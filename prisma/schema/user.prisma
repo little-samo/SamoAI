@@ -1,0 +1,30 @@
+model UserModel {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  platform UserPlatform
+  pid      BigInt       @unique
+
+  username  String?
+  nickname  String
+  firstName String? @map("first_name")
+  lastName  String? @map("last_name")
+
+  ownedLocations LocationModel[] @relation("userOwnedLocations")
+
+  agentMemories AgentUserMemoryModel[] @relation("agentUserMemoryUser")
+
+  sentMessages     MessageModel[] @relation("userSentMessages")
+  receivedMessages MessageModel[] @relation("userReceivedMessages")
+
+  apiKey       UserApiKeyModel?      @relation("userApiKey")
+  apiHistories UserApiHistoryModel[] @relation("userApiHistory")
+
+  llmApiKeys LlmApiKeyModel[] @relation("userLlmApiKey")
+}
+
+enum UserPlatform {
+  API
+  TELEGRAM
+}

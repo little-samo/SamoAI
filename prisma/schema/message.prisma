@@ -1,0 +1,26 @@
+model MessageModel {
+  id        BigInt   @id @default(autoincrement())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  location   LocationModel? @relation("locationMessages", fields: [locationId], references: [id])
+  locationId Int?           @map("location_id")
+
+  senderAgent   AgentModel? @relation("agentSentMessages", fields: [senderAgentId], references: [id])
+  senderAgentId Int?        @map("sender_agent_id")
+  senderUser    UserModel?  @relation("userSentMessages", fields: [senderUserId], references: [id])
+  senderUserId  Int?        @map("sender_user_id")
+
+  receiverAgent   AgentModel? @relation("agentReceivedMessages", fields: [receiverAgentId], references: [id])
+  receiverAgentId Int?        @map("receiver_agent_id")
+  receiverUser    UserModel?  @relation("userReceivedMessages", fields: [receiverUserId], references: [id])
+  receiverUserId  Int?        @map("receiver_user_id")
+
+  content Json
+
+  @@index([locationId, createdAt])
+  @@index([senderAgentId, createdAt])
+  @@index([senderUserId, createdAt])
+  @@index([receiverAgentId, createdAt])
+  @@index([receiverUserId, createdAt])
+}

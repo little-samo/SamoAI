@@ -1,0 +1,24 @@
+model UserApiKeyModel {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  userModel   UserModel? @relation("userApiKey", fields: [userModelId], references: [id])
+  userModelId Int?       @unique @map("user_model_id")
+
+  key String
+}
+
+model UserApiHistoryModel {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  userModel   UserModel? @relation("userApiHistory", fields: [userModelId], references: [id])
+  userModelId Int?       @map("user_model_id")
+
+  request  Json
+  response Json
+
+  @@index([userModelId, createdAt])
+}

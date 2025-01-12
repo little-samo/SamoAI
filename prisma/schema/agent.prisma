@@ -1,0 +1,20 @@
+model AgentModel {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  name String
+  core String
+  meta Json   @default("{}")
+
+  state Json @default("{}")
+
+  llmApis LlmApiModel[] @relation("agentLlmApis")
+
+  ownedLocations LocationModel[] @relation("agentOwnedLocations")
+
+  userMemories AgentUserMemoryModel[] @relation("agentUserMemoryAgent")
+
+  sentMessages     MessageModel[] @relation("agentSentMessages")
+  receivedMessages MessageModel[] @relation("agentReceivedMessages")
+}
