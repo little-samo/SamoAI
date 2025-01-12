@@ -136,7 +136,7 @@ We welcome contributions! Please see our [Contributing Guidelines](#) for detail
 
 ## 📜 License
 
-[License information to be added]
+[MIT License](LICENSE)
 
 ## 🔗 Links
 

@@ -2,6 +2,7 @@
   "name": "samo-ai",
   "version": "0.0.1",
   "description": "The Multi-Agent AI Gaming Framework: Compete, Evolve, Adapt",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/little-samo/SamoAI.git"
