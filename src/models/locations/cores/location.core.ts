@@ -1,5 +1,5 @@
 import { Location } from '../location.js';
-import { sleepWithAbort } from '../../utils/sleep.js';
+import { sleepWithAbort } from '../../../common/utils/sleep.js';
 import { Entity } from '../../entities/entity.js';
 
 import { LocationEmptyCore } from './location.empty-core.js';

@@ -4,7 +4,7 @@ import { Injectable, Logger } from '@nestjs/common';
 export class AgentsService {
   protected readonly logger = new Logger(this.constructor.name);
 
-  constructor() {}
+  public constructor() {}
 
   protected async init() {
     this.logger.log('Initializing agent...');

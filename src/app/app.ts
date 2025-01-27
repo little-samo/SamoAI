@@ -6,7 +6,7 @@ import packageJson from '../../package.json' with { type: 'json' };
 import { AppModule } from './app.module.js';
 
 export class SamoAiApp {
-  async bootstrap() {
+  public async bootstrap() {
     const app = await NestFactory.create(AppModule);
 
     const config = new DocumentBuilder()
