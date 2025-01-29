@@ -2,12 +2,17 @@ import { EventEmitter } from 'events';
 
 import { LocationModel } from '@prisma/client';
 
+import { LocationState } from './states/location.state.js';
+
 export type LocationId = number & { __locationId: true };
 
-export abstract class Location extends EventEmitter {
+export class Location extends EventEmitter {
   public readonly id: LocationId;
 
-  protected constructor(public readonly model: LocationModel) {
+  protected constructor(
+    public readonly model: LocationModel,
+    public state: LocationState
+  ) {
     super();
     this.id = model.id as LocationId;
   }

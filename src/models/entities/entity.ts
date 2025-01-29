@@ -1,3 +1,5 @@
+import { EntityState } from './entity.state.js';
+
 export type EntityId = number & { __entityId: true };
 
 export abstract class Entity {
@@ -9,7 +11,10 @@ export abstract class Entity {
 
   public readonly id: EntityId;
 
-  protected constructor(public readonly name: string) {
+  protected constructor(
+    public readonly name: string,
+    private readonly state: EntityState
+  ) {
     this.id = Entity.generateId();
   }
 

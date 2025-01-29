@@ -11,13 +11,6 @@ model UserModel {
   firstName String? @map("first_name")
   lastName  String? @map("last_name")
 
-  ownedLocations LocationModel[] @relation("userOwnedLocations")
-
-  agentMemories AgentUserMemoryModel[] @relation("agentUserMemoryUser")
-
-  sentMessages     MessageModel[] @relation("userSentMessages")
-  receivedMessages MessageModel[] @relation("userReceivedMessages")
-
   apiKey       UserApiKeyModel?      @relation("userApiKey")
   apiHistories UserApiHistoryModel[] @relation("userApiHistory")
 

@@ -7,14 +7,5 @@ model AgentModel {
   core String
   meta Json   @default("{}")
 
-  state Json @default("{}")
-
   llmApis LlmApiModel[] @relation("agentLlmApis")
-
-  ownedLocations LocationModel[] @relation("agentOwnedLocations")
-
-  userMemories AgentUserMemoryModel[] @relation("agentUserMemoryAgent")
-
-  sentMessages     MessageModel[] @relation("agentSentMessages")
-  receivedMessages MessageModel[] @relation("agentReceivedMessages")
 }

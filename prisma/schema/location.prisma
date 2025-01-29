@@ -6,13 +6,4 @@ model LocationModel {
   name String
   core String
   meta Json   @default("{}")
-
-  state Json @default("{}")
-
-  ownerAgent   AgentModel? @relation("agentOwnedLocations", fields: [ownerAgentId], references: [id])
-  ownerAgentId Int?        @map("owner_agent_id")
-  ownerUser    UserModel?  @relation("userOwnedLocations", fields: [ownerUserId], references: [id])
-  ownerUserId  Int?        @map("owner_user_id")
-
-  messages MessageModel[] @relation("locationMessages")
 }
