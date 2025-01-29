@@ -3,7 +3,7 @@ model LocationModel {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  name String
+  name String @unique
   core String
   meta Json   @default("{}")
 }
