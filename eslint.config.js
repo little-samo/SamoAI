@@ -18,6 +18,9 @@ const compat = new FlatCompat({
 });
 
 export default [
+  {
+    ignores: ['**/node_modules/**', '**/dist/**'],
+  },
   ...compat.extends(
     'plugin:@typescript-eslint/recommended',
     'plugin:prettier/recommended'
@@ -51,6 +54,7 @@ export default [
           'newlines-between': 'always',
         },
       ],
+      'import/newline-after-import': 'error',
       '@typescript-eslint/explicit-member-accessibility': [
         'error',
         {
@@ -59,7 +63,5 @@ export default [
       ],
       '@typescript-eslint/no-explicit-any': 'error',
     },
-
-    ignores: ['node_modules', 'dist'],
   },
 ];
