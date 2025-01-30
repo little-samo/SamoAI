@@ -10,12 +10,18 @@ export abstract class Entity {
   }
 
   public readonly id: EntityId;
+  protected _state: EntityState;
 
   protected constructor(
     public readonly name: string,
-    private readonly state: EntityState
+    state: EntityState
   ) {
     this.id = Entity.generateId();
+    this._state = state;
+  }
+
+  public get state(): EntityState {
+    return this._state;
   }
 
   public abstract update(): Promise<void>;
