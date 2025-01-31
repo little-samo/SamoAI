@@ -1,7 +1,7 @@
-import { Agent } from '../agent.js';
-import { AgentOutput } from '../io/agent.output.js';
+import { Agent } from '../agent';
+import { AgentOutput } from '../io/agent.output';
 
-import { AgentAction } from './agent.action.js';
+import { AgentAction } from './agent.action';
 
 export class AgentSayAction extends AgentAction {
   public constructor(agent: Agent) {

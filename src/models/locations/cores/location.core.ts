@@ -1,8 +1,9 @@
-import { Location } from '../location.js';
-import { sleepWithAbort } from '../../../common/utils/sleep.js';
-import { Entity } from '../../entities/entity.js';
+import { sleepWithAbort } from '@common/utils/sleep';
+import { Entity } from '@models/entities/entity';
 
-import { LocationEmptyCore } from './location.empty-core.js';
+import { Location } from '../location';
+
+import { LocationEmptyCore } from './location.empty-core';
 
 export abstract class LocationCore {
   private _sleepController = new AbortController();

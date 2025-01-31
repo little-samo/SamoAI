@@ -1,7 +1,7 @@
-import { Agent } from '../agent.js';
-import { AgentOutput } from '../io/agent.output.js';
+import { Agent } from '../agent';
+import { AgentOutput } from '../io/agent.output';
 
-import { AgentSayAction } from './agent.say-action.js';
+import { AgentSayAction } from './agent.say-action';
 
 export abstract class AgentAction {
   protected constructor(public readonly agent: Agent) {}

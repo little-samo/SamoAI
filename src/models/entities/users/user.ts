@@ -1,8 +1,8 @@
 import { UserModel } from '@prisma/client';
 
-import { Entity } from '../entity.js';
+import { Entity } from '../entity';
 
-import { UserState } from './states/user.state.js';
+import { UserState } from './states/user.state';
 
 export class User extends Entity {
   public constructor(

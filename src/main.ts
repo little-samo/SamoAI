@@ -1,3 +1,3 @@
-import { SamoAiApp } from './app/app.js';
+import { SamoAiApp } from '@app/app';
 
 new SamoAiApp().bootstrap();

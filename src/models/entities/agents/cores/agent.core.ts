@@ -1,7 +1,7 @@
-import { Agent } from '../agent.js';
-import { AgentOutput } from '../io/agent.output.js';
+import { Agent } from '../agent';
+import { AgentOutput } from '../io/agent.output';
 
-import { AgentDmCore } from './agent.dm-core.js';
+import { AgentDmCore } from './agent.dm-core';
 
 export abstract class AgentCore {
   protected constructor(public readonly agent: Agent) {}

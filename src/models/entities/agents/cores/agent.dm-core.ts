@@ -1,7 +1,7 @@
-import { Agent } from '../agent.js';
-import { AgentOutput } from '../io/agent.output.js';
+import { Agent } from '../agent';
+import { AgentOutput } from '../io/agent.output';
 
-import { AgentCore } from './agent.core.js';
+import { AgentCore } from './agent.core';
 
 export class AgentDmCore extends AgentCore {
   public constructor(agent: Agent) {

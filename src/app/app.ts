@@ -1,9 +1,9 @@
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
-import packageJson from '../../package.json' with { type: 'json' };
+import * as packageJson from '../../package.json';
 
-import { AppModule } from './app.module.js';
+import { AppModule } from './app.module';
 
 export class SamoAiApp {
   public async bootstrap() {

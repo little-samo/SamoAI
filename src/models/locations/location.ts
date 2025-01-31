@@ -2,7 +2,7 @@ import { EventEmitter } from 'events';
 
 import { LocationModel } from '@prisma/client';
 
-import { LocationState } from './states/location.state.js';
+import { LocationState } from './states/location.state';
 
 export type LocationId = number & { __locationId: true };
 

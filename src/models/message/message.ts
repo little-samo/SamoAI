@@ -1,5 +1,5 @@
-import { LocationId } from '../locations/location.js';
-import { EntityId } from '../entities/entity.js';
+import { EntityId } from '@models/entities/entity';
+import { LocationId } from '@models/locations/location';
 
 export interface Message {
   locationId: LocationId;

@@ -1,4 +1,4 @@
-import { EntityState } from './entity.state.js';
+import { EntityState } from './entity.state';
 
 export type EntityId = number & { __entityId: true };
 

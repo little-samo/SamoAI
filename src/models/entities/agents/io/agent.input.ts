@@ -1,4 +1,4 @@
-import { AgentOutput } from './agent.output.js';
+import { AgentOutput } from './agent.output';
 
 export type AgentInput = AgentInputType[];
 

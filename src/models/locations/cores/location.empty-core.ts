@@ -1,6 +1,6 @@
-import { Location } from '../location.js';
+import { Location } from '../location';
 
-import { LocationCore } from './location.core.js';
+import { LocationCore } from './location.core';
 
 export class LocationEmptyCore extends LocationCore {
   public constructor(location: Location) {

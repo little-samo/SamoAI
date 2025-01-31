@@ -1,7 +1,6 @@
 import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
-
-import { EntityState } from '@/models/entities/entity.state.js';
+import { EntityState } from '@models/entities/entity.state';
 
 @Schema({ timestamps: true })
 export class UserState extends EntityState {

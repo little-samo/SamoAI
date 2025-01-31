@@ -1,10 +1,10 @@
 import { AgentModel } from '@prisma/client';
 
-import { Entity } from '../entity.js';
+import { Entity } from '../entity';
 
-import { AgentCore } from './cores/agent.core.js';
-import { AgentInput } from './io/agent.input.js';
-import { AgentState } from './states/agent.state.js';
+import { AgentCore } from './cores/agent.core';
+import { AgentInput } from './io/agent.input';
+import { AgentState } from './states/agent.state';
 
 export class Agent extends Entity {
   public readonly core: AgentCore;
