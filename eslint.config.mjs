@@ -1,5 +1,5 @@
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 import typescriptEslintEslintPlugin from '@typescript-eslint/eslint-plugin';
 import globals from 'globals';
