@@ -22,13 +22,13 @@ export abstract class LocationCore {
     return 1;
   }
 
-  public static createCore(id: number, location: Location): LocationCore {
-    switch (location.model.core) {
+  public static createCore(location: Location): LocationCore {
+    switch (location.meta.core) {
       case '':
       case 'empty':
         return new LocationEmptyCore(location);
       default:
-        throw new Error(`Unknown location core: ${location.model.core}`);
+        throw new Error(`Unknown location core: ${location.meta.core}`);
     }
   }
 
@@ -52,7 +52,7 @@ export abstract class LocationCore {
     }
   }
 
-  protected async update(): Promise<void> {
+  public async update(): Promise<void> {
     await Promise.all(
       Array.from(this._entities.values()).map((entity) => entity.update())
     );

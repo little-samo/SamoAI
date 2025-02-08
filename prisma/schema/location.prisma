@@ -4,6 +4,5 @@ model LocationModel {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   name String @unique
-  core String
   meta Json   @default("{}")
 }

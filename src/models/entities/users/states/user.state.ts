@@ -6,9 +6,6 @@ import { EntityState } from '@models/entities/entity.state';
 export class UserState extends EntityState {
   @Prop({ required: true, unique: true })
   public userId!: number;
-
-  @Prop({ type: [Number], default: [] })
-  public locationIds!: number[];
 }
 
 export type UserStateDocument = UserState & Document;

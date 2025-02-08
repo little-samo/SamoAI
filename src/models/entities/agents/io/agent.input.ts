@@ -1,15 +1,16 @@
-import { AgentOutput } from './agent.output';
+import { UserContext } from '@models/entities/users/user.context';
+import { LocationContext } from '@models/locations/location.context';
 
-export type AgentInput = AgentInputType[];
+import { AgentSelfContext } from '../agent.context';
+import { AgentOtherContext } from '../agent.context';
 
-export type AgentInputType = AgentInputMessage | AgentOutput;
-
-export interface AgentInputMessage {
-  action?: string;
-  payload?: string;
-
-  content?: string;
-  expression?: string;
-
+export interface AgentInput {
   timestamp: Date;
+
+  self: AgentSelfContext;
+
+  location: LocationContext;
+
+  users: UserContext[];
+  otherAgents: AgentOtherContext[];
 }

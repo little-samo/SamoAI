@@ -4,7 +4,6 @@ model AgentModel {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   name String
-  core String
   meta Json   @default("{}")
 
   llmApis LlmApiModel[] @relation("agentLlmApis")

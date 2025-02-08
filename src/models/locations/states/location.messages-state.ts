@@ -1,7 +1,7 @@
 import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
-@Schema()
+@Schema({ timestamps: true })
 export class LocationMessage {
   @Prop()
   public agentId?: number;
@@ -12,25 +12,35 @@ export class LocationMessage {
   @Prop({ required: true })
   public name!: string;
 
-  @Prop({ required: true })
-  public expression!: string;
+  @Prop()
+  public expression?: string;
 
-  @Prop({ required: true })
-  public message!: string;
-
-  @Prop({ type: Date, default: Date.now })
-  public createdAt!: Date;
+  @Prop()
+  public message?: string;
 
   @Prop({
     required: true,
-    validate: {
-      validator: function (this: LocationMessage) {
-        return (this.agentId !== undefined) !== (this.userId !== undefined);
+    validate: [
+      {
+        validator: function (this: LocationMessage) {
+          return (this.agentId !== undefined) !== (this.userId !== undefined);
+        },
+        message: 'Either agentId or userId must be provided, but not both',
       },
-      message: 'Either agentId or userId must be provided, but not both',
-    },
+      {
+        validator: function (this: LocationMessage) {
+          return this.expression !== undefined || this.message !== undefined;
+        },
+        message: 'Either expression or message must be provided',
+      },
+    ],
   })
   public _validate?: never;
+}
+
+export interface LocationMessage {
+  updatedAt: Date;
+  createdAt: Date;
 }
 
 @Schema({ timestamps: true })
@@ -40,12 +50,11 @@ export class LocationMessagesState {
 
   @Prop({ type: [LocationMessage], default: [] })
   public messages!: LocationMessage[];
+}
 
-  @Prop({ type: Date, default: Date.now })
-  public updatedAt!: Date;
-
-  @Prop({ type: Date, default: Date.now })
-  public createdAt!: Date;
+export interface LocationMessagesState {
+  updatedAt: Date;
+  createdAt: Date;
 }
 
 export type LocationMessagesStateDocument = LocationMessagesState & Document;

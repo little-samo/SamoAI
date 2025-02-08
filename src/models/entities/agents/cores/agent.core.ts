@@ -1,19 +1,19 @@
 import { Agent } from '../agent';
-import { AgentOutput } from '../io/agent.output';
 
-import { AgentDmCore } from './agent.dm-core';
+import { AgentEmptyCore } from './agent.empty-core';
 
 export abstract class AgentCore {
   protected constructor(public readonly agent: Agent) {}
 
   public static createCore(agent: Agent): AgentCore {
-    switch (agent.model.core) {
-      case 'dm':
-        return new AgentDmCore(agent);
+    switch (agent.meta.core) {
+      case '':
+      case 'empty':
+        return new AgentEmptyCore(agent);
       default:
-        throw new Error(`Unknown agent core: ${agent.model.core}`);
+        throw new Error(`Unknown agent core: ${agent.meta.core}`);
     }
   }
 
-  public abstract generateMessage(): Promise<AgentOutput>;
+  public abstract update(): Promise<void>;
 }

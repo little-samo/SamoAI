@@ -7,9 +7,6 @@ export class AgentState extends EntityState {
   @Prop({ required: true, unique: true })
   public agentId!: number;
 
-  @Prop({ type: [Number], default: [] })
-  public locationIds!: number[];
-
   @Prop({ type: [String], default: [] })
   public memories!: string[];
 }

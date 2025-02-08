@@ -6,10 +6,10 @@ export class LocationState {
   @Prop({ required: true, unique: true })
   public locationId!: number;
 
-  @Prop({ type: [Number], default: [] })
+  @Prop({ type: [Number], default: [], index: true })
   public agentIds!: number[];
 
-  @Prop({ type: [Number], default: [] })
+  @Prop({ type: [Number], default: [], index: true })
   public userIds!: number[];
 
   @Prop({ type: Date, default: Date.now })
