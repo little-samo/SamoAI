@@ -57,6 +57,10 @@ export class AgentSendCasualMessageAction extends AgentAction {
       );
     }
 
+    if (action.expression) {
+      this.agent.state.expression = action.expression;
+    }
+
     this.location.addAgentMessage(
       this.agent,
       action.casualPolicyViolatingAnswer,
