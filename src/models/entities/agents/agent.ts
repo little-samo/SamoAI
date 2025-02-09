@@ -7,11 +7,15 @@ import { Entity, EntityKey } from '../entity';
 
 import { AgentCore } from './cores/agent.core';
 import { AgentState } from './states/agent.state';
-import { AgentContext } from './agent.context';
+import {
+  AgentContext,
+  AgentOtherContext,
+  AgentSelfContext,
+} from './agent.context';
 import { AgentMeta, DEFAULT_AGENT_META } from './agent.meta';
 import { AgentAction } from './actions/agent.action';
 import { AgentEntityState } from './states/agent.entity-state';
-import { AgentInputBuilder } from './inputs/agent.input';
+import { AgentInputBuilder } from './io/agent.input';
 
 export class Agent extends Entity {
   public static createState(model: AgentModel, meta: AgentMeta): AgentState {
@@ -130,8 +134,38 @@ export class Agent extends Entity {
     return super.context as AgentContext;
   }
 
-  public get selfContext(): AgentContext {
-    return this.context;
+  public get selfContext(): AgentSelfContext {
+    return {
+      ...this.context,
+      memories: this.state.memories,
+    };
+  }
+
+  public otherContext(other: Entity): AgentOtherContext {
+    const entityState = this._entityStates[other.key];
+    return {
+      ...other.context,
+      memories: entityState?.memories ?? [],
+    };
+  }
+
+  public getEntityState(key: EntityKey): AgentEntityState | undefined {
+    return this._entityStates[key];
+  }
+
+  public getEntityStateByTarget(
+    targetAgentId?: number,
+    targetUserId?: number
+  ): AgentEntityState | undefined {
+    let key: EntityKey;
+    if (targetAgentId) {
+      key = `agent:${targetAgentId}` as EntityKey;
+    } else if (targetUserId) {
+      key = `user:${targetUserId}` as EntityKey;
+    } else {
+      throw new Error('No target agent or user provided');
+    }
+    return this._entityStates[key];
   }
 
   public addEntityState(

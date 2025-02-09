@@ -7,6 +7,7 @@ import { Agent } from '../agent';
 import { AgentSendCasualMessageAction } from './agent.send-casual-message-action';
 import { AgentSendMessageAction } from './agent.send-message-action';
 import { AgentUpdateMemoryAction } from './agent.update-memory';
+import { AgentUpdateEntityMemoryAction } from './agent.update-entity-memory';
 
 export abstract class AgentAction implements LlmTool {
   public static readonly ACTION_TYPE: string;
@@ -17,6 +18,7 @@ export abstract class AgentAction implements LlmTool {
   > = {
     [AgentSendCasualMessageAction.ACTION_TYPE]: AgentSendCasualMessageAction,
     [AgentSendMessageAction.ACTION_TYPE]: AgentSendMessageAction,
+    [AgentUpdateEntityMemoryAction.ACTION_TYPE]: AgentUpdateEntityMemoryAction,
     [AgentUpdateMemoryAction.ACTION_TYPE]: AgentUpdateMemoryAction,
   };
 
