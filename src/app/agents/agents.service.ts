@@ -30,6 +30,10 @@ export class AgentsService implements AgentsRepository {
     private agentEntityStateModel: Model<AgentEntityStateDocument>
   ) {}
 
+  public async getAllAgentModels(): Promise<AgentModel[]> {
+    return this.prisma.agentModel.findMany();
+  }
+
   public async getAgentModel(agentId: number): Promise<AgentModel> {
     const agent = await this.prisma.agentModel.findUnique({
       where: { id: agentId },

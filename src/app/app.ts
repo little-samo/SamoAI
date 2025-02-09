@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { WorldManager } from '@core/managers/world.manager';
+import { INestApplication } from '@nestjs/common';
 
 import * as packageJson from '../../package.json';
 
@@ -11,13 +12,15 @@ import { LocationsService } from './locations/locations.service';
 import { UsersService } from './users/users.service';
 
 export class SamoAiApp {
-  public async bootstrap() {
-    const app = await NestFactory.create(AppModule);
+  public app?: INestApplication;
 
-    const redisService = app.get(RedisService);
-    const agentsService = app.get(AgentsService);
-    const locationsService = app.get(LocationsService);
-    const usersService = app.get(UsersService);
+  public async bootstrap(listen: boolean = true) {
+    this.app = await NestFactory.create(AppModule);
+
+    const redisService = this.app.get(RedisService);
+    const agentsService = this.app.get(AgentsService);
+    const locationsService = this.app.get(LocationsService);
+    const usersService = this.app.get(UsersService);
 
     WorldManager.initialize(
       redisService,
@@ -31,9 +34,12 @@ export class SamoAiApp {
       .setDescription('Samo-AI API description')
       .setVersion(packageJson.version)
       .build();
-    const documentFactory = () => SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('api', app, documentFactory);
+    const documentFactory = () =>
+      SwaggerModule.createDocument(this.app!, config);
+    SwaggerModule.setup('api', this.app, documentFactory);
 
-    await app.listen(process.env.PORT ?? 11177);
+    if (listen) {
+      await this.app.listen(process.env.PORT ?? 11177);
+    }
   }
 }
