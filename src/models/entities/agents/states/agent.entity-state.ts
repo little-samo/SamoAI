@@ -33,6 +33,8 @@ export const AgentEntityStateSchema =
   SchemaFactory.createForClass(AgentEntityState);
 
 AgentEntityStateSchema.index(
-  { agentId: 1, targetAgentId: 1, targetUserId: 1 },
+  { agentId: 1, targetAgentId: 1 },
   { unique: true }
 );
+
+AgentEntityStateSchema.index({ agentId: 1, targetUserId: 1 }, { unique: true });

@@ -6,5 +6,5 @@ model UserApiKeyModel {
   userModel   UserModel? @relation("userApiKey", fields: [userModelId], references: [id])
   userModelId Int?       @unique @map("user_model_id")
 
-  key String @unique
+  key String @unique @default(uuid())
 }

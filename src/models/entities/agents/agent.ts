@@ -32,6 +32,37 @@ export class Agent extends Entity {
     }
   }
 
+  public createEntityState(
+    targetAgentId?: number,
+    targetUserId?: number
+  ): AgentEntityState {
+    const state = new AgentEntityState();
+    state.agentId = this.model.id;
+    if (targetAgentId) {
+      state.targetType = 'agent';
+      state.targetAgentId = targetAgentId;
+    } else if (targetUserId) {
+      state.targetType = 'user';
+      state.targetUserId = targetUserId;
+    } else {
+      throw new Error('No target agent or user provided');
+    }
+    state.memories = Array(this.meta.entityMemoryLimit).fill('');
+    state.dirty = true;
+    return state;
+  }
+
+  public fixEntityState(state: AgentEntityState): void {
+    if (state.memories.length < this.meta.entityMemoryLimit) {
+      state.memories = state.memories.concat(
+        Array(this.meta.entityMemoryLimit - state.memories.length).fill('')
+      );
+    } else if (state.memories.length > this.meta.entityMemoryLimit) {
+      state.memories = state.memories.slice(0, this.meta.entityMemoryLimit);
+    }
+    state.dirty = true;
+  }
+
   public readonly key: EntityKey;
 
   public readonly core: AgentCore;
@@ -95,11 +126,40 @@ export class Agent extends Entity {
     return this.context;
   }
 
-  public addEntityState(key: EntityKey, state: AgentEntityState): void {
+  public addEntityState(
+    targetAgentId?: number,
+    targetUserId?: number,
+    state?: null | AgentEntityState
+  ): void {
+    let key: EntityKey;
+    if (targetAgentId) {
+      key = `agent:${targetAgentId}` as EntityKey;
+    } else if (targetUserId) {
+      key = `user:${targetUserId}` as EntityKey;
+    } else {
+      throw new Error('No target agent or user provided');
+    }
+
+    if (state) {
+      this.fixEntityState(state);
+    } else {
+      state = this.createEntityState(targetAgentId, targetUserId);
+    }
     this._entityStates[key] = state;
   }
 
-  public removeEntityState(key: EntityKey): void {
+  public removeEntityState(
+    targetAgentId?: number,
+    targetUserId?: number
+  ): void {
+    let key: EntityKey;
+    if (targetAgentId) {
+      key = `agent:${targetAgentId}` as EntityKey;
+    } else if (targetUserId) {
+      key = `user:${targetUserId}` as EntityKey;
+    } else {
+      throw new Error('No target agent or user provided');
+    }
     delete this._entityStates[key];
   }
 

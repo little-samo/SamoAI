@@ -20,8 +20,9 @@
     "baseUrl": "./src",
     "paths": {
       "@common/*": ["common/*"],
-      "@app/*": ["app/*"],
-      "@models/*": ["models/*"]
+      "@models/*": ["models/*"],
+      "@core/*": ["core/*"],
+      "@app/*": ["app/*"]
     }
   }
 }
