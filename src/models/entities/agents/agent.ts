@@ -9,12 +9,14 @@ import { AgentState } from './states/agent.state';
 import { AgentContext } from './agent.context';
 import { AgentMeta, DEFAULT_AGENT_META } from './agent.meta';
 import { AgentAction } from './actions/agent.action';
+import { AgentEntityState } from './states/agent.entity-state';
 
 export class Agent extends Entity {
   public static createState(model: AgentModel, meta: AgentMeta): AgentState {
     const state = new AgentState();
     state.agentId = model.id;
     state.memories = Array(meta.memoryLimit).fill('');
+    state.dirty = true;
     return state;
   }
 
@@ -23,8 +25,10 @@ export class Agent extends Entity {
       state.memories = state.memories.concat(
         Array(meta.memoryLimit - state.memories.length).fill('')
       );
+      state.dirty = true;
     } else if (state.memories.length > meta.memoryLimit) {
       state.memories = state.memories.slice(0, meta.memoryLimit);
+      state.dirty = true;
     }
   }
 
@@ -35,10 +39,12 @@ export class Agent extends Entity {
   public readonly llms: LlmService[] = [];
   public readonly actions: Record<string, AgentAction> = {};
 
+  private readonly _entityStates: Record<EntityKey, AgentEntityState> = {};
+
   public constructor(
     public readonly location: Location,
     public readonly model: AgentModel,
-    state?: AgentState,
+    state?: null | AgentState,
     apiKeys?: LlmApiKeyModel[]
   ) {
     const meta = { ...DEFAULT_AGENT_META, ...(model.meta as object) };
@@ -87,6 +93,14 @@ export class Agent extends Entity {
 
   public get selfContext(): AgentContext {
     return this.context;
+  }
+
+  public addEntityState(key: EntityKey, state: AgentEntityState): void {
+    this._entityStates[key] = state;
+  }
+
+  public removeEntityState(key: EntityKey): void {
+    delete this._entityStates[key];
   }
 
   public async update(): Promise<void> {}

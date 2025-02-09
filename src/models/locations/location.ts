@@ -5,7 +5,10 @@ import { Agent } from '@models/entities/agents/agent';
 import { User } from '@models/entities/users/user';
 import { Entity, EntityKey } from '@models/entities/entity';
 
-import { LocationMessage } from './states/location.messages-state';
+import {
+  LocationMessage,
+  LocationMessagesState,
+} from './states/location.messages-state';
 import { LocationState } from './states/location.state';
 import { DEFAULT_LOCATION_META, LocationMeta } from './location.meta';
 import { LocationCore } from './cores/location.core';
@@ -25,15 +28,64 @@ export class Location extends EventEmitter {
 
   public readonly entities: Record<EntityKey, Entity> = {};
 
+  public readonly state: LocationState;
+  public readonly messagesState: LocationMessagesState;
+
+  public static createState(
+    model: LocationModel,
+    _meta: LocationMeta
+  ): LocationState {
+    const state = new LocationState();
+    state.locationId = model.id;
+    state.agentIds = [];
+    state.userIds = [];
+    state.dirty = true;
+    return state;
+  }
+
+  public static fixState(_state: LocationState, _meta: LocationMeta): void {}
+
+  public static createMessagesState(
+    model: LocationModel,
+    _meta: LocationMeta
+  ): LocationMessagesState {
+    const state = new LocationMessagesState();
+    state.locationId = model.id;
+    state.messages = [];
+    state.dirty = true;
+    return state;
+  }
+
+  public static fixMessagesState(
+    _state: LocationMessagesState,
+    _meta: LocationMeta
+  ): void {
+    if (_state.messages.length > _meta.messageLimit) {
+      _state.messages = _state.messages.slice(
+        _state.messages.length - _meta.messageLimit
+      );
+      _state.dirty = true;
+    }
+  }
+
   protected constructor(
     public readonly model: LocationModel,
-    public state: LocationState,
-    public readonly messages: LocationMessage[]
+    state?: null | LocationState,
+    messagesState?: null | LocationMessagesState
   ) {
     super();
     this.id = model.id as LocationId;
     this.key = `location:${model.id}` as LocationKey;
     this.meta = { ...DEFAULT_LOCATION_META, ...(model.meta as object) };
+
+    state ??= Location.createState(model, this.meta);
+    Location.fixState(state, this.meta);
+    this.state = state;
+
+    messagesState ??= Location.createMessagesState(model, this.meta);
+    Location.fixMessagesState(messagesState, this.meta);
+    this.messagesState = messagesState;
+
     this.core = LocationCore.createCore(this);
   }
 
@@ -45,6 +97,7 @@ export class Location extends EventEmitter {
       } else if (entity instanceof User) {
         this.state.userIds.push(entity.model.id);
       }
+      this.state.dirty = true;
     }
   }
 
@@ -60,6 +113,7 @@ export class Location extends EventEmitter {
           (id) => id !== entity.model.id
         );
       }
+      this.state.dirty = true;
     }
   }
 
@@ -67,7 +121,7 @@ export class Location extends EventEmitter {
     return {
       name: this.model.name,
       description: this.meta.description,
-      messages: this.messages.map((message) => ({
+      messages: this.messagesState.messages.map((message) => ({
         key: message.agentId
           ? (`agent:${message.agentId}` as EntityKey)
           : (`user:${message.userId}` as EntityKey),
@@ -92,7 +146,11 @@ export class Location extends EventEmitter {
         this.meta.messageLengthLimit
       );
     }
-    this.messages.push(message);
+    this.messagesState.messages.push(message);
+    if (this.messagesState.messages.length > this.meta.messageLimit) {
+      this.messagesState.messages.shift();
+    }
+    this.messagesState.dirty = true;
   }
 
   public addAgentMessage(

@@ -53,6 +53,8 @@ export class LocationMessagesState {
 }
 
 export interface LocationMessagesState {
+  dirty?: boolean;
+
   updatedAt: Date;
   createdAt: Date;
 }

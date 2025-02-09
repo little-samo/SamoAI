@@ -12,6 +12,7 @@ export class User extends Entity {
   public static createState(model: UserModel, _meta: UserMeta): UserState {
     const state = new UserState();
     state.userId = model.id;
+    state.dirty = true;
     return state;
   }
 
@@ -20,7 +21,7 @@ export class User extends Entity {
   public constructor(
     location: Location,
     public readonly model: UserModel,
-    state?: UserState
+    state?: null | UserState
   ) {
     const meta = { ...DEFAULT_USER_META, ...(model.meta as object) };
     state ??= User.createState(model, meta);

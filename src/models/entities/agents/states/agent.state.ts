@@ -12,6 +12,8 @@ export class AgentState extends EntityState {
 }
 
 export interface AgentState {
+  dirty?: boolean;
+
   updatedAt: Date;
   createdAt: Date;
 }

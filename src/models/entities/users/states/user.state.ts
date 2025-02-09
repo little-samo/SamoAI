@@ -9,6 +9,8 @@ export class UserState extends EntityState {
 }
 
 export interface UserState {
+  dirty?: boolean;
+
   updatedAt: Date;
   createdAt: Date;
 }

@@ -14,6 +14,8 @@ export class LocationState {
 }
 
 export interface LocationState {
+  dirty?: boolean;
+
   updatedAt: Date;
   createdAt: Date;
 }
