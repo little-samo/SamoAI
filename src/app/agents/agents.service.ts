@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { FilterQuery, Model } from 'mongoose';
 import { AgentEntityStateDocument } from '@models/entities/agents/states/agent.entity-state';
 import { AgentEntityState } from '@models/entities/agents/states/agent.entity-state';
 import { AgentsRepository } from '@core/repositories/agents.repository';
@@ -12,6 +12,13 @@ import { AgentModel } from '@prisma/client';
 import { PrismaService } from '@app/prisma/prisma.service';
 import { RedisService } from '@app/redis/redis.service';
 import { JsonObject } from '@prisma/client/runtime/library';
+
+interface AgentEntityStateCacheKey {
+  agentId: number;
+  targetAgentId?: number;
+  targetUserId?: number;
+  cacheKey: string;
+}
 
 @Injectable()
 export class AgentsService implements AgentsRepository {
@@ -97,16 +104,57 @@ export class AgentsService implements AgentsRepository {
     }
 
     const remainingAgentIds = agentIds.filter((id) => !states[id]);
+    if (remainingAgentIds.length > 0) {
+      const statesFromDb = await this.agentStateModel
+        .find({ agentId: { $in: remainingAgentIds } })
+        .exec();
 
-    const statesFromDb = await this.agentStateModel
-      .find({ agentId: { in: remainingAgentIds } })
-      .exec();
-
-    for (const state of statesFromDb) {
-      states[state.agentId] = state;
+      for (const state of statesFromDb) {
+        states[state.agentId] = state;
+      }
     }
 
+    const cacheEntries = Object.values(states).reduce(
+      (acc, state) => {
+        const cacheKey = `${this.AGENT_STATE_PREFIX}${state.agentId}`;
+        acc[cacheKey] = JSON.stringify(state);
+        return acc;
+      },
+      {} as Record<string, string>
+    );
+
+    await this.redis.mset(cacheEntries);
+
+    await Promise.all(
+      Object.keys(cacheEntries).map((key) =>
+        this.redis.expire(key, this.CACHE_TTL)
+      )
+    );
+
     return states;
+  }
+
+  private getAgentEntityStateCacheKeyById(
+    agentId: number,
+    targetAgentId?: number,
+    targetUserId?: number
+  ): string {
+    if (targetAgentId) {
+      return `${this.AGENT_ENTITY_STATE_PREFIX}${agentId}:agent:${targetAgentId}`;
+    } else if (targetUserId) {
+      return `${this.AGENT_ENTITY_STATE_PREFIX}${agentId}:user:${targetUserId}`;
+    }
+    throw new Error('No target agent or user provided');
+  }
+
+  private getAgentEntityStateCacheKey(
+    agentEntityState: AgentEntityState
+  ): string {
+    return this.getAgentEntityStateCacheKeyById(
+      agentEntityState.agentId,
+      agentEntityState.targetAgentId,
+      agentEntityState.targetUserId
+    );
   }
 
   public async getAgentEntityState(
@@ -118,12 +166,11 @@ export class AgentsService implements AgentsRepository {
       throw new Error('No target agent or user provided');
     }
 
-    let cacheKey = `${this.AGENT_ENTITY_STATE_PREFIX}${agentId}:`;
-    if (targetAgentId) {
-      cacheKey += `agent:${targetAgentId}`;
-    } else if (targetUserId) {
-      cacheKey += `user:${targetUserId}`;
-    }
+    const cacheKey = this.getAgentEntityStateCacheKeyById(
+      agentId,
+      targetAgentId,
+      targetUserId
+    );
 
     const cachedState = await this.redis.get(cacheKey);
 
@@ -152,53 +199,99 @@ export class AgentsService implements AgentsRepository {
 
   public async getAgentEntityStates(
     agentIds: number[],
-    targetAgentIds: (number | null)[],
-    targetUserIds: (number | null)[]
+    targetAgentIds: number[],
+    targetUserIds: number[]
   ): Promise<Record<number, AgentEntityState[]>> {
     const states: Record<number, AgentEntityState[]> = {};
 
-    const cacheKeys: string[] = [];
+    const cacheKeys: AgentEntityStateCacheKey[] = [];
     for (let i = 0; i < agentIds.length; i++) {
       const agentId = agentIds[i];
-      const targetAgentId = targetAgentIds[i];
-      const targetUserId = targetUserIds[i];
-
-      let cacheKey = `${this.AGENT_ENTITY_STATE_PREFIX}${agentId}:`;
-      if (targetAgentId) {
-        cacheKey += `agent:${targetAgentId}`;
-      } else if (targetUserId) {
-        cacheKey += `user:${targetUserId}`;
-      }
-      cacheKeys.push(cacheKey);
-    }
-
-    const cachedStates = await this.redis.mget(cacheKeys);
-
-    for (let i = 0; i < agentIds.length; i++) {
-      const agentId = agentIds[i];
-      const cachedState = cachedStates[i];
-
-      if (cachedState) {
-        if (!states[agentId]) {
-          states[agentId] = [];
+      for (const targetAgentId of targetAgentIds) {
+        if (agentId === targetAgentId) {
+          continue;
         }
-        states[agentId].push(JSON.parse(cachedState));
+        const cacheKey = this.getAgentEntityStateCacheKeyById(
+          agentId,
+          targetAgentId
+        );
+        cacheKeys.push({
+          agentId,
+          targetAgentId,
+          cacheKey,
+        });
+      }
+      for (const targetUserId of targetUserIds) {
+        const cacheKey = this.getAgentEntityStateCacheKeyById(
+          agentId,
+          undefined,
+          targetUserId
+        );
+        cacheKeys.push({
+          agentId,
+          targetUserId,
+          cacheKey,
+        });
       }
     }
 
-    const remainingIndices = agentIds
-      .map((_, index) => index)
-      .filter((index) => !states[agentIds[index]]);
+    const remainingAgentIdTargetAgentIds: Record<number, number[]> = {};
+    const remainingAgentIdTargetUserIds: Record<number, number[]> = {};
+    const cachedStates = await this.redis.mget(
+      cacheKeys.map((key) => key.cacheKey)
+    );
 
-    if (remainingIndices.length > 0) {
-      const query = remainingIndices.map((index) => ({
-        agentId: agentIds[index],
-        targetAgentId: targetAgentIds[index],
-        targetUserId: targetUserIds[index],
-      }));
+    for (let i = 0; i < cacheKeys.length; i++) {
+      const cacheKey = cacheKeys[i];
+      const cachedState = cachedStates[i];
+      if (cachedState) {
+        const state = JSON.parse(cachedState) as AgentEntityState;
+        if (!states[state.agentId]) {
+          states[state.agentId] = [];
+        }
+        states[state.agentId].push(state);
+      } else {
+        if (cacheKey.targetAgentId) {
+          if (!remainingAgentIdTargetAgentIds[cacheKey.agentId]) {
+            remainingAgentIdTargetAgentIds[cacheKey.agentId] = [];
+          }
+          remainingAgentIdTargetAgentIds[cacheKey.agentId].push(
+            cacheKey.targetAgentId
+          );
+        } else if (cacheKey.targetUserId) {
+          if (!remainingAgentIdTargetUserIds[cacheKey.agentId]) {
+            remainingAgentIdTargetUserIds[cacheKey.agentId] = [];
+          }
+          remainingAgentIdTargetUserIds[cacheKey.agentId].push(
+            cacheKey.targetUserId
+          );
+        }
+      }
+    }
 
+    const remainingQueries: FilterQuery<AgentEntityState>[] = [];
+
+    Object.entries(remainingAgentIdTargetAgentIds).forEach(
+      ([agentId, targetIds]) => {
+        remainingQueries.push({
+          agentId: parseInt(agentId),
+          targetAgentId: { $in: targetIds },
+        });
+      }
+    );
+
+    Object.entries(remainingAgentIdTargetUserIds).forEach(
+      ([agentId, targetIds]) => {
+        remainingQueries.push({
+          agentId: parseInt(agentId),
+          targetUserId: { $in: targetIds },
+        });
+      }
+    );
+
+    if (remainingQueries.length > 0) {
       const statesFromDb = await this.agentEntityStateModel
-        .find({ $or: query })
+        .find({ $or: remainingQueries })
         .exec();
 
       for (const state of statesFromDb) {
@@ -209,17 +302,42 @@ export class AgentsService implements AgentsRepository {
       }
     }
 
+    if (Object.keys(states).length > 0) {
+      const cacheEntries = Object.values(states).reduce(
+        (acc, entityStates) => {
+          for (const entityState of entityStates) {
+            const cacheKey = this.getAgentEntityStateCacheKey(entityState);
+            acc[cacheKey] = JSON.stringify(entityState);
+          }
+          return acc;
+        },
+        {} as Record<string, string>
+      );
+
+      await this.redis.mset(cacheEntries);
+
+      await Promise.all(
+        Object.keys(cacheEntries).map((key) =>
+          this.redis.expire(key, this.CACHE_TTL)
+        )
+      );
+    }
+
     return states;
   }
 
-  public async saveAgentModel(model: AgentModel): Promise<void> {
-    await this.prisma.agentModel.upsert({
+  public async saveAgentModel(model: AgentModel): Promise<AgentModel> {
+    if (!model.id) {
+      return await this.prisma.agentModel.create({
+        data: {
+          ...model,
+          meta: model.meta as JsonObject,
+        },
+      });
+    }
+    return await this.prisma.agentModel.update({
       where: { id: model.id },
-      update: {
-        ...model,
-        meta: model.meta as JsonObject,
-      },
-      create: {
+      data: {
         ...model,
         meta: model.meta as JsonObject,
       },

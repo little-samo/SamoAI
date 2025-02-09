@@ -9,7 +9,7 @@ export interface LocationsRepository {
     locationId: number
   ): Promise<null | LocationMessagesState>;
 
-  saveLocationModel(model: LocationModel): Promise<void>;
+  saveLocationModel(model: LocationModel): Promise<LocationModel>;
   saveLocationState(state: LocationState): Promise<void>;
   saveLocationMessagesState(state: LocationMessagesState): Promise<void>;
 }

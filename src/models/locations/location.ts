@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 
-import { LocationModel } from '@prisma/client';
+import { LlmApiKeyModel, LocationModel } from '@prisma/client';
 import { Agent } from '@models/entities/agents/agent';
 import { User } from '@models/entities/users/user';
 import { Entity, EntityKey } from '@models/entities/entity';
@@ -13,6 +13,7 @@ import { LocationState } from './states/location.state';
 import { DEFAULT_LOCATION_META, LocationMeta } from './location.meta';
 import { LocationCore } from './cores/location.core';
 import { LocationContext } from './location.context';
+import { LocationCoreFactory } from './cores/location.core-factory';
 
 export type LocationId = number & { __locationId: true };
 
@@ -32,6 +33,8 @@ export class Location extends EventEmitter {
 
   public readonly state: LocationState;
   public readonly messagesState: LocationMessagesState;
+
+  public readonly apiKeys: Record<string, LlmApiKeyModel> = {};
 
   public static createState(
     model: LocationModel,
@@ -73,7 +76,8 @@ export class Location extends EventEmitter {
   public constructor(
     public readonly model: LocationModel,
     state?: null | LocationState,
-    messagesState?: null | LocationMessagesState
+    messagesState?: null | LocationMessagesState,
+    apiKeys?: LlmApiKeyModel[]
   ) {
     super();
     this.id = model.id as LocationId;
@@ -88,7 +92,13 @@ export class Location extends EventEmitter {
     Location.fixMessagesState(messagesState, this.meta);
     this.messagesState = messagesState;
 
-    this.core = LocationCore.createCore(this);
+    this.core = LocationCoreFactory.createCore(this);
+
+    if (apiKeys) {
+      for (const apiKey of apiKeys) {
+        this.apiKeys[apiKey.platform] = apiKey;
+      }
+    }
   }
 
   public addEntity(entity: Entity, updateIds: boolean = true): void {

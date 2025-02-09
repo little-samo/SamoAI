@@ -5,9 +5,16 @@ import { RedisLockService } from '@core/services/redis-lock.service';
 import { Agent } from '@models/entities/agents/agent';
 import { User } from '@models/entities/users/user';
 import { Location } from '@models/locations/location';
+import { DEFAULT_LOCATION_META } from '@models/locations/location.meta';
+import {
+  LocationMessage,
+  LocationMessagesState,
+} from '@models/locations/states/location.messages-state';
+import { LocationState } from '@models/locations/states/location.state';
+import { UserModel } from '@prisma/client';
 
 export class WorldManager {
-  private static readonly LOCK_TTL = 30; // 30 seconds
+  private static readonly LOCK_TTL = 30000; // 30 seconds
   private static readonly LOCATION_LOCK_PREFIX = 'lock:location:';
   private static readonly AGENT_LOCK_PREFIX = 'lock:agent:';
   private static readonly USER_LOCK_PREFIX = 'lock:user:';
@@ -42,7 +49,31 @@ export class WorldManager {
     private readonly userRepository: UsersRepository
   ) {}
 
-  private async loadLocation(locationId: number): Promise<Location> {
+  private async withLocationLock<T>(
+    locationId: number,
+    operation: () => Promise<T>
+  ): Promise<T> {
+    const lockKey = `${WorldManager.LOCATION_LOCK_PREFIX}${locationId}`;
+    const lock = await this.redisLockService.acquireLock(
+      lockKey,
+      WorldManager.LOCK_TTL
+    );
+    if (!lock) {
+      throw new Error(`Failed to lock location ${locationId}`);
+    }
+    try {
+      return await operation();
+    } finally {
+      await lock.release();
+    }
+  }
+
+  private async getLocation(
+    userModel: UserModel,
+    locationId: number
+  ): Promise<Location> {
+    const apiKeys = await this.userRepository.getUserLlmApiKeys(userModel.id);
+
     const locationModel =
       await this.locationRepository.getLocationModel(locationId);
     const locationState =
@@ -53,27 +84,65 @@ export class WorldManager {
     const location = new Location(
       locationModel,
       locationState,
-      locationMessagesState
+      locationMessagesState,
+      apiKeys
     );
 
-    const agents = await this.loadAgents(
+    const agents = await this.getAgents(
       location,
       location.state.agentIds,
       location.state.userIds
     );
-    const users = await this.loadUsers(location, location.state.userIds);
+    const users = await this.getUsers(location, location.state.userIds);
 
     for (const agent of Object.values(agents)) {
-      location.addEntity(agent);
+      location.addEntity(agent, false);
     }
     for (const user of Object.values(users)) {
-      location.addEntity(user);
+      location.addEntity(user, false);
     }
 
     return location;
   }
 
-  private async loadAgents(
+  private async getOrCreateLocationState(
+    locationId: number
+  ): Promise<LocationState> {
+    let locationState =
+      await this.locationRepository.getLocationState(locationId);
+    if (!locationState) {
+      const locationModel =
+        await this.locationRepository.getLocationModel(locationId);
+      const locationMeta = {
+        ...DEFAULT_LOCATION_META,
+        ...(locationModel.meta as object),
+      };
+      locationState = Location.createState(locationModel, locationMeta);
+    }
+    return locationState;
+  }
+
+  private async getOrCreateLocationMessagesState(
+    locationId: number
+  ): Promise<LocationMessagesState> {
+    let locationMessagesState =
+      await this.locationRepository.getLocationMessagesState(locationId);
+    if (!locationMessagesState) {
+      const locationModel =
+        await this.locationRepository.getLocationModel(locationId);
+      const locationMeta = {
+        ...DEFAULT_LOCATION_META,
+        ...(locationModel.meta as object),
+      };
+      locationMessagesState = Location.createMessagesState(
+        locationModel,
+        locationMeta
+      );
+    }
+    return locationMessagesState;
+  }
+
+  private async getAgents(
     location: Location,
     agentIds: number[],
     userIds: number[]
@@ -101,13 +170,23 @@ export class WorldManager {
         }
       }
 
+      for (const otherAgentId of agentIds) {
+        if (otherAgentId === agentId) {
+          continue;
+        }
+        agent.getOrCreateEntityStateByTarget(otherAgentId);
+      }
+      for (const otherUserId of userIds) {
+        agent.getOrCreateEntityStateByTarget(undefined, otherUserId);
+      }
+
       agents[agentId] = agent;
     }
 
     return agents;
   }
 
-  private async loadUsers(
+  private async getUsers(
     location: Location,
     userIds: number[]
   ): Promise<Record<number, User>> {
@@ -150,24 +229,65 @@ export class WorldManager {
     await this.userRepository.saveUserStates(users.map((user) => user.state));
   }
 
-  public async updateLocation(locationId: number): Promise<Location> {
-    const lockKey = `${WorldManager.LOCATION_LOCK_PREFIX}${locationId}`;
-    const lock = await this.redisLockService.acquireLock(
-      lockKey,
-      WorldManager.LOCK_TTL
-    );
-    if (!lock) {
-      throw new Error(`Failed to lock location ${locationId}`);
-    }
-    try {
-      const location = await this.loadLocation(locationId);
+  public async addLocationAgent(
+    locationId: number,
+    agentId: number
+  ): Promise<void> {
+    await this.withLocationLock(locationId, async () => {
+      const locationState = await this.getOrCreateLocationState(locationId);
+      if (locationState.agentIds.includes(agentId)) {
+        return;
+      }
+
+      locationState.agentIds.push(agentId);
+      locationState.dirty = true;
+
+      await this.locationRepository.saveLocationState(locationState);
+    });
+  }
+
+  public async addLocationUser(
+    locationId: number,
+    userId: number
+  ): Promise<void> {
+    await this.withLocationLock(locationId, async () => {
+      const locationState = await this.getOrCreateLocationState(locationId);
+      if (locationState.userIds.includes(userId)) {
+        return;
+      }
+
+      locationState.userIds.push(userId);
+      locationState.dirty = true;
+
+      await this.locationRepository.saveLocationState(locationState);
+    });
+  }
+
+  public async addLocationMessage(
+    locationId: number,
+    message: LocationMessage
+  ): Promise<void> {
+    await this.withLocationLock(locationId, async () => {
+      const locationMessagesState =
+        await this.getOrCreateLocationMessagesState(locationId);
+      locationMessagesState.messages.push(message);
+      locationMessagesState.dirty = true;
+
+      await this.locationRepository.saveLocationMessagesState(
+        locationMessagesState
+      );
+    });
+  }
+
+  public async updateLocation(
+    userModel: UserModel,
+    locationId: number
+  ): Promise<Location> {
+    return await this.withLocationLock(locationId, async () => {
+      const location = await this.getLocation(userModel, locationId);
       await location.update();
-
       await this.saveLocation(location);
-
       return location;
-    } finally {
-      await lock.release();
-    }
+    });
   }
 }

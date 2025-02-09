@@ -1,6 +1,6 @@
 import { Prop, Schema } from '@nestjs/mongoose';
 
-@Schema({ timestamps: true })
+@Schema({ timestamps: true, versionKey: false })
 export abstract class EntityState {
   @Prop()
   public expression?: string;

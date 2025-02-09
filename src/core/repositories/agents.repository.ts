@@ -14,11 +14,11 @@ export interface AgentsRepository {
   ): Promise<null | AgentEntityState>;
   getAgentEntityStates(
     agentIds: number[],
-    targetAgentIds: (number | null)[],
-    targetUserIds: (number | null)[]
+    targetAgentIds: number[],
+    targetUserIds: number[]
   ): Promise<Record<number, AgentEntityState[]>>;
 
-  saveAgentModel(model: AgentModel): Promise<void>;
+  saveAgentModel(model: AgentModel): Promise<AgentModel>;
   saveAgentState(state: AgentState): Promise<void>;
   saveAgentStates(states: AgentState[]): Promise<void>;
   saveAgentEntityState(state: AgentEntityState): Promise<void>;

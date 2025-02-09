@@ -2,19 +2,8 @@ import { sleepWithAbort } from '@common/utils/sleep';
 
 import { Location } from '../location';
 
-import { LocationEmptyCore } from './location.empty-core';
-import { LocationRepeatActionCore } from './location.repeat-action-core';
-
 export abstract class LocationCore {
   public static readonly CORE_TYPE: string;
-
-  public static CORE_MAP: Record<
-    string,
-    new (location: Location) => LocationCore
-  > = {
-    [LocationEmptyCore.CORE_TYPE]: LocationEmptyCore,
-    [LocationRepeatActionCore.CORE_TYPE]: LocationRepeatActionCore,
-  };
 
   private _sleepController = new AbortController();
 
@@ -28,14 +17,6 @@ export abstract class LocationCore {
 
   public get tick(): number {
     return 0;
-  }
-
-  public static createCore(location: Location): LocationCore {
-    const CoreClass = this.CORE_MAP[location.meta.core];
-    if (!CoreClass) {
-      throw new Error(`Unknown location core: ${location.meta.core}`);
-    }
-    return new CoreClass(location);
   }
 
   public async run(): Promise<void> {

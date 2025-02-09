@@ -1,5 +1,7 @@
 import { OpenAI } from 'openai';
 import { zodFunction } from 'openai/helpers/zod';
+import { ENV } from '@common/config';
+import { ChatCompletionCreateParamsNonStreaming } from 'openai/resources/chat/completions';
 
 import { LlmMessage, LlmService } from './llm.service';
 import { LlmApiError } from './llm.errors';
@@ -21,12 +23,20 @@ export class OpenAIService extends LlmService {
 
   public async generate(messages: LlmMessage[]): Promise<string> {
     try {
-      const response = await this.client.chat.completions.create({
+      const request: ChatCompletionCreateParamsNonStreaming = {
         model: this.model,
         messages,
         temperature: this.temperature,
         max_tokens: this.maxTokens,
-      });
+      };
+      if (ENV.DEBUG) {
+        console.log(request);
+      }
+
+      const response = await this.client.chat.completions.create(request);
+      if (ENV.DEBUG) {
+        console.log(response);
+      }
 
       if (response.choices[0].message.content === null) {
         throw new LlmInvalidContentError('OpenAI returned no content');
@@ -46,7 +56,7 @@ export class OpenAIService extends LlmService {
     tools: LlmTool[]
   ): Promise<LlmToolCall[]> {
     try {
-      const response = await this.client.chat.completions.create({
+      const request: ChatCompletionCreateParamsNonStreaming = {
         model: this.model,
         messages,
         tools: tools.map((tool) =>
@@ -59,7 +69,15 @@ export class OpenAIService extends LlmService {
         tool_choice: 'required',
         temperature: this.temperature,
         max_tokens: this.maxTokens,
-      });
+      };
+      if (ENV.DEBUG) {
+        console.log(request);
+      }
+
+      const response = await this.client.chat.completions.create(request);
+      if (ENV.DEBUG) {
+        console.log(response);
+      }
 
       if (response.choices.length === 0) {
         throw new LlmInvalidContentError('OpenAI returned no choices');

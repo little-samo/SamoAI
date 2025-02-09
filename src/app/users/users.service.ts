@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { UserState } from '@models/entities/users/states/user.state';
 import { UsersRepository } from '@core/repositories/users.repository';
-import { UserModel, UserApiKeyModel } from '@prisma/client';
+import { UserModel, LlmApiKeyModel } from '@prisma/client';
 import { PrismaService } from '@app/prisma/prisma.service';
 import { RedisService } from '@app/redis/redis.service';
 import { JsonObject } from '@prisma/client/runtime/library';
@@ -22,8 +22,8 @@ export class UsersService implements UsersRepository {
     private userStateModel: Model<UserState>
   ) {}
 
-  public async getUserLlmApiKeys(userId: number): Promise<UserApiKeyModel[]> {
-    return this.prisma.userApiKeyModel.findMany({
+  public async getUserLlmApiKeys(userId: number): Promise<LlmApiKeyModel[]> {
+    return this.prisma.llmApiKeyModel.findMany({
       where: { userModelId: userId },
     });
   }
@@ -105,25 +105,50 @@ export class UsersService implements UsersRepository {
 
     const remainingUserIds = userIds.filter((id) => !states[id]);
 
-    const statesFromDb = await this.userStateModel
-      .find({ userId: { in: remainingUserIds } })
-      .exec();
+    if (remainingUserIds.length > 0) {
+      const statesFromDb = await this.userStateModel
+        .find({ userId: { $in: remainingUserIds } })
+        .exec();
 
-    for (const state of statesFromDb) {
-      states[state.userId] = state;
+      for (const state of statesFromDb) {
+        states[state.userId] = state;
+      }
+    }
+
+    if (Object.keys(states).length > 0) {
+      const cacheEntries = Object.values(states).reduce(
+        (acc, state) => {
+          const cacheKey = `${this.USER_STATE_PREFIX}${state.userId}`;
+          acc[cacheKey] = JSON.stringify(state);
+          return acc;
+        },
+        {} as Record<string, string>
+      );
+
+      await this.redis.mset(cacheEntries);
+
+      await Promise.all(
+        Object.keys(cacheEntries).map((key) =>
+          this.redis.expire(key, this.CACHE_TTL)
+        )
+      );
     }
 
     return states;
   }
 
-  public async saveUserModel(model: UserModel): Promise<void> {
-    await this.prisma.userModel.upsert({
+  public async saveUserModel(model: UserModel): Promise<UserModel> {
+    if (!model.id) {
+      return await this.prisma.userModel.create({
+        data: {
+          ...model,
+          meta: model.meta as JsonObject,
+        },
+      });
+    }
+    return await this.prisma.userModel.update({
       where: { id: model.id },
-      update: {
-        ...model,
-        meta: model.meta as JsonObject,
-      },
-      create: {
+      data: {
         ...model,
         meta: model.meta as JsonObject,
       },

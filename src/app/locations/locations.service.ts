@@ -39,6 +39,30 @@ export class LocationsService implements LocationsRepository {
     return location;
   }
 
+  public async getLocationModelByName(name: string): Promise<LocationModel> {
+    const location = await this.prisma.locationModel.findUnique({
+      where: { name },
+    });
+
+    if (!location) {
+      throw new NotFoundException(`Location with name ${name} not found`);
+    }
+
+    return location;
+  }
+
+  public async getOrCreateLocationModelByName(
+    name: string
+  ): Promise<LocationModel> {
+    const location = await this.getLocationModelByName(name);
+    if (location) {
+      return location;
+    }
+    return this.saveLocationModel({
+      name,
+    } as LocationModel);
+  }
+
   public async getLocationState(
     locationId: number
   ): Promise<null | LocationState> {
@@ -79,14 +103,18 @@ export class LocationsService implements LocationsRepository {
     return state;
   }
 
-  public async saveLocationModel(model: LocationModel): Promise<void> {
-    await this.prisma.locationModel.upsert({
+  public async saveLocationModel(model: LocationModel): Promise<LocationModel> {
+    if (!model.id) {
+      return await this.prisma.locationModel.create({
+        data: {
+          ...model,
+          meta: model.meta as JsonObject,
+        },
+      });
+    }
+    return await this.prisma.locationModel.update({
       where: { id: model.id },
-      update: {
-        ...model,
-        meta: model.meta as JsonObject,
-      },
-      create: {
+      data: {
         ...model,
         meta: model.meta as JsonObject,
       },

@@ -3,7 +3,7 @@ import { Document } from 'mongoose';
 
 export type AgentEntityStateTargetType = 'agent' | 'user';
 
-@Schema({ timestamps: true })
+@Schema({ timestamps: true, versionKey: false })
 export class AgentEntityState {
   @Prop({ required: true })
   public agentId!: number;

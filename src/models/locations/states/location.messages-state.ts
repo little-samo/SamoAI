@@ -4,6 +4,7 @@ import { Document } from 'mongoose';
 @Schema({
   timestamps: true,
   validateBeforeSave: true,
+  versionKey: false,
 })
 export class LocationMessage {
   @Prop()
@@ -34,7 +35,10 @@ export interface LocationMessage {
   createdAt: Date;
 }
 
-@Schema({ timestamps: true })
+@Schema({
+  timestamps: true,
+  versionKey: false,
+})
 export class LocationMessagesState {
   @Prop({ required: true, unique: true })
   public locationId!: number;

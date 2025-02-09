@@ -1,7 +1,8 @@
-import { AgentModel, LlmApiKeyModel } from '@prisma/client';
+import { AgentModel } from '@prisma/client';
 import { LlmService } from '@common/llms/llm.service';
 import { Location } from '@models/locations/location';
 import { LlmToolCall } from '@common/llms/llm.tool';
+import { LlmFactory } from '@common/llms/llm.factory';
 
 import { Entity, EntityKey } from '../entity';
 
@@ -16,6 +17,9 @@ import { AgentMeta, DEFAULT_AGENT_META } from './agent.meta';
 import { AgentAction } from './actions/agent.action';
 import { AgentEntityState } from './states/agent.entity-state';
 import { AgentInputBuilder } from './io/agent.input';
+import { AgentCoreFactory } from './cores/agent.core-factory';
+import { AgentActionFactory } from './actions/agent.action-factory';
+import { AgentInputFactory } from './io/agent.input-factory';
 
 export class Agent extends Entity {
   public static createState(model: AgentModel, meta: AgentMeta): AgentState {
@@ -83,8 +87,7 @@ export class Agent extends Entity {
   public constructor(
     public readonly location: Location,
     public readonly model: AgentModel,
-    state?: null | AgentState,
-    apiKeys?: LlmApiKeyModel[]
+    state?: null | AgentState
   ) {
     const meta = { ...DEFAULT_AGENT_META, ...(model.meta as object) };
     state ??= Agent.createState(model, meta);
@@ -93,24 +96,28 @@ export class Agent extends Entity {
     super(location, model.name, meta, state);
     this.key = `agent:${model.id}` as EntityKey;
 
-    this.core = AgentCore.createCore(this);
+    this.core = AgentCoreFactory.createCore(this);
 
     for (const llm of meta.llms) {
-      const apiKey = apiKeys?.find((key) => key.platform === llm.platform);
+      const apiKey = location.apiKeys[llm.platform];
       if (!apiKey) {
         throw new Error(`API key not found for platform: ${llm.platform}`);
       }
-      this.llms.push(LlmService.create(llm.platform, llm.model, apiKey.key));
+      this.llms.push(LlmFactory.create(llm.platform, llm.model, apiKey.key));
     }
     this.llm = this.llms[0];
     for (const input of meta.inputs) {
-      this.inputs.push(AgentInputBuilder.createInput(input, location, this));
+      this.inputs.push(AgentInputFactory.createInput(input, location, this));
     }
     this.actions = Object.fromEntries(
-      meta.actions.map((action) => [
-        action,
-        AgentAction.createAction(action, location, this),
-      ])
+      meta.actions.map((actionWithVersion) => {
+        const action = AgentActionFactory.createAction(
+          actionWithVersion,
+          location,
+          this
+        );
+        return [action.name, action];
+      })
     );
   }
 
@@ -157,22 +164,42 @@ export class Agent extends Entity {
     return Object.values(this._entityStates);
   }
 
+  public getEntityStateKeyByTarget(
+    targetAgentId?: number,
+    targetUserId?: number
+  ): EntityKey {
+    if (targetAgentId) {
+      return `agent:${targetAgentId}` as EntityKey;
+    } else if (targetUserId) {
+      return `user:${targetUserId}` as EntityKey;
+    } else {
+      throw new Error('No target agent or user provided');
+    }
+  }
+
   public getEntityStateByTarget(
     targetAgentId?: number,
     targetUserId?: number
   ): AgentEntityState | undefined {
-    let key: EntityKey;
-    if (targetAgentId) {
-      key = `agent:${targetAgentId}` as EntityKey;
-    } else if (targetUserId) {
-      key = `user:${targetUserId}` as EntityKey;
-    } else {
-      throw new Error('No target agent or user provided');
-    }
+    const key = this.getEntityStateKeyByTarget(targetAgentId, targetUserId);
     return this._entityStates[key];
   }
 
-  public addEntityState(state: AgentEntityState): void {
+  public getOrCreateEntityStateByTarget(
+    targetAgentId?: number,
+    targetUserId?: number
+  ): AgentEntityState {
+    const key = this.getEntityStateKeyByTarget(targetAgentId, targetUserId);
+    const state = this._entityStates[key];
+    if (state) {
+      return state;
+    }
+    const newState = this.createEntityState(targetAgentId, targetUserId);
+    this._entityStates[key] = newState;
+    return newState;
+  }
+
+  public addEntityState(state: AgentEntityState): AgentEntityState {
     let key: EntityKey;
     if (state.targetAgentId) {
       key = `agent:${state.targetAgentId}` as EntityKey;
@@ -184,6 +211,8 @@ export class Agent extends Entity {
 
     this.fixEntityState(state);
     this._entityStates[key] = state;
+
+    return state;
   }
 
   public removeEntityState(

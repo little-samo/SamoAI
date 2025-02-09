@@ -1,10 +1,12 @@
 import { Anthropic, AnthropicError, APIError } from '@anthropic-ai/sdk';
 import {
+  MessageCreateParamsNonStreaming,
   TextBlock,
   Tool,
   ToolUseBlock,
 } from '@anthropic-ai/sdk/resources/messages/messages';
 import zodToJsonSchema from 'zod-to-json-schema';
+import { ENV } from '@common/config';
 
 import { LlmMessage, LlmService } from './llm.service';
 import { LlmApiError, LlmInvalidContentError } from './llm.errors';
@@ -26,7 +28,7 @@ export class AnthropicService extends LlmService {
 
   public async generate(messages: LlmMessage[]): Promise<string> {
     try {
-      const response = await this.client.messages.create({
+      const request: MessageCreateParamsNonStreaming = {
         model: this.model,
         system: messages
           .filter((message) => message.role === 'system')
@@ -46,7 +48,15 @@ export class AnthropicService extends LlmService {
           })),
         max_tokens: this.maxTokens,
         temperature: this.temperature,
-      });
+      };
+      if (ENV.DEBUG) {
+        console.log(request);
+      }
+
+      const response = await this.client.messages.create(request);
+      if (ENV.DEBUG) {
+        console.log(response);
+      }
 
       if (response.content.length === 0) {
         throw new LlmInvalidContentError('Anthropic returned no content');
@@ -69,7 +79,7 @@ export class AnthropicService extends LlmService {
     tools: LlmTool[]
   ): Promise<LlmToolCall[]> {
     try {
-      const response = await this.client.messages.create({
+      const request: MessageCreateParamsNonStreaming = {
         model: this.model,
         system: messages
           .filter((message) => message.role === 'system')
@@ -97,7 +107,15 @@ export class AnthropicService extends LlmService {
           })),
         max_tokens: this.maxTokens,
         temperature: this.temperature,
-      });
+      };
+      if (ENV.DEBUG) {
+        console.log(request);
+      }
+
+      const response = await this.client.messages.create(request);
+      if (ENV.DEBUG) {
+        console.log(response);
+      }
 
       if (response.content.length === 0) {
         throw new LlmInvalidContentError('Anthropic returned no content');
