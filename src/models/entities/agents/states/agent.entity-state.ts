@@ -19,12 +19,11 @@ export class AgentEntityState {
 
   @Prop({ type: [String], default: [] })
   public memories!: string[];
+}
 
-  @Prop({ type: Date, default: Date.now })
-  public updatedAt!: Date;
-
-  @Prop({ type: Date, default: Date.now })
-  public createdAt!: Date;
+export interface AgentEntityState {
+  updatedAt: Date;
+  createdAt: Date;
 }
 
 export type AgentEntityStateDocument = AgentEntityState & Document;

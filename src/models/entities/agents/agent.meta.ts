@@ -1,13 +1,18 @@
-import { LLMPlatform } from '@prisma/client';
+import { LlmPlatform } from '@prisma/client';
 
 import { EntityMeta } from '../entity.meta';
+
+export interface AgentLlmMeta {
+  platform: LlmPlatform;
+  model: string;
+}
 
 export interface AgentMeta extends EntityMeta {
   core: string;
 
   temperature: number;
   maxTokens: number;
-  models: LLMPlatform[];
+  llms: AgentLlmMeta[];
   languages: string[];
 
   actionLimit: number;
@@ -60,11 +65,13 @@ export const DEFAULT_AGENT_META: AgentMeta = {
 
   temperature: 0.5,
   maxTokens: 1000,
-  models: [LLMPlatform.ANTHROPIC],
+  llms: [
+    { platform: LlmPlatform.ANTHROPIC, model: 'claude-3-5-sonnet-20241022' },
+  ],
   languages: ['English'],
 
   actionLimit: 6,
-  actions: ['REASONING', 'SEND_CASUAL_MESSAGE', 'UPDATE_MEMORY'],
+  actions: ['send_casual_message', 'update_memory'],
 
   memoryLimit: 16,
   entityMemoryLimit: 8,

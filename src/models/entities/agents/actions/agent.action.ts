@@ -1,28 +1,30 @@
 import { Location } from '@models/locations/location';
+import { LlmTool, LlmToolCall } from '@common/llms/llm.tool';
+import { z } from 'zod';
 
 import { Agent } from '../agent';
-import { AgentOutput } from '../io/agent.output';
 
-import { AgentReasoningAction } from './agent.reasoning-action';
 import { AgentSendCasualMessageAction } from './agent.send-casual-message-action';
 import { AgentSendMessageAction } from './agent.send-message-action';
 import { AgentUpdateMemoryAction } from './agent.update-memory';
 
-export abstract class AgentAction {
+export abstract class AgentAction implements LlmTool {
   public static readonly ACTION_TYPE: string;
 
-  public static ACTION_MAP: Record<string, typeof AgentAction> = {
-    [AgentReasoningAction.ACTION_TYPE]: AgentReasoningAction,
+  public static ACTION_MAP: Record<
+    string,
+    new (version: number, location: Location, agent: Agent) => AgentAction
+  > = {
     [AgentSendCasualMessageAction.ACTION_TYPE]: AgentSendCasualMessageAction,
     [AgentSendMessageAction.ACTION_TYPE]: AgentSendMessageAction,
     [AgentUpdateMemoryAction.ACTION_TYPE]: AgentUpdateMemoryAction,
   };
 
-  public static getActionDescription(
+  public static createAction(
     action: string,
     location: Location,
     agent: Agent
-  ): string {
+  ): AgentAction {
     let version = 0;
     const actionMatch = action.match(/^(\w+):(\d+)$/);
     if (actionMatch) {
@@ -34,53 +36,21 @@ export abstract class AgentAction {
     if (!ActionClass) {
       throw new Error(`Unknown action type: ${action}`);
     }
-    return ActionClass.getDescription(version, location, agent);
+    return new ActionClass(version, location, agent);
   }
 
-  protected static getDescription(
-    _version: number,
-    _location: Location,
-    _agent: Agent
-  ): string {
-    throw new Error('Not implemented');
+  public constructor(
+    public readonly version: number,
+    public readonly location: Location,
+    public readonly agent: Agent
+  ) {}
+
+  public get name(): string {
+    return (this.constructor as typeof AgentAction).ACTION_TYPE;
   }
 
-  public static getActionSchema(
-    action: string,
-    location: Location,
-    agent: Agent
-  ): string {
-    let version = 0;
-    const actionMatch = action.match(/^(\w+):(\d+)$/);
-    if (actionMatch) {
-      action = actionMatch[1];
-      version = parseInt(actionMatch[2]);
-    }
+  public abstract get description(): string;
+  public abstract get parameters(): z.ZodSchema;
 
-    const ActionClass = this.ACTION_MAP[action];
-    if (!ActionClass) {
-      throw new Error(`Unknown action type: ${action}`);
-    }
-    return ActionClass.getSchema(version, location, agent);
-  }
-
-  protected static getSchema(
-    _version: number,
-    _location: Location,
-    _agent: Agent
-  ): string {
-    throw new Error('Not implemented');
-  }
-
-  public static execute(
-    location: Location,
-    agent: Agent,
-    output: AgentOutput
-  ): Promise<void> {
-    const ActionClass = this.ACTION_MAP[output.action];
-    if (!ActionClass) {
-      throw new Error(`Unknown action type: ${output.action}`);
-    }
-    return ActionClass.execute(location, agent, output);
-  }
+  public abstract execute(call: LlmToolCall): Promise<void>;
 }

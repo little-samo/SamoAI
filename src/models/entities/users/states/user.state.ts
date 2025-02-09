@@ -8,5 +8,10 @@ export class UserState extends EntityState {
   public userId!: number;
 }
 
+export interface UserState {
+  updatedAt: Date;
+  createdAt: Date;
+}
+
 export type UserStateDocument = UserState & Document;
 export const UserStateSchema = SchemaFactory.createForClass(UserState);

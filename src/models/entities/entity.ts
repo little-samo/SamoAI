@@ -1,3 +1,5 @@
+import { Location } from '@models/locations/location';
+
 import { EntityContext } from './entity.context';
 import { EntityState } from './entity.state';
 import { EntityMeta } from './entity.meta';
@@ -11,6 +13,7 @@ export abstract class Entity {
   protected _state: EntityState;
 
   protected constructor(
+    public readonly location: Location,
     public readonly name: string,
     meta: EntityMeta,
     state: EntityState

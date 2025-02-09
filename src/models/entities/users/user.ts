@@ -1,4 +1,5 @@
 import { UserModel } from '@prisma/client';
+import { Location } from '@models/locations/location';
 
 import { Entity, EntityKey } from '../entity';
 
@@ -17,6 +18,7 @@ export class User extends Entity {
   public static fixState(_state: UserState, _meta: UserMeta): void {}
 
   public constructor(
+    location: Location,
     public readonly model: UserModel,
     state?: UserState
   ) {
@@ -24,7 +26,7 @@ export class User extends Entity {
     state ??= User.createState(model, meta);
     User.fixState(state, meta);
 
-    super(model.nickname, meta, state);
+    super(location, model.nickname, meta, state);
     this.key = `user:${model.id}` as EntityKey;
   }
 

@@ -11,5 +11,10 @@ export class AgentState extends EntityState {
   public memories!: string[];
 }
 
+export interface AgentState {
+  updatedAt: Date;
+  createdAt: Date;
+}
+
 export type AgentStateDocument = AgentState & Document;
 export const AgentStateSchema = SchemaFactory.createForClass(AgentState);

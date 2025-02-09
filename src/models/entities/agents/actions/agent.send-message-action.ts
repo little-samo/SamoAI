@@ -1,59 +1,55 @@
 import { ENV } from '@common/config';
-import { Location } from '@models/locations/location';
-
-import { Agent } from '../agent';
-import { AgentOutput } from '../io/agent.output';
+import { z } from 'zod';
+import { LlmToolCall } from '@common/llms/llm.tool';
 
 import { AgentAction } from './agent.action';
 
-export interface AgentSendMessageActionOutput extends AgentOutput {
+export interface AgentSendMessageActionParameters {
   message: string;
-  expression: string;
+  expression: null | string;
 }
 
 export class AgentSendMessageAction extends AgentAction {
-  public static override readonly ACTION_TYPE = 'SEND_MESSAGE';
+  public static readonly ACTION_TYPE = 'send_message';
 
-  public static override getDescription(
-    version: number,
-    _location: Location,
-    _agent: Agent
-  ): string {
-    switch (version) {
+  public override get description(): string {
+    switch (this.version) {
       case 1:
       default:
         return 'Send a message.';
     }
   }
 
-  public static override getSchema(
-    version: number,
-    location: Location,
-    _agent: Agent
-  ): string {
-    switch (version) {
+  public override get parameters(): z.ZodSchema {
+    switch (this.version) {
       case 1:
       default:
-        return `
-{
-  "action": "${this.ACTION_TYPE}",
-  "message": string (max ${location.meta.messageLengthLimit} characters), // The message you want to send. Visible to others.
-  "expression": string (optional, max ${location.meta.messageLengthLimit} characters) // Your outward expressions, such as facial expressions and gestures. Visible to others.
-}
-  `;
+        return z.object({
+          message: z
+            .string()
+            .max(this.location.meta.messageLengthLimit)
+            .describe('The message you want to send. Visible to others.'),
+          expression: z
+            .string()
+            .max(this.location.meta.messageLengthLimit)
+            .optional()
+            .describe(
+              'Your outward expressions, such as facial expressions and gestures. Visible to others. Can be null to indicate no expression.'
+            ),
+        });
     }
   }
 
-  public static override async execute(
-    location: Location,
-    agent: Agent,
-    output: AgentOutput
-  ): Promise<void> {
-    const action = output as AgentSendMessageActionOutput;
+  public override async execute(call: LlmToolCall): Promise<void> {
+    const action = call.arguments as AgentSendMessageActionParameters;
     if (ENV.DEBUG) {
-      console.log(`Agent ${agent.name} says: ${action.message}`);
+      console.log(`Agent ${this.agent.name} says: ${action.message}`);
     }
 
-    location.addAgentMessage(agent, action.message, action.expression);
+    this.location.addAgentMessage(
+      this.agent,
+      action.message,
+      action.expression ?? undefined
+    );
   }
 }

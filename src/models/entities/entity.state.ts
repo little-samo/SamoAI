@@ -4,10 +4,9 @@ import { Prop, Schema } from '@nestjs/mongoose';
 export abstract class EntityState {
   @Prop()
   public expression?: string;
+}
 
-  @Prop({ type: Date, default: Date.now })
-  public updatedAt!: Date;
-
-  @Prop({ type: Date, default: Date.now })
-  public createdAt!: Date;
+export interface EntityState {
+  updatedAt: Date;
+  createdAt: Date;
 }

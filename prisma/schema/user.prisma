@@ -10,11 +10,10 @@ model UserModel {
   nickname  String
   firstName String? @map("first_name")
   lastName  String? @map("last_name")
-  
-  meta Json   @default("{}")
 
-  apiKey       UserApiKeyModel?      @relation("userApiKey")
-  apiHistories UserApiHistoryModel[] @relation("userApiHistory")
+  meta Json @default("{}")
+
+  apiKey UserApiKeyModel? @relation("userApiKey")
 
   llmApiKeys LlmApiKeyModel[] @relation("userLlmApiKey")
 }

@@ -74,6 +74,7 @@ export class Location extends EventEmitter {
         name: message.name,
         message: message.message,
         expression: message.expression,
+        createdAt: message.createdAt,
       })),
     };
   }

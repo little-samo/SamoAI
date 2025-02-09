@@ -5,6 +5,7 @@ export interface LocationMessageContext {
   name: string;
   message?: string;
   expression?: string;
+  createdAt: Date;
 }
 
 export interface LocationContext {

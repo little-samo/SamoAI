@@ -11,12 +11,11 @@ export class LocationState {
 
   @Prop({ type: [Number], default: [], index: true })
   public userIds!: number[];
+}
 
-  @Prop({ type: Date, default: Date.now })
-  public updatedAt!: Date;
-
-  @Prop({ type: Date, default: Date.now })
-  public createdAt!: Date;
+export interface LocationState {
+  updatedAt: Date;
+  createdAt: Date;
 }
 
 export type LocationStateDocument = LocationState & Document;

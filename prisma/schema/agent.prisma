@@ -5,6 +5,4 @@ model AgentModel {
 
   name String
   meta Json   @default("{}")
-
-  llmApis LlmApiModel[] @relation("agentLlmApis")
 }

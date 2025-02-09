@@ -1,14 +1,3 @@
-model LlmApiModel {
-  id        Int      @id @default(autoincrement())
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  platform LLMPlatform
-  model    String      @db.VarChar(256)
-
-  agents AgentModel[] @relation("agentLlmApis")
-}
-
 model LlmApiKeyModel {
   id        Int      @id @default(autoincrement())
   createdAt DateTime @default(now()) @map("created_at")
@@ -17,13 +6,13 @@ model LlmApiKeyModel {
   userModel   UserModel? @relation("userLlmApiKey", fields: [userModelId], references: [id])
   userModelId Int?       @map("user_model_id")
 
-  platform LLMPlatform
+  platform LlmPlatform
   key      String
 
   @@unique([userModelId, platform])
 }
 
-enum LLMPlatform {
+enum LlmPlatform {
   ANTHROPIC
-  GPT
+  OPENAI
 }
