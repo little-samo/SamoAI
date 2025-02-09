@@ -1,3 +1,7 @@
 import { SamoAiApp } from '@app/app';
 
-new SamoAiApp().bootstrap();
+export { SamoAiApp };
+
+if (require.main === module) {
+  new SamoAiApp().bootstrap();
+}
