@@ -73,7 +73,11 @@ export const DEFAULT_AGENT_META: AgentMeta = {
   languages: ['English'],
 
   actionLimit: 6,
-  actions: ['send_casual_message', 'update_memory', 'update_entity_memory'],
+  actions: [
+    'send_casual_message:latest',
+    'update_memory:latest',
+    'update_entity_memory:latest',
+  ],
 
   memoryLimit: 16,
   entityMemoryLimit: 8,

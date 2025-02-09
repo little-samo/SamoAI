@@ -205,7 +205,9 @@ export class Agent extends Entity {
     delete this._entityStates[key];
   }
 
-  public async update(): Promise<void> {}
+  public async update(): Promise<void> {
+    await this.core.update();
+  }
 
   private async executeToolCall(toolCall: LlmToolCall): Promise<void> {
     const action = this.actions[toolCall.name];

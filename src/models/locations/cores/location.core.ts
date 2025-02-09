@@ -1,14 +1,22 @@
 import { sleepWithAbort } from '@common/utils/sleep';
-import { Entity } from '@models/entities/entity';
 
 import { Location } from '../location';
 
 import { LocationEmptyCore } from './location.empty-core';
+import { LocationRepeatActionCore } from './location.repeat-action-core';
 
 export abstract class LocationCore {
-  private _sleepController = new AbortController();
+  public static readonly CORE_TYPE: string;
 
-  private _entities: Map<string, Entity> = new Map();
+  public static CORE_MAP: Record<
+    string,
+    new (location: Location) => LocationCore
+  > = {
+    [LocationEmptyCore.CORE_TYPE]: LocationEmptyCore,
+    [LocationRepeatActionCore.CORE_TYPE]: LocationRepeatActionCore,
+  };
+
+  private _sleepController = new AbortController();
 
   private _destroyed = false;
 
@@ -19,20 +27,22 @@ export abstract class LocationCore {
   }
 
   public get tick(): number {
-    return 1;
+    return 0;
   }
 
   public static createCore(location: Location): LocationCore {
-    switch (location.meta.core) {
-      case '':
-      case 'empty':
-        return new LocationEmptyCore(location);
-      default:
-        throw new Error(`Unknown location core: ${location.meta.core}`);
+    const CoreClass = this.CORE_MAP[location.meta.core];
+    if (!CoreClass) {
+      throw new Error(`Unknown location core: ${location.meta.core}`);
     }
+    return new CoreClass(location);
   }
 
   public async run(): Promise<void> {
+    if (this.tick <= 0) {
+      throw new Error(`${this.constructor.name} is not runnable`);
+    }
+
     while (!this._destroyed) {
       const updateStartAt = Date.now();
       let waitTime = 1;
@@ -54,7 +64,9 @@ export abstract class LocationCore {
 
   public async update(): Promise<void> {
     await Promise.all(
-      Array.from(this._entities.values()).map((entity) => entity.update())
+      Array.from(Object.values(this.location.entities)).map((entity) =>
+        entity.update()
+      )
     );
   }
 

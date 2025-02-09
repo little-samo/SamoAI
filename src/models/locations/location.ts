@@ -27,6 +27,8 @@ export class Location extends EventEmitter {
   public readonly core: LocationCore;
 
   public readonly entities: Record<EntityKey, Entity> = {};
+  public readonly agents: Record<number, Agent> = {};
+  public readonly users: Record<number, User> = {};
 
   public readonly state: LocationState;
   public readonly messagesState: LocationMessagesState;
@@ -91,6 +93,11 @@ export class Location extends EventEmitter {
 
   public addEntity(entity: Entity, updateIds: boolean = true): void {
     this.entities[entity.key] = entity;
+    if (entity instanceof Agent) {
+      this.agents[entity.model.id] = entity;
+    } else if (entity instanceof User) {
+      this.users[entity.model.id] = entity;
+    }
     if (updateIds) {
       if (entity instanceof Agent) {
         this.state.agentIds.push(entity.model.id);
@@ -103,6 +110,11 @@ export class Location extends EventEmitter {
 
   public removeEntity(entity: Entity, updateIds: boolean = true): void {
     delete this.entities[entity.key];
+    if (entity instanceof Agent) {
+      delete this.agents[entity.model.id];
+    } else if (entity instanceof User) {
+      delete this.users[entity.model.id];
+    }
     if (updateIds) {
       if (entity instanceof Agent) {
         this.state.agentIds = this.state.agentIds.filter(

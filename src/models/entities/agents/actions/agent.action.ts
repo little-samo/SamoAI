@@ -28,10 +28,13 @@ export abstract class AgentAction implements LlmTool {
     agent: Agent
   ): AgentAction {
     let version = 0;
-    const actionMatch = action.match(/^(\w+):(\d+)$/);
+    const actionMatch = action.match(/^(\w+):(\w+)$/);
     if (actionMatch) {
       action = actionMatch[1];
-      version = parseInt(actionMatch[2]);
+      const versionStr = actionMatch[2];
+      if (versionStr !== 'latest') {
+        version = parseInt(versionStr);
+      }
     }
 
     const ActionClass = this.ACTION_MAP[action];

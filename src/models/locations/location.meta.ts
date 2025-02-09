@@ -9,7 +9,7 @@ export interface LocationMeta {
 }
 
 export const DEFAULT_LOCATION_META: LocationMeta = {
-  core: 'empty',
+  core: 'repeat_action',
   description: '',
 
   messageLimit: 25,
