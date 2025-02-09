@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { AgentEntityStateDocument } from '@models/entities/agents/states/agent.entity-state';
 import { AgentEntityState } from '@models/entities/agents/states/agent.entity-state';
-import { AgentsRepository } from '@core/agents/agents.repository';
+import { AgentsRepository } from '@core/repositories/agents.repository';
 import {
   AgentState,
   AgentStateDocument,

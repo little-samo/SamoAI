@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { LocationState } from '@models/locations/states/location.state';
 import { LocationMessagesState } from '@models/locations/states/location.messages-state';
-import { LocationsRepository } from '@core/locations/locations.repository';
+import { LocationsRepository } from '@core/repositories/locations.repository';
 import { LocationModel } from '@prisma/client';
 import { PrismaService } from '@app/prisma/prisma.service';
 import { RedisService } from '@app/redis/redis.service';

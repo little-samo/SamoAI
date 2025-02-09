@@ -1,7 +1,10 @@
 import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
-@Schema({ timestamps: true })
+@Schema({
+  timestamps: true,
+  validateBeforeSave: true,
+})
 export class LocationMessage {
   @Prop()
   public agentId?: number;
@@ -18,24 +21,12 @@ export class LocationMessage {
   @Prop()
   public message?: string;
 
-  @Prop({
-    required: true,
-    validate: [
-      {
-        validator: function (this: LocationMessage) {
-          return (this.agentId !== undefined) !== (this.userId !== undefined);
-        },
-        message: 'Either agentId or userId must be provided, but not both',
-      },
-      {
-        validator: function (this: LocationMessage) {
-          return this.expression !== undefined || this.message !== undefined;
-        },
-        message: 'Either expression or message must be provided',
-      },
-    ],
-  })
-  public _validate?: never;
+  public static validate(doc: LocationMessage): boolean {
+    return (
+      (doc.agentId !== undefined) !== (doc.userId !== undefined) &&
+      (doc.expression !== undefined || doc.message !== undefined)
+    );
+  }
 }
 
 export interface LocationMessage {

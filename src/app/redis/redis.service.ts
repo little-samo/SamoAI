@@ -1,9 +1,12 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { Redis } from 'ioredis';
 import Redlock, { Lock } from 'redlock';
+import { RedisLockService } from '@core/services/redis-lock.service';
 
 @Injectable()
-export class RedisService implements OnModuleInit, OnModuleDestroy {
+export class RedisService
+  implements OnModuleInit, OnModuleDestroy, RedisLockService
+{
   private readonly redis: Redis;
   private readonly redlock: Redlock;
 

@@ -2,7 +2,7 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { UserState } from '@models/entities/users/states/user.state';
-import { UsersRepository } from '@core/users/users.repository';
+import { UsersRepository } from '@core/repositories/users.repository';
 import { UserModel, UserApiKeyModel } from '@prisma/client';
 import { PrismaService } from '@app/prisma/prisma.service';
 import { RedisService } from '@app/redis/redis.service';
