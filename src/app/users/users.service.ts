@@ -53,6 +53,22 @@ export class UsersService implements UsersRepository {
     return userApiKey.userModel;
   }
 
+  public async getUserModels(
+    userIds: number[]
+  ): Promise<Record<number, UserModel>> {
+    const users = await this.prisma.userModel.findMany({
+      where: { id: { in: userIds } },
+    });
+
+    return users.reduce(
+      (acc, user) => {
+        acc[user.id] = user;
+        return acc;
+      },
+      {} as Record<number, UserModel>
+    );
+  }
+
   public async getUserState(userId: number): Promise<null | UserState> {
     const cacheKey = `${this.USER_STATE_PREFIX}${userId}`;
     const cachedState = await this.redis.get(cacheKey);
@@ -68,6 +84,36 @@ export class UsersService implements UsersRepository {
     }
 
     return state;
+  }
+
+  public async getUserStates(
+    userIds: number[]
+  ): Promise<Record<number, UserState>> {
+    const states: Record<number, UserState> = {};
+
+    const cacheKeys = userIds.map((id) => `${this.USER_STATE_PREFIX}${id}`);
+    const cachedStates = await this.redis.mget(cacheKeys);
+
+    for (let i = 0; i < userIds.length; i++) {
+      const userId = userIds[i];
+      const cachedState = cachedStates[i];
+
+      if (cachedState) {
+        states[userId] = JSON.parse(cachedState);
+      }
+    }
+
+    const remainingUserIds = userIds.filter((id) => !states[id]);
+
+    const statesFromDb = await this.userStateModel
+      .find({ userId: { in: remainingUserIds } })
+      .exec();
+
+    for (const state of statesFromDb) {
+      states[state.userId] = state;
+    }
+
+    return states;
   }
 
   public async saveUserModel(model: UserModel): Promise<void> {
@@ -93,5 +139,43 @@ export class UsersService implements UsersRepository {
 
     const cacheKey = `${this.USER_STATE_PREFIX}${state.userId}`;
     await this.redis.set(cacheKey, JSON.stringify(state), this.CACHE_TTL);
+  }
+
+  public async saveUserStates(states: UserState[]): Promise<void> {
+    states = states.filter((state) => state.dirty);
+    if (states.length === 0) {
+      return;
+    }
+
+    await this.userStateModel.bulkWrite(
+      states.map((state) => ({
+        updateOne: {
+          filter: { userId: state.userId },
+          update: { $set: state },
+          upsert: true,
+        },
+      }))
+    );
+
+    const cacheEntries = states.reduce(
+      (acc, state) => {
+        const cacheKey = `${this.USER_STATE_PREFIX}${state.userId}`;
+        acc[cacheKey] = JSON.stringify(state);
+        return acc;
+      },
+      {} as Record<string, string>
+    );
+
+    await this.redis.mset(cacheEntries);
+
+    await Promise.all(
+      Object.keys(cacheEntries).map((key) =>
+        this.redis.expire(key, this.CACHE_TTL)
+      )
+    );
+
+    states.forEach((state) => {
+      state.dirty = false;
+    });
   }
 }

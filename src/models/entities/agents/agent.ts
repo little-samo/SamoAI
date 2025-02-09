@@ -153,6 +153,10 @@ export class Agent extends Entity {
     return this._entityStates[key];
   }
 
+  public getEntityStates(): AgentEntityState[] {
+    return Object.values(this._entityStates);
+  }
+
   public getEntityStateByTarget(
     targetAgentId?: number,
     targetUserId?: number
@@ -168,25 +172,17 @@ export class Agent extends Entity {
     return this._entityStates[key];
   }
 
-  public addEntityState(
-    targetAgentId?: number,
-    targetUserId?: number,
-    state?: null | AgentEntityState
-  ): void {
+  public addEntityState(state: AgentEntityState): void {
     let key: EntityKey;
-    if (targetAgentId) {
-      key = `agent:${targetAgentId}` as EntityKey;
-    } else if (targetUserId) {
-      key = `user:${targetUserId}` as EntityKey;
+    if (state.targetAgentId) {
+      key = `agent:${state.targetAgentId}` as EntityKey;
+    } else if (state.targetUserId) {
+      key = `user:${state.targetUserId}` as EntityKey;
     } else {
-      throw new Error('No target agent or user provided');
+      throw new Error('Invalid entity state');
     }
 
-    if (state) {
-      this.fixEntityState(state);
-    } else {
-      state = this.createEntityState(targetAgentId, targetUserId);
-    }
+    this.fixEntityState(state);
     this._entityStates[key] = state;
   }
 

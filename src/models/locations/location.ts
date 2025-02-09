@@ -70,7 +70,7 @@ export class Location extends EventEmitter {
     }
   }
 
-  protected constructor(
+  public constructor(
     public readonly model: LocationModel,
     state?: null | LocationState,
     messagesState?: null | LocationMessagesState
@@ -207,5 +207,9 @@ export class Location extends EventEmitter {
       );
     }
     this.addMessage(locationMessage);
+  }
+
+  public async update(): Promise<void> {
+    await this.core.update();
   }
 }

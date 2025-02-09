@@ -14,11 +14,11 @@ export class RedisService
     this.redis = new Redis(process.env.REDIS_URL!);
     this.redlock = new Redlock([this.redis], {
       // Configuration for the Redlock instance
-      driftFactor: 0.01, // Time in ms to account for drift
-      retryCount: 10, // Maximum number of retries
-      retryDelay: 200, // Time in ms between retries
-      retryJitter: 200, // Variance in retry delay
-      automaticExtensionThreshold: 500, // Time in ms for automatic lock extension
+      driftFactor: 0.01, // Safety factor for clock drift (1% of TTL)
+      retryCount: 20, // Maximum number of retries
+      retryDelay: 1000, // Time in ms between retries
+      retryJitter: 500, // Variance in retry delay
+      automaticExtensionThreshold: 1000, // Time in ms for automatic lock extension
     });
   }
 
@@ -52,12 +52,30 @@ export class RedisService
   }
 
   /**
+   * Sets multiple key-value pairs in Redis
+   * @param keyValuePairs - Object containing key-value pairs to set
+   * @returns 'OK' if successful
+   */
+  public async mset(keyValuePairs: Record<string, string>): Promise<'OK'> {
+    return this.redis.mset(keyValuePairs);
+  }
+
+  /**
    * Gets the value for a given key
    * @param key - The key to get
    * @returns The value if exists, null otherwise
    */
   public async get(key: string): Promise<string | null> {
     return this.redis.get(key);
+  }
+
+  /**
+   * Gets multiple values for given keys
+   * @param keys - Array of keys to get
+   * @returns Array of values in the same order as keys (null for non-existing keys)
+   */
+  public async mget(keys: string[]): Promise<(string | null)[]> {
+    return this.redis.mget(keys);
   }
 
   /**
