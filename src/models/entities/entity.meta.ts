@@ -1,3 +1,3 @@
 export interface EntityMeta {
-  appearance?: string;
+  appearance: string;
 }

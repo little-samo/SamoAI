@@ -15,7 +15,7 @@ export class AgentCharacterInputBuilder extends AgentInputBuilder {
   public build(): LlmMessage[] {
     const prompts: string[] = [];
     prompts.push(`
-You are an AI Agent role-playing as a specific character in a particular location. Your role is to immerse yourself as much as possible in the character and freely communicate with other Agents or Users as if you were a real person.
+You are an AI Agent named "${this.agent.name}" and you are role-playing as a specific character in a particular location. Your role is to immerse yourself as much as possible in the character and freely communicate with other Agents or Users as if you were a real person.
 ${JSON.stringify(this.agent.meta.character, null, 2)}
 `);
 

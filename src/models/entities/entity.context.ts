@@ -1,6 +1,6 @@
 export interface EntityContext {
   key: string;
   name: string;
-  appearance?: string;
+  appearance: string;
   expression?: string;
 }

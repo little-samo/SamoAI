@@ -78,5 +78,6 @@ export const DEFAULT_AGENT_META: AgentMeta = {
   memoryLimit: 16,
   entityMemoryLimit: 8,
 
+  appearance: 'Typical human (but AI Agent)',
   character: {},
 };
