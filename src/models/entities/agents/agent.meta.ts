@@ -13,6 +13,7 @@ export interface AgentMeta extends EntityMeta {
   temperature: number;
   maxTokens: number;
   llms: AgentLlmMeta[];
+  inputs: string[];
   languages: string[];
 
   actionLimit: number;
@@ -68,6 +69,7 @@ export const DEFAULT_AGENT_META: AgentMeta = {
   llms: [
     { platform: LlmPlatform.ANTHROPIC, model: 'claude-3-5-sonnet-20241022' },
   ],
+  inputs: ['character'],
   languages: ['English'],
 
   actionLimit: 6,

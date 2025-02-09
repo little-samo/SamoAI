@@ -1,6 +1,7 @@
 import { AgentModel, LlmApiKeyModel } from '@prisma/client';
 import { LlmService } from '@common/llms/llm.service';
 import { Location } from '@models/locations/location';
+import { LlmToolCall } from '@common/llms/llm.tool';
 
 import { Entity, EntityKey } from '../entity';
 
@@ -10,6 +11,7 @@ import { AgentContext } from './agent.context';
 import { AgentMeta, DEFAULT_AGENT_META } from './agent.meta';
 import { AgentAction } from './actions/agent.action';
 import { AgentEntityState } from './states/agent.entity-state';
+import { AgentInputBuilder } from './inputs/agent.input';
 
 export class Agent extends Entity {
   public static createState(model: AgentModel, meta: AgentMeta): AgentState {
@@ -66,6 +68,8 @@ export class Agent extends Entity {
   public readonly key: EntityKey;
 
   public readonly core: AgentCore;
+
+  public readonly inputs: AgentInputBuilder[] = [];
   public readonly llm: LlmService;
   public readonly llms: LlmService[] = [];
   public readonly actions: Record<string, AgentAction> = {};
@@ -86,6 +90,7 @@ export class Agent extends Entity {
     this.key = `agent:${model.id}` as EntityKey;
 
     this.core = AgentCore.createCore(this);
+
     for (const llm of meta.llms) {
       const apiKey = apiKeys?.find((key) => key.platform === llm.platform);
       if (!apiKey) {
@@ -94,6 +99,9 @@ export class Agent extends Entity {
       this.llms.push(LlmService.create(llm.platform, llm.model, apiKey.key));
     }
     this.llm = this.llms[0];
+    for (const input of meta.inputs) {
+      this.inputs.push(AgentInputBuilder.createInput(input, location, this));
+    }
     this.actions = Object.fromEntries(
       meta.actions.map((action) => [
         action,
@@ -164,4 +172,21 @@ export class Agent extends Entity {
   }
 
   public async update(): Promise<void> {}
+
+  private async executeToolCall(toolCall: LlmToolCall): Promise<void> {
+    const action = this.actions[toolCall.name];
+    await action.execute(toolCall);
+  }
+
+  public async executeNextActions(index: number = 0): Promise<void> {
+    const input = this.inputs[index];
+    const messages = input.build();
+    const toolCalls = await this.llm.useTools(
+      messages,
+      Object.values(this.actions)
+    );
+    await Promise.all(
+      toolCalls.map((toolCall) => this.executeToolCall(toolCall))
+    );
+  }
 }
