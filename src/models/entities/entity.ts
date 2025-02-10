@@ -40,4 +40,12 @@ export abstract class Entity {
   }
 
   public abstract update(): Promise<void>;
+
+  public async setExpression(expression: string): Promise<void> {
+    if (expression.startsWith('*') && expression.endsWith('*')) {
+      expression = expression.slice(1, -1);
+    }
+    this.state.expression = expression;
+    this.state.dirty = true;
+  }
 }

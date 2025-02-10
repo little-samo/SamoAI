@@ -250,9 +250,4 @@ export class Agent extends Entity {
       toolCalls.map((toolCall) => this.executeToolCall(toolCall))
     );
   }
-
-  public async setExpression(expression: string): Promise<void> {
-    this.state.expression = expression;
-    this.state.dirty = true;
-  }
 }
