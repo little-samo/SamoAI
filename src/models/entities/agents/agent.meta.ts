@@ -26,30 +26,30 @@ export interface AgentMeta extends EntityMeta {
   character: {
     // Background information
     background?: {
-      role?: string; // Agent's role (professor, assistant, coach)
-      gender?: string; // Gender
-      expertise?: string[]; // Areas of expertise
-      backstory?: string; // Background story
-      birthDate?: string; // Birth date (YYYY-MM-DD format)
-      occupation?: string; // Current or past occupation
+      role?: string | string[]; // Agent's role (professor, assistant, coach)
+      gender?: string | string[]; // Gender
+      expertise?: string | string[]; // Areas of expertise
+      backstory?: string | string[]; // Background story
+      birthDate?: string | string[]; // Birth date (YYYY-MM-DD format)
+      occupation?: string | string[]; // Current or past occupation
       [key: string]: undefined | string | string[]; // Additional background properties
     };
 
     // Communication style
     speech?: {
-      tone?: string; // How the agent speaks (friendly, formal, professional)
-      style?: string; // Conversation style (concise, detailed, humorous)
-      formality?: string; // Level of formality
+      tone?: string | string[]; // How the agent speaks (friendly, formal, professional)
+      style?: string | string[]; // Conversation style (concise, detailed, humorous)
+      formality?: string | string[]; // Level of formality
       [key: string]: undefined | string | string[]; // Additional speech properties
     };
 
     // Personality aspects
     personality?: {
-      traits?: string[]; // Key personality traits (empathetic, analytical, creative)
-      interests?: string[]; // Topics of interest
-      values?: string[]; // Core values and beliefs
-      quirks?: string[]; // Unique habits or characteristics
-      mbti?: string; // MBTI personality type
+      traits?: string | string[]; // Key personality traits (empathetic, analytical, creative)
+      interests?: string | string[]; // Topics of interest
+      values?: string | string[]; // Core values and beliefs
+      quirks?: string | string[]; // Unique habits or characteristics
+      mbti?: string | string[]; // MBTI personality type
       [key: string]: undefined | string | string[]; // Additional personality properties
     };
 
