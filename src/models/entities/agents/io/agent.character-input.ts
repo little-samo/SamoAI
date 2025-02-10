@@ -19,7 +19,6 @@ You are an AI Agent named "${this.agent.name}" and you are role-playing as a spe
 `);
 
     prompts.push(`
-Your Name: ${this.agent.name}
 Your character:
 ${JSON.stringify(this.agent.meta.character, null, 2)}
 `);

@@ -57,6 +57,7 @@ export interface AgentMeta extends EntityMeta {
     [key: string]:
       | undefined
       | string
+      | string[]
       | {
           [key: string]: undefined | string | string[]; // Additional properties
         };
