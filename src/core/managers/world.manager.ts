@@ -67,6 +67,37 @@ export class WorldManager {
     }
   }
 
+  private async withLocationAndEntitiesLock<T>(
+    llmApiKeyUserId: number,
+    locationId: number,
+    operation: (location: Location) => Promise<T>
+  ): Promise<T> {
+    return await this.withLocationLock(locationId, async () => {
+      const location = await this.getLocation(llmApiKeyUserId, locationId);
+
+      const lockKeys: string[] = [];
+      for (const agentId of location.state.agentIds) {
+        lockKeys.push(`${WorldManager.AGENT_LOCK_PREFIX}${agentId}`);
+      }
+      for (const userId of location.state.userIds) {
+        lockKeys.push(`${WorldManager.USER_LOCK_PREFIX}${userId}`);
+      }
+
+      const lock = await this.redisLockService.multiLock(
+        lockKeys,
+        WorldManager.LOCK_TTL
+      );
+      if (!lock) {
+        throw new Error(`Failed to lock location ${locationId}`);
+      }
+      try {
+        return await operation(location);
+      } finally {
+        await lock.release();
+      }
+    });
+  }
+
   private async getLocation(
     llmApiKeyUserId: number,
     locationId: number
@@ -283,11 +314,14 @@ export class WorldManager {
     llmApiKeyUserId: number,
     locationId: number
   ): Promise<Location> {
-    return await this.withLocationLock(locationId, async () => {
-      const location = await this.getLocation(llmApiKeyUserId, locationId);
-      await location.update();
-      await this.saveLocation(location);
-      return location;
-    });
+    return await this.withLocationAndEntitiesLock(
+      llmApiKeyUserId,
+      locationId,
+      async (location) => {
+        await location.update();
+        await this.saveLocation(location);
+        return location;
+      }
+    );
   }
 }
