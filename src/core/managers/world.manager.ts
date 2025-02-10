@@ -11,7 +11,6 @@ import {
   LocationMessagesState,
 } from '@models/locations/states/location.messages-state';
 import { LocationState } from '@models/locations/states/location.state';
-import { UserModel } from '@prisma/client';
 
 export class WorldManager {
   private static readonly LOCK_TTL = 30000; // 30 seconds
