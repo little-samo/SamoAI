@@ -59,6 +59,8 @@ export interface AgentMeta extends EntityMeta {
           [key: string]: undefined | string | string[]; // Additional properties
         };
   };
+
+  rules: string[];
 }
 
 export const DEFAULT_AGENT_META: AgentMeta = {
@@ -84,4 +86,6 @@ export const DEFAULT_AGENT_META: AgentMeta = {
 
   appearance: 'Typical human (but AI Agent)',
   character: {},
+
+  rules: [],
 };

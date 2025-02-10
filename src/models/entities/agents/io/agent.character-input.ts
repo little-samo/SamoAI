@@ -41,6 +41,13 @@ Important Rules:
 - Do not describe your expressions or actions using asterisks. Instead, use the expression argument of tools.
 `);
 
+    if (this.agent.meta.rules.length > 0) {
+      prompts.push(`
+Additional Rules:
+- ${this.agent.meta.rules.join('\n- ')}
+`);
+    }
+
     const contexts: string[] = [];
 
     const locationContext = this.location.context;
