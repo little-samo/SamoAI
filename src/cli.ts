@@ -56,7 +56,7 @@ async function bootstrap() {
       );
 
       const location = await WorldManager.instance.updateLocation(
-        userModel,
+        userId,
         locationModel.id
       );
 

@@ -69,10 +69,11 @@ export class WorldManager {
   }
 
   private async getLocation(
-    userModel: UserModel,
+    llmApiKeyUserId: number,
     locationId: number
   ): Promise<Location> {
-    const apiKeys = await this.userRepository.getUserLlmApiKeys(userModel.id);
+    const apiKeys =
+      await this.userRepository.getUserLlmApiKeys(llmApiKeyUserId);
 
     const locationModel =
       await this.locationRepository.getLocationModel(locationId);
@@ -280,11 +281,11 @@ export class WorldManager {
   }
 
   public async updateLocation(
-    userModel: UserModel,
+    llmApiKeyUserId: number,
     locationId: number
   ): Promise<Location> {
     return await this.withLocationLock(locationId, async () => {
-      const location = await this.getLocation(userModel, locationId);
+      const location = await this.getLocation(llmApiKeyUserId, locationId);
       await location.update();
       await this.saveLocation(location);
       return location;
