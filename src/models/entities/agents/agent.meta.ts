@@ -27,6 +27,7 @@ export interface AgentMeta extends EntityMeta {
     // Background information
     background?: {
       role?: string; // Agent's role (professor, assistant, coach)
+      gender?: string; // Gender
       expertise?: string[]; // Areas of expertise
       backstory?: string; // Background story
       birthDate?: string; // Birth date (YYYY-MM-DD format)
