@@ -4,7 +4,7 @@ import { AgentCore } from './agent.core';
 import { AgentEmptyCore } from './agent.empty-core';
 
 export class AgentCoreFactory {
-  private static readonly CORE_MAP: Record<
+  public static readonly CORE_MAP: Record<
     string,
     new (agent: Agent) => AgentCore
   > = {

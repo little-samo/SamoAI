@@ -48,6 +48,11 @@ export class AgentSendMessageAction extends AgentAction {
 
     if (action.expression) {
       this.agent.state.expression = action.expression;
+      if (ENV.DEBUG) {
+        console.log(
+          `Agent ${this.agent.name} expression: ${action.expression}`
+        );
+      }
     }
 
     this.location.addAgentMessage(

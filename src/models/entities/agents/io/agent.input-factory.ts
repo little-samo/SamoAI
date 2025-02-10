@@ -6,7 +6,7 @@ import { AgentInputBuilder } from './agent.input';
 import { AgentCharacterInputBuilder } from './agent.character-input';
 
 export class AgentInputFactory {
-  private static readonly INPUT_MAP: Record<
+  public static readonly INPUT_MAP: Record<
     string,
     new (location: Location, agent: Agent) => AgentInputBuilder
   > = {

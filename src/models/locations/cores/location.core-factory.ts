@@ -5,7 +5,7 @@ import { LocationEmptyCore } from './location.empty-core';
 import { LocationRepeatActionCore } from './location.repeat-action-core';
 
 export class LocationCoreFactory {
-  private static readonly CORE_MAP: Record<
+  public static readonly CORE_MAP: Record<
     string,
     new (location: Location) => LocationCore
   > = {

@@ -9,7 +9,7 @@ import { AgentUpdateMemoryAction } from './agent.update-memory';
 import { AgentUpdateEntityMemoryAction } from './agent.update-entity-memory';
 
 export class AgentActionFactory {
-  private static readonly ACTION_MAP: Record<
+  public static readonly ACTION_MAP: Record<
     string,
     new (version: number, location: Location, agent: Agent) => AgentAction
   > = {
