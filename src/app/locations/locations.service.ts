@@ -54,13 +54,16 @@ export class LocationsService implements LocationsRepository {
   public async getOrCreateLocationModelByName(
     name: string
   ): Promise<LocationModel> {
-    const location = await this.getLocationModelByName(name);
-    if (location) {
-      return location;
+    try {
+      return await this.getLocationModelByName(name);
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        return this.saveLocationModel({
+          name,
+        } as LocationModel);
+      }
+      throw error;
     }
-    return this.saveLocationModel({
-      name,
-    } as LocationModel);
   }
 
   public async getLocationState(

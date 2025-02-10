@@ -114,22 +114,24 @@ export class AgentsService implements AgentsRepository {
       }
     }
 
-    const cacheEntries = Object.values(states).reduce(
-      (acc, state) => {
-        const cacheKey = `${this.AGENT_STATE_PREFIX}${state.agentId}`;
-        acc[cacheKey] = JSON.stringify(state);
-        return acc;
-      },
-      {} as Record<string, string>
-    );
+    if (Object.keys(states).length > 0) {
+      const cacheEntries = Object.values(states).reduce(
+        (acc, state) => {
+          const cacheKey = `${this.AGENT_STATE_PREFIX}${state.agentId}`;
+          acc[cacheKey] = JSON.stringify(state);
+          return acc;
+        },
+        {} as Record<string, string>
+      );
 
-    await this.redis.mset(cacheEntries);
+      await this.redis.mset(cacheEntries);
 
-    await Promise.all(
-      Object.keys(cacheEntries).map((key) =>
-        this.redis.expire(key, this.CACHE_TTL)
-      )
-    );
+      await Promise.all(
+        Object.keys(cacheEntries).map((key) =>
+          this.redis.expire(key, this.CACHE_TTL)
+        )
+      );
+    }
 
     return states;
   }

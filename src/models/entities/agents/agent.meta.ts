@@ -15,6 +15,7 @@ export interface AgentMeta extends EntityMeta {
   llms: AgentLlmMeta[];
   inputs: string[];
   languages: string[];
+  timeZone: string;
 
   actionLimit: number;
   actions: string[];
@@ -76,6 +77,7 @@ export const DEFAULT_AGENT_META: AgentMeta = {
   ],
   inputs: ['character'],
   languages: ['English'],
+  timeZone: 'UTC',
 
   actionLimit: 6,
   actions: [
