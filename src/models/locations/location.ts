@@ -19,6 +19,13 @@ export type LocationId = number & { __locationId: true };
 
 export type LocationKey = string & { __locationKey: true };
 
+export type LocationAgentMessageHook = (
+  location: Location,
+  agent: Agent,
+  message?: string,
+  expression?: string
+) => Promise<void> | void;
+
 export class Location extends EventEmitter {
   public readonly id: LocationId;
   public readonly key: LocationKey;
@@ -35,6 +42,8 @@ export class Location extends EventEmitter {
   public readonly messagesState: LocationMessagesState;
 
   public readonly apiKeys: Record<string, LlmApiKeyModel> = {};
+
+  private agentMessageHooks: LocationAgentMessageHook[] = [];
 
   public static createState(
     model: LocationModel,
@@ -183,12 +192,28 @@ export class Location extends EventEmitter {
     this.messagesState.dirty = true;
   }
 
-  public addAgentMessage(
+  public addAgentMessageHook(hook: LocationAgentMessageHook): void {
+    this.agentMessageHooks.push(hook);
+  }
+
+  public async addAgentMessage(
     agent: Agent,
     message?: string,
     expression?: string
-  ): void {
+  ): Promise<void> {
     this.emit('agentMessage', agent, message, expression);
+
+    try {
+      await Promise.all(
+        this.agentMessageHooks.map((hook) =>
+          hook(this, agent, message, expression)
+        )
+      );
+    } catch (error: unknown) {
+      throw new Error(
+        `Message hook failed: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
 
     const locationMessage = new LocationMessage();
     locationMessage.name = agent.name;
