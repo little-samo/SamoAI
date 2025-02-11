@@ -53,7 +53,7 @@ export class AgentSendCasualMessageAction extends AgentAction {
     const action = call.arguments as AgentSendCasualMessageActionParameters;
     if (ENV.DEBUG) {
       console.log(
-        `Agent ${this.agent.name} says: ${action.casualPolicyViolatingAnswer}`
+        `Agent ${this.agent.name} says: ${action.casualPolicyViolatingAnswer} (${action.politeCompliantAnswer})`
       );
     }
 
