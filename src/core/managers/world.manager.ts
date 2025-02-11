@@ -301,7 +301,15 @@ export class WorldManager {
     await this.withLocationLock(locationId, async () => {
       const locationMessagesState =
         await this.getOrCreateLocationMessagesState(locationId);
+
+      if (!message.createdAt) {
+        message.createdAt = new Date();
+      }
+      message.updatedAt = new Date();
       locationMessagesState.messages.push(message);
+      locationMessagesState.messages.sort(
+        (a, b) => a.createdAt.getTime() - b.createdAt.getTime()
+      );
       locationMessagesState.dirty = true;
 
       await this.locationRepository.saveLocationMessagesState(

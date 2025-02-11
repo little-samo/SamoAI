@@ -168,7 +168,14 @@ export class Location extends EventEmitter {
         this.meta.messageLengthLimit
       );
     }
+    if (!message.createdAt) {
+      message.createdAt = new Date();
+    }
+    message.updatedAt = new Date();
     this.messagesState.messages.push(message);
+    this.messagesState.messages.sort(
+      (a, b) => a.createdAt.getTime() - b.createdAt.getTime()
+    );
     if (this.messagesState.messages.length > this.meta.messageLimit) {
       this.messagesState.messages.shift();
     }

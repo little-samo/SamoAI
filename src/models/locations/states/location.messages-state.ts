@@ -2,7 +2,6 @@ import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
 @Schema({
-  timestamps: true,
   validateBeforeSave: true,
   versionKey: false,
 })
@@ -22,17 +21,18 @@ export class LocationMessage {
   @Prop()
   public message?: string;
 
+  @Prop({ required: true })
+  public updatedAt!: Date;
+
+  @Prop({ required: true })
+  public createdAt!: Date;
+
   public static validate(doc: LocationMessage): boolean {
     return (
       (doc.agentId !== undefined) !== (doc.userId !== undefined) &&
       (doc.expression !== undefined || doc.message !== undefined)
     );
   }
-}
-
-export interface LocationMessage {
-  updatedAt: Date;
-  createdAt: Date;
 }
 
 @Schema({
