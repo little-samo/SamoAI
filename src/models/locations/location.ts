@@ -174,7 +174,8 @@ export class Location extends EventEmitter {
     message.updatedAt = new Date();
     this.messagesState.messages.push(message);
     this.messagesState.messages.sort(
-      (a, b) => a.createdAt.getTime() - b.createdAt.getTime()
+      (a, b) =>
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
     );
     if (this.messagesState.messages.length > this.meta.messageLimit) {
       this.messagesState.messages.shift();
@@ -187,6 +188,8 @@ export class Location extends EventEmitter {
     message?: string,
     expression?: string
   ): void {
+    this.emit('agentMessage', agent, message, expression);
+
     const locationMessage = new LocationMessage();
     locationMessage.name = agent.name;
     if (message) {
@@ -209,6 +212,8 @@ export class Location extends EventEmitter {
     message?: string,
     expression?: string
   ): void {
+    this.emit('userMessage', user, message, expression);
+
     const locationMessage = new LocationMessage();
     locationMessage.name = user.name;
     if (message) {

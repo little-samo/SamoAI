@@ -308,7 +308,7 @@ export class WorldManager {
       message.updatedAt = new Date();
       locationMessagesState.messages.push(message);
       locationMessagesState.messages.sort(
-        (a, b) => a.createdAt.getTime() - b.createdAt.getTime()
+        (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
       );
       locationMessagesState.dirty = true;
 

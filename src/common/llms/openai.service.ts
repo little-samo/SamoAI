@@ -66,7 +66,6 @@ export class OpenAIService extends LlmService {
             parameters: tool.parameters,
           })
         ),
-        tool_choice: 'required',
         temperature: this.temperature,
         max_tokens: this.maxTokens,
       };

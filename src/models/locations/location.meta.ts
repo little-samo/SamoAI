@@ -6,6 +6,7 @@ export interface LocationMeta {
   messageLengthLimit: number;
   actions: string[];
   requiredActions: string[];
+  rules: string[];
 }
 
 export const DEFAULT_LOCATION_META: LocationMeta = {
@@ -14,6 +15,7 @@ export const DEFAULT_LOCATION_META: LocationMeta = {
 
   messageLimit: 25,
   messageLengthLimit: 250,
-  actions: [],
-  requiredActions: [],
+  actions: ['send_casual_message:latest'],
+  requiredActions: ['send_casual_message:latest'],
+  rules: [],
 };

@@ -109,8 +109,9 @@ export class Agent extends Entity {
     for (const input of meta.inputs) {
       this.inputs.push(AgentInputFactory.createInput(input, location, this));
     }
+    const actions = [...meta.actions, ...location.meta.actions];
     this.actions = Object.fromEntries(
-      meta.actions.map((actionWithVersion) => {
+      actions.map((actionWithVersion) => {
         const action = AgentActionFactory.createAction(
           actionWithVersion,
           location,

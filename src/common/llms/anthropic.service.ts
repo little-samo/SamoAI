@@ -89,9 +89,6 @@ export class AnthropicService extends LlmService {
               text: message.content,
             };
           }),
-        tool_choice: {
-          type: 'any',
-        },
         tools: tools.map((tool) => ({
           name: tool.name,
           description: tool.description,
