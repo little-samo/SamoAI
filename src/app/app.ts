@@ -38,7 +38,7 @@ export class SamoAiApp {
       .build();
     const documentFactory = () =>
       SwaggerModule.createDocument(this.app!, config);
-    SwaggerModule.setup('api', this.app, documentFactory);
+    SwaggerModule.setup('swagger', this.app, documentFactory);
 
     if (listen) {
       const host = process.env.SAMO_AI_HOST ?? '0.0.0.0';
