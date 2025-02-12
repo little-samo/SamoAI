@@ -5,6 +5,7 @@ import {
   Logger,
   ServiceUnavailableException,
 } from '@nestjs/common';
+import { ENV } from '@common/config';
 
 import { TelegramBot } from './bots/telegram.bot';
 import { TelegramRegistrarBot } from './bots/telegram.registrar-bot';
@@ -22,8 +23,12 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
       if (secret == null) {
         return;
       }
-      this.bots[bot.token] = bot;
-      this.logger.log(`Bot ${bot.name} registered`);
+      this.bots[secret] = bot;
+      if (ENV.DEBUG) {
+        this.logger.log(`Bot ${bot.name} registered with secret: ${secret}`);
+      } else {
+        this.logger.log(`Bot ${bot.name} registered`);
+      }
     } catch (error) {
       this.logger.error(`Error registering bot: ${error}`);
     }
