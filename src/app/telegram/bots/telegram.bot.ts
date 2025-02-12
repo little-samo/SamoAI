@@ -3,6 +3,7 @@ import { randomBytes } from 'crypto';
 import { Logger, HttpException } from '@nestjs/common';
 import { fetch } from 'undici';
 import { ENV } from '@common/config';
+import { sleep } from '@common/utils/sleep';
 
 import { TelegramUpdateDto } from '../dto/telegram.update-dto';
 import { TelegramMessageDto } from '../dto/telegram.message-dto';
@@ -10,7 +11,6 @@ import { TelegramUserDto } from '../dto/telegram.user-dto';
 import { TelegramBotCommandDto } from '../dto/telegram.bot-command-dto';
 
 import { TELEGRAM_COMMANDS_METADATA_KEY } from './telegram.bot-commands-decorator';
-import { sleep } from '@common/utils/sleep';
 
 export enum TelegramBotMethod {
   SetWebhook = 'setWebhook',
@@ -51,7 +51,7 @@ export abstract class TelegramBot {
         if (response.status === 429 && i < maxRetries - 1) {
           const retryAfter = i + 1;
           this.logger.warn(
-            `[TelegramBot:${this.name}] Telegram API rate limited, retrying in ${retryAfter} seconds`
+            `[${this.name}] Telegram API rate limited, retrying in ${retryAfter} seconds`
           );
           await sleep(retryAfter * 1000);
           continue;
@@ -87,7 +87,7 @@ export abstract class TelegramBot {
         allowed_updates: ['message', 'callback_query'],
       });
       if (ENV.DEBUG) {
-        this.logger.log(`[TelegramBot:${this.name}] Webhook registered`);
+        this.logger.log(`[${this.name}] Webhook registered`);
       }
 
       const commands = Reflect.getMetadata(
@@ -98,7 +98,7 @@ export abstract class TelegramBot {
         commands,
       });
       if (ENV.DEBUG) {
-        this.logger.log(`[TelegramBot:${this.name}] Commands registered`);
+        this.logger.log(`[${this.name}] Commands registered`);
       }
 
       return this.secret;
