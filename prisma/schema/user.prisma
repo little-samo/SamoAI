@@ -16,6 +16,8 @@ model UserModel {
   apiKey UserApiKeyModel? @relation("userApiKey")
 
   llmApiKeys LlmApiKeyModel[] @relation("userLlmApiKey")
+
+  agents AgentModel[] @relation("agentOwnerUser")
 }
 
 enum UserPlatform {

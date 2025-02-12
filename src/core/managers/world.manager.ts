@@ -5,7 +5,10 @@ import { RedisLockService } from '@core/services/redis-lock.service';
 import { Agent } from '@models/entities/agents/agent';
 import { User } from '@models/entities/users/user';
 import { Location } from '@models/locations/location';
-import { DEFAULT_LOCATION_META } from '@models/locations/location.meta';
+import {
+  DEFAULT_LOCATION_META,
+  LocationMeta,
+} from '@models/locations/location.meta';
 import {
   LocationMessage,
   LocationMessagesState,
@@ -100,7 +103,8 @@ export class WorldManager {
 
   private async getLocation(
     llmApiKeyUserId: number,
-    locationId: number
+    locationId: number,
+    defaultMeta?: LocationMeta
   ): Promise<Location> {
     const apiKeys =
       await this.userRepository.getUserLlmApiKeys(llmApiKeyUserId);
@@ -112,12 +116,12 @@ export class WorldManager {
     const locationMessagesState =
       await this.locationRepository.getLocationMessagesState(locationId);
 
-    const location = new Location(
-      locationModel,
-      locationState,
-      locationMessagesState,
-      apiKeys
-    );
+    const location = new Location(locationModel, {
+      state: locationState,
+      messagesState: locationMessagesState,
+      apiKeys,
+      defaultMeta,
+    });
 
     const agents = await this.getAgents(
       location,

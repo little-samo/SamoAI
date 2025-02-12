@@ -6,6 +6,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { RedisModule } from './redis/redis.module';
 import { LocationsModule } from './locations/locations.module';
 import { UsersModule } from './users/users.module';
+import { TelegramModule } from './telegram/telegram.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { UsersModule } from './users/users.module';
     LocationsModule,
     AgentsModule,
     UsersModule,
+    TelegramModule,
   ],
   controllers: [],
   providers: [],

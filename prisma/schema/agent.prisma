@@ -5,4 +5,14 @@ model AgentModel {
 
   name String
   meta Json   @default("{}")
+
+  ownerUserModel UserModel? @relation("agentOwnerUser", fields: [ownerUserId], references: [id])
+  ownerUserId    Int?       @map("owner_user_id")
+
+  telegramUsername String? @unique
+  telegramBotToken String? @unique
+
+  isActive Boolean @default(true)
+
+  @@index([ownerUserId])
 }

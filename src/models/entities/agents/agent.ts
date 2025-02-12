@@ -139,7 +139,11 @@ export class Agent extends Entity {
   }
 
   public override get context(): AgentContext {
-    return super.context as AgentContext;
+    const context = super.context as AgentContext;
+    if (this.model.telegramUsername) {
+      context.handle = `@${this.model.telegramUsername}`;
+    }
+    return context;
   }
 
   public get selfContext(): AgentSelfContext {
@@ -236,8 +240,14 @@ export class Agent extends Entity {
   }
 
   private async executeToolCall(toolCall: LlmToolCall): Promise<void> {
-    const action = this.actions[toolCall.name];
-    await action.execute(toolCall);
+    try {
+      const action = this.actions[toolCall.name];
+      await action.execute(toolCall);
+    } catch (error) {
+      console.error(
+        `Error executing tool call:\n${JSON.stringify(toolCall, null, 2)}\n${error}`
+      );
+    }
   }
 
   public async executeNextActions(index: number = 0): Promise<void> {

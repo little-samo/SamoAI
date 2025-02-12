@@ -19,6 +19,13 @@ export type LocationId = number & { __locationId: true };
 
 export type LocationKey = string & { __locationKey: true };
 
+export interface LocationConstructorOptions {
+  state?: null | LocationState;
+  messagesState?: null | LocationMessagesState;
+  apiKeys?: LlmApiKeyModel[];
+  defaultMeta?: LocationMeta;
+}
+
 export type LocationAgentMessageHook = (
   location: Location,
   agent: Agent,
@@ -84,22 +91,27 @@ export class Location extends EventEmitter {
 
   public constructor(
     public readonly model: LocationModel,
-    state?: null | LocationState,
-    messagesState?: null | LocationMessagesState,
-    apiKeys?: LlmApiKeyModel[]
+    options: LocationConstructorOptions = {}
   ) {
     super();
     this.id = model.id as LocationId;
     this.key = `location:${model.id}` as LocationKey;
-    this.meta = { ...DEFAULT_LOCATION_META, ...(model.meta as object) };
+    this.meta = {
+      ...DEFAULT_LOCATION_META,
+      ...(options.defaultMeta ?? {}),
+      ...(model.meta as object),
+    };
 
-    state ??= Location.createState(model, this.meta);
-    Location.fixState(state, this.meta);
-    this.state = state;
+    const { state, messagesState, apiKeys } = options;
 
-    messagesState ??= Location.createMessagesState(model, this.meta);
-    Location.fixMessagesState(messagesState, this.meta);
-    this.messagesState = messagesState;
+    const initialState = state ?? Location.createState(model, this.meta);
+    Location.fixState(initialState, this.meta);
+    this.state = initialState;
+
+    const initialMessagesState =
+      messagesState ?? Location.createMessagesState(model, this.meta);
+    Location.fixMessagesState(initialMessagesState, this.meta);
+    this.messagesState = initialMessagesState;
 
     this.core = LocationCoreFactory.createCore(this);
 
