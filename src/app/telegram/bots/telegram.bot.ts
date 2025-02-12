@@ -24,7 +24,10 @@ export abstract class TelegramBot {
 
   private readonly secret: string;
 
-  public constructor(public readonly token: string) {
+  public constructor(
+    public readonly name: string,
+    public readonly token: string
+  ) {
     this.secret = randomBytes(32).toString('hex');
   }
 
@@ -66,6 +69,7 @@ export abstract class TelegramBot {
         secret_token: this.secret,
         allowed_updates: ['message', 'callback_query'],
       });
+      console.log(`${this.name} webhook registered`);
 
       const commands = Reflect.getMetadata(
         TELEGRAM_COMMANDS_METADATA_KEY,
@@ -74,6 +78,7 @@ export abstract class TelegramBot {
       await this.call(TelegramBotMethod.SetMyCommands, {
         commands,
       });
+      console.log(`${this.name} commands registered`);
 
       return this.secret;
     } catch (error) {

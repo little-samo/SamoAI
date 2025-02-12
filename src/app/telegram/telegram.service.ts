@@ -38,7 +38,9 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
   public async onModuleInit() {
     const registrarBotToken = process.env.TELEGRAM_REGISTRAR_BOT_TOKEN;
     if (registrarBotToken) {
-      await this.registerBot(new TelegramRegistrarBot(registrarBotToken));
+      await this.registerBot(
+        new TelegramRegistrarBot('Registrar', registrarBotToken)
+      );
     }
   }
 
