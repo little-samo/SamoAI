@@ -39,7 +39,10 @@ export class SamoAiApp {
     SwaggerModule.setup('api', this.app, documentFactory);
 
     if (listen) {
-      await this.app.listen(process.env.PORT ?? 11177);
+      await this.app.listen(
+        process.env.PORT ?? 11177,
+        process.env.HOST ?? '0.0.0.0'
+      );
     }
   }
 }

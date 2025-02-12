@@ -10,6 +10,7 @@ import { TelegramUserDto } from '../dto/telegram.user-dto';
 import { TelegramBotCommandDto } from '../dto/telegram.bot-command-dto';
 
 import { TELEGRAM_COMMANDS_METADATA_KEY } from './telegram.bot-commands-decorator';
+import { sleep } from '@common/utils/sleep';
 
 export enum TelegramBotMethod {
   SetWebhook = 'setWebhook',
@@ -34,24 +35,39 @@ export abstract class TelegramBot {
 
   public async call(
     method: TelegramBotMethod,
-    params: Record<string, unknown> = {}
+    params: Record<string, unknown> = {},
+    maxRetries: number = 5
   ): Promise<unknown> {
     const url = `https://api.telegram.org/bot${this.token}/${method}`;
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(params),
-    });
-    if (!response.ok) {
-      this.logger.error(`Failed to call ${method}: ${response.statusText}`);
-      throw new HttpException(
-        `Failed to call Telegram API ${method}: ${response.statusText}`,
-        response.status
-      );
+    for (let i = 0; i < maxRetries; i++) {
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(params),
+        });
+        if (response.status === 429 && i < maxRetries - 1) {
+          const retryAfter = i + 1;
+          this.logger.warn(
+            `[TelegramBot:${this.name}] Telegram API rate limited, retrying in ${retryAfter} seconds`
+          );
+          await sleep(retryAfter * 1000);
+          continue;
+        }
+        if (!response.ok) {
+          this.logger.error(`Failed to call ${method}: ${response.statusText}`);
+          throw new HttpException(
+            `Failed to call Telegram API ${method}: ${response.statusText}`,
+            response.status
+          );
+        }
+        return response.json();
+      } catch (error) {
+        this.logger.error(`Failed to call ${method}: ${error}`);
+      }
     }
-    return response.json();
   }
 
   public async registerWebhook(): Promise<string | null> {
@@ -71,7 +87,7 @@ export abstract class TelegramBot {
         allowed_updates: ['message', 'callback_query'],
       });
       if (ENV.DEBUG) {
-        this.logger.log(`${this.name} webhook registered`);
+        this.logger.log(`[TelegramBot:${this.name}] Webhook registered`);
       }
 
       const commands = Reflect.getMetadata(
@@ -82,7 +98,7 @@ export abstract class TelegramBot {
         commands,
       });
       if (ENV.DEBUG) {
-        this.logger.log(`${this.name} commands registered`);
+        this.logger.log(`[TelegramBot:${this.name}] Commands registered`);
       }
 
       return this.secret;
