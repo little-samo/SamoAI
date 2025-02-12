@@ -22,6 +22,7 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
         return;
       }
       this.bots[bot.token] = bot;
+      this.logger.log(`Bot ${bot.name} registered`);
     } catch (error) {
       this.logger.error(`Error registering bot: ${error}`);
     }
@@ -41,6 +42,8 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
       await this.registerBot(
         new TelegramRegistrarBot('Registrar', registrarBotToken)
       );
+    } else {
+      this.logger.warn('TELEGRAM_REGISTRAR_BOT_TOKEN is not set');
     }
   }
 
