@@ -3,11 +3,11 @@ import { Location } from '@models/locations/location';
 
 import { Agent } from '../agent';
 
+import { RegisterAgentInput } from './agent.input-decorator';
 import { AgentInputBuilder } from './agent.input';
 
+@RegisterAgentInput('character')
 export class AgentCharacterInputBuilder extends AgentInputBuilder {
-  public static override readonly INPUT_TYPE = 'character';
-
   public constructor(location: Location, agent: Agent) {
     super(location, agent);
   }

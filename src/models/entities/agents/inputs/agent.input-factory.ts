@@ -3,15 +3,12 @@ import { Location } from '@models/locations/location';
 import { Agent } from '../agent';
 
 import { AgentInputBuilder } from './agent.input';
-import { AgentCharacterInputBuilder } from './agent.character-input';
 
 export class AgentInputFactory {
   public static readonly INPUT_MAP: Record<
     string,
     new (location: Location, agent: Agent) => AgentInputBuilder
-  > = {
-    character: AgentCharacterInputBuilder,
-  };
+  > = {};
 
   public static createInput(
     type: string,

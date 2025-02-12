@@ -1,10 +1,10 @@
 import { Location } from '../location';
 
+import { RegisterLocationCore } from './location.core-decorator';
 import { LocationCore } from './location.core';
 
+@RegisterLocationCore('repeat_action')
 export class LocationRepeatActionCore extends LocationCore {
-  public static readonly CORE_TYPE = 'repeat_action';
-
   public constructor(location: Location) {
     super(location);
   }

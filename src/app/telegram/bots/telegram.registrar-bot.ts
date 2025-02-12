@@ -1,29 +1,28 @@
-import { TelegramBotCommandDto } from '../dto/telegram.bot-command-dto';
 import { TelegramMessageDto } from '../dto/telegram.message-dto';
 import { TelegramUserDto } from '../dto/telegram.user-dto';
 
+import { TelegramBotCommands } from './telegram.bot-commands-decorator';
 import { TelegramBot } from './telegram.bot';
 
+@TelegramBotCommands([
+  {
+    command: 'list',
+    description: 'List all registered bots.',
+  },
+  {
+    command: 'register',
+    description: 'Register a new bot.',
+  },
+  {
+    command: 'set_api',
+    description: 'Set the LLM API key for a bot.',
+  },
+  {
+    command: 'delete',
+    description: 'Delete a bot.',
+  },
+])
 export class TelegramRegistrarBot extends TelegramBot {
-  public static readonly COMMANDS: TelegramBotCommandDto[] = [
-    {
-      command: 'list',
-      description: 'List all registered bots.',
-    },
-    {
-      command: 'register',
-      description: 'Register a new bot.',
-    },
-    {
-      command: 'set_api',
-      description: 'Set the LLM API key for a bot.',
-    },
-    {
-      command: 'delete',
-      description: 'Delete a bot.',
-    },
-  ];
-
   protected override async handleTextMessage(
     message: TelegramMessageDto,
     from: TelegramUserDto,

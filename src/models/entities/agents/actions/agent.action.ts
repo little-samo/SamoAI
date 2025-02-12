@@ -4,9 +4,9 @@ import { z } from 'zod';
 
 import { Agent } from '../agent';
 
-export abstract class AgentAction implements LlmTool {
-  public static readonly ACTION_TYPE: string;
+import { AGENT_ACTION_METADATA_KEY } from './agent.action-decorator';
 
+export abstract class AgentAction implements LlmTool {
   public constructor(
     public readonly version: number,
     public readonly location: Location,
@@ -14,7 +14,7 @@ export abstract class AgentAction implements LlmTool {
   ) {}
 
   public get name(): string {
-    return (this.constructor as typeof AgentAction).ACTION_TYPE;
+    return Reflect.getMetadata(AGENT_ACTION_METADATA_KEY, this.constructor);
   }
 
   public abstract get description(): string;

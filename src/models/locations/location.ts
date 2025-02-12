@@ -13,7 +13,7 @@ import { LocationState } from './states/location.state';
 import { DEFAULT_LOCATION_META, LocationMeta } from './location.meta';
 import { LocationCore } from './cores/location.core';
 import { LocationContext } from './location.context';
-import { LocationCoreFactory } from './cores/location.core-factory';
+import { LocationCoreFactory } from './cores';
 
 export type LocationId = number & { __locationId: true };
 

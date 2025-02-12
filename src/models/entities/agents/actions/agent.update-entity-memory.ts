@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { LlmToolCall } from '@common/llms/llm.tool';
 import { EntityKey } from '@models/entities/entity';
 
+import { RegisterAgentAction } from './agent.action-decorator';
 import { AgentAction } from './agent.action';
 
 export interface AgentUpdateEntityMemoryActionParameters {
@@ -11,9 +12,8 @@ export interface AgentUpdateEntityMemoryActionParameters {
   memory: string;
 }
 
+@RegisterAgentAction('update_entity_memory')
 export class AgentUpdateEntityMemoryAction extends AgentAction {
-  public static readonly ACTION_TYPE = 'update_entity_memory';
-
   public override get description(): string {
     switch (this.version) {
       case 1:

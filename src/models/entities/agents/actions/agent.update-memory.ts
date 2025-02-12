@@ -2,6 +2,7 @@ import { ENV } from '@common/config';
 import { z } from 'zod';
 import { LlmToolCall } from '@common/llms/llm.tool';
 
+import { RegisterAgentAction } from './agent.action-decorator';
 import { AgentAction } from './agent.action';
 
 export interface AgentUpdateMemoryActionParameters {
@@ -9,9 +10,8 @@ export interface AgentUpdateMemoryActionParameters {
   memory: string;
 }
 
+@RegisterAgentAction('update_memory')
 export class AgentUpdateMemoryAction extends AgentAction {
-  public static readonly ACTION_TYPE = 'update_memory';
-
   public override get description(): string {
     switch (this.version) {
       case 1:

@@ -8,6 +8,8 @@ import { TelegramMessageDto } from '../dto/telegram.message-dto';
 import { TelegramUserDto } from '../dto/telegram.user-dto';
 import { TelegramBotCommandDto } from '../dto/telegram.bot-command-dto';
 
+import { TELEGRAM_COMMANDS_METADATA_KEY } from './telegram.bot-commands-decorator';
+
 export enum TelegramBotMethod {
   SetWebhook = 'setWebhook',
   DeleteWebhook = 'deleteWebhook',
@@ -18,8 +20,6 @@ export enum TelegramBotMethod {
 }
 
 export abstract class TelegramBot {
-  public static readonly COMMANDS: TelegramBotCommandDto[] = [];
-
   private readonly logger = new Logger(TelegramBot.name);
 
   private readonly secret: string;
@@ -67,8 +67,12 @@ export abstract class TelegramBot {
         allowed_updates: ['message', 'callback_query'],
       });
 
+      const commands = Reflect.getMetadata(
+        TELEGRAM_COMMANDS_METADATA_KEY,
+        this.constructor
+      ) as TelegramBotCommandDto[];
       await this.call(TelegramBotMethod.SetMyCommands, {
-        commands: TelegramBot.COMMANDS,
+        commands,
       });
 
       return this.secret;

@@ -1,10 +1,10 @@
 import { Location } from '../location';
 
+import { RegisterLocationCore } from './location.core-decorator';
 import { LocationCore } from './location.core';
 
+@RegisterLocationCore('empty')
 export class LocationEmptyCore extends LocationCore {
-  public static readonly CORE_TYPE = 'empty';
-
   public constructor(location: Location) {
     super(location);
   }

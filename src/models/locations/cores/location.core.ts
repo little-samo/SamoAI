@@ -3,8 +3,6 @@ import { sleepWithAbort } from '@common/utils/sleep';
 import { Location } from '../location';
 
 export abstract class LocationCore {
-  public static readonly CORE_TYPE: string;
-
   private _sleepController = new AbortController();
 
   private _destroyed = false;

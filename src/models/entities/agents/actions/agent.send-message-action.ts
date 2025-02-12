@@ -2,6 +2,7 @@ import { ENV } from '@common/config';
 import { z } from 'zod';
 import { LlmToolCall } from '@common/llms/llm.tool';
 
+import { RegisterAgentAction } from './agent.action-decorator';
 import { AgentAction } from './agent.action';
 
 export interface AgentSendMessageActionParameters {
@@ -9,9 +10,8 @@ export interface AgentSendMessageActionParameters {
   expression: null | string;
 }
 
+@RegisterAgentAction('send_message')
 export class AgentSendMessageAction extends AgentAction {
-  public static readonly ACTION_TYPE = 'send_message';
-
   public override get description(): string {
     switch (this.version) {
       case 1:

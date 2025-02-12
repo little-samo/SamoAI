@@ -16,10 +16,9 @@ import {
 import { AgentMeta, DEFAULT_AGENT_META } from './agent.meta';
 import { AgentAction } from './actions/agent.action';
 import { AgentEntityState } from './states/agent.entity-state';
-import { AgentInputBuilder } from './io/agent.input';
-import { AgentCoreFactory } from './cores/agent.core-factory';
-import { AgentActionFactory } from './actions/agent.action-factory';
-import { AgentInputFactory } from './io/agent.input-factory';
+import { AgentCoreFactory } from './cores';
+import { AgentActionFactory } from './actions';
+import { AgentInputBuilder, AgentInputFactory } from './inputs';
 
 export class Agent extends Entity {
   public static createState(model: AgentModel, meta: AgentMeta): AgentState {

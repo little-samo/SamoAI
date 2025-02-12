@@ -1,15 +1,12 @@
 import { Agent } from '../agent';
 
 import { AgentCore } from './agent.core';
-import { AgentEmptyCore } from './agent.empty-core';
 
 export class AgentCoreFactory {
   public static readonly CORE_MAP: Record<
     string,
     new (agent: Agent) => AgentCore
-  > = {
-    [AgentEmptyCore.CORE_TYPE]: AgentEmptyCore,
-  };
+  > = {};
 
   public static createCore(agent: Agent): AgentCore {
     const CoreClass = this.CORE_MAP[agent.meta.core];

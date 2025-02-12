@@ -1,10 +1,10 @@
 import { Agent } from '../agent';
 
+import { RegisterAgentCore } from './agent.core-decorator';
 import { AgentCore } from './agent.core';
 
+@RegisterAgentCore('empty')
 export class AgentEmptyCore extends AgentCore {
-  public static readonly CORE_TYPE = 'empty';
-
   public constructor(agent: Agent) {
     super(agent);
   }
