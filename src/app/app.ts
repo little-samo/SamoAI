@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { WorldManager } from '@core/managers/world.manager';
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, Logger } from '@nestjs/common';
 
 import * as packageJson from '../../package.json';
 
@@ -12,6 +12,8 @@ import { LocationsService } from './locations/locations.service';
 import { UsersService } from './users/users.service';
 
 export class SamoAiApp {
+  private readonly logger = new Logger(SamoAiApp.name);
+
   public app?: INestApplication;
 
   public async bootstrap(listen: boolean = true) {
@@ -39,10 +41,10 @@ export class SamoAiApp {
     SwaggerModule.setup('api', this.app, documentFactory);
 
     if (listen) {
-      await this.app.listen(
-        process.env.PORT ?? 11177,
-        process.env.HOST ?? '0.0.0.0'
-      );
+      const host = process.env.SAMO_AI_HOST ?? '0.0.0.0';
+      const port = process.env.SAMO_AI_PORT ?? 11177;
+      await this.app.listen(port, host);
+      this.logger.log(`Samo-AI API listening on ${host}:${port}`);
     }
   }
 }
