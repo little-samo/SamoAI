@@ -37,7 +37,7 @@ export class TelegramRegistrarBot extends TelegramBot {
     args: string[]
   ): Promise<void> {
     switch (command) {
-      case 'start':
+      case '/start':
         return await this.sendChatForceReplyMessage(
           message.chat.id,
           'Force Reply Test',

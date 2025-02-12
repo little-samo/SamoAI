@@ -2,6 +2,7 @@ import { randomBytes } from 'crypto';
 
 import { Logger, HttpException } from '@nestjs/common';
 import { fetch } from 'undici';
+import { ENV } from '@common/config';
 
 import { TelegramUpdateDto } from '../dto/telegram.update-dto';
 import { TelegramMessageDto } from '../dto/telegram.message-dto';
@@ -69,7 +70,9 @@ export abstract class TelegramBot {
         secret_token: this.secret,
         allowed_updates: ['message', 'callback_query'],
       });
-      console.log(`${this.name} webhook registered`);
+      if (ENV.DEBUG) {
+        this.logger.log(`${this.name} webhook registered`);
+      }
 
       const commands = Reflect.getMetadata(
         TELEGRAM_COMMANDS_METADATA_KEY,
@@ -78,7 +81,9 @@ export abstract class TelegramBot {
       await this.call(TelegramBotMethod.SetMyCommands, {
         commands,
       });
-      console.log(`${this.name} commands registered`);
+      if (ENV.DEBUG) {
+        this.logger.log(`${this.name} commands registered`);
+      }
 
       return this.secret;
     } catch (error) {

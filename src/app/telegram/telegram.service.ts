@@ -36,7 +36,13 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  public async onModuleInit() {
+  public async onModuleInit(): Promise<void> {
+    const baseUrl = process.env.TELEGRAM_WEBHOOK_BASE_URL;
+    if (!baseUrl) {
+      this.logger.warn('TELEGRAM_WEBHOOK_BASE_URL is not set');
+      return;
+    }
+
     const registrarBotToken = process.env.TELEGRAM_REGISTRAR_BOT_TOKEN;
     if (registrarBotToken) {
       await this.registerBot(
@@ -44,10 +50,11 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
       );
     } else {
       this.logger.warn('TELEGRAM_REGISTRAR_BOT_TOKEN is not set');
+      return;
     }
   }
 
-  public async onModuleDestroy() {
+  public async onModuleDestroy(): Promise<void> {
     await Promise.all(
       Object.values(this.bots).map((bot) => this.unregisterBot(bot))
     );
