@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Req,
   UnauthorizedException,
+  Headers,
 } from '@nestjs/common';
 
 import { TelegramService } from './telegram.service';
@@ -18,10 +19,10 @@ export class TelegramController {
   @Post()
   @HttpCode(HttpStatus.OK)
   public async receiveUpdate(
-    @Req() req: Request,
+    @Headers() headers: Record<string, string>,
     @Body() update: TelegramUpdateDto
   ): Promise<void> {
-    const secret = req.headers.get('X-Telegram-Bot-Api-Secret-Token');
+    const secret = headers['x-telegram-bot-api-secret-token'];
     if (!secret) {
       throw new UnauthorizedException(
         'X-Telegram-Bot-Api-Secret-Token is required'
