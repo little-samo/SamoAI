@@ -4,7 +4,6 @@ import {
   Body,
   HttpCode,
   HttpStatus,
-  Req,
   UnauthorizedException,
   Headers,
 } from '@nestjs/common';

@@ -3,6 +3,7 @@ import {
   OnModuleInit,
   OnModuleDestroy,
   Logger,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 
 import { TelegramBot } from './bots/telegram.bot';
@@ -69,7 +70,9 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
     if (bot) {
       await bot.handleUpdate(update);
     } else {
-      this.logger.warn(`No bot found for secret: ${secret}`);
+      throw new ServiceUnavailableException(
+        'Bot not found for secret: ' + secret
+      );
     }
   }
 }
