@@ -18,6 +18,7 @@ export enum TelegramBotMethod {
 
   SetMyCommands = 'setMyCommands',
 
+  SendChatAction = 'sendChatAction',
   SendMessage = 'sendMessage',
 }
 
@@ -119,6 +120,13 @@ export abstract class TelegramBot {
   }
 
   protected async handleMessage(message: TelegramMessageDto): Promise<void> {
+    if (message.chat.type === 'private') {
+      await this.call(TelegramBotMethod.SendChatAction, {
+        chat_id: message.chat.id,
+        action: 'typing',
+      });
+    }
+
     if (message.from && message.text) {
       //   if (message.reply_to_message?.reply) {
       //     return await this.handleReply(message, message.reply_to_message);
@@ -134,6 +142,10 @@ export abstract class TelegramBot {
     }
     if (message.left_chat_member) {
       return await this.handleLeftChatMember(message, message.left_chat_member);
+    }
+
+    if (message.chat.type === 'private') {
+      return await this.sendCommands(message.chat.id);
     }
   }
 
@@ -158,6 +170,19 @@ export abstract class TelegramBot {
     message: TelegramMessageDto,
     leftChatMember: TelegramUserDto
   ): Promise<void>;
+
+  public async sendCommands(chat_id: number): Promise<void> {
+    const commands = Reflect.getMetadata(
+      TELEGRAM_COMMANDS_METADATA_KEY,
+      this.constructor
+    ) as TelegramBotCommandDto[];
+    await this.sendChatTextMessage(
+      chat_id,
+      `commands:\n${commands
+        .map((c) => `/${c.command} - ${c.description}`)
+        .join('\n')}`
+    );
+  }
 
   public async sendChatTextMessage(
     chat_id: number,
