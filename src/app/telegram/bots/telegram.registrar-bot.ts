@@ -511,6 +511,7 @@ ${meta.appearance}`
           message.chat.id,
           `Great choice! ${agent.name} is still safe and sound. ❤️`
         );
+        return;
       }
     }
 
