@@ -64,17 +64,8 @@ export class TelegramChatBot extends TelegramAgentBot {
           preAction: async (location) => {
             location.meta = {
               ...TELEGRAM_BOT_PRIVATE_LOCATION_META,
-              ...location.meta,
+              ...(locationModel.meta as object),
             };
-            if (ENV.DEBUG) {
-              this.logger.log(
-                `[${this.name}] Location meta: ${JSON.stringify(
-                  location.meta,
-                  null,
-                  2
-                )}`
-              );
-            }
 
             location.addAgentMessageHook(
               async (location, agent, agentMessage, expression) => {
