@@ -73,6 +73,7 @@ export const DEFAULT_AGENT_META: AgentMeta = {
   temperature: 0,
   maxTokens: 1000,
   llms: [
+    { platform: LlmPlatform.OPENAI, model: 'gpt-4o-2024-11-20' },
     { platform: LlmPlatform.ANTHROPIC, model: 'claude-3-5-sonnet-20241022' },
   ],
   inputs: ['character'],
