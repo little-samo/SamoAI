@@ -125,6 +125,11 @@ export class LocationsService implements LocationsRepository {
   }
 
   public async saveLocationState(state: LocationState): Promise<void> {
+    if (!state.dirty) {
+      return;
+    }
+    state.dirty = false;
+
     await this.locationStateModel.updateOne(
       { locationId: state.locationId },
       { $set: { ...state } },
@@ -138,6 +143,11 @@ export class LocationsService implements LocationsRepository {
   public async saveLocationMessagesState(
     state: LocationMessagesState
   ): Promise<void> {
+    if (!state.dirty) {
+      return;
+    }
+    state.dirty = false;
+
     await this.locationMessagesStateModel.updateOne(
       { locationId: state.locationId },
       { $set: { ...state } },

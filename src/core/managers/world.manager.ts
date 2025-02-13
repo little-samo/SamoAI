@@ -260,6 +260,9 @@ export class WorldManager {
 
     if (ENV.DEBUG) {
       console.log(`Location ${location.model.name} successfully saved`);
+      console.log(
+        `Location messages:\n${JSON.stringify(location.messagesState.messages, null, 2)}`
+      );
     }
   }
 
@@ -318,7 +321,6 @@ export class WorldManager {
       const locationMessagesState =
         await this.getOrCreateLocationMessagesState(locationId);
 
-      // if message with same createdAt already exists, skip
       if (
         locationMessagesState.messages.find(
           (m) =>
