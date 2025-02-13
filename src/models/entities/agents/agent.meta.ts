@@ -82,7 +82,7 @@ export const DEFAULT_AGENT_META: AgentMeta = {
   actionLimit: 6,
   actions: ['update_memory:latest', 'update_entity_memory:latest'],
 
-  memoryLimit: 16,
+  memoryLimit: 32,
   entityMemoryLimit: 8,
 
   appearance: 'Typical human (but AI Agent)',
