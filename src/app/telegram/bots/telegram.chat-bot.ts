@@ -93,7 +93,12 @@ export class TelegramChatBot extends TelegramAgentBot {
         );
         return;
     }
-    return this.handleTextMessage(user, message, message.from!, message.text!);
+    return await this.handleTextMessage(
+      user,
+      message,
+      message.from!,
+      message.text!
+    );
   }
 
   protected override async handleNewChatMembers(

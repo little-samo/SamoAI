@@ -160,7 +160,12 @@ export class TelegramRegistrarBot extends TelegramBot {
         return;
       }
 
-      const botUser = await this.getMe(token);
+      let botUser;
+      try {
+        botUser = await this.getMe(token);
+      } catch (error) {
+        this.logger.error(`Error getting bot user: ${error}`);
+      }
       if (!botUser || !botUser.username) {
         await this.sendChatTextMessage(
           message.chat.id,
