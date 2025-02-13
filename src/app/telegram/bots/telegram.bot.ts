@@ -70,13 +70,17 @@ export abstract class TelegramBot {
   ): Promise<unknown> {
     const { maxRetries = 5, token = this.token } = options;
     const url = `https://api.telegram.org/bot${token}/${method}`;
+    const body = JSON.stringify(params);
+    if (ENV.DEBUG) {
+      this.logger.log(`[${this.name}] Calling ${url} with body: ${body}`);
+    }
     for (let i = 0; i < maxRetries; i++) {
       const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(params),
+        body,
       });
       if (response.status === 429 && i < maxRetries - 1) {
         const retryAfter = i + 1;
