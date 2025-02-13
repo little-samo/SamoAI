@@ -109,7 +109,7 @@ export class TelegramRegistrarBot extends TelegramBot {
       }
 
       const botUser = await this.getMe(token);
-      if (!botUser) {
+      if (!botUser || !botUser.username) {
         await this.sendChatTextMessage(
           message.chat.id,
           `Oops! That token isn't valid. Please create a bot through @BotFather and register the API Token!`

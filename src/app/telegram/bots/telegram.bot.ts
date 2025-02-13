@@ -159,11 +159,15 @@ export abstract class TelegramBot {
   }
 
   public async handleUpdate(update: TelegramUpdateDto): Promise<void> {
-    if (update.message) {
-      return await this.handleMessage(update.message);
-    }
-    if (update.callback_query) {
-      return await this.handleCallbackQuery(update.callback_query);
+    try {
+      if (update.message) {
+        return await this.handleMessage(update.message);
+      }
+      if (update.callback_query) {
+        return await this.handleCallbackQuery(update.callback_query);
+      }
+    } catch (error) {
+      this.logger.error(`Failed to handle update: ${error}`);
     }
   }
 
