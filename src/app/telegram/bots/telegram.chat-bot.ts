@@ -5,7 +5,10 @@ import { WorldManager } from '@core/managers/world.manager';
 
 import { TelegramMessageDto } from '../dto/telegram.message-dto';
 import { TelegramUserDto } from '../dto/telegram.user-dto';
-import { TELEGRAM_BOT_PRIVATE_LOCATION_META } from '../meta/location.meta';
+import {
+  TELEGRAM_BOT_PRIVATE_LOCATION_META,
+  TELEGRAM_MESSAGE_LENGTH_LIMIT,
+} from '../meta/location.meta';
 
 import { TelegramAgentBot } from './telegram.agent-bot';
 
@@ -33,6 +36,11 @@ export class TelegramChatBot extends TelegramAgentBot {
     from: TelegramUserDto,
     text: string
   ): Promise<void> {
+    if (text.length > TELEGRAM_MESSAGE_LENGTH_LIMIT) {
+      text =
+        text.slice(0, TELEGRAM_MESSAGE_LENGTH_LIMIT - 14) + '...[TRUNCATED]';
+    }
+
     const locationName = `${TELEGRAM_BOT_PRIVATE_LOCATION_PREFIX}/agent:${this.agent!.id}/user:${user.id}`;
     const locationModel =
       await this.locationsService.getOrCreateLocationModelByName(locationName);
