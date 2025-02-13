@@ -125,14 +125,12 @@ export abstract class TelegramBot {
   }
 
   protected async handleMessage(message: TelegramMessageDto): Promise<void> {
-    if (message.chat.type === 'private') {
-      await this.call(TelegramBotMethod.SendChatAction, {
-        chat_id: message.chat.id,
-        action: 'typing',
-      });
-    }
-
+    const isPrivateChat = message.chat.type === 'private';
     if (message.from && message.text) {
+      if (isPrivateChat) {
+        await this.sendChatAction(message.chat.id);
+      }
+
       if (message.text.startsWith('/')) {
         const [command, ...args] = message.text.split(' ');
         return await this.handleCommand(message, command, args);
@@ -146,7 +144,7 @@ export abstract class TelegramBot {
       return await this.handleLeftChatMember(message, message.left_chat_member);
     }
 
-    if (message.chat.type === 'private') {
+    if (isPrivateChat) {
       return await this.sendCommands(message.chat.id);
     }
   }
@@ -184,6 +182,16 @@ export abstract class TelegramBot {
         .map((c) => `/${c.command} - ${c.description}`)
         .join('\n')}`
     );
+  }
+
+  public async sendChatAction(
+    chat_id: number,
+    action: string = 'typing'
+  ): Promise<void> {
+    await this.call(TelegramBotMethod.SendChatAction, {
+      chat_id,
+      action,
+    });
   }
 
   public async sendChatTextMessage(
