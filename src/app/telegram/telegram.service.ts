@@ -14,6 +14,7 @@ import { LocationsService } from '@app/locations/locations.service';
 import { TelegramBot } from './bots/telegram.bot';
 import { TelegramRegistrarBot } from './bots/telegram.registrar-bot';
 import { TelegramUpdateDto } from './dto/telegram.update-dto';
+import { TelegramChatBot } from './bots/telegram.chat-bot';
 
 @Injectable()
 export class TelegramService implements OnModuleInit, OnModuleDestroy {
@@ -97,6 +98,20 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
     } else {
       this.logger.warn('TELEGRAM_REGISTRAR_BOT_TOKEN is not set');
       return;
+    }
+
+    for (const agentModel of await this.agentsService.getAllTelegramAgentModels()) {
+      await this.registerBot(
+        new TelegramChatBot(
+          this,
+          this.prisma,
+          this.usersService,
+          this.agentsService,
+          this.locationsService,
+          agentModel.name,
+          agentModel.telegramBotToken!
+        )
+      );
     }
   }
 

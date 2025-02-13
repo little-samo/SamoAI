@@ -41,6 +41,12 @@ export class AgentsService implements AgentsRepository {
     return this.prisma.agentModel.findMany();
   }
 
+  public async getAllTelegramAgentModels(): Promise<AgentModel[]> {
+    return this.prisma.agentModel.findMany({
+      where: { telegramBotToken: { not: null }, isDeleted: false },
+    });
+  }
+
   public async getAgentModel(agentId: number): Promise<AgentModel> {
     const agent = await this.prisma.agentModel.findUnique({
       where: { id: agentId, isDeleted: false },
