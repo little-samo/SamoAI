@@ -268,19 +268,19 @@ export class TelegramRegistrarBot extends TelegramBot {
       inlineKeyboard.push([
         {
           text: '✨ Update Apperance',
-          callback_data: `/character ${agent.id} apperance`,
+          callback_data: `/json ${agent.id} apperance`,
         },
       ]);
       inlineKeyboard.push([
         {
           text: '🤖 Update Character',
-          callback_data: `/character ${agent.id} character`,
+          callback_data: `/json ${agent.id} character`,
         },
       ]);
       inlineKeyboard.push([
         {
           text: '🕒 Update Timezone',
-          callback_data: `/character ${agent.id} timezone`,
+          callback_data: `/json ${agent.id} timezone`,
         },
       ]);
       inlineKeyboard.push([
@@ -523,7 +523,7 @@ ${meta.appearance}`
           [
             {
               text: '❤️ Cancel',
-              callback_data: `/manage ${agent.id} cancel`,
+              callback_data: `/delete ${agent.id} cancel`,
             },
           ],
         ],
