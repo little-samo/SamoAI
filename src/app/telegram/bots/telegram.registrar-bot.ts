@@ -117,6 +117,10 @@ export class TelegramRegistrarBot extends TelegramBot {
         return;
       }
 
+      this.logger.log(
+        `${user.nickname} is registering bot ${botUser.username}`
+      );
+
       const botName = botUser.last_name
         ? `${botUser.first_name} ${botUser.last_name}`
         : botUser.first_name;
