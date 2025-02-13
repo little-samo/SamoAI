@@ -79,7 +79,6 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
     const baseUrl = process.env.TELEGRAM_WEBHOOK_BASE_URL;
     if (!baseUrl) {
       this.logger.warn('TELEGRAM_WEBHOOK_BASE_URL is not set');
-      return;
     }
 
     const registrarBotToken = process.env.TELEGRAM_REGISTRAR_BOT_TOKEN;
@@ -97,21 +96,25 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
       );
     } else {
       this.logger.warn('TELEGRAM_REGISTRAR_BOT_TOKEN is not set');
-      return;
     }
 
-    for (const agentModel of await this.agentsService.getAllTelegramAgentModels()) {
-      await this.registerBot(
-        new TelegramChatBot(
-          this,
-          this.prisma,
-          this.usersService,
-          this.agentsService,
-          this.locationsService,
-          agentModel.name,
-          agentModel.telegramBotToken!
-        )
-      );
+    if (!process.env.TELEGRAM_LLM_API_USER_ID) {
+      this.logger.warn('TELEGRAM_LLM_API_USER_ID is not set');
+      return;
+    } else {
+      for (const agentModel of await this.agentsService.getAllTelegramAgentModels()) {
+        await this.registerBot(
+          new TelegramChatBot(
+            this,
+            this.prisma,
+            this.usersService,
+            this.agentsService,
+            this.locationsService,
+            agentModel.name,
+            agentModel.telegramBotToken!
+          )
+        );
+      }
     }
   }
 

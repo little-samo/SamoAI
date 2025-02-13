@@ -48,27 +48,31 @@ export class TelegramChatBot extends TelegramAgentBot {
       locationMessage
     );
 
-    await WorldManager.instance.updateLocation(user.id, locationModel.id, {
-      preAction: async (location) => {
-        location.meta = {
-          ...TELEGRAM_BOT_PRIVATE_LOCATION_META,
-          ...location.meta,
-        };
+    await WorldManager.instance.updateLocation(
+      Number(process.env.TELEGRAM_LLM_API_USER_ID),
+      locationModel.id,
+      {
+        preAction: async (location) => {
+          location.meta = {
+            ...TELEGRAM_BOT_PRIVATE_LOCATION_META,
+            ...location.meta,
+          };
 
-        location.addAgentMessageHook(
-          async (location, agent, agentMessage, expression) => {
-            if (ENV.DEBUG) {
-              this.logger.log(
-                `[${this.name}] Agent response: ${agentMessage} (${expression})`
-              );
+          location.addAgentMessageHook(
+            async (location, agent, agentMessage, expression) => {
+              if (ENV.DEBUG) {
+                this.logger.log(
+                  `[${this.name}] Agent response: ${agentMessage} (${expression})`
+                );
+              }
+              if (agentMessage) {
+                await this.sendChatTextMessage(message.chat.id, agentMessage);
+              }
             }
-            if (agentMessage) {
-              await this.sendChatTextMessage(message.chat.id, agentMessage);
-            }
-          }
-        );
-      },
-    });
+          );
+        },
+      }
+    );
   }
 
   protected async handleCommand(
