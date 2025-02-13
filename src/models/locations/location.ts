@@ -4,6 +4,7 @@ import { LlmApiKeyModel, LocationModel } from '@prisma/client';
 import { Agent } from '@models/entities/agents/agent';
 import { User } from '@models/entities/users/user';
 import { Entity, EntityKey } from '@models/entities/entity';
+import { ENV } from '@common/config';
 
 import {
   LocationMessage,
@@ -202,6 +203,12 @@ export class Location extends EventEmitter {
       this.messagesState.messages.shift();
     }
     this.messagesState.dirty = true;
+
+    if (ENV.DEBUG) {
+      console.log(
+        `Location.addMessage:\n${JSON.stringify(this.messagesState.messages, null, 2)}`
+      );
+    }
   }
 
   public addAgentMessageHook(hook: LocationAgentMessageHook): void {
