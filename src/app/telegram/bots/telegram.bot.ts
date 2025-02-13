@@ -71,33 +71,31 @@ export abstract class TelegramBot {
     const { maxRetries = 5, token = this.token } = options;
     const url = `https://api.telegram.org/bot${token}/${method}`;
     for (let i = 0; i < maxRetries; i++) {
-      try {
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(params),
-        });
-        if (response.status === 429 && i < maxRetries - 1) {
-          const retryAfter = i + 1;
-          this.logger.warn(
-            `[${this.name}] Telegram API rate limited, retrying in ${retryAfter} seconds`
-          );
-          await sleep(retryAfter * 1000);
-          continue;
-        }
-        if (!response.ok) {
-          this.logger.error(`Failed to call ${method}: ${response.statusText}`);
-          throw new HttpException(
-            `Failed to call Telegram API ${method}: ${response.statusText}`,
-            response.status
-          );
-        }
-        return response.json();
-      } catch (error) {
-        this.logger.error(`Failed to call ${method}: ${error}`);
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(params),
+      });
+      if (response.status === 429 && i < maxRetries - 1) {
+        const retryAfter = i + 1;
+        this.logger.warn(
+          `[${this.name}] Telegram API rate limited, retrying in ${retryAfter} seconds`
+        );
+        await sleep(retryAfter * 1000);
+        continue;
       }
+      if (!response.ok) {
+        this.logger.error(
+          `Failed to call ${method}: ${response.statusText} ${await response.text()}`
+        );
+        throw new HttpException(
+          `Failed to call Telegram API ${method}: ${response.statusText}`,
+          response.status
+        );
+      }
+      return response.json();
     }
   }
 
