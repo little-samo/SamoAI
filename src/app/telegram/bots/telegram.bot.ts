@@ -124,7 +124,7 @@ export abstract class TelegramBot {
       //     return await this.handleReply(message, message.reply_to_message);
       //   }
       if (message.text.startsWith('/')) {
-        const [command, ...args] = message.text.slice(1).split(' ');
+        const [command, ...args] = message.text.split(' ');
         return await this.handleCommand(message, command, args);
       }
       return await this.handleTextMessage(message, message.from, message.text);
