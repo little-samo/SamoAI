@@ -37,6 +37,7 @@ export enum TelegramBotMethod {
   SendChatAction = 'sendChatAction',
   SendMessage = 'sendMessage',
 
+  AnswerCallbackQuery = 'answerCallbackQuery',
   EditMessageReplyMarkup = 'editMessageReplyMarkup',
 }
 
@@ -216,7 +217,7 @@ export abstract class TelegramBot {
     query: TelegramCallbackQueryDto
   ): Promise<void> {
     if (!query.data || !query.message) {
-      return;
+      return await this.answerCallbackQuery(query.id);
     }
 
     const user = await this.usersService.getOrCreateTelegramUserModel(
@@ -227,7 +228,8 @@ export abstract class TelegramBot {
     );
 
     const [command, ...args] = query.data.split(' ');
-    return await this.handleCommand(user, query.message, command, args);
+    await this.handleCommand(user, query.message, command, args);
+    return await this.answerCallbackQuery(query.id);
   }
 
   protected abstract handleTextMessage(
@@ -336,6 +338,16 @@ export abstract class TelegramBot {
     await this.call(TelegramBotMethod.SendMessage, {
       chat_id,
       reply_markup: remove_keyboard,
+    });
+  }
+
+  public async answerCallbackQuery(
+    callback_query_id: string,
+    text?: string
+  ): Promise<void> {
+    await this.call(TelegramBotMethod.AnswerCallbackQuery, {
+      callback_query_id,
+      text,
     });
   }
 
