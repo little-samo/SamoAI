@@ -278,6 +278,12 @@ export class TelegramRegistrarBot extends TelegramBot {
       ]);
       inlineKeyboard.push([
         {
+          text: '🌐 Update Language',
+          callback_data: `/json ${agent.id} language`,
+        },
+      ]);
+      inlineKeyboard.push([
+        {
           text: '🤖 Update Character',
           callback_data: `/json ${agent.id} character`,
         },
@@ -389,6 +395,41 @@ ${meta.appearance}`
           await this.sendChatTextMessage(
             message.chat.id,
             `${agent.name}'s appearance has been updated successfully! Time to test it out! 🚀`
+          );
+        }
+        return;
+      case 'language':
+        if (args.length === 2) {
+          await this.usersService.setUserTelegramCommand(
+            user.id,
+            `/json ${agent.id} language`
+          );
+          await this.sendChatTextMessage(
+            message.chat.id,
+            `Please enter ${agent.name}'s language (e.g. English, max 30 characters, comma separated).`
+          );
+          if (meta.languages && meta.languages.length > 0) {
+            await this.sendChatTextMessage(
+              message.chat.id,
+              `Current languages for ${agent.name}: ${meta.languages.join(', ')}`
+            );
+          }
+          return;
+        } else {
+          meta.languages = args[2]
+            .substring(0, 30)
+            .split(',')
+            .map((language) => language.trim());
+          if (meta.languages.length === 0) {
+            meta.languages = ['English'];
+          }
+          await this.agentsService.setAgentMeta(
+            agentId,
+            meta as object as JsonObject
+          );
+          await this.sendChatTextMessage(
+            message.chat.id,
+            `${agent.name}'s languages have been updated successfully! Time to test it out! 🚀`
           );
         }
         return;
