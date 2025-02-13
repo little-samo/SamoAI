@@ -99,7 +99,11 @@ export abstract class TelegramBot {
           response.status
         );
       }
-      return response.json();
+      if (ENV.DEBUG) {
+        this.logger.log(`[${this.name}] Response: ${await response.text()}`);
+      }
+      const data = (await response.json()) as { result: unknown };
+      return data.result;
     }
   }
 
