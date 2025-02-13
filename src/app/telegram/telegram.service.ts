@@ -6,6 +6,9 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ENV } from '@common/config';
+import { PrismaService } from '@app/prisma/prisma.service';
+import { AgentsService } from '@app/agents/agents.service';
+import { UsersService } from '@app/users/users.service';
 
 import { TelegramBot } from './bots/telegram.bot';
 import { TelegramRegistrarBot } from './bots/telegram.registrar-bot';
@@ -16,6 +19,12 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(TelegramService.name);
 
   private bots: Record<string, TelegramBot> = {};
+
+  public constructor(
+    private readonly prisma: PrismaService,
+    private readonly agentsService: AgentsService,
+    private readonly usersService: UsersService
+  ) {}
 
   private async registerBot(bot: TelegramBot): Promise<void> {
     try {
@@ -52,7 +61,14 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
     const registrarBotToken = process.env.TELEGRAM_REGISTRAR_BOT_TOKEN;
     if (registrarBotToken) {
       await this.registerBot(
-        new TelegramRegistrarBot('Registrar', registrarBotToken)
+        new TelegramRegistrarBot(
+          this,
+          this.prisma,
+          this.usersService,
+          this.agentsService,
+          'Registrar',
+          registrarBotToken
+        )
       );
     } else {
       this.logger.warn('TELEGRAM_REGISTRAR_BOT_TOKEN is not set');

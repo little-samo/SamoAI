@@ -1,5 +1,6 @@
 import { ENV } from '@common/config';
 import { Logger } from '@nestjs/common';
+import { UserModel } from '@prisma/client';
 
 import { TelegramMessageDto } from '../dto/telegram.message-dto';
 import { TelegramUserDto } from '../dto/telegram.user-dto';
@@ -29,6 +30,7 @@ export class TelegramRegistrarBot extends TelegramBot {
   protected readonly logger = new Logger(TelegramRegistrarBot.name);
 
   protected override async handleTextMessage(
+    user: UserModel,
     message: TelegramMessageDto,
     from: TelegramUserDto,
     text: string
@@ -42,6 +44,7 @@ export class TelegramRegistrarBot extends TelegramBot {
   }
 
   protected override async handleCommand(
+    user: UserModel,
     message: TelegramMessageDto,
     command: string,
     args: string[]

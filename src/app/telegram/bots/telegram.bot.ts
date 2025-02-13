@@ -4,6 +4,10 @@ import { Logger, HttpException } from '@nestjs/common';
 import { fetch } from 'undici';
 import { ENV } from '@common/config';
 import { sleep } from '@common/utils/sleep';
+import { PrismaService } from '@app/prisma/prisma.service';
+import { AgentsService } from '@app/agents/agents.service';
+import { UsersService } from '@app/users/users.service';
+import { UserModel } from '@prisma/client';
 
 import { TelegramUpdateDto } from '../dto/telegram.update-dto';
 import { TelegramMessageDto } from '../dto/telegram.message-dto';
@@ -14,6 +18,7 @@ import {
   TelegramReplyKeyboardMarkupDto,
   TelegramReplyKeyboardRemoveDto,
 } from '../dto/telegram.reply-keyboard-markup';
+import { TelegramService } from '../telegram.service';
 
 import { TELEGRAM_COMMANDS_METADATA_KEY } from './telegram.bot-commands-decorator';
 
@@ -33,6 +38,11 @@ export abstract class TelegramBot {
   private readonly secret: string;
 
   public constructor(
+    private readonly telegram: TelegramService,
+    private readonly prisma: PrismaService,
+    private readonly usersService: UsersService,
+    private readonly agentsService: AgentsService,
+
     public readonly name: string,
     public readonly token: string
   ) {
@@ -131,11 +141,23 @@ export abstract class TelegramBot {
         await this.sendChatAction(message.chat.id);
       }
 
+      const user = await this.usersService.getOrCreateTelegramUserModel(
+        message.from.id,
+        message.from.first_name,
+        message.from.last_name,
+        message.from.username
+      );
+
       if (message.text.startsWith('/')) {
         const [command, ...args] = message.text.split(' ');
-        return await this.handleCommand(message, command, args);
+        return await this.handleCommand(user, message, command, args);
       }
-      return await this.handleTextMessage(message, message.from, message.text);
+      return await this.handleTextMessage(
+        user,
+        message,
+        message.from,
+        message.text
+      );
     }
     if (message.new_chat_members) {
       return await this.handleNewChatMembers(message, message.new_chat_members);
@@ -150,12 +172,14 @@ export abstract class TelegramBot {
   }
 
   protected abstract handleTextMessage(
+    user: UserModel,
     message: TelegramMessageDto,
     from: TelegramUserDto,
     text: string
   ): Promise<void>;
 
   protected abstract handleCommand(
+    user: UserModel,
     message: TelegramMessageDto,
     command: string,
     args: string[]

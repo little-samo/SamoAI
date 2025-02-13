@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { UserState } from '@models/entities/users/states/user.state';
 import { UsersRepository } from '@core/repositories/users.repository';
-import { UserModel, LlmApiKeyModel } from '@prisma/client';
+import { UserModel, LlmApiKeyModel, UserPlatform } from '@prisma/client';
 import { PrismaService } from '@app/prisma/prisma.service';
 import { RedisService } from '@app/redis/redis.service';
 import { JsonObject } from '@prisma/client/runtime/library';
@@ -51,6 +51,27 @@ export class UsersService implements UsersRepository {
     }
 
     return userApiKey.userModel;
+  }
+
+  public async getOrCreateTelegramUserModel(
+    telegramUserId: number,
+    firstName: string,
+    lastName?: string,
+    username?: string
+  ): Promise<UserModel> {
+    const nickname = lastName ? `${firstName} ${lastName}` : firstName;
+    return await this.prisma.userModel.upsert({
+      where: { platform: UserPlatform.TELEGRAM, pid: telegramUserId },
+      update: { firstName, lastName, username, nickname },
+      create: {
+        platform: UserPlatform.TELEGRAM,
+        pid: telegramUserId,
+        firstName,
+        lastName,
+        username,
+        nickname,
+      },
+    });
   }
 
   public async getUserModels(

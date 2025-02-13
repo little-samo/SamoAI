@@ -4,7 +4,7 @@ model UserModel {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   platform UserPlatform
-  pid      BigInt       @unique
+  pid      BigInt
 
   username  String?
   nickname  String
@@ -18,6 +18,8 @@ model UserModel {
   llmApiKeys LlmApiKeyModel[] @relation("userLlmApiKey")
 
   agents AgentModel[] @relation("agentOwnerUser")
+
+  @@unique([platform, pid])
 }
 
 enum UserPlatform {
