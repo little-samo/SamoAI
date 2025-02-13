@@ -1,3 +1,4 @@
+import { ENV } from '@common/config';
 import { AgentsRepository } from '@core/repositories/agents.repository';
 import { LocationsRepository } from '@core/repositories/locations.repository';
 import { UsersRepository } from '@core/repositories/users.repository';
@@ -256,6 +257,10 @@ export class WorldManager {
 
     await this.saveAgents(Object.values(location.agents));
     await this.saveUsers(Object.values(location.users));
+
+    if (ENV.DEBUG) {
+      console.log(`Location ${location.model.name} successfully saved`);
+    }
   }
 
   private async saveAgents(agents: Agent[]): Promise<void> {
