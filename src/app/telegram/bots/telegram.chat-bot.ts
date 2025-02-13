@@ -70,7 +70,10 @@ export class TelegramChatBot extends TelegramAgentBot {
                 );
               }
               if (agentMessage) {
-                await this.sendChatTextMessage(message.chat.id, agentMessage);
+                await this.sendChatTextMessage(
+                  message.chat.id,
+                  this.changeMarkdownToHtml(agentMessage)
+                );
               }
             }
           );
@@ -91,11 +94,17 @@ export class TelegramChatBot extends TelegramAgentBot {
     }
     switch (command) {
       case '/start':
+        const ownerUser = await this.usersService.getUserModel(
+          this.agent!.ownerUserId!
+        );
+        const ownerUsername = ownerUser.username
+          ? `@${ownerUser.username}`
+          : ownerUser.nickname;
         this.sendChatTextMessage(
           message.chat.id,
-          this.changeMarkdownToHtml(
-            `Hello! This bot is ${this.agent!.name}, powered by @samo_ai_bot. When you exchange private messages with the bot, $SAMOAI will be consumed. If you invite and activate the bot in a group, it can interact with other group members. For more information, please visit @samo_ai_bot. 🐾`
-          )
+          `Hello! This bot is ${this.agent!.name}, powered by @samo_ai_bot. The bot was registered and configured by ${ownerUsername}, so if you have any questions about its assigned persona, please reach out to ${ownerUsername}.
+When you exchange private messages with the bot, $SAMOAI will be consumed. If you invite and activate the bot in a group, it can interact with other group members.
+For more information, please visit @samo_ai_bot. 🐾`
         );
         return;
     }
