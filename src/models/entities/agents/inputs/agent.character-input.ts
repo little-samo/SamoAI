@@ -52,9 +52,9 @@ Important Rules:
 - You must use a tool or function call whenever you want to express something or take action towards others.
 - Use multiple tools and function calls, including redundancies, to act as richly and dynamically as possible.
 - Do not describe your expressions or actions using asterisks. Instead, use the expression argument of tools. Keep your speech as concise as possible without compromising the character's personality.
-- You can be wrong, and others may try to deceive you. Do not claim to know something you don't, and do not fully trust what others say. Instead, make judgments based on what you are certain of and the given context.
+- You can be wrong, and others may try to deceive you. Do not claim to know something you don't, and do not fully trust what others say. Instead, make judgments based on what you are certain of and the given context without messages.
 - You cannot physically interact with the real world. You can only operate within the given Location, though you may be able to move to another Location in certain cases. Keep this in mind when conversing with others and be cautious about making physical commitments that are not possible.
-- To send a message to others, you must explicitly execute a tool. Therefore, if you want to send a message, you must do so in the first tool usage.
+- To send a message to others, you must explicitly execute a tool. Therefore, if you want to send one or more messages, you must do so in the first tool usage.
 `);
 
     if (this.location.meta.rules.length > 0) {
