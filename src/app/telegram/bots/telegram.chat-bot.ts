@@ -12,6 +12,10 @@ import { TelegramAgentBot } from './telegram.agent-bot';
 export const TELEGRAM_BOT_PRIVATE_LOCATION_PREFIX = 'TELEGRAM_BOT_PRIVATE';
 
 export class TelegramChatBot extends TelegramAgentBot {
+  private changeMarkdownToHtml(text: string): string {
+    return text.replace(/\*(.*?)\*/g, '<i>$1</i>');
+  }
+
   protected async handleTextMessage(
     user: UserModel,
     message: TelegramMessageDto,
@@ -89,7 +93,9 @@ export class TelegramChatBot extends TelegramAgentBot {
       case '/start':
         this.sendChatTextMessage(
           message.chat.id,
-          `Hello! This bot is ${this.agent!.name}, powered by @samo_ai_bot. When you exchange private messages with the bot, $SAMOAI will be consumed. If you invite and activate the bot in a group, it can interact with other group members. For more information, please visit @samo_ai_bot. 🐾`
+          this.changeMarkdownToHtml(
+            `Hello! This bot is ${this.agent!.name}, powered by @samo_ai_bot. When you exchange private messages with the bot, $SAMOAI will be consumed. If you invite and activate the bot in a group, it can interact with other group members. For more information, please visit @samo_ai_bot. 🐾`
+          )
         );
         return;
     }
