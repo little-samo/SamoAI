@@ -267,8 +267,7 @@ export abstract class TelegramBot {
       chat_id,
       `Commands:\n${commands
         .map((c) => `/${c.command} - ${c.description}`)
-        .join('\n')}`,
-      'HTML'
+        .join('\n')}`
     );
   }
 
@@ -285,7 +284,7 @@ export abstract class TelegramBot {
   public async sendChatTextMessage(
     chat_id: number,
     text: string,
-    parse_mode: 'MarkdownV2' | 'HTML' = 'MarkdownV2'
+    parse_mode: 'HTML' | 'MarkdownV2' = 'HTML'
   ): Promise<void> {
     await this.call(TelegramBotMethod.SendMessage, {
       chat_id,

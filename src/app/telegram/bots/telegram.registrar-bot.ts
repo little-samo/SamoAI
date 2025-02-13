@@ -92,6 +92,10 @@ export class TelegramRegistrarBot extends TelegramBot {
       );
     } else {
       const token = args[0];
+      if (ENV.DEBUG) {
+        this.logger.log(`${user.nickname} is registering bot ${token}`);
+      }
+
       const agent = await this.agentsService.getAgentByTelegramBotToken(token);
       if (agent) {
         if (agent.ownerUserId !== user.id) {
