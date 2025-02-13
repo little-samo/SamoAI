@@ -71,7 +71,9 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
     update: TelegramUpdateDto
   ): Promise<void> {
     const bot = this.bots[secret];
-    this.logger.log(`Update received for bot: ${JSON.stringify(update)}`);
+    this.logger.log(
+      `Update received for bot ${bot?.name}: ${JSON.stringify(update)}`
+    );
     if (bot) {
       await bot.handleUpdate(update);
     } else {

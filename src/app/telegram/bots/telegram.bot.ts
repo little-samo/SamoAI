@@ -22,7 +22,7 @@ export enum TelegramBotMethod {
 }
 
 export abstract class TelegramBot {
-  private readonly logger = new Logger(TelegramBot.name);
+  protected readonly logger = new Logger(TelegramBot.name);
 
   private readonly secret: string;
 

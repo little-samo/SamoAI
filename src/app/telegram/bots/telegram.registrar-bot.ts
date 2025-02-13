@@ -1,3 +1,6 @@
+import { ENV } from '@common/config';
+import { Logger } from '@nestjs/common';
+
 import { TelegramMessageDto } from '../dto/telegram.message-dto';
 import { TelegramUserDto } from '../dto/telegram.user-dto';
 
@@ -23,12 +26,18 @@ import { TelegramBot } from './telegram.bot';
   },
 ])
 export class TelegramRegistrarBot extends TelegramBot {
+  protected readonly logger = new Logger(TelegramRegistrarBot.name);
+
   protected override async handleTextMessage(
     message: TelegramMessageDto,
     from: TelegramUserDto,
     text: string
   ): Promise<void> {
-    throw new Error('Method not implemented.');
+    if (ENV.DEBUG) {
+      this.logger.log(
+        `[${this.name}] Text message received: ${text} from ${from.id}`
+      );
+    }
   }
 
   protected override async handleCommand(
@@ -36,6 +45,11 @@ export class TelegramRegistrarBot extends TelegramBot {
     command: string,
     args: string[]
   ): Promise<void> {
+    if (ENV.DEBUG) {
+      this.logger.log(
+        `[${this.name}] Command received: ${command} ${args.join(' ')}`
+      );
+    }
     switch (command) {
       case '/start':
         return await this.sendChatForceReplyMessage(
@@ -50,13 +64,19 @@ export class TelegramRegistrarBot extends TelegramBot {
     message: TelegramMessageDto,
     newChatMembers: TelegramUserDto[]
   ): Promise<void> {
-    throw new Error('Method not implemented.');
+    if (ENV.DEBUG) {
+      this.logger.log(
+        `[${this.name}] New chat members: ${newChatMembers.map((m) => m.id).join(', ')}`
+      );
+    }
   }
 
   protected override async handleLeftChatMember(
     message: TelegramMessageDto,
     leftChatMember: TelegramUserDto
   ): Promise<void> {
-    throw new Error('Method not implemented.');
+    if (ENV.DEBUG) {
+      this.logger.log(`[${this.name}] Left chat member: ${leftChatMember.id}`);
+    }
   }
 }
