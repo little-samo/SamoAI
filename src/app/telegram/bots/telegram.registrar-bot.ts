@@ -52,11 +52,19 @@ export class TelegramRegistrarBot extends TelegramBot {
     }
     switch (command) {
       case '/start':
-        return await this.sendChatForceReplyMessage(
+        await this.sendChatForceReplyMessage(
           message.chat.id,
           'Force Reply Test',
           'Send Reply'
         );
+        await this.sendReplyKeyboard(
+          message.chat.id,
+          'Empty Reply Keyboard Test',
+          {
+            keyboard: [[]],
+          }
+        );
+        return;
     }
   }
 

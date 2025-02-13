@@ -9,6 +9,11 @@ import { TelegramUpdateDto } from '../dto/telegram.update-dto';
 import { TelegramMessageDto } from '../dto/telegram.message-dto';
 import { TelegramUserDto } from '../dto/telegram.user-dto';
 import { TelegramBotCommandDto } from '../dto/telegram.bot-command-dto';
+import { TelegramInlineKeyboardMarkupDto } from '../dto/telegram.inline-keyboard-markup-dto';
+import {
+  TelegramReplyKeyboardMarkupDto,
+  TelegramReplyKeyboardRemoveDto,
+} from '../dto/telegram.reply-keyboard-markup';
 
 import { TELEGRAM_COMMANDS_METADATA_KEY } from './telegram.bot-commands-decorator';
 
@@ -128,9 +133,6 @@ export abstract class TelegramBot {
     }
 
     if (message.from && message.text) {
-      //   if (message.reply_to_message?.reply) {
-      //     return await this.handleReply(message, message.reply_to_message);
-      //   }
       if (message.text.startsWith('/')) {
         const [command, ...args] = message.text.split(' ');
         return await this.handleCommand(message, command, args);
@@ -207,6 +209,42 @@ export abstract class TelegramBot {
         force_reply: true,
         input_field_placeholder: placeholder,
       },
+    });
+  }
+
+  public async sendInlineKeyboard(
+    chat_id: number,
+    text: string,
+    keyboard: TelegramInlineKeyboardMarkupDto
+  ): Promise<void> {
+    await this.call(TelegramBotMethod.SendMessage, {
+      chat_id,
+      text,
+      reply_markup: keyboard,
+    });
+  }
+
+  public async sendReplyKeyboard(
+    chat_id: number,
+    text: string,
+    keyboard: TelegramReplyKeyboardMarkupDto
+  ): Promise<void> {
+    await this.call(TelegramBotMethod.SendMessage, {
+      chat_id,
+      text,
+      reply_markup: keyboard,
+    });
+  }
+
+  public async sendReplyKeyboardRemove(
+    chat_id: number,
+    remove_keyboard: TelegramReplyKeyboardRemoveDto = {
+      remove_keyboard: true,
+    }
+  ): Promise<void> {
+    await this.call(TelegramBotMethod.SendMessage, {
+      chat_id,
+      reply_markup: remove_keyboard,
     });
   }
 }
