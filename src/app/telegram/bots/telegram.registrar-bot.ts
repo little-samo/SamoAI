@@ -38,6 +38,7 @@ export class TelegramRegistrarBot extends TelegramBot {
         `[${this.name}] Text message received: ${text} from ${from.id}`
       );
     }
+    await this.sendCommands(message.chat.id);
   }
 
   protected override async handleCommand(
@@ -65,6 +66,8 @@ export class TelegramRegistrarBot extends TelegramBot {
           }
         );
         return;
+      default:
+        await this.sendCommands(message.chat.id);
     }
   }
 
