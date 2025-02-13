@@ -88,7 +88,7 @@ export class TelegramRegistrarBot extends TelegramBot {
       await this.sendChatForceReplyMessage(
         message.chat.id,
         `/register\nAre you ready to create a new bot? Just go to @BotFather, make a bot, and register the API Token! Please enter the API Token in the chat! 🐾`,
-        'API Token'
+        '1234567890:ABCDEFGHIJKLMNOPQRSTUVWXYZ012345678'
       );
     } else {
       const token = args[0];
