@@ -522,6 +522,13 @@ export class AgentsService implements AgentsRepository {
     });
   }
 
+  public async setAgentMeta(agentId: number, meta: JsonObject): Promise<void> {
+    await this.prisma.agentModel.update({
+      where: { id: agentId },
+      data: { meta },
+    });
+  }
+
   public async setAgentActive(
     agentId: number,
     isActive: boolean

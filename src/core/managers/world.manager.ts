@@ -15,6 +15,11 @@ import {
 } from '@models/locations/states/location.messages-state';
 import { LocationState } from '@models/locations/states/location.state';
 
+interface UpdateLocationOptions {
+  preAction?: (location: Location) => Promise<void>;
+  postAction?: (location: Location) => Promise<void>;
+}
+
 export class WorldManager {
   private static readonly LOCK_TTL = 30000; // 30 seconds
   private static readonly LOCATION_LOCK_PREFIX = 'lock:location:';
@@ -327,13 +332,23 @@ export class WorldManager {
 
   public async updateLocation(
     llmApiKeyUserId: number,
-    locationId: number
+    locationId: number,
+    options: UpdateLocationOptions = {}
   ): Promise<Location> {
     return await this.withLocationAndEntitiesLock(
       llmApiKeyUserId,
       locationId,
       async (location) => {
+        if (options.preAction) {
+          await options.preAction(location);
+        }
+
         await location.update();
+
+        if (options.postAction) {
+          await options.postAction(location);
+        }
+
         await this.saveLocation(location);
         return location;
       }

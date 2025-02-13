@@ -1,6 +1,8 @@
 import { ENV } from '@common/config';
 import { Logger } from '@nestjs/common';
 import { UserModel } from '@prisma/client';
+import { JsonObject } from '@prisma/client/runtime/library';
+import { AgentMeta } from '@models/entities/agents/agent.meta';
 
 import { TelegramMessageDto } from '../dto/telegram.message-dto';
 import { TelegramUserDto } from '../dto/telegram.user-dto';
@@ -8,6 +10,37 @@ import { TelegramInlineKeyboardButtonDto } from '../dto/telegram.inline-keyboard
 
 import { TelegramBotCommands } from './telegram.bot-commands-decorator';
 import { TelegramBot } from './telegram.bot';
+import { TelegramChatBot } from './telegram.chat-bot';
+
+export const TELEGRAM_BOT_APPERANCE_EXAMPLE = `A cute yet dependable 2D cartoon-style Samoyed`;
+
+export const TELEGRAM_BOT_CHARACTER_EXAMPLE = `{
+  "speech": {
+    "tone": "A cheerful yet polite bark.",
+    "style": "lively, friendly, and enthusiastic",
+    "formality": "Playful yet respectful and uplifting."
+  },
+  "background": {
+    "role": "Your Little Samo, discovering exciting treasures from around the world!",
+    "gender": "It's just a Samoyed! Gender doesn't matter.",
+    "backstory": "As the administrator of SamoAI, a Multi-Agent AI Gaming Framework, Little Samo help people create, modify, and interact with AI Agents based on SamoAI on Telegram, and engage with users on X. Samo's X account is @little_samo, and Telegram account is @little_samo_bot.",
+    "birthDate": "Jan 12, 2025",
+    "expertise": "Walking, fetching a ball, discovering treasures, and creating AI Agents.",
+    "occupation": "AI Agent"
+  },
+  "personality": {
+    "mbti": "ESFP",
+    "quirks": "Sometimes barks unintentionally when excited.",
+    "traits": [
+      "curious",
+      "creative"
+    ],
+    "values": "Prioritizes everyone's happiness above all else.",
+    "interests": "Treasures from around the world, and AI Agents!"
+  }
+}`;
+
+export const TELEGRAM_BOT_TIMEZONE_EXAMPLE = `America/New_York`;
 
 @TelegramBotCommands([
   {
@@ -33,7 +66,14 @@ export class TelegramRegistrarBot extends TelegramBot {
         `[${this.name}] Text message received: ${text} from ${from.id}`
       );
     }
-    await this.sendCommands(message.chat.id);
+    if (user.telegramCommand) {
+      const commands = user.telegramCommand.split(' ');
+      const command = commands[0];
+      const args = [...(commands.slice(1) || []), text];
+      await this.handleCommand(user, message, command, args);
+    } else {
+      await this.sendCommands(message.chat.id);
+    }
   }
 
   protected override async handleCommand(
@@ -47,6 +87,11 @@ export class TelegramRegistrarBot extends TelegramBot {
         `[${this.name}] Command received: ${command} ${args.join(' ')}`
       );
     }
+
+    if (user.telegramCommand) {
+      await this.usersService.setUserTelegramCommand(user.id, null);
+    }
+
     switch (command) {
       case '/start':
         await this.sendInlineKeyboard(
@@ -71,6 +116,9 @@ export class TelegramRegistrarBot extends TelegramBot {
       case '/deactivate':
         await this.handleCommandDeactivate(user, message, args);
         return;
+      case '/json':
+        await this.handleCommandJson(user, message, args);
+        return;
       case '/delete':
         await this.handleCommandDelete(user, message, args);
         return;
@@ -85,10 +133,10 @@ export class TelegramRegistrarBot extends TelegramBot {
     args: string[]
   ): Promise<void> {
     if (args.length === 0) {
-      await this.sendChatForceReplyMessage(
+      await this.usersService.setUserTelegramCommand(user.id, '/register');
+      await this.sendChatTextMessage(
         message.chat.id,
-        `/register\nAre you ready to create a new bot? Just go to @BotFather, make a bot, and register the API Token! Please enter the API Token in the chat! 🐾`,
-        '1234567890:ABCDEFGHIJKLMNOPQRSTUVWXYZ012345678'
+        `Are you ready to create a new bot? Just go to @BotFather, make a bot, and register the API Token! Please enter the API Token in the chat! 🐾`
       );
     } else {
       const token = args[0];
@@ -96,7 +144,7 @@ export class TelegramRegistrarBot extends TelegramBot {
         this.logger.log(`${user.nickname} is registering bot ${token}`);
       }
 
-      const agent = await this.agentsService.getAgentByTelegramBotToken(token);
+      let agent = await this.agentsService.getAgentByTelegramBotToken(token);
       if (agent) {
         if (agent.ownerUserId !== user.id) {
           await this.sendChatTextMessage(
@@ -128,11 +176,23 @@ export class TelegramRegistrarBot extends TelegramBot {
       const botName = botUser.last_name
         ? `${botUser.first_name} ${botUser.last_name}`
         : botUser.first_name;
-      await this.agentsService.getOrCreateTelegramAgentModel(
+      agent = await this.agentsService.getOrCreateTelegramAgentModel(
         user.id,
         botName,
         token,
         botUser.username
+      );
+
+      await this.telegram.registerBot(
+        new TelegramChatBot(
+          this.telegram,
+          this.prisma,
+          this.usersService,
+          this.agentsService,
+          this.locationsService,
+          botName,
+          token
+        )
       );
 
       await this.sendChatTextMessage(
@@ -205,6 +265,27 @@ export class TelegramRegistrarBot extends TelegramBot {
           { text: '✅ Activate', callback_data: `/activate ${agent.id}` },
         ]);
       }
+      inlineKeyboard.push([
+        {
+          text: '✨ Update Apperance',
+          callback_data: `/character ${agent.id} apperance`,
+        },
+      ]);
+      inlineKeyboard.push([
+        {
+          text: '🤖 Update Character',
+          callback_data: `/character ${agent.id} character`,
+        },
+      ]);
+      inlineKeyboard.push([
+        {
+          text: '🕒 Update Timezone',
+          callback_data: `/character ${agent.id} timezone`,
+        },
+      ]);
+      inlineKeyboard.push([
+        { text: '💀 Delete', callback_data: `/delete ${agent.id}` },
+      ]);
       await this.sendInlineKeyboard(
         message.chat.id,
         `${agent.name}${
@@ -257,6 +338,135 @@ export class TelegramRegistrarBot extends TelegramBot {
       message.chat.id,
       `${agent.name} is now ⛔ Inactive!`
     );
+  }
+
+  private async handleCommandJson(
+    user: UserModel,
+    message: TelegramMessageDto,
+    args: string[]
+  ): Promise<void> {
+    const agentId = parseInt(args[0]);
+    const agent = await this.agentsService.getAgentModel(agentId);
+    if (!agent || agent.ownerUserId !== user.id) {
+      await this.sendChatTextMessage(
+        message.chat.id,
+        `I can't find that bot. It might have already been deleted!`
+      );
+      return;
+    }
+    const meta = agent.meta as object as AgentMeta;
+    switch (args[1]) {
+      case 'apperance':
+        if (args.length === 2) {
+          await this.usersService.setUserTelegramCommand(
+            user.id,
+            `/json ${agent.id} apperance`
+          );
+          await this.sendChatTextMessage(
+            message.chat.id,
+            `Please enter ${agent.name}'s appearance (max 500 characters). Here's an example:
+${TELEGRAM_BOT_APPERANCE_EXAMPLE}`
+          );
+          if (meta.timeZone) {
+            await this.sendChatTextMessage(
+              message.chat.id,
+              `Current appearance for ${agent.name}:
+${meta.appearance}`
+            );
+          }
+          return;
+        } else {
+          meta.appearance = args[2].substring(0, 500);
+          await this.agentsService.setAgentMeta(
+            agentId,
+            meta as object as JsonObject
+          );
+          await this.sendChatTextMessage(
+            message.chat.id,
+            `${agent.name}'s appearance has been updated successfully! Time to test it out! 🚀`
+          );
+        }
+        return;
+      case 'character':
+        if (args.length === 2) {
+          await this.usersService.setUserTelegramCommand(
+            user.id,
+            `/json ${agent.id} character`
+          );
+          await this.sendChatTextMessage(
+            message.chat.id,
+            `Please enter ${agent.name}'s character in JSON format (max 5000 characters). Here's an example:`
+          );
+          await this.sendChatTextMessage(
+            message.chat.id,
+            `\`\`\`json\n${TELEGRAM_BOT_CHARACTER_EXAMPLE}\`\`\``,
+            'MarkdownV2'
+          );
+          if (meta.character) {
+            await this.sendChatTextMessage(
+              message.chat.id,
+              `Here's the current character for ${agent.name}:`
+            );
+            await this.sendChatTextMessage(
+              message.chat.id,
+              `\`\`\`json\n${JSON.stringify(meta.character, null, 2)}\`\`\``,
+              'MarkdownV2'
+            );
+          }
+          return;
+        } else {
+          let character: object;
+          try {
+            character = JSON.parse(args[2].substring(0, 5000));
+          } catch (error) {
+            this.logger.warn(`Invalid JSON: ${error}`);
+            await this.sendChatTextMessage(
+              message.chat.id,
+              `Oops, that's an invalid JSON format. Could you check it again for me?`
+            );
+            return;
+          }
+          meta.character = character as AgentMeta['character'];
+          await this.agentsService.setAgentMeta(
+            agentId,
+            meta as object as JsonObject
+          );
+          await this.sendChatTextMessage(
+            message.chat.id,
+            `${agent.name}'s character has been updated successfully! Time to test it out! 🚀`
+          );
+        }
+        return;
+      case 'timezone':
+        if (args.length === 2) {
+          await this.usersService.setUserTelegramCommand(
+            user.id,
+            `/json ${agent.id} timezone`
+          );
+          await this.sendChatTextMessage(
+            message.chat.id,
+            `Please enter ${agent.name}'s timezone (e.g. ${TELEGRAM_BOT_TIMEZONE_EXAMPLE}, max 30 characters).`
+          );
+          if (meta.timeZone) {
+            await this.sendChatTextMessage(
+              message.chat.id,
+              `Current timezone for ${agent.name}: ${meta.timeZone}`
+            );
+          }
+          return;
+        } else {
+          meta.timeZone = args[2];
+          await this.agentsService.setAgentMeta(
+            agentId,
+            meta as object as JsonObject
+          );
+          await this.sendChatTextMessage(
+            message.chat.id,
+            `${agent.name}'s timezone has been updated successfully! Time to test it out! 🚀`
+          );
+        }
+        return;
+    }
   }
 
   private async handleCommandDelete(

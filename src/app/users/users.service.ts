@@ -226,4 +226,14 @@ export class UsersService implements UsersRepository {
       state.dirty = false;
     });
   }
+
+  public async setUserTelegramCommand(
+    userId: number,
+    command: string | null
+  ): Promise<void> {
+    await this.prisma.userModel.update({
+      where: { id: userId },
+      data: { telegramCommand: command },
+    });
+  }
 }

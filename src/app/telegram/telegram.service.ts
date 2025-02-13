@@ -9,6 +9,7 @@ import { ENV } from '@common/config';
 import { PrismaService } from '@app/prisma/prisma.service';
 import { AgentsService } from '@app/agents/agents.service';
 import { UsersService } from '@app/users/users.service';
+import { LocationsService } from '@app/locations/locations.service';
 
 import { TelegramBot } from './bots/telegram.bot';
 import { TelegramRegistrarBot } from './bots/telegram.registrar-bot';
@@ -23,10 +24,11 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
   public constructor(
     private readonly prisma: PrismaService,
     private readonly agentsService: AgentsService,
-    private readonly usersService: UsersService
+    private readonly usersService: UsersService,
+    private readonly locationsService: LocationsService
   ) {}
 
-  private async registerBot(bot: TelegramBot): Promise<void> {
+  public async registerBot(bot: TelegramBot): Promise<void> {
     try {
       const secret = await bot.registerWebhook();
       if (secret == null) {
@@ -64,7 +66,7 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  private async unregisterBot(bot: TelegramBot): Promise<void> {
+  public async unregisterBot(bot: TelegramBot): Promise<void> {
     try {
       await bot.deleteWebhook();
     } catch (error) {
@@ -87,6 +89,7 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
           this.prisma,
           this.usersService,
           this.agentsService,
+          this.locationsService,
           'Registrar',
           registrarBotToken
         )

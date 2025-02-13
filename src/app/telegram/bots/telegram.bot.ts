@@ -8,6 +8,7 @@ import { PrismaService } from '@app/prisma/prisma.service';
 import { AgentsService } from '@app/agents/agents.service';
 import { UsersService } from '@app/users/users.service';
 import { UserModel } from '@prisma/client';
+import { LocationsService } from '@app/locations/locations.service';
 
 import { TelegramUpdateDto } from '../dto/telegram.update-dto';
 import { TelegramMessageDto } from '../dto/telegram.message-dto';
@@ -56,7 +57,7 @@ export abstract class TelegramBot {
     protected readonly prisma: PrismaService,
     protected readonly usersService: UsersService,
     protected readonly agentsService: AgentsService,
-
+    protected readonly locationsService: LocationsService,
     public readonly name: string,
     public readonly token: string
   ) {
@@ -191,15 +192,6 @@ export abstract class TelegramBot {
         message.from.username
       );
 
-      if (
-        message.reply_to_message &&
-        message.reply_to_message.text &&
-        message.reply_to_message.text.startsWith('/')
-      ) {
-        const command = message.reply_to_message.text.split('\n')[0];
-        const args = message.text.split(' ');
-        return await this.handleCommand(user, message, command, args);
-      }
       if (message.text.startsWith('/')) {
         const [command, ...args] = message.text.split(' ');
         return await this.handleCommand(user, message, command, args);

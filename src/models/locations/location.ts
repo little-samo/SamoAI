@@ -37,7 +37,7 @@ export class Location extends EventEmitter {
   public readonly id: LocationId;
   public readonly key: LocationKey;
 
-  public readonly meta: LocationMeta;
+  public meta: LocationMeta;
 
   public readonly core: LocationCore;
 

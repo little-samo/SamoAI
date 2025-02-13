@@ -13,6 +13,8 @@ model UserModel {
 
   meta Json @default("{}")
 
+  telegramCommand String? @map("telegram_command")
+
   apiKey UserApiKeyModel? @relation("userApiKey")
 
   llmApiKeys LlmApiKeyModel[] @relation("userLlmApiKey")
