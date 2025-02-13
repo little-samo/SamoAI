@@ -108,7 +108,7 @@ export class TelegramChatBot extends TelegramAgentBot {
         const ownerUsername = ownerUser.username
           ? `@${ownerUser.username}`
           : ownerUser.nickname;
-        this.sendChatTextMessage(
+        await this.sendChatTextMessage(
           message.chat.id,
           `Hello! This bot is <b>${this.agent!.name}</b>, powered by @samo_ai_bot. The bot was registered and configured by ${ownerUsername}, so if you have any questions about its assigned persona, please reach out to ${ownerUsername}.
 When you exchange private messages with the bot, $SAMOAI will be consumed. If you invite and activate the bot in a group, it can interact with other group members.

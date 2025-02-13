@@ -1,4 +1,4 @@
-import { TelegramUserDto } from "./telegram.user-dto";
+import { TelegramUserDto } from './telegram.user-dto';
 
 export interface TelegramInlineQueryDto {
   id: string; // Unique identifier for this query

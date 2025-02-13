@@ -71,6 +71,7 @@ export default [
           varsIgnorePattern: '^_',
         },
       ],
+      '@typescript-eslint/no-floating-promises': 'error',
     },
   },
 ];

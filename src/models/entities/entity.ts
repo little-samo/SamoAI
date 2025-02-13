@@ -41,7 +41,7 @@ export abstract class Entity {
 
   public abstract update(): Promise<void>;
 
-  public async setExpression(expression: string): Promise<void> {
+  public setExpression(expression: string): void {
     if (expression.startsWith('*') && expression.endsWith('*')) {
       expression = expression.slice(1, -1);
     }
