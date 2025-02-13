@@ -12,17 +12,23 @@ import { UserModel } from '@prisma/client';
 import { TelegramUpdateDto } from '../dto/telegram.update-dto';
 import { TelegramMessageDto } from '../dto/telegram.message-dto';
 import { TelegramUserDto } from '../dto/telegram.user-dto';
-import { TelegramBotCommandDto } from '../dto/telegram.bot-command-dto';
+import {
+  TelegramBotCommandDto,
+  TelegramBotCommandScopeDto,
+} from '../dto/telegram.bot-command-dto';
 import { TelegramInlineKeyboardMarkupDto } from '../dto/telegram.inline-keyboard-markup-dto';
 import {
   TelegramReplyKeyboardMarkupDto,
   TelegramReplyKeyboardRemoveDto,
 } from '../dto/telegram.reply-keyboard-markup';
 import { TelegramService } from '../telegram.service';
+import { TelegramCallbackQueryDto } from '../dto/telegram.callback-query-dto';
 
 import { TELEGRAM_COMMANDS_METADATA_KEY } from './telegram.bot-commands-decorator';
 
 export enum TelegramBotMethod {
+  GetMe = 'getMe',
+
   SetWebhook = 'setWebhook',
   DeleteWebhook = 'deleteWebhook',
 
@@ -30,6 +36,13 @@ export enum TelegramBotMethod {
 
   SendChatAction = 'sendChatAction',
   SendMessage = 'sendMessage',
+
+  EditMessageReplyMarkup = 'editMessageReplyMarkup',
+}
+
+interface TelegramCallOptions {
+  maxRetries?: number;
+  token?: string;
 }
 
 export abstract class TelegramBot {
@@ -38,10 +51,10 @@ export abstract class TelegramBot {
   private readonly secret: string;
 
   public constructor(
-    private readonly telegram: TelegramService,
-    private readonly prisma: PrismaService,
-    private readonly usersService: UsersService,
-    private readonly agentsService: AgentsService,
+    protected readonly telegram: TelegramService,
+    protected readonly prisma: PrismaService,
+    protected readonly usersService: UsersService,
+    protected readonly agentsService: AgentsService,
 
     public readonly name: string,
     public readonly token: string
@@ -52,9 +65,10 @@ export abstract class TelegramBot {
   public async call(
     method: TelegramBotMethod,
     params: Record<string, unknown> = {},
-    maxRetries: number = 5
+    options: TelegramCallOptions = {}
   ): Promise<unknown> {
-    const url = `https://api.telegram.org/bot${this.token}/${method}`;
+    const { maxRetries = 5, token = this.token } = options;
+    const url = `https://api.telegram.org/bot${token}/${method}`;
     for (let i = 0; i < maxRetries; i++) {
       try {
         const response = await fetch(url, {
@@ -86,6 +100,14 @@ export abstract class TelegramBot {
     }
   }
 
+  public async getMe(token?: string): Promise<TelegramUserDto> {
+    return (await this.call(
+      TelegramBotMethod.GetMe,
+      {},
+      { token }
+    )) as TelegramUserDto;
+  }
+
   public async registerWebhook(): Promise<string | null> {
     const baseUrl = process.env.TELEGRAM_WEBHOOK_BASE_URL;
     if (!baseUrl) {
@@ -106,17 +128,6 @@ export abstract class TelegramBot {
         this.logger.log(`[${this.name}] Webhook registered`);
       }
 
-      const commands = Reflect.getMetadata(
-        TELEGRAM_COMMANDS_METADATA_KEY,
-        this.constructor
-      ) as TelegramBotCommandDto[];
-      await this.call(TelegramBotMethod.SetMyCommands, {
-        commands,
-      });
-      if (ENV.DEBUG) {
-        this.logger.log(`[${this.name}] Commands registered`);
-      }
-
       return this.secret;
     } catch (error) {
       this.logger.error(`Failed to register webhook: ${error}`);
@@ -128,9 +139,30 @@ export abstract class TelegramBot {
     await this.call(TelegramBotMethod.DeleteWebhook);
   }
 
+  public async setMyCommands(
+    commands?: TelegramBotCommandDto[],
+    scope?: TelegramBotCommandScopeDto
+  ): Promise<void> {
+    commands ??= Reflect.getMetadata(
+      TELEGRAM_COMMANDS_METADATA_KEY,
+      this.constructor
+    ) as TelegramBotCommandDto[];
+
+    await this.call(TelegramBotMethod.SetMyCommands, {
+      commands,
+      scope,
+    });
+    if (ENV.DEBUG) {
+      this.logger.log(`[${this.name}] Commands registered`);
+    }
+  }
+
   public async handleUpdate(update: TelegramUpdateDto): Promise<void> {
     if (update.message) {
-      await this.handleMessage(update.message);
+      return await this.handleMessage(update.message);
+    }
+    if (update.callback_query) {
+      return await this.handleCallbackQuery(update.callback_query);
     }
   }
 
@@ -148,6 +180,15 @@ export abstract class TelegramBot {
         message.from.username
       );
 
+      if (
+        message.reply_to_message &&
+        message.reply_to_message.text &&
+        message.reply_to_message.text.startsWith('/')
+      ) {
+        const command = message.reply_to_message.text.split('\n')[0];
+        const args = message.text.split(' ');
+        return await this.handleCommand(user, message, command, args);
+      }
       if (message.text.startsWith('/')) {
         const [command, ...args] = message.text.split(' ');
         return await this.handleCommand(user, message, command, args);
@@ -169,6 +210,24 @@ export abstract class TelegramBot {
     if (isPrivateChat) {
       return await this.sendCommands(message.chat.id);
     }
+  }
+
+  protected async handleCallbackQuery(
+    query: TelegramCallbackQueryDto
+  ): Promise<void> {
+    if (!query.data || !query.message) {
+      return;
+    }
+
+    const user = await this.usersService.getOrCreateTelegramUserModel(
+      query.from.id,
+      query.from.first_name,
+      query.from.last_name,
+      query.from.username
+    );
+
+    const [command, ...args] = query.data.split(' ');
+    return await this.handleCommand(user, query.message, command, args);
   }
 
   protected abstract handleTextMessage(
@@ -277,6 +336,18 @@ export abstract class TelegramBot {
     await this.call(TelegramBotMethod.SendMessage, {
       chat_id,
       reply_markup: remove_keyboard,
+    });
+  }
+
+  public async editMessageReplyMarkup(
+    chat_id: number,
+    message_id: number,
+    reply_markup: TelegramInlineKeyboardMarkupDto
+  ): Promise<void> {
+    await this.call(TelegramBotMethod.EditMessageReplyMarkup, {
+      chat_id,
+      message_id,
+      reply_markup,
     });
   }
 }

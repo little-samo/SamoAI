@@ -183,6 +183,8 @@ export class WorldManager {
     userIds: number[]
   ): Promise<Record<number, Agent>> {
     const agentModels = await this.agentRepository.getAgentModels(agentIds);
+    agentIds = agentIds.filter((agentId) => agentModels[agentId]?.isActive);
+
     const agentStates = await this.agentRepository.getAgentStates(agentIds);
     const agentEntityStates = await this.agentRepository.getAgentEntityStates(
       agentIds,

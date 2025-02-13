@@ -61,7 +61,9 @@ export class UsersService implements UsersRepository {
   ): Promise<UserModel> {
     const nickname = lastName ? `${firstName} ${lastName}` : firstName;
     return await this.prisma.userModel.upsert({
-      where: { platform: UserPlatform.TELEGRAM, pid: telegramUserId },
+      where: {
+        platform_pid: { platform: UserPlatform.TELEGRAM, pid: telegramUserId },
+      },
       update: { firstName, lastName, username, nickname },
       create: {
         platform: UserPlatform.TELEGRAM,

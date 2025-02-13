@@ -32,6 +32,27 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
       if (secret == null) {
         return;
       }
+      await bot.setMyCommands();
+
+      const agent = await this.agentsService.getAgentByTelegramBotToken(
+        bot.token
+      );
+      if (agent) {
+        const botUser = await bot.getMe();
+        const botName = botUser.last_name
+          ? `${botUser.first_name} ${botUser.last_name}`
+          : botUser.first_name;
+        if (
+          agent.name !== botName ||
+          agent.telegramUsername !== botUser.username
+        ) {
+          await this.prisma.agentModel.update({
+            where: { id: agent.id },
+            data: { name: botName, telegramUsername: botUser.username },
+          });
+        }
+      }
+
       this.bots[secret] = bot;
       if (ENV.DEBUG) {
         this.logger.log(`Bot ${bot.name} registered with secret: ${secret}`);

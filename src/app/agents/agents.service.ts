@@ -43,7 +43,7 @@ export class AgentsService implements AgentsRepository {
 
   public async getAgentModel(agentId: number): Promise<AgentModel> {
     const agent = await this.prisma.agentModel.findUnique({
-      where: { id: agentId },
+      where: { id: agentId, isDeleted: false },
     });
 
     if (!agent) {
@@ -57,7 +57,7 @@ export class AgentsService implements AgentsRepository {
     agentIds: number[]
   ): Promise<Record<number, AgentModel>> {
     const agents = await this.prisma.agentModel.findMany({
-      where: { id: { in: agentIds } },
+      where: { id: { in: agentIds }, isDeleted: false },
     });
 
     return agents.reduce(
@@ -67,6 +67,52 @@ export class AgentsService implements AgentsRepository {
       },
       {} as Record<number, AgentModel>
     );
+  }
+
+  public async getAgentByTelegramBotToken(
+    telegramBotToken: string
+  ): Promise<AgentModel | null> {
+    return this.prisma.agentModel.findUnique({
+      where: { telegramBotToken },
+    });
+  }
+
+  public async getOrCreateTelegramAgentModel(
+    ownerUserId: number,
+    agentName: string,
+    telegramBotToken: string,
+    telegramUsername?: string
+  ): Promise<AgentModel> {
+    if (telegramUsername) {
+      const agent = await this.prisma.agentModel.findUnique({
+        where: { telegramUsername },
+      });
+      if (agent && agent.telegramBotToken !== telegramBotToken) {
+        await this.prisma.agentModel.update({
+          where: { id: agent.id },
+          data: { telegramBotToken: null },
+        });
+      }
+    }
+
+    return await this.prisma.agentModel.upsert({
+      where: { telegramBotToken },
+      update: { name: agentName, ownerUserId, telegramUsername },
+      create: {
+        name: agentName,
+        ownerUserId,
+        telegramBotToken,
+        telegramUsername,
+      },
+    });
+  }
+
+  public async getAllAgentsByOwnerUserId(
+    ownerUserId: number
+  ): Promise<AgentModel[]> {
+    return this.prisma.agentModel.findMany({
+      where: { ownerUserId, isDeleted: false },
+    });
   }
 
   public async getAgentState(agentId: number): Promise<null | AgentState> {
@@ -473,6 +519,27 @@ export class AgentsService implements AgentsRepository {
 
     states.forEach((state) => {
       state.dirty = false;
+    });
+  }
+
+  public async setAgentActive(
+    agentId: number,
+    isActive: boolean
+  ): Promise<void> {
+    await this.prisma.agentModel.update({
+      where: { id: agentId },
+      data: { isActive },
+    });
+  }
+
+  public async deleteAgentModel(agentId: number): Promise<void> {
+    await this.prisma.agentModel.update({
+      where: { id: agentId },
+      data: {
+        telegramUsername: null,
+        telegramBotToken: null,
+        isDeleted: true,
+      },
     });
   }
 }

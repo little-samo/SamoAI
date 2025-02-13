@@ -9,10 +9,11 @@ model AgentModel {
   ownerUserModel UserModel? @relation("agentOwnerUser", fields: [ownerUserId], references: [id])
   ownerUserId    Int?       @map("owner_user_id")
 
-  telegramUsername String? @unique
-  telegramBotToken String? @unique
+  telegramUsername String? @unique @map("telegram_username")
+  telegramBotToken String? @unique @map("telegram_bot_token")
 
-  isActive Boolean @default(true)
+  isActive  Boolean @default(true) @map("is_active")
+  isDeleted Boolean @default(false) @map("is_deleted")
 
   @@index([ownerUserId])
 }
