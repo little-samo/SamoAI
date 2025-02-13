@@ -47,6 +47,7 @@ export class TelegramChatBot extends TelegramAgentBot {
     locationMessage.userId = user.id;
     locationMessage.name = user.nickname;
     locationMessage.message = text;
+    locationMessage.createdAt = new Date(message.date * 1000);
     await WorldManager.instance.addLocationMessage(
       locationModel.id,
       locationMessage

@@ -313,6 +313,20 @@ export class WorldManager {
       const locationMessagesState =
         await this.getOrCreateLocationMessagesState(locationId);
 
+      // if message with same createdAt already exists, skip
+      if (
+        locationMessagesState.messages.find(
+          (m) =>
+            m.agentId === message.agentId &&
+            m.userId === message.userId &&
+            m.name === message.name &&
+            new Date(m.createdAt).getTime() ===
+              new Date(message.createdAt).getTime()
+        )
+      ) {
+        return;
+      }
+
       if (!message.createdAt) {
         message.createdAt = new Date();
       }
