@@ -147,7 +147,7 @@ export abstract class TelegramBot {
     commands ??= Reflect.getMetadata(
       TELEGRAM_COMMANDS_METADATA_KEY,
       this.constructor
-    ) as TelegramBotCommandDto[];
+    ) as TelegramBotCommandDto[] | [];
 
     await this.call(TelegramBotMethod.SetMyCommands, {
       commands,
@@ -260,7 +260,12 @@ export abstract class TelegramBot {
     const commands = Reflect.getMetadata(
       TELEGRAM_COMMANDS_METADATA_KEY,
       this.constructor
-    ) as TelegramBotCommandDto[];
+    ) as TelegramBotCommandDto[] | [];
+    this.logger.log(
+      `[${this.name}] Sending commands to chat ${chat_id}: ${commands
+        .map((c) => `/${c.command} - ${c.description}`)
+        .join('\n')}`
+    );
     await this.sendChatTextMessage(
       chat_id,
       `commands:\n${commands
