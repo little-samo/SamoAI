@@ -263,16 +263,12 @@ export abstract class TelegramBot {
       TELEGRAM_COMMANDS_METADATA_KEY,
       this.constructor
     ) as TelegramBotCommandDto[] | [];
-    this.logger.log(
-      `[${this.name}] Sending commands to chat ${chat_id}: ${commands
-        .map((c) => `/${c.command} - ${c.description}`)
-        .join('\n')}`
-    );
     await this.sendChatTextMessage(
       chat_id,
-      `commands:\n${commands
+      `Commands:\n${commands
         .map((c) => `/${c.command} - ${c.description}`)
-        .join('\n')}`
+        .join('\n')}`,
+      'HTML'
     );
   }
 
@@ -288,12 +284,13 @@ export abstract class TelegramBot {
 
   public async sendChatTextMessage(
     chat_id: number,
-    text: string
+    text: string,
+    parse_mode: 'MarkdownV2' | 'HTML' = 'MarkdownV2'
   ): Promise<void> {
     await this.call(TelegramBotMethod.SendMessage, {
       chat_id,
       text,
-      parse_mode: 'MarkdownV2',
+      parse_mode,
     });
   }
 
