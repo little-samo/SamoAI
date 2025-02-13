@@ -55,7 +55,7 @@ export class AgentSendMessageAction extends AgentAction {
       }
     }
 
-    this.location.addAgentMessage(
+    await this.location.addAgentMessage(
       this.agent,
       action.message,
       action.expression ?? undefined

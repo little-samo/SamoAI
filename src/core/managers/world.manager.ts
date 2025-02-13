@@ -260,9 +260,6 @@ export class WorldManager {
 
     if (ENV.DEBUG) {
       console.log(`Location ${location.model.name} successfully saved`);
-      console.log(
-        `Location messages:\n${JSON.stringify(location.messagesState.messages, null, 2)}`
-      );
     }
   }
 
