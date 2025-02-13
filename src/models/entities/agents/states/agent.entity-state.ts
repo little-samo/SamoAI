@@ -33,17 +33,6 @@ export const AgentEntityStateSchema =
   SchemaFactory.createForClass(AgentEntityState);
 
 AgentEntityStateSchema.index(
-  { agentId: 1, targetAgentId: 1 },
-  {
-    unique: true,
-    partialFilterExpression: { targetAgentId: { $exists: true, $ne: null } },
-  }
-);
-
-AgentEntityStateSchema.index(
-  { agentId: 1, targetUserId: 1 },
-  {
-    unique: true,
-    partialFilterExpression: { targetUserId: { $exists: true, $ne: null } },
-  }
+  { agentId: 1, targetAgentId: 1, targetUserId: 1 },
+  { unique: true }
 );
