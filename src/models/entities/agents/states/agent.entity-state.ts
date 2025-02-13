@@ -34,7 +34,16 @@ export const AgentEntityStateSchema =
 
 AgentEntityStateSchema.index(
   { agentId: 1, targetAgentId: 1 },
-  { unique: true }
+  {
+    unique: true,
+    partialFilterExpression: { targetAgentId: { $exists: true, $ne: null } },
+  }
 );
 
-AgentEntityStateSchema.index({ agentId: 1, targetUserId: 1 }, { unique: true });
+AgentEntityStateSchema.index(
+  { agentId: 1, targetUserId: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { targetUserId: { $exists: true, $ne: null } },
+  }
+);
