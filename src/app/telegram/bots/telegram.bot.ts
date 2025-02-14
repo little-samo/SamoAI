@@ -122,7 +122,6 @@ export abstract class TelegramBot {
       const webhookUrl = `${baseUrl}/telegram/webhook`;
       await this.call(TelegramBotMethod.SetWebhook, {
         url: webhookUrl,
-        max_connections: 4,
         secret_token: this.token.replace(':', '-'),
         allowed_updates: ['message', 'callback_query'],
       });
