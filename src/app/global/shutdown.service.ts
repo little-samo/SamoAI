@@ -1,18 +1,26 @@
-import { IncomingMessage, Server, ServerResponse } from 'http';
+import { IncomingMessage, ServerResponse } from 'http';
 
-import { Injectable, OnApplicationShutdown } from '@nestjs/common';
+import {
+  Injectable,
+  OnApplicationShutdown,
+  OnModuleInit,
+} from '@nestjs/common';
 import { Logger } from '@nestjs/common';
+import { HttpAdapterHost } from '@nestjs/core';
 
 @Injectable()
-export class ShutdownService implements OnApplicationShutdown {
+export class ShutdownService implements OnModuleInit, OnApplicationShutdown {
   private logger = new Logger(ShutdownService.name);
 
   private activeRequests = 0;
   private isShuttingDown = false;
   private readonly resolveShutdowns: ((value: unknown) => void)[] = [];
 
-  public constructor(private server: Server) {
-    this.server.on(
+  public constructor(private readonly adapterHost: HttpAdapterHost) {}
+
+  public async onModuleInit() {
+    const server = this.adapterHost.httpAdapter.getHttpServer();
+    server.on(
       'request',
       (req: IncomingMessage, res: ServerResponse<IncomingMessage>) => {
         if (this.isShuttingDown) {

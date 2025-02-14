@@ -6,6 +6,7 @@ import { LocationsModule } from './locations/locations.module';
 import { UsersModule } from './users/users.module';
 import { TelegramModule } from './telegram/telegram.module';
 import { GlobalModule } from './global/global.module';
+import { AppController } from './app.controller';
 
 @Module({
   imports: [
@@ -16,7 +17,7 @@ import { GlobalModule } from './global/global.module';
     UsersModule,
     TelegramModule,
   ],
-  controllers: [],
+  controllers: [AppController],
   providers: [],
 })
 export class AppModule {}
