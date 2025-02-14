@@ -1,5 +1,6 @@
 import {
   Injectable,
+  Logger,
   OnApplicationShutdown,
   OnModuleInit,
 } from '@nestjs/common';
@@ -13,6 +14,8 @@ import { ShutdownService } from './shutdown.service';
 export class RedisService
   implements OnModuleInit, OnApplicationShutdown, RedisLockService
 {
+  private readonly logger = new Logger(RedisService.name);
+
   private readonly redis: Redis;
   private readonly redlock: Redlock;
 
@@ -209,7 +212,7 @@ export class RedisService
       const lock = await this.redlock.acquire([resource], ttl);
       return lock;
     } catch (error) {
-      console.error(error);
+      this.logger.error(error);
       return null;
     }
   }
@@ -232,7 +235,55 @@ export class RedisService
       const lock = await this.redlock.acquire(sortedResources, ttl);
       return lock;
     } catch (error) {
-      console.error(error);
+      this.logger.error(error);
+      return null;
+    }
+  }
+
+  /**
+   * Attempts to acquire a lock on a single resource without retries
+   * @param resource - The resource to lock
+   * @param ttl - Time to live in milliseconds
+   * @returns Lock object if successful, null if lock cannot be acquired
+   */
+  public async acquireLockNoRetry(
+    resource: string,
+    ttl: number = 30000
+  ): Promise<Lock | null> {
+    try {
+      const lock = await this.redlock.acquire([resource], ttl, {
+        retryCount: 0, // No retries
+        retryDelay: 0,
+        retryJitter: 0,
+      });
+      return lock;
+    } catch (error) {
+      this.logger.error(error);
+      return null;
+    }
+  }
+
+  /**
+   * Attempts to acquire locks on multiple resources without retries
+   * Resources are sorted to prevent deadlocks
+   * @param resources - Array of resources to lock
+   * @param ttl - Time to live in milliseconds
+   * @returns Lock object if successful, null if any lock cannot be acquired
+   */
+  public async multiLockNoRetry(
+    resources: string[],
+    ttl: number = 30000
+  ): Promise<Lock | null> {
+    try {
+      const sortedResources = [...resources].sort();
+      const lock = await this.redlock.acquire(sortedResources, ttl, {
+        retryCount: 0, // No retries
+        retryDelay: 0,
+        retryJitter: 0,
+      });
+      return lock;
+    } catch (error) {
+      this.logger.error(error);
       return null;
     }
   }
