@@ -2,7 +2,7 @@ import { Logger, HttpException } from '@nestjs/common';
 import { fetch } from 'undici';
 import { ENV } from '@common/config';
 import { sleep } from '@common/utils/sleep';
-import { PrismaService } from '@app/prisma/prisma.service';
+import { PrismaService } from '@app/global/prisma.service';
 import { AgentsService } from '@app/agents/agents.service';
 import { UsersService } from '@app/users/users.service';
 import { UserModel } from '@prisma/client';

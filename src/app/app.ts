@@ -6,7 +6,7 @@ import { INestApplication, Logger } from '@nestjs/common';
 import * as packageJson from '../../package.json';
 
 import { AppModule } from './app.module';
-import { RedisService } from './redis/redis.service';
+import { RedisService } from './global/redis.service';
 import { AgentsService } from './agents/agents.service';
 import { LocationsService } from './locations/locations.service';
 import { UsersService } from './users/users.service';
@@ -18,6 +18,7 @@ export class SamoAiApp {
 
   public async bootstrap(listen: boolean = true) {
     this.app = await NestFactory.create(AppModule);
+    this.app.enableShutdownHooks();
 
     const redisService = this.app.get(RedisService);
     const agentsService = this.app.get(AgentsService);

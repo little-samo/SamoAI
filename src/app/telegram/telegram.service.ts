@@ -6,7 +6,7 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ENV } from '@common/config';
-import { PrismaService } from '@app/prisma/prisma.service';
+import { PrismaService } from '@app/global/prisma.service';
 import { AgentsService } from '@app/agents/agents.service';
 import { UsersService } from '@app/users/users.service';
 import { LocationsService } from '@app/locations/locations.service';

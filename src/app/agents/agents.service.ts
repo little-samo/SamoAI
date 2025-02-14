@@ -9,8 +9,8 @@ import {
   AgentStateDocument,
 } from '@models/entities/agents/states/agent.state';
 import { AgentModel } from '@prisma/client';
-import { PrismaService } from '@app/prisma/prisma.service';
-import { RedisService } from '@app/redis/redis.service';
+import { PrismaService } from '@app/global/prisma.service';
+import { RedisService } from '@app/global/redis.service';
 import { JsonObject } from '@prisma/client/runtime/library';
 
 interface AgentEntityStateCacheKey {

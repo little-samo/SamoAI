@@ -4,8 +4,8 @@ import { Model } from 'mongoose';
 import { UserState } from '@models/entities/users/states/user.state';
 import { UsersRepository } from '@core/repositories/users.repository';
 import { UserModel, LlmApiKeyModel, UserPlatform } from '@prisma/client';
-import { PrismaService } from '@app/prisma/prisma.service';
-import { RedisService } from '@app/redis/redis.service';
+import { PrismaService } from '@app/global/prisma.service';
+import { RedisService } from '@app/global/redis.service';
 import { JsonObject } from '@prisma/client/runtime/library';
 
 @Injectable()
