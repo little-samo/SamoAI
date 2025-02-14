@@ -31,8 +31,12 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
 
   public async registerBot(bot: TelegramBot): Promise<void> {
     try {
-      const token = await bot.registerWebhook();
-      if (token == null) {
+      if (!bot.token || this.bots[bot.token]) {
+        return;
+      }
+
+      const success = await bot.registerWebhook();
+      if (!success) {
         return;
       }
       await bot.setMyCommands();
@@ -56,9 +60,9 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
         }
       }
 
-      this.bots[token] = bot;
+      this.bots[bot.token] = bot;
       if (ENV.DEBUG) {
-        this.logger.log(`Bot ${bot.name} registered with token: ${token}`);
+        this.logger.log(`Bot ${bot.name} registered with token: ${bot.token}`);
       } else {
         this.logger.log(`Bot ${bot.name} registered`);
       }

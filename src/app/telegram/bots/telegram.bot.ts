@@ -110,13 +110,13 @@ export abstract class TelegramBot {
     )) as TelegramUserDto;
   }
 
-  public async registerWebhook(): Promise<string | null> {
+  public async registerWebhook(): Promise<boolean> {
     const baseUrl = process.env.TELEGRAM_WEBHOOK_BASE_URL;
     if (!baseUrl) {
       this.logger.warn(
         'TELEGRAM_WEBHOOK_BASE_URL is not set, Telegram bot will not be able to receive updates.'
       );
-      return null;
+      return false;
     }
     try {
       const webhookUrl = `${baseUrl}/telegram/webhook`;
@@ -130,10 +130,10 @@ export abstract class TelegramBot {
         this.logger.log(`[${this.name}] Webhook registered`);
       }
 
-      return this.token;
+      return true;
     } catch (error) {
       this.logger.error(`Failed to register webhook: ${error}`);
-      return null;
+      return false;
     }
   }
 

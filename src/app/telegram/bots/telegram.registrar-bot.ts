@@ -323,6 +323,19 @@ export class TelegramRegistrarBot extends TelegramBot {
     }
 
     await this.agentsService.setAgentActive(agentId, true);
+
+    await this.telegram.registerBot(
+      new TelegramChatBot(
+        this.telegram,
+        this.prisma,
+        this.usersService,
+        this.agentsService,
+        this.locationsService,
+        agent.name,
+        agent.telegramBotToken!
+      )
+    );
+
     await this.sendChatTextMessage(
       message.chat.id,
       `${agent.name} is now ✅ Active! 🎉`
