@@ -1,11 +1,7 @@
-import cluster from 'cluster';
-import os from 'os';
-
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { WorldManager } from '@core/managers/world.manager';
 import { INestApplication, Logger } from '@nestjs/common';
-import { ENV } from '@common/config';
 
 import * as packageJson from '../../package.json';
 
@@ -21,28 +17,6 @@ export class SamoAiApp {
   public app?: INestApplication;
 
   public async bootstrap(listen: boolean = true) {
-    if (cluster.isPrimary) {
-      let numWorkers;
-      if (ENV.DEBUG) {
-        numWorkers = 4;
-      } else {
-        numWorkers = 4 * os.cpus().length;
-      }
-      this.logger.log(`Forking for ${numWorkers} workers`);
-      for (let i = 0; i < numWorkers; i++) {
-        cluster.fork();
-      }
-
-      cluster.on('exit', (worker) => {
-        this.logger.log(`Worker ${worker.id} died. Restarting...`);
-        cluster.fork();
-      });
-
-      return;
-    } else {
-      this.logger.log(`Worker ${process.pid} started`);
-    }
-
     this.app = await NestFactory.create(AppModule);
 
     const redisService = this.app.get(RedisService);
