@@ -21,12 +21,14 @@ export class TelegramController {
     @Headers() headers: Record<string, string>,
     @Body() update: TelegramUpdateDto
   ): Promise<void> {
-    const token = headers['x-telegram-bot-api-secret-token'];
-    if (!token) {
+    const secret = headers['x-telegram-bot-api-secret-token'];
+    if (!secret) {
       throw new UnauthorizedException(
         'X-Telegram-Bot-Api-Secret-Token is required'
       );
     }
+    const secrets = secret.split('-', 1);
+    const token = `${secrets[0]}:${secrets[1]}`;
     await this.telegramService.handleUpdate(token, update);
   }
 }
