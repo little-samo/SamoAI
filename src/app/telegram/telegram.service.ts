@@ -31,8 +31,8 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
 
   public async registerBot(bot: TelegramBot): Promise<void> {
     try {
-      const secret = await bot.registerWebhook();
-      if (secret == null) {
+      const token = await bot.registerWebhook();
+      if (token == null) {
         return;
       }
       await bot.setMyCommands();
@@ -56,9 +56,9 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
         }
       }
 
-      this.bots[secret] = bot;
+      this.bots[token] = bot;
       if (ENV.DEBUG) {
-        this.logger.log(`Bot ${bot.name} registered with secret: ${secret}`);
+        this.logger.log(`Bot ${bot.name} registered with token: ${token}`);
       } else {
         this.logger.log(`Bot ${bot.name} registered`);
       }
@@ -125,10 +125,10 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
   }
 
   public async handleUpdate(
-    secret: string,
+    token: string,
     update: TelegramUpdateDto
   ): Promise<void> {
-    const bot = this.bots[secret];
+    const bot = this.bots[token];
     this.logger.log(
       `Update received for bot ${bot?.name}: ${JSON.stringify(update)}`
     );
@@ -136,7 +136,7 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
       await bot.handleUpdate(update);
     } else {
       throw new ServiceUnavailableException(
-        'Bot not found for secret: ' + secret
+        `Bot not found for token: ${token}`
       );
     }
   }

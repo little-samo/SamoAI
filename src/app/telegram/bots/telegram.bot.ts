@@ -1,5 +1,3 @@
-import { randomBytes } from 'crypto';
-
 import { Logger, HttpException } from '@nestjs/common';
 import { fetch } from 'undici';
 import { ENV } from '@common/config';
@@ -50,8 +48,6 @@ interface TelegramCallOptions {
 export abstract class TelegramBot {
   protected readonly logger = new Logger(TelegramBot.name);
 
-  private readonly secret: string;
-
   public constructor(
     protected readonly telegram: TelegramService,
     protected readonly prisma: PrismaService,
@@ -60,9 +56,7 @@ export abstract class TelegramBot {
     protected readonly locationsService: LocationsService,
     public readonly name: string,
     public readonly token: string
-  ) {
-    this.secret = randomBytes(32).toString('hex');
-  }
+  ) {}
 
   public async call(
     method: TelegramBotMethod,
@@ -129,14 +123,14 @@ export abstract class TelegramBot {
       await this.call(TelegramBotMethod.SetWebhook, {
         url: webhookUrl,
         max_connections: 4,
-        secret_token: this.secret,
+        secret_token: this.token,
         allowed_updates: ['message', 'callback_query'],
       });
       if (ENV.DEBUG) {
         this.logger.log(`[${this.name}] Webhook registered`);
       }
 
-      return this.secret;
+      return this.token;
     } catch (error) {
       this.logger.error(`Failed to register webhook: ${error}`);
       return null;
