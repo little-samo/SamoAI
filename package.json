@@ -37,6 +37,7 @@
     "@nestjs/swagger": "^11.0.3",
     "@prisma/client": "^6.1.0",
     "cheerio": "^1.0.0",
+    "dotenv": "^16.4.7",
     "ioredis": "^5.4.2",
     "mongoose": "^8.9.5",
     "openai": "^4.83.0",
