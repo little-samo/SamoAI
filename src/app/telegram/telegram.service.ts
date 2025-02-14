@@ -130,7 +130,7 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
   ): Promise<void> {
     const bot = this.bots[token];
     this.logger.log(
-      `Update received for bot ${bot?.name}: ${JSON.stringify(update)}`
+      `Update received for bot ${bot?.name ?? token}: ${JSON.stringify(update)}`
     );
     if (bot) {
       await bot.handleUpdate(update);
