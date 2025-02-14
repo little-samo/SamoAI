@@ -1,7 +1,9 @@
 import { Anthropic, AnthropicError, APIError } from '@anthropic-ai/sdk';
 import {
   MessageCreateParamsNonStreaming,
+  MessageParam,
   TextBlock,
+  TextBlockParam,
   Tool,
   ToolUseBlock,
 } from '@anthropic-ai/sdk/resources/messages/messages';
@@ -28,24 +30,31 @@ export class AnthropicService extends LlmService {
 
   public async generate(messages: LlmMessage[]): Promise<string> {
     try {
+      const systemMessages: TextBlockParam[] = messages
+        .filter((message) => message.role === 'system')
+        .map((message) => {
+          return {
+            type: 'text',
+            text: message.content,
+          };
+        });
+      systemMessages[systemMessages.length - 1].cache_control = {
+        type: 'ephemeral',
+      };
+
+      const userAssistantMessages: MessageParam[] = messages
+        .filter(
+          (message) => message.role === 'user' || message.role === 'assistant'
+        )
+        .map((message) => ({
+          role: message.role as 'user' | 'assistant',
+          content: message.content,
+        }));
+
       const request: MessageCreateParamsNonStreaming = {
         model: this.model,
-        system: messages
-          .filter((message) => message.role === 'system')
-          .map((message) => {
-            return {
-              type: 'text',
-              text: message.content,
-            };
-          }),
-        messages: messages
-          .filter(
-            (message) => message.role === 'user' || message.role === 'assistant'
-          )
-          .map((message) => ({
-            role: message.role as 'user' | 'assistant',
-            content: message.content,
-          })),
+        system: systemMessages,
+        messages: userAssistantMessages,
         max_tokens: this.maxTokens,
         temperature: this.temperature,
       };
@@ -53,9 +62,13 @@ export class AnthropicService extends LlmService {
         console.log(request);
       }
 
+      const startTime = Date.now();
       const response = await this.client.messages.create(request);
       if (ENV.DEBUG) {
         console.log(response);
+        console.log(
+          `Anthropic generate time taken: ${((Date.now() - startTime) / 1000).toFixed(2)}s`
+        );
       }
 
       if (response.content.length === 0) {
@@ -79,29 +92,41 @@ export class AnthropicService extends LlmService {
     tools: LlmTool[]
   ): Promise<LlmToolCall[]> {
     try {
+      const systemMessages: TextBlockParam[] = messages
+        .filter((message) => message.role === 'system')
+        .map((message) => {
+          return {
+            type: 'text',
+            text: message.content,
+          };
+        });
+      systemMessages[systemMessages.length - 1].cache_control = {
+        type: 'ephemeral',
+      };
+
+      const toolMessages: Tool[] = tools.map((tool) => ({
+        name: tool.name,
+        description: tool.description,
+        input_schema: zodToJsonSchema(tool.parameters) as Tool.InputSchema,
+      }));
+      toolMessages[toolMessages.length - 1].cache_control = {
+        type: 'ephemeral',
+      };
+
+      const userAssistantMessages: MessageParam[] = messages
+        .filter(
+          (message) => message.role === 'user' || message.role === 'assistant'
+        )
+        .map((message) => ({
+          role: message.role as 'user' | 'assistant',
+          content: message.content,
+        }));
+
       const request: MessageCreateParamsNonStreaming = {
         model: this.model,
-        system: messages
-          .filter((message) => message.role === 'system')
-          .map((message) => {
-            return {
-              type: 'text',
-              text: message.content,
-            };
-          }),
-        tools: tools.map((tool) => ({
-          name: tool.name,
-          description: tool.description,
-          input_schema: zodToJsonSchema(tool.parameters) as Tool.InputSchema,
-        })),
-        messages: messages
-          .filter(
-            (message) => message.role === 'user' || message.role === 'assistant'
-          )
-          .map((message) => ({
-            role: message.role as 'user' | 'assistant',
-            content: message.content,
-          })),
+        system: systemMessages,
+        tools: toolMessages,
+        messages: userAssistantMessages,
         max_tokens: this.maxTokens,
         temperature: this.temperature,
       };
@@ -109,9 +134,13 @@ export class AnthropicService extends LlmService {
         console.log(request);
       }
 
+      const startTime = Date.now();
       const response = await this.client.messages.create(request);
       if (ENV.DEBUG) {
         console.log(response);
+        console.log(
+          `Anthropic useTools time taken: ${((Date.now() - startTime) / 1000).toFixed(2)}s`
+        );
       }
 
       if (response.content.length === 0) {

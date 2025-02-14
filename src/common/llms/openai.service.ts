@@ -33,9 +33,13 @@ export class OpenAIService extends LlmService {
         console.log(request);
       }
 
+      const startTime = Date.now();
       const response = await this.client.chat.completions.create(request);
       if (ENV.DEBUG) {
         console.log(response);
+        console.log(
+          `OpenAI generate time taken: ${((Date.now() - startTime) / 1000).toFixed(2)}s`
+        );
       }
 
       if (response.choices[0].message.content === null) {
@@ -73,9 +77,13 @@ export class OpenAIService extends LlmService {
         console.log(request);
       }
 
+      const startTime = Date.now();
       const response = await this.client.chat.completions.create(request);
       if (ENV.DEBUG) {
         console.log(response);
+        console.log(
+          `OpenAI useTools time taken: ${((Date.now() - startTime) / 1000).toFixed(2)}s`
+        );
       }
 
       if (response.choices.length === 0) {

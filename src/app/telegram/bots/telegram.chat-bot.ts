@@ -1,6 +1,5 @@
 import { UserModel } from '@prisma/client';
 import { ENV } from '@common/config';
-import { LocationMessage } from '@models/locations/states/location.messages-state';
 import { WorldManager } from '@core/managers/world.manager';
 
 import { TelegramMessageDto } from '../dto/telegram.message-dto';
@@ -51,14 +50,12 @@ export class TelegramChatBot extends TelegramAgentBot {
     );
     await WorldManager.instance.addLocationUser(locationModel.id, user.id);
 
-    const locationMessage = new LocationMessage();
-    locationMessage.userId = user.id;
-    locationMessage.name = user.nickname;
-    locationMessage.message = text;
-    locationMessage.createdAt = new Date(message.date * 1000);
-    await WorldManager.instance.addLocationMessage(
+    await WorldManager.instance.addLocationUserMessage(
       locationModel.id,
-      locationMessage
+      user.id,
+      user.nickname,
+      text,
+      new Date(message.date * 1000)
     );
 
     const typingInterval = setInterval(() => {

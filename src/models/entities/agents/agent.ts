@@ -102,7 +102,10 @@ export class Agent extends Entity {
       if (!apiKey) {
         throw new Error(`API key not found for platform: ${llm.platform}`);
       }
-      this.llms.push(LlmFactory.create(llm.platform, llm.model, apiKey.key));
+      const llmService = LlmFactory.create(llm.platform, llm.model, apiKey.key);
+      llmService.temperature = meta.temperature;
+      llmService.maxTokens = meta.maxTokens;
+      this.llms.push(llmService);
     }
     this.llm = this.llms[0];
     for (const input of meta.inputs) {
@@ -148,7 +151,7 @@ export class Agent extends Entity {
   public get selfContext(): AgentSelfContext {
     return {
       ...this.context,
-      memories: this.state.memories,
+      memory: this.state.memories,
     };
   }
 
@@ -156,7 +159,7 @@ export class Agent extends Entity {
     const entityState = this._entityStates[other.key];
     return {
       ...other.context,
-      memories: entityState?.memories ?? [],
+      memory: entityState?.memories ?? [],
     };
   }
 

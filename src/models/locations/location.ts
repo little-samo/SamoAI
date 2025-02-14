@@ -171,7 +171,7 @@ export class Location extends EventEmitter {
         name: message.name,
         message: message.message,
         expression: message.expression,
-        createdAt: message.createdAt,
+        created: Math.floor(new Date(message.createdAt).getTime() / 1000),
       })),
     };
   }
@@ -228,6 +228,7 @@ export class Location extends EventEmitter {
     }
 
     const locationMessage = new LocationMessage();
+    locationMessage.agentId = agent.model.id;
     locationMessage.name = agent.name;
     if (message) {
       locationMessage.message = message.substring(
@@ -252,6 +253,7 @@ export class Location extends EventEmitter {
     this.emit('userMessage', user, message, expression);
 
     const locationMessage = new LocationMessage();
+    locationMessage.userId = user.model.id;
     locationMessage.name = user.name;
     if (message) {
       locationMessage.message = message.substring(

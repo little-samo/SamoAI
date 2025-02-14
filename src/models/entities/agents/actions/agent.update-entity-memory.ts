@@ -35,7 +35,7 @@ export class AgentUpdateEntityMemoryAction extends AgentAction {
             .describe('The index of the memory to update.'),
           memory: z
             .string()
-            .max(this.location.meta.messageLengthLimit)
+            .max(this.agent.meta.entityMemoryLengthLimit)
             .describe('The new memory value.'),
         });
     }

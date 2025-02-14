@@ -21,8 +21,9 @@ export interface AgentMeta extends EntityMeta {
   actions: string[];
 
   memoryLimit: number;
+  memoryLengthLimit: number;
   entityMemoryLimit: number;
-
+  entityMemoryLengthLimit: number;
   // Agent's characteristics and personality traits
   character: {
     // Background information
@@ -70,8 +71,8 @@ export interface AgentMeta extends EntityMeta {
 export const DEFAULT_AGENT_META: AgentMeta = {
   core: 'empty',
 
-  temperature: 0,
-  maxTokens: 1000,
+  temperature: 0.5,
+  maxTokens: 1024,
   llms: [
     { platform: LlmPlatform.ANTHROPIC, model: 'claude-3-5-sonnet-20241022' },
     { platform: LlmPlatform.OPENAI, model: 'gpt-4o-2024-11-20' },
@@ -84,7 +85,9 @@ export const DEFAULT_AGENT_META: AgentMeta = {
   actions: ['update_memory:latest', 'update_entity_memory:latest'],
 
   memoryLimit: 32,
+  memoryLengthLimit: 500,
   entityMemoryLimit: 8,
+  entityMemoryLengthLimit: 500,
 
   appearance: 'Typical human (but AI Agent)',
   character: {},

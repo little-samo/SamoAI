@@ -310,7 +310,7 @@ export class WorldManager {
     });
   }
 
-  public async addLocationMessage(
+  private async addLocationMessage(
     locationId: number,
     message: LocationMessage
   ): Promise<void> {
@@ -346,6 +346,40 @@ export class WorldManager {
         locationMessagesState
       );
     });
+  }
+
+  public async addLocationAgentMessage(
+    locationId: number,
+    agentId: number,
+    name: string,
+    message: string,
+    createdAt?: Date
+  ): Promise<void> {
+    const locationMessage = new LocationMessage();
+    locationMessage.agentId = agentId;
+    locationMessage.name = name;
+    locationMessage.message = message;
+    if (createdAt) {
+      locationMessage.createdAt = createdAt;
+    }
+    await this.addLocationMessage(locationId, locationMessage);
+  }
+
+  public async addLocationUserMessage(
+    locationId: number,
+    userId: number,
+    name: string,
+    message: string,
+    createdAt?: Date
+  ): Promise<void> {
+    const locationMessage = new LocationMessage();
+    locationMessage.userId = userId;
+    locationMessage.name = name;
+    locationMessage.message = message;
+    if (createdAt) {
+      locationMessage.createdAt = createdAt;
+    }
+    await this.addLocationMessage(locationId, locationMessage);
   }
 
   public async updateLocation(

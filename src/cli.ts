@@ -3,7 +3,6 @@ import { SamoAiApp } from '@app/app';
 import { AgentsService } from '@app/agents/agents.service';
 import { LocationsService } from '@app/locations/locations.service';
 import { UsersService } from '@app/users/users.service';
-import { LocationMessage } from '@models/locations/states/location.messages-state';
 import { WorldManager } from '@core/managers/world.manager';
 
 async function bootstrap() {
@@ -30,6 +29,8 @@ async function bootstrap() {
     .command('agent:chat <agentId> <message>')
     .description('Chat with an agent')
     .action(async (agentIdStr: string, message: string) => {
+      const startTime = Date.now();
+
       const agentId = parseInt(agentIdStr);
       const agentsService = samoai.app!.get(AgentsService);
       await agentsService.getAgentModel(agentId);
@@ -46,13 +47,11 @@ async function bootstrap() {
       await WorldManager.instance.addLocationAgent(locationModel.id, agentId);
       await WorldManager.instance.addLocationUser(locationModel.id, userId);
 
-      const locationMessage = new LocationMessage();
-      locationMessage.userId = userId;
-      locationMessage.name = userModel.nickname;
-      locationMessage.message = message;
-      await WorldManager.instance.addLocationMessage(
+      await WorldManager.instance.addLocationUserMessage(
         locationModel.id,
-        locationMessage
+        userId,
+        userModel.nickname,
+        message
       );
 
       const location = await WorldManager.instance.updateLocation(
@@ -63,6 +62,10 @@ async function bootstrap() {
       for (const message of location.messagesState.messages) {
         console.log(`${message.name}: ${message.message}`);
       }
+
+      const endTime = Date.now();
+      const executionTime = (endTime - startTime) / 1000;
+      console.log(`\nExecution time: ${executionTime.toFixed(2)} seconds`);
     });
 
   program.parse(process.argv);
