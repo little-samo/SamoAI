@@ -1,16 +1,22 @@
-import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import {
+  Injectable,
+  OnApplicationShutdown,
+  OnModuleInit,
+} from '@nestjs/common';
 import { Redis } from 'ioredis';
 import Redlock, { Lock } from 'redlock';
 import { RedisLockService } from '@core/services/redis-lock.service';
 
+import { ShutdownService } from './shutdown.service';
+
 @Injectable()
 export class RedisService
-  implements OnModuleInit, OnModuleDestroy, RedisLockService
+  implements OnModuleInit, OnApplicationShutdown, RedisLockService
 {
   private readonly redis: Redis;
   private readonly redlock: Redlock;
 
-  public constructor() {
+  public constructor(private shutdownService: ShutdownService) {
     this.redis = new Redis(process.env.REDIS_URL!);
     this.redlock = new Redlock([this.redis], {
       // Configuration for the Redlock instance
@@ -33,7 +39,8 @@ export class RedisService
   /**
    * Gracefully closes the Redis connection when the module is destroyed
    */
-  public async onModuleDestroy() {
+  public async onApplicationShutdown() {
+    await this.shutdownService.waitForShutdown();
     await this.redis.quit();
   }
 
