@@ -43,12 +43,15 @@ export class ShutdownService implements OnModuleInit, OnApplicationShutdown {
   public async onApplicationShutdown() {
     this.isShuttingDown = true;
 
+    this.logger.log('Shutting down...');
     if (this.activeRequests > 0) {
       this.logger.log(
         `Waiting for ${this.activeRequests} requests to finish...`
       );
       await this.waitForShutdown();
     }
+
+    this.logger.log('Shutdown complete');
   }
 
   public incrementActiveRequests(): void {
