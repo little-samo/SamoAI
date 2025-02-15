@@ -46,7 +46,6 @@ export class AgentUpdateMemoryAction extends AgentAction {
       );
     }
 
-    this.agent.state.memories[action.index] = action.memory;
-    this.agent.state.dirty = true;
+    await this.agent.setMemory(action.index, action.memory);
   }
 }

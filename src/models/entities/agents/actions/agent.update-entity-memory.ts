@@ -49,11 +49,6 @@ export class AgentUpdateEntityMemoryAction extends AgentAction {
       );
     }
 
-    const entityState = this.agent.getEntityState(action.key);
-    if (!entityState) {
-      throw new Error(`Entity with key ${action.key} not found`);
-    }
-    entityState.memories[action.index] = action.memory;
-    entityState.dirty = true;
+    await this.agent.setEntityMemory(action.key, action.index, action.memory);
   }
 }

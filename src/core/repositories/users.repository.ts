@@ -11,5 +11,4 @@ export interface UsersRepository {
 
   saveUserModel(model: UserModel): Promise<UserModel>;
   saveUserState(state: UserState): Promise<void>;
-  saveUserStates(states: UserState[]): Promise<void>;
 }

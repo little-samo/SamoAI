@@ -20,7 +20,16 @@ export interface AgentsRepository {
 
   saveAgentModel(model: AgentModel): Promise<AgentModel>;
   saveAgentState(state: AgentState): Promise<void>;
-  saveAgentStates(states: AgentState[]): Promise<void>;
+  saveAgentStateMemory(
+    state: AgentState,
+    index: number,
+    memory: string
+  ): Promise<void>;
   saveAgentEntityState(state: AgentEntityState): Promise<void>;
-  saveAgentEntityStates(states: AgentEntityState[]): Promise<void>;
+  saveAgentEntityStateMemory(
+    state: AgentEntityState,
+    index: number,
+    memory: string
+  ): Promise<void>;
+  saveAgentExpression(state: AgentState, expression: string): Promise<void>;
 }

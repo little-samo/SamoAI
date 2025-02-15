@@ -399,72 +399,38 @@ export class AgentsService implements AgentsRepository {
   }
 
   public async saveAgentState(state: AgentState): Promise<void> {
-    if (!state.dirty) {
-      return;
-    }
-
     await this.agentStateModel.updateOne(
       { agentId: state.agentId },
-      { $set: { ...state } },
+      { $set: state },
       { upsert: true }
     );
 
     const cacheKey = `${this.AGENT_STATE_PREFIX}${state.agentId}`;
     await this.redis.set(cacheKey, JSON.stringify(state), this.CACHE_TTL);
-
-    state.dirty = false;
   }
 
-  public async saveAgentStates(states: AgentState[]): Promise<void> {
-    states = states.filter((state) => state.dirty);
-    if (states.length === 0) {
-      return;
-    }
-
-    await this.agentStateModel.bulkWrite(
-      states.map((state) => ({
-        updateOne: {
-          filter: { agentId: state.agentId },
-          update: { $set: state },
-          upsert: true,
-        },
-      }))
+  public async saveAgentStateMemory(
+    state: AgentState,
+    index: number,
+    memory: string
+  ): Promise<void> {
+    await this.agentStateModel.updateOne(
+      { agentId: state.agentId },
+      { $set: { [`memories.${index}`]: memory } }
     );
 
-    const cacheEntries = states.reduce(
-      (acc, state) => {
-        const cacheKey = `${this.AGENT_STATE_PREFIX}${state.agentId}`;
-        acc[cacheKey] = JSON.stringify(state);
-        return acc;
-      },
-      {} as Record<string, string>
-    );
-
-    await this.redis.mset(cacheEntries);
-
-    await Promise.all(
-      Object.keys(cacheEntries).map((key) =>
-        this.redis.expire(key, this.CACHE_TTL)
-      )
-    );
-
-    states.forEach((state) => {
-      state.dirty = false;
-    });
+    const cacheKey = `${this.AGENT_STATE_PREFIX}${state.agentId}`;
+    await this.redis.set(cacheKey, JSON.stringify(state), this.CACHE_TTL);
   }
 
   public async saveAgentEntityState(state: AgentEntityState): Promise<void> {
-    if (!state.dirty) {
-      return;
-    }
-
     await this.agentEntityStateModel.updateOne(
       {
         agentId: state.agentId,
         targetAgentId: state.targetAgentId,
         targetUserId: state.targetUserId,
       },
-      { $set: { ...state } },
+      { $set: state },
       { upsert: true }
     );
 
@@ -475,57 +441,38 @@ export class AgentsService implements AgentsRepository {
       cacheKey += `user:${state.targetUserId}`;
     }
     await this.redis.set(cacheKey, JSON.stringify(state), this.CACHE_TTL);
-
-    state.dirty = false;
   }
 
-  public async saveAgentEntityStates(
-    states: AgentEntityState[]
+  public async saveAgentEntityStateMemory(
+    state: AgentEntityState,
+    index: number,
+    memory: string
   ): Promise<void> {
-    states = states.filter((state) => state.dirty);
-    if (states.length === 0) {
-      return;
-    }
-
-    await this.agentEntityStateModel.bulkWrite(
-      states.map((state) => ({
-        updateOne: {
-          filter: {
-            agentId: state.agentId,
-            targetAgentId: state.targetAgentId,
-            targetUserId: state.targetUserId,
-          },
-          update: { $set: state },
-          upsert: true,
-        },
-      }))
-    );
-
-    const cacheEntries = states.reduce(
-      (acc, state) => {
-        let cacheKey = `${this.AGENT_ENTITY_STATE_PREFIX}${state.agentId}:`;
-        if (state.targetAgentId) {
-          cacheKey += `agent:${state.targetAgentId}`;
-        } else if (state.targetUserId) {
-          cacheKey += `user:${state.targetUserId}`;
-        }
-        acc[cacheKey] = JSON.stringify(state);
-        return acc;
+    await this.agentEntityStateModel.updateOne(
+      {
+        agentId: state.agentId,
+        targetAgentId: state.targetAgentId,
+        targetUserId: state.targetUserId,
       },
-      {} as Record<string, string>
+      { $set: { [`memories.${index}`]: memory } }
     );
 
-    await this.redis.mset(cacheEntries);
+    const cacheKey = this.getAgentEntityStateCacheKey(state);
+    await this.redis.set(cacheKey, JSON.stringify(state), this.CACHE_TTL);
+  }
 
-    await Promise.all(
-      Object.keys(cacheEntries).map((key) =>
-        this.redis.expire(key, this.CACHE_TTL)
-      )
+  public async saveAgentExpression(
+    state: AgentState,
+    expression: string
+  ): Promise<void> {
+    await this.agentStateModel.updateOne(
+      { agentId: state.agentId },
+      { $set: { expression } },
+      { upsert: true }
     );
 
-    states.forEach((state) => {
-      state.dirty = false;
-    });
+    const cacheKey = `${this.AGENT_STATE_PREFIX}${state.agentId}`;
+    await this.redis.set(cacheKey, JSON.stringify(state), this.CACHE_TTL);
   }
 
   public async setAgentMeta(agentId: number, meta: JsonObject): Promise<void> {

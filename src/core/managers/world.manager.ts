@@ -4,6 +4,8 @@ import { LocationsRepository } from '@core/repositories/locations.repository';
 import { UsersRepository } from '@core/repositories/users.repository';
 import { RedisLockService } from '@core/services/redis-lock.service';
 import { Agent } from '@models/entities/agents/agent';
+import { AgentEntityState } from '@models/entities/agents/states/agent.entity-state';
+import { AgentState } from '@models/entities/agents/states/agent.state';
 import { User } from '@models/entities/users/user';
 import { Location } from '@models/locations/location';
 import {
@@ -26,6 +28,7 @@ export class WorldManager {
   private static readonly LOCK_TTL = 30000; // 30 seconds
   private static readonly LOCATION_LOCK_PREFIX = 'lock:location:';
   private static readonly AGENT_LOCK_PREFIX = 'lock:agent:';
+  private static readonly AGENT_ENTITY_LOCK_PREFIX = 'lock:agent-entity:';
   private static readonly USER_LOCK_PREFIX = 'lock:user:';
 
   private static _instance: WorldManager;
@@ -77,6 +80,25 @@ export class WorldManager {
     }
   }
 
+  private async withLocationLockNoRetry<T>(
+    locationId: number,
+    operation: () => Promise<T>
+  ): Promise<T | null> {
+    const lockKey = `${WorldManager.LOCATION_LOCK_PREFIX}${locationId}`;
+    const lock = await this.redisLockService.acquireLockNoRetry(
+      lockKey,
+      WorldManager.LOCK_TTL
+    );
+    if (!lock) {
+      return null;
+    }
+    try {
+      return await operation();
+    } finally {
+      await lock.release();
+    }
+  }
+
   private async withLocationAndEntitiesLock<T>(
     llmApiKeyUserId: number,
     locationId: number,
@@ -106,6 +128,68 @@ export class WorldManager {
         await lock.release();
       }
     });
+  }
+
+  private async withAgentLock<T>(
+    agentId: number,
+    operation: () => Promise<T>
+  ): Promise<T> {
+    const lockKey = `${WorldManager.AGENT_LOCK_PREFIX}${agentId}`;
+    const lock = await this.redisLockService.acquireLock(
+      lockKey,
+      WorldManager.LOCK_TTL
+    );
+    if (!lock) {
+      throw new Error(`Failed to lock agent ${agentId}`);
+    }
+    try {
+      return await operation();
+    } finally {
+      await lock.release();
+    }
+  }
+
+  private async withAgentEntityLock<T>(
+    agentId: number,
+    targetAgentId: number | undefined,
+    targetUserId: number | undefined,
+    operation: () => Promise<T>
+  ): Promise<T> {
+    const entityKey = targetAgentId
+      ? `agent:${targetAgentId}`
+      : `user:${targetUserId}`;
+    const lockKey = `${WorldManager.AGENT_ENTITY_LOCK_PREFIX}${agentId}:${entityKey}`;
+    const lock = await this.redisLockService.acquireLock(
+      lockKey,
+      WorldManager.LOCK_TTL
+    );
+    if (!lock) {
+      throw new Error(`Failed to lock agent entity ${agentId}:${entityKey}`);
+    }
+    try {
+      return await operation();
+    } finally {
+      await lock.release();
+    }
+  }
+
+  private async withUserLock<T>(
+    userId: number,
+    operation: () => Promise<T>
+  ): Promise<T> {
+    const lockKey = `${WorldManager.USER_LOCK_PREFIX}${userId}`;
+    const lock = await this.redisLockService.acquireLock(
+      lockKey,
+      WorldManager.LOCK_TTL
+    );
+    if (!lock) {
+      throw new Error(`Failed to lock user ${userId}`);
+    }
+    try {
+      return await operation();
+    } finally {
+      await lock.release();
+    }
   }
 
   private async getLocation(
@@ -256,25 +340,9 @@ export class WorldManager {
       location.messagesState
     );
 
-    await this.saveAgents(Object.values(location.agents));
-    await this.saveUsers(Object.values(location.users));
-
     if (ENV.DEBUG) {
       console.log(`Location ${location.model.name} successfully saved`);
     }
-  }
-
-  private async saveAgents(agents: Agent[]): Promise<void> {
-    await this.agentRepository.saveAgentStates(
-      agents.map((agent) => agent.state)
-    );
-    await this.agentRepository.saveAgentEntityStates(
-      agents.flatMap((agent) => agent.getEntityStates())
-    );
-  }
-
-  private async saveUsers(users: User[]): Promise<void> {
-    await this.userRepository.saveUserStates(users.map((user) => user.state));
   }
 
   public async addLocationAgent(
@@ -426,34 +494,181 @@ export class WorldManager {
     await this.addLocationMessage(locationId, locationMessage);
   }
 
+  private async updateLocationInternal(
+    llmApiKeyUserId: number,
+    locationId: number,
+    options: UpdateLocationOptions = {}
+  ): Promise<Location> {
+    const location = await this.getLocation(llmApiKeyUserId, locationId);
+
+    if (
+      !options.ignorePauseUpdateUntil &&
+      location.state.pauseUpdateUntil &&
+      location.state.pauseUpdateUntil > new Date()
+    ) {
+      return location;
+    }
+
+    if (options.preAction) {
+      await options.preAction(location);
+    }
+
+    location.addAgentMemoryHook(
+      async (location, agent, state, index, memory) => {
+        void this.updateAgentStateMemory(state, index, memory);
+      }
+    );
+
+    location.addAgentEntityMemoryHook(
+      async (location, agent, state, index, memory) => {
+        void this.updateAgentEntityStateMemory(state, index, memory);
+      }
+    );
+
+    location.addAgentExpressionHook(
+      async (location, agent, state, expression) => {
+        void this.updateAgentExpression(state, expression);
+      }
+    );
+
+    await location.update();
+
+    if (options.postAction) {
+      await options.postAction(location);
+    }
+
+    await this.saveLocation(location);
+    return location;
+  }
+
   public async updateLocation(
     llmApiKeyUserId: number,
     locationId: number,
     options: UpdateLocationOptions = {}
   ): Promise<Location> {
     return await this.withLocationLock(locationId, async () => {
-      const location = await this.getLocation(llmApiKeyUserId, locationId);
+      return await this.updateLocationInternal(
+        llmApiKeyUserId,
+        locationId,
+        options
+      );
+    });
+  }
 
-      if (
-        !options.ignorePauseUpdateUntil &&
-        location.state.pauseUpdateUntil &&
-        location.state.pauseUpdateUntil > new Date()
-      ) {
-        return location;
+  public async updateLocationNoRetry(
+    llmApiKeyUserId: number,
+    locationId: number,
+    options: UpdateLocationOptions = {}
+  ): Promise<Location | null> {
+    return await this.withLocationLockNoRetry(locationId, async () => {
+      return await this.updateLocationInternal(
+        llmApiKeyUserId,
+        locationId,
+        options
+      );
+    });
+  }
+
+  public async updateAgentStateMemory(
+    state: AgentState,
+    index: number,
+    memory: string
+  ): Promise<void> {
+    await this.withAgentLock(state.agentId, async () => {
+      if (ENV.DEBUG) {
+        console.log(
+          `Updating agent ${state.agentId} memory at index ${index} to ${memory}`
+        );
       }
 
-      if (options.preAction) {
-        await options.preAction(location);
+      const agentState = await this.agentRepository.getAgentState(
+        state.agentId
+      );
+      if (!agentState) {
+        await this.agentRepository.saveAgentState(state);
+        return;
       }
 
-      await location.update();
-
-      if (options.postAction) {
-        await options.postAction(location);
+      if (agentState.memories[index]) {
+        const emptyIndex = agentState.memories.findIndex((m) => !m);
+        if (emptyIndex !== -1) {
+          index = emptyIndex;
+        }
       }
 
-      await this.saveLocation(location);
-      return location;
+      agentState.memories[index] = memory;
+      await this.agentRepository.saveAgentStateMemory(
+        agentState,
+        index,
+        memory
+      );
+    });
+  }
+
+  public async updateAgentEntityStateMemory(
+    state: AgentEntityState,
+    index: number,
+    memory: string
+  ): Promise<void> {
+    await this.withAgentEntityLock(
+      state.agentId,
+      state.targetAgentId,
+      state.targetUserId,
+      async () => {
+        if (ENV.DEBUG) {
+          console.log(
+            `Updating agent entity ${state.agentId}:${state.targetAgentId}:${state.targetUserId} memory at index ${index} to ${memory}`
+          );
+        }
+
+        const agentEntityState = await this.agentRepository.getAgentEntityState(
+          state.agentId,
+          state.targetAgentId,
+          state.targetUserId
+        );
+        if (!agentEntityState) {
+          await this.agentRepository.saveAgentEntityState(state);
+          return;
+        }
+
+        if (agentEntityState.memories[index]) {
+          const emptyIndex = agentEntityState.memories.findIndex((m) => !m);
+          if (emptyIndex !== -1) {
+            index = emptyIndex;
+          }
+        }
+
+        agentEntityState.memories[index] = memory;
+        await this.agentRepository.saveAgentEntityStateMemory(
+          agentEntityState,
+          index,
+          memory
+        );
+      }
+    );
+  }
+
+  public async updateAgentExpression(
+    state: AgentState,
+    expression: string
+  ): Promise<void> {
+    await this.withAgentLock(state.agentId, async () => {
+      if (ENV.DEBUG) {
+        console.log(
+          `Updating agent ${state.agentId} expression to ${expression}`
+        );
+      }
+
+      const agentState = await this.agentRepository.getAgentState(
+        state.agentId
+      );
+      if (!agentState) {
+        await this.agentRepository.saveAgentState(state);
+        return;
+      }
+
+      agentState.expression = expression;
+      await this.agentRepository.saveAgentExpression(agentState, expression);
     });
   }
 }

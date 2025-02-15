@@ -189,44 +189,6 @@ export class UsersService implements UsersRepository {
     await this.redis.set(cacheKey, JSON.stringify(state), this.CACHE_TTL);
   }
 
-  public async saveUserStates(states: UserState[]): Promise<void> {
-    states = states.filter((state) => state.dirty);
-    if (states.length === 0) {
-      return;
-    }
-
-    await this.userStateModel.bulkWrite(
-      states.map((state) => ({
-        updateOne: {
-          filter: { userId: state.userId },
-          update: { $set: state },
-          upsert: true,
-        },
-      }))
-    );
-
-    const cacheEntries = states.reduce(
-      (acc, state) => {
-        const cacheKey = `${this.USER_STATE_PREFIX}${state.userId}`;
-        acc[cacheKey] = JSON.stringify(state);
-        return acc;
-      },
-      {} as Record<string, string>
-    );
-
-    await this.redis.mset(cacheEntries);
-
-    await Promise.all(
-      Object.keys(cacheEntries).map((key) =>
-        this.redis.expire(key, this.CACHE_TTL)
-      )
-    );
-
-    states.forEach((state) => {
-      state.dirty = false;
-    });
-  }
-
   public async setUserTelegramCommand(
     userId: number,
     command: string | null

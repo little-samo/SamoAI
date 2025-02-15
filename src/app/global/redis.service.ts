@@ -257,8 +257,7 @@ export class RedisService
         retryJitter: 0,
       });
       return lock;
-    } catch (error) {
-      this.logger.error(error);
+    } catch {
       return null;
     }
   }
@@ -282,8 +281,7 @@ export class RedisService
         retryJitter: 0,
       });
       return lock;
-    } catch (error) {
-      this.logger.error(error);
+    } catch {
       return null;
     }
   }

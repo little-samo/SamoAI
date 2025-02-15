@@ -25,7 +25,6 @@ export class Agent extends Entity {
     const state = new AgentState();
     state.agentId = model.id;
     state.memories = Array(meta.memoryLimit).fill('');
-    state.dirty = true;
     return state;
   }
 
@@ -34,10 +33,14 @@ export class Agent extends Entity {
       state.memories = state.memories.concat(
         Array(meta.memoryLimit - state.memories.length).fill('')
       );
-      state.dirty = true;
     } else if (state.memories.length > meta.memoryLimit) {
       state.memories = state.memories.slice(0, meta.memoryLimit);
-      state.dirty = true;
+    }
+
+    for (let i = 0; i < state.memories.length; i++) {
+      if (!state.memories[i]) {
+        state.memories[i] = '';
+      }
     }
   }
 
@@ -57,7 +60,6 @@ export class Agent extends Entity {
       throw new Error('No target agent or user provided');
     }
     state.memories = Array(this.meta.entityMemoryLimit).fill('');
-    state.dirty = true;
     return state;
   }
 
@@ -66,10 +68,14 @@ export class Agent extends Entity {
       state.memories = state.memories.concat(
         Array(this.meta.entityMemoryLimit - state.memories.length).fill('')
       );
-      state.dirty = true;
     } else if (state.memories.length > this.meta.entityMemoryLimit) {
       state.memories = state.memories.slice(0, this.meta.entityMemoryLimit);
-      state.dirty = true;
+    }
+
+    for (let i = 0; i < state.memories.length; i++) {
+      if (!state.memories[i]) {
+        state.memories[i] = '';
+      }
     }
   }
 
@@ -236,6 +242,47 @@ export class Agent extends Entity {
       throw new Error('No target agent or user provided');
     }
     delete this._entityStates[key];
+  }
+
+  public async setMemory(index: number, memory: string): Promise<void> {
+    await this.location.executeAgentMemoryHooks(
+      this,
+      this.state,
+      index,
+      memory
+    );
+    this.state.memories[index] = memory;
+  }
+
+  public async setEntityMemory(
+    key: EntityKey,
+    index: number,
+    memory: string
+  ): Promise<void> {
+    const entityState = this.getEntityState(key);
+    if (!entityState) {
+      throw new Error(`Entity with key ${key} not found`);
+    }
+
+    await this.location.executeAgentEntityMemoryHooks(
+      this,
+      entityState,
+      index,
+      memory
+    );
+    entityState.memories[index] = memory;
+  }
+
+  public async setExpression(expression: string): Promise<void> {
+    if (expression.startsWith('*') && expression.endsWith('*')) {
+      expression = expression.slice(1, -1);
+    }
+    await this.location.executeAgentExpressionHooks(
+      this,
+      this.state,
+      expression
+    );
+    this.state.expression = expression;
   }
 
   public async update(): Promise<void> {

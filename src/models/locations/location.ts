@@ -4,6 +4,8 @@ import { LlmApiKeyModel, LocationModel } from '@prisma/client';
 import { Agent } from '@models/entities/agents/agent';
 import { User } from '@models/entities/users/user';
 import { Entity, EntityKey } from '@models/entities/entity';
+import { AgentState } from '@models/entities/agents/states/agent.state';
+import { AgentEntityState } from '@models/entities/agents/states/agent.entity-state';
 
 import {
   LocationMessage,
@@ -33,6 +35,29 @@ export type LocationAgentMessageHook = (
   expression?: string
 ) => Promise<void> | void;
 
+export type LocationAgentMemoryHook = (
+  location: Location,
+  agent: Agent,
+  state: AgentState,
+  index: number,
+  memory: string
+) => Promise<void> | void;
+
+export type LocationAgentEntityMemoryHook = (
+  location: Location,
+  agent: Agent,
+  state: AgentEntityState,
+  index: number,
+  memory: string
+) => Promise<void> | void;
+
+export type LocationAgentExpressionHook = (
+  location: Location,
+  agent: Agent,
+  state: AgentState,
+  expression: string
+) => Promise<void> | void;
+
 export class Location extends EventEmitter {
   public readonly id: LocationId;
   public readonly key: LocationKey;
@@ -51,6 +76,9 @@ export class Location extends EventEmitter {
   public readonly apiKeys: Record<string, LlmApiKeyModel> = {};
 
   private agentMessageHooks: LocationAgentMessageHook[] = [];
+  private agentMemoryHooks: LocationAgentMemoryHook[] = [];
+  private agentEntityMemoryHooks: LocationAgentEntityMemoryHook[] = [];
+  private agentExpressionHooks: LocationAgentExpressionHook[] = [];
 
   public static createState(
     model: LocationModel,
@@ -208,13 +236,23 @@ export class Location extends EventEmitter {
     this.agentMessageHooks.push(hook);
   }
 
-  public async addAgentMessage(
+  public addAgentMemoryHook(hook: LocationAgentMemoryHook): void {
+    this.agentMemoryHooks.push(hook);
+  }
+
+  public addAgentEntityMemoryHook(hook: LocationAgentEntityMemoryHook): void {
+    this.agentEntityMemoryHooks.push(hook);
+  }
+
+  public addAgentExpressionHook(hook: LocationAgentExpressionHook): void {
+    this.agentExpressionHooks.push(hook);
+  }
+
+  public async executeAgentMessageHooks(
     agent: Agent,
     message?: string,
     expression?: string
   ): Promise<void> {
-    this.emit('agentMessage', agent, message, expression);
-
     try {
       await Promise.all(
         this.agentMessageHooks.map((hook) =>
@@ -226,6 +264,65 @@ export class Location extends EventEmitter {
         `Message hook failed: ${error instanceof Error ? error.message : String(error)}`
       );
     }
+  }
+
+  public async executeAgentMemoryHooks(
+    agent: Agent,
+    state: AgentState,
+    index: number,
+    memory: string
+  ): Promise<void> {
+    try {
+      await Promise.all(
+        this.agentMemoryHooks.map((hook) =>
+          hook(this, agent, state, index, memory)
+        )
+      );
+    } catch (error: unknown) {
+      throw new Error(
+        `Memory hook failed: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+  }
+
+  public async executeAgentEntityMemoryHooks(
+    agent: Agent,
+    state: AgentEntityState,
+    index: number,
+    memory: string
+  ): Promise<void> {
+    try {
+      await Promise.all(
+        this.agentEntityMemoryHooks.map((hook) =>
+          hook(this, agent, state, index, memory)
+        )
+      );
+    } catch (error: unknown) {
+      throw new Error(
+        `Entity memory hook failed: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+  }
+
+  public async executeAgentExpressionHooks(
+    agent: Agent,
+    state: AgentState,
+    expression: string
+  ): Promise<void> {
+    await Promise.all(
+      this.agentExpressionHooks.map((hook) =>
+        hook(this, agent, state, expression)
+      )
+    );
+  }
+
+  public async addAgentMessage(
+    agent: Agent,
+    message?: string,
+    expression?: string
+  ): Promise<void> {
+    this.emit('agentMessage', agent, message, expression);
+    await this.executeAgentMessageHooks(agent, message, expression);
 
     const locationMessage = new LocationMessage();
     locationMessage.agentId = agent.model.id;
