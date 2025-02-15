@@ -260,8 +260,8 @@ export class Agent extends Entity {
       messages,
       Object.values(this.actions)
     );
-    await Promise.all(
-      toolCalls.map((toolCall) => this.executeToolCall(toolCall))
-    );
+    for (const toolCall of toolCalls) {
+      await this.executeToolCall(toolCall);
+    }
   }
 }
