@@ -10,6 +10,7 @@ import { PrismaService } from '@app/global/prisma.service';
 import { AgentsService } from '@app/agents/agents.service';
 import { UsersService } from '@app/users/users.service';
 import { LocationsService } from '@app/locations/locations.service';
+import { ShutdownService } from '@app/global/shutdown.service';
 
 import { TelegramBot } from './bots/telegram.bot';
 import { TelegramRegistrarBot } from './bots/telegram.registrar-bot';
@@ -23,6 +24,7 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
   private bots: Record<string, TelegramBot> = {};
 
   public constructor(
+    private readonly shutdownService: ShutdownService,
     private readonly prisma: PrismaService,
     private readonly agentsService: AgentsService,
     private readonly usersService: UsersService,
@@ -89,6 +91,7 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
     if (registrarBotToken) {
       await this.registerBot(
         new TelegramRegistrarBot(
+          this.shutdownService,
           this,
           this.prisma,
           this.usersService,
@@ -109,6 +112,7 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
       for (const agentModel of await this.agentsService.getAllTelegramAgentModels()) {
         await this.registerBot(
           new TelegramChatBot(
+            this.shutdownService,
             this,
             this.prisma,
             this.usersService,

@@ -7,6 +7,7 @@ import { AgentsService } from '@app/agents/agents.service';
 import { UsersService } from '@app/users/users.service';
 import { UserModel } from '@prisma/client';
 import { LocationsService } from '@app/locations/locations.service';
+import { ShutdownService } from '@app/global/shutdown.service';
 
 import { TelegramUpdateDto } from '../dto/telegram.update-dto';
 import { TelegramMessageDto } from '../dto/telegram.message-dto';
@@ -49,6 +50,7 @@ export abstract class TelegramBot {
   protected readonly logger = new Logger(TelegramBot.name);
 
   public constructor(
+    protected readonly shutdownService: ShutdownService,
     protected readonly telegram: TelegramService,
     protected readonly prisma: PrismaService,
     protected readonly usersService: UsersService,

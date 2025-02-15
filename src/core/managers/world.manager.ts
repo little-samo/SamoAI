@@ -22,6 +22,7 @@ interface UpdateLocationOptions {
   ignorePauseUpdateUntil?: boolean;
   preAction?: (location: Location) => Promise<void>;
   postAction?: (location: Location) => Promise<void>;
+  handleSave?: (save: Promise<void>) => Promise<void>;
 }
 
 export class WorldManager {
@@ -515,19 +516,37 @@ export class WorldManager {
 
     location.addAgentMemoryHook(
       async (location, agent, state, index, memory) => {
-        void this.updateAgentStateMemory(state, index, memory);
+        if (options.handleSave) {
+          await options.handleSave(
+            this.updateAgentStateMemory(state, index, memory)
+          );
+        } else {
+          void this.updateAgentStateMemory(state, index, memory);
+        }
       }
     );
 
     location.addAgentEntityMemoryHook(
       async (location, agent, state, index, memory) => {
-        void this.updateAgentEntityStateMemory(state, index, memory);
+        if (options.handleSave) {
+          await options.handleSave(
+            this.updateAgentEntityStateMemory(state, index, memory)
+          );
+        } else {
+          void this.updateAgentEntityStateMemory(state, index, memory);
+        }
       }
     );
 
     location.addAgentExpressionHook(
       async (location, agent, state, expression) => {
-        void this.updateAgentExpression(state, expression);
+        if (options.handleSave) {
+          await options.handleSave(
+            this.updateAgentExpression(state, expression)
+          );
+        } else {
+          void this.updateAgentExpression(state, expression);
+        }
       }
     );
 

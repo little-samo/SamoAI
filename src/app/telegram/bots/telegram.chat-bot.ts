@@ -18,6 +18,15 @@ export class TelegramChatBot extends TelegramAgentBot {
     return text.replace(/\*(.*?)\*/g, '<i>$1</i>');
   }
 
+  private async handleSave(save: Promise<void>): Promise<void> {
+    this.shutdownService.incrementActiveRequests();
+    try {
+      await save;
+    } finally {
+      this.shutdownService.decrementActiveRequests();
+    }
+  }
+
   protected async handleTextMessage(
     user: UserModel,
     message: TelegramMessageDto,
@@ -87,6 +96,9 @@ export class TelegramChatBot extends TelegramAgentBot {
                 }
               }
             );
+          },
+          handleSave: async (save) => {
+            void this.handleSave(save);
           },
         }
       );

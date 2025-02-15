@@ -190,6 +190,7 @@ export class TelegramRegistrarBot extends TelegramBot {
 
       await this.telegram.registerBot(
         new TelegramChatBot(
+          this.shutdownService,
           this.telegram,
           this.prisma,
           this.usersService,
@@ -326,6 +327,7 @@ export class TelegramRegistrarBot extends TelegramBot {
 
     await this.telegram.registerBot(
       new TelegramChatBot(
+        this.shutdownService,
         this.telegram,
         this.prisma,
         this.usersService,
