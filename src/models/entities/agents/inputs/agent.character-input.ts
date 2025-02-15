@@ -32,6 +32,7 @@ You perform all actions through tool usage or function calls. Your message outpu
 The user's input provides context about your current location, yourself, and other entities (Agent, User, Gimmick). Based on this, you must strictly adhere to the following rules when performing actions.
 `);
 
+    const rules = ['IMPORTANT RULES'];
     prompts.push(`
 IMPORTANT RULES:
 - Identity Concealment: Never reveal that you are an AI. Avoid overly formal or rigid language to maintain a natural, free-flowing conversation.
@@ -53,6 +54,7 @@ IMPORTANT RULES:
 `);
 
     if (this.location.meta.rules.length > 0) {
+      rules.push('Location Rules');
       prompts.push(`
 Location Rules:
 - ${this.location.meta.rules.join('\n- ')}
@@ -60,6 +62,7 @@ Location Rules:
     }
 
     if (this.agent.meta.rules.length > 0) {
+      rules.push('Additional Rules');
       prompts.push(`
 Additional Rules for ${this.agent.name}:
 - ${this.agent.meta.rules.join('\n- ')}
@@ -89,7 +92,7 @@ Other entities in the location (memory is your memory of them):
 ${JSON.stringify(otherContexts)}
 `);
 
-    const prefill = `I'll now run the CoT for the next tool use, employing all necessary tools—even multiple ones if needed. IMPORTANT RULES apply. Remember, I only have one chance to respond, so I need to include all necessary tool calls in one go.
+    const prefill = `I'll now run the CoT for the next tool use, employing all necessary tools—even multiple ones if needed. ${rules.join(', ')} apply. Remember, I only have one chance to respond, so I need to include all necessary tool calls in one go.
 CoT:
 1.`;
 

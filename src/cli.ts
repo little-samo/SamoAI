@@ -4,6 +4,7 @@ import { AgentsService } from '@app/agents/agents.service';
 import { LocationsService } from '@app/locations/locations.service';
 import { UsersService } from '@app/users/users.service';
 import { WorldManager } from '@core/managers/world.manager';
+import { LocationModel } from '@prisma/client';
 
 async function bootstrap() {
   const samoai = new SamoAiApp();
@@ -42,7 +43,13 @@ async function bootstrap() {
       const locationsService = samoai.app!.get(LocationsService);
       const locationName = `CLI_CHAT/agent:${agentId}/user:${userId}`;
       const locationModel =
-        await locationsService.getOrCreateLocationModelByName(locationName);
+        await locationsService.getOrCreateLocationModelByName({
+          name: locationName,
+        } as LocationModel);
+      await WorldManager.instance.setLocationPauseUpdateUntil(
+        locationModel.id,
+        new Date(Date.now() + 1000 * 60 * 60 * 24 * 365 * 100) // pause update forever
+      );
 
       await WorldManager.instance.addLocationAgent(locationModel.id, agentId);
       await WorldManager.instance.addLocationUser(locationModel.id, userId);

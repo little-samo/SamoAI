@@ -4,10 +4,14 @@ import { Model } from 'mongoose';
 import { LocationState } from '@models/locations/states/location.state';
 import { LocationMessagesState } from '@models/locations/states/location.messages-state';
 import { LocationsRepository } from '@core/repositories/locations.repository';
-import { LocationModel } from '@prisma/client';
+import { LocationModel, UserPlatform } from '@prisma/client';
 import { PrismaService } from '@app/global/prisma.service';
 import { RedisService } from '@app/global/redis.service';
 import { JsonObject } from '@prisma/client/runtime/library';
+import { Cron, CronExpression } from '@nestjs/schedule';
+import { WorldManager } from '@core/managers/world.manager';
+import { ShutdownService } from '@app/global/shutdown.service';
+import { Location } from '@models/locations/location';
 
 @Injectable()
 export class LocationsService implements LocationsRepository {
@@ -15,10 +19,21 @@ export class LocationsService implements LocationsRepository {
   private readonly LOCATION_STATE_PREFIX = 'cache:location_state:';
   private readonly LOCATION_MESSAGES_STATE_PREFIX =
     'cache:location_messages_state:';
+  private readonly UPDATE_LOCK_KEY = 'locations:update';
+  private readonly UPDATE_LOCK_TTL = 30000; // 30 seconds
 
   protected readonly logger = new Logger(this.constructor.name);
 
+  private readonly locationUpdatePreActions: Record<
+    UserPlatform,
+    (location: Location) => Promise<void>
+  > = {
+    API: async () => {},
+    TELEGRAM: async () => {},
+  };
+
   public constructor(
+    private shutdownService: ShutdownService,
     private prisma: PrismaService,
     private redis: RedisService,
     @InjectModel(LocationState.name)
@@ -26,6 +41,22 @@ export class LocationsService implements LocationsRepository {
     @InjectModel(LocationMessagesState.name)
     private locationMessagesStateModel: Model<LocationMessagesState>
   ) {}
+
+  public registerLocationUpdatePreAction(
+    platform: UserPlatform,
+    preAction: (location: Location) => Promise<void>
+  ): void {
+    this.locationUpdatePreActions[platform] = preAction;
+  }
+
+  private async handleLocationSave(save: Promise<void>): Promise<void> {
+    this.shutdownService.incrementActiveRequests();
+    try {
+      await save;
+    } finally {
+      this.shutdownService.decrementActiveRequests();
+    }
+  }
 
   public async getLocationModel(locationId: number): Promise<LocationModel> {
     const location = await this.prisma.locationModel.findUnique({
@@ -52,18 +83,29 @@ export class LocationsService implements LocationsRepository {
   }
 
   public async getOrCreateLocationModelByName(
-    name: string
+    locationModel: LocationModel
   ): Promise<LocationModel> {
     try {
-      return await this.getLocationModelByName(name);
+      return await this.getLocationModelByName(locationModel.name);
     } catch (error) {
       if (error instanceof NotFoundException) {
-        return this.saveLocationModel({
-          name,
-        } as LocationModel);
+        return this.saveLocationModel(locationModel);
       }
       throw error;
     }
+  }
+
+  public async getAllUnpausedLocationIds(): Promise<number[]> {
+    const locations = await this.locationStateModel.find(
+      {
+        pauseUpdateUntil: {
+          $lte: new Date(),
+        },
+      },
+      { locationId: 1, _id: 0 }
+    );
+
+    return locations.map((location) => location.locationId);
   }
 
   public async getLocationState(
@@ -156,5 +198,40 @@ export class LocationsService implements LocationsRepository {
 
     const cacheKey = `${this.LOCATION_MESSAGES_STATE_PREFIX}${state.locationId}`;
     await this.redis.set(cacheKey, JSON.stringify(state), this.CACHE_TTL);
+  }
+
+  @Cron(CronExpression.EVERY_5_SECONDS)
+  private async updateUnpausedLocations(): Promise<void> {
+    const lock = await this.redis.acquireLockNoRetry(
+      this.UPDATE_LOCK_KEY,
+      this.UPDATE_LOCK_TTL
+    );
+    if (!lock) {
+      return;
+    }
+    try {
+      const llmApiKeyUserId = Number(process.env.TELEGRAM_LLM_API_USER_ID);
+      const locationIds = await this.getAllUnpausedLocationIds();
+      await Promise.all(
+        locationIds.map(async (locationId) => {
+          await WorldManager.instance.updateLocationNoRetry(
+            llmApiKeyUserId,
+            locationId,
+            {
+              preAction: async (location) => {
+                await this.locationUpdatePreActions[location.model.platform]!(
+                  location
+                );
+              },
+              handleSave: async (save) => {
+                await this.handleLocationSave(save);
+              },
+            }
+          );
+        })
+      );
+    } finally {
+      await lock.release();
+    }
   }
 }

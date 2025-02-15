@@ -1,10 +1,18 @@
-import { UserModel } from '@prisma/client';
+import {
+  LocationModel,
+  LocationType,
+  UserModel,
+  UserPlatform,
+} from '@prisma/client';
 import { ENV } from '@common/config';
 import { WorldManager } from '@core/managers/world.manager';
+import { Agent } from '@models/entities/agents/agent';
+import { Location } from '@models/locations/location';
 
 import { TelegramMessageDto } from '../dto/telegram.message-dto';
 import { TelegramUserDto } from '../dto/telegram.user-dto';
 import {
+  TELEGRAM_BOT_GROUP_LOCATION_META,
   TELEGRAM_BOT_PRIVATE_LOCATION_META,
   TELEGRAM_MESSAGE_LENGTH_LIMIT,
 } from '../meta/location.meta';
@@ -14,8 +22,49 @@ import { TelegramAgentBot } from './telegram.agent-bot';
 export const TELEGRAM_BOT_PRIVATE_LOCATION_PREFIX = 'TELEGRAM_BOT_PRIVATE';
 
 export class TelegramChatBot extends TelegramAgentBot {
-  private changeMarkdownToHtml(text: string): string {
+  public static updateLocationMeta(location: Location): void {
+    switch (location.model.type) {
+      case LocationType.PRIVATE:
+        location.meta = {
+          ...TELEGRAM_BOT_PRIVATE_LOCATION_META,
+          ...(location.model.meta as object),
+        };
+        break;
+      case LocationType.GROUP:
+        location.meta = {
+          ...TELEGRAM_BOT_GROUP_LOCATION_META,
+          ...(location.model.meta as object),
+        };
+        break;
+    }
+  }
+
+  public static changeMarkdownToHtml(text: string): string {
     return text.replace(/\*(.*?)\*/g, '<i>$1</i>');
+  }
+
+  public async locationUpdatePreAction(location: Location): Promise<void> {
+    TelegramChatBot.updateLocationMeta(location);
+    location.addAgentMessageHook(this.handleAgentMessage);
+  }
+
+  public async handleAgentMessage(
+    location: Location,
+    agent: Agent,
+    agentMessage?: string,
+    expression?: string
+  ): Promise<void> {
+    if (ENV.DEBUG) {
+      this.logger.log(
+        `[${location.model.name}] Agent response: ${agentMessage} (${expression})`
+      );
+    }
+    if (agentMessage) {
+      await this.sendChatTextMessage(
+        Number(location.model.telegramChatId),
+        TelegramChatBot.changeMarkdownToHtml(agentMessage)
+      );
+    }
   }
 
   private async handleSave(save: Promise<void>): Promise<void> {
@@ -51,7 +100,16 @@ export class TelegramChatBot extends TelegramAgentBot {
 
     const locationName = `${TELEGRAM_BOT_PRIVATE_LOCATION_PREFIX}/agent:${this.agent!.id}/user:${user.id}`;
     const locationModel =
-      await this.locationsService.getOrCreateLocationModelByName(locationName);
+      await this.locationsService.getOrCreateLocationModelByName({
+        platform: UserPlatform.TELEGRAM,
+        type: LocationType.PRIVATE,
+        name: locationName,
+        telegramChatId: BigInt(message.chat.id),
+      } as LocationModel);
+    await WorldManager.instance.setLocationPauseUpdateUntil(
+      locationModel.id,
+      new Date(Date.now() + 1000 * 60 * 60 * 24 * 365 * 100) // pause update forever
+    );
 
     await WorldManager.instance.addLocationAgent(
       locationModel.id,
@@ -74,28 +132,8 @@ export class TelegramChatBot extends TelegramAgentBot {
       Number(process.env.TELEGRAM_LLM_API_USER_ID),
       locationModel.id,
       {
-        preAction: async (location) => {
-          location.meta = {
-            ...TELEGRAM_BOT_PRIVATE_LOCATION_META,
-            ...(locationModel.meta as object),
-          };
-
-          location.addAgentMessageHook(
-            async (location, agent, agentMessage, expression) => {
-              if (ENV.DEBUG) {
-                this.logger.log(
-                  `[${this.name}] Agent response: ${agentMessage} (${expression})`
-                );
-              }
-              if (agentMessage) {
-                await this.sendChatTextMessage(
-                  message.chat.id,
-                  this.changeMarkdownToHtml(agentMessage)
-                );
-              }
-            }
-          );
-        },
+        ignorePauseUpdateUntil: true,
+        preAction: this.locationUpdatePreAction,
         postAction: async () => {
           clearInterval(typingInterval!);
         },

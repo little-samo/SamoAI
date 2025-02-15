@@ -11,6 +11,8 @@ import { AgentsService } from '@app/agents/agents.service';
 import { UsersService } from '@app/users/users.service';
 import { LocationsService } from '@app/locations/locations.service';
 import { ShutdownService } from '@app/global/shutdown.service';
+import { Location } from '@models/locations/location';
+import { UserPlatform } from '@prisma/client';
 
 import { TelegramBot } from './bots/telegram.bot';
 import { TelegramRegistrarBot } from './bots/telegram.registrar-bot';
@@ -21,7 +23,7 @@ import { TelegramChatBot } from './bots/telegram.chat-bot';
 export class TelegramService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(TelegramService.name);
 
-  private bots: Record<string, TelegramBot> = {};
+  public bots: Record<string, TelegramBot> = {};
 
   public constructor(
     private readonly shutdownService: ShutdownService,
@@ -124,12 +126,46 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
         );
       }
     }
+
+    await this.locationsService.registerLocationUpdatePreAction(
+      UserPlatform.TELEGRAM,
+      this.telegramLocationUpdatePreAction
+    );
   }
 
   public async onModuleDestroy(): Promise<void> {
     await Promise.all(
       Object.values(this.bots).map((bot) => this.unregisterBot(bot))
     );
+  }
+
+  private async telegramLocationUpdatePreAction(
+    location: Location
+  ): Promise<void> {
+    switch (location.model.platform) {
+      case UserPlatform.TELEGRAM:
+        TelegramChatBot.updateLocationMeta(location);
+
+        location.addAgentMessageHook(
+          async (location, agent, agentMessage, expression) => {
+            if (ENV.DEBUG) {
+              this.logger.log(
+                `[${location.model.name}] Agent response: ${agentMessage} (${expression})`
+              );
+            }
+            if (agentMessage) {
+              const bot = this.bots[agent.model.telegramBotToken!];
+              if (bot) {
+                await bot.sendChatTextMessage(
+                  Number(location.model.telegramChatId!),
+                  TelegramChatBot.changeMarkdownToHtml(agentMessage)
+                );
+              }
+            }
+          }
+        );
+        break;
+    }
   }
 
   public async handleUpdate(

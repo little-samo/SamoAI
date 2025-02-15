@@ -3,8 +3,16 @@ model LocationModel {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  platform UserPlatform @default(API)
+  type     LocationType @default(PRIVATE)
+
   name String @unique
   meta Json   @default("{}")
 
   telegramChatId BigInt? @unique @map("telegram_chat_id")
+}
+
+enum LocationType {
+  PRIVATE
+  GROUP
 }
