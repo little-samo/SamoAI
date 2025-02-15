@@ -266,6 +266,9 @@ For more information, please visit @samo_ai_bot. 🐾
             name: locationName,
             telegramChatId: BigInt(message.chat.id),
           } as LocationModel);
+        await WorldManager.instance.setLocationPauseUpdateUntil(
+          locationModel.id
+        );
 
         for (const member of newChatMembers) {
           if (member.is_bot) {
@@ -328,6 +331,9 @@ For more information, please visit @samo_ai_bot. 🐾
             name: locationName,
             telegramChatId: BigInt(message.chat.id),
           } as LocationModel);
+        await WorldManager.instance.setLocationPauseUpdateUntil(
+          locationModel.id
+        );
 
         if (leftChatMember.is_bot) {
           const agent = await this.agentsService.getAgentByTelegramId(

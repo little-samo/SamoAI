@@ -537,6 +537,13 @@ export class WorldManager {
     }
 
     const location = await this.getLocation(llmApiKeyUserId, locationId);
+    if (Object.keys(location.agents).length === 0) {
+      await this.setLocationPauseUpdateUntil(
+        location.model.id,
+        new Date(Date.now() + 1000 * 60 * 60 * 24 * 365 * 100)
+      );
+      return location;
+    }
 
     if (
       !options.ignorePauseUpdateUntil &&
