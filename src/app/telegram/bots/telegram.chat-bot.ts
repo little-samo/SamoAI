@@ -135,7 +135,9 @@ export class TelegramChatBot extends TelegramAgentBot {
       locationModel.id,
       {
         ignorePauseUpdateUntil: true,
-        preAction: this.locationUpdatePreAction,
+        preAction: async (location) => {
+          await this.locationUpdatePreAction(location);
+        },
         postAction: async () => {
           clearInterval(typingInterval!);
         },
