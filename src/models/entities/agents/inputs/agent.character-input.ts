@@ -89,6 +89,8 @@ Other entities in the location (memory is your memory of them):
 ${JSON.stringify(otherContexts)}
 `);
 
+    const prefill = `I'll now run the CoT for the next tool use, employing all necessary tools—even multiple ones if needed. IMPORTANT RULES apply. First,`;
+
     return [
       {
         role: 'system',
@@ -97,6 +99,10 @@ ${JSON.stringify(otherContexts)}
       {
         role: 'user',
         content: contexts.map((c) => c.trim()).join('\n\n'),
+      },
+      {
+        role: 'assistant',
+        content: prefill,
       },
     ];
   }
