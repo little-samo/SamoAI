@@ -225,7 +225,7 @@ export class LocationsService implements LocationsRepository {
     }
   }
 
-  @Cron(CronExpression.EVERY_5_SECONDS)
+  @Cron(CronExpression.EVERY_10_SECONDS)
   private async updateUnpausedLocations(): Promise<void> {
     const lock = await this.redis.acquireLockNoRetry(
       this.UPDATE_LOCK_KEY,
@@ -245,11 +245,9 @@ export class LocationsService implements LocationsRepository {
 
       const llmApiKeyUserId = Number(process.env.TELEGRAM_LLM_API_USER_ID);
       const locationIds = await this.getAllUnpausedLocationIds();
-      await Promise.all(
-        locationIds.map(async (locationId) => {
-          await this.updateLocation(llmApiKeyUserId, locationId);
-        })
-      );
+      for (const locationId of locationIds) {
+        void this.updateLocation(llmApiKeyUserId, locationId);
+      }
     } finally {
       await lock.release();
       this.shutdownService.decrementActiveRequests();
