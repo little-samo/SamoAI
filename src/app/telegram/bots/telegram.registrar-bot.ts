@@ -184,6 +184,7 @@ export class TelegramRegistrarBot extends TelegramBot {
       agent = await this.agentsService.getOrCreateTelegramAgentModel(
         user.id,
         botName,
+        BigInt(botUser.id),
         token,
         botUser.username
       );

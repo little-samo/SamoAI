@@ -20,6 +20,7 @@ import {
 import { TelegramAgentBot } from './telegram.agent-bot';
 
 export const TELEGRAM_BOT_PRIVATE_LOCATION_PREFIX = 'TELEGRAM_BOT_PRIVATE';
+export const TELEGRAM_BOT_GROUP_LOCATION_PREFIX = 'TELEGRAM_BOT_GROUP';
 
 export class TelegramChatBot extends TelegramAgentBot {
   public static updateLocationMeta(location: Location): void {
@@ -84,8 +85,13 @@ export class TelegramChatBot extends TelegramAgentBot {
     from: TelegramUserDto,
     text: string
   ): Promise<void> {
-    if (message.chat.type === 'private') {
-      await this.handlePrivateMessage(user, message, from, text);
+    switch (message.chat.type) {
+      case 'private':
+        await this.handlePrivateMessage(user, message, from, text);
+        break;
+      case 'group':
+        await this.handleGroupMessage(user, message, from, text);
+        break;
     }
   }
 
@@ -148,6 +154,59 @@ export class TelegramChatBot extends TelegramAgentBot {
     );
   }
 
+  private async handleGroupMessage(
+    user: UserModel,
+    message: TelegramMessageDto,
+    from: TelegramUserDto,
+    text: string
+  ): Promise<void> {
+    if (text.length > TELEGRAM_MESSAGE_LENGTH_LIMIT) {
+      text =
+        text.slice(0, TELEGRAM_MESSAGE_LENGTH_LIMIT - 14) + '...[TRUNCATED]';
+    }
+
+    const locationName = `${TELEGRAM_BOT_GROUP_LOCATION_PREFIX}/${message.chat.id}`;
+    const locationModel =
+      await this.locationsService.getOrCreateLocationModelByName({
+        platform: UserPlatform.TELEGRAM,
+        type: LocationType.GROUP,
+        name: locationName,
+        telegramChatId: BigInt(message.chat.id),
+      } as LocationModel);
+    await WorldManager.instance.setLocationPauseUpdateUntil(
+      locationModel.id,
+      new Date(Date.now() + 1000 * 60 * 5)
+    );
+
+    await WorldManager.instance.addLocationAgent(
+      locationModel.id,
+      this.agent!.id
+    );
+    await WorldManager.instance.addLocationUser(locationModel.id, user.id);
+
+    await WorldManager.instance.addLocationUserMessage(
+      locationModel.id,
+      user.id,
+      user.nickname,
+      text,
+      new Date(message.date * 1000)
+    );
+
+    void WorldManager.instance.updateLocation(
+      Number(process.env.TELEGRAM_LLM_API_USER_ID),
+      locationModel.id,
+      {
+        ignorePauseUpdateUntil: true,
+        preAction: async (location) => {
+          await this.locationUpdatePreAction(location);
+        },
+        handleSave: async (save) => {
+          void this.handleSave(save);
+        },
+      }
+    );
+  }
+
   protected async handleCommand(
     user: UserModel,
     message: TelegramMessageDto,
@@ -196,6 +255,59 @@ For more information, please visit @samo_ai_bot. 🐾
         `[${this.name}] New chat members: ${newChatMembers.map((m) => m.id).join(', ')}`
       );
     }
+
+    switch (message.chat.type) {
+      case 'group':
+        const locationName = `${TELEGRAM_BOT_GROUP_LOCATION_PREFIX}/${message.chat.id}`;
+        const locationModel =
+          await this.locationsService.getOrCreateLocationModelByName({
+            platform: UserPlatform.TELEGRAM,
+            type: LocationType.GROUP,
+            name: locationName,
+            telegramChatId: BigInt(message.chat.id),
+          } as LocationModel);
+
+        for (const member of newChatMembers) {
+          if (member.is_bot) {
+            const agent = await this.agentsService.getAgentByTelegramId(
+              BigInt(member.id)
+            );
+            if (agent) {
+              if (
+                await WorldManager.instance.addLocationAgent(
+                  locationModel.id,
+                  agent.id
+                )
+              ) {
+                await WorldManager.instance.addLocationSystemMessage(
+                  locationModel.id,
+                  `New agent ${agent.name} joined the group.`
+                );
+              }
+              continue;
+            }
+          }
+
+          const user = await this.usersService.getOrCreateTelegramUserModel(
+            member.id,
+            member.first_name,
+            member.last_name,
+            member.username
+          );
+          if (
+            await WorldManager.instance.addLocationUser(
+              locationModel.id,
+              user.id
+            )
+          ) {
+            await WorldManager.instance.addLocationSystemMessage(
+              locationModel.id,
+              `New user ${user.nickname} joined the group.`
+            );
+          }
+        }
+        break;
+    }
   }
 
   protected override async handleLeftChatMember(
@@ -204,6 +316,58 @@ For more information, please visit @samo_ai_bot. 🐾
   ): Promise<void> {
     if (ENV.DEBUG) {
       this.logger.log(`[${this.name}] Left chat member: ${leftChatMember.id}`);
+    }
+
+    switch (message.chat.type) {
+      case 'group':
+        const locationName = `${TELEGRAM_BOT_GROUP_LOCATION_PREFIX}/${message.chat.id}`;
+        const locationModel =
+          await this.locationsService.getOrCreateLocationModelByName({
+            platform: UserPlatform.TELEGRAM,
+            type: LocationType.GROUP,
+            name: locationName,
+            telegramChatId: BigInt(message.chat.id),
+          } as LocationModel);
+
+        if (leftChatMember.is_bot) {
+          const agent = await this.agentsService.getAgentByTelegramId(
+            BigInt(leftChatMember.id)
+          );
+          if (agent) {
+            if (
+              await WorldManager.instance.removeLocationAgent(
+                locationModel.id,
+                agent.id
+              )
+            ) {
+              await WorldManager.instance.addLocationSystemMessage(
+                locationModel.id,
+                `Agent ${agent.name} left the group.`
+              );
+            }
+            return;
+          }
+        }
+
+        const user = await this.usersService.getOrCreateTelegramUserModel(
+          leftChatMember.id,
+          leftChatMember.first_name,
+          leftChatMember.last_name,
+          leftChatMember.username
+        );
+        if (
+          await WorldManager.instance.removeLocationUser(
+            locationModel.id,
+            user.id
+          )
+        ) {
+          await WorldManager.instance.addLocationSystemMessage(
+            locationModel.id,
+            `User ${user.nickname} left the group.`
+          );
+        }
+
+        break;
     }
   }
 }

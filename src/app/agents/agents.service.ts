@@ -75,6 +75,14 @@ export class AgentsService implements AgentsRepository {
     );
   }
 
+  public async getAgentByTelegramId(
+    telegramId: bigint
+  ): Promise<AgentModel | null> {
+    return this.prisma.agentModel.findUnique({
+      where: { telegramId },
+    });
+  }
+
   public async getAgentByTelegramBotToken(
     telegramBotToken: string
   ): Promise<AgentModel | null> {
@@ -86,6 +94,7 @@ export class AgentsService implements AgentsRepository {
   public async getOrCreateTelegramAgentModel(
     ownerUserId: number,
     agentName: string,
+    telegramId: bigint,
     telegramBotToken: string,
     telegramUsername?: string
   ): Promise<AgentModel> {
@@ -107,6 +116,7 @@ export class AgentsService implements AgentsRepository {
       create: {
         name: agentName,
         ownerUserId,
+        telegramId,
         telegramBotToken,
         telegramUsername,
       },

@@ -19,6 +19,7 @@ export const TELEGRAM_BOT_PRIVATE_LOCATION_META: LocationMeta = {
 export const TELEGRAM_BOT_GROUP_LOCATION_META: LocationMeta = {
   ...DEFAULT_LOCATION_META,
   ...{
+    core: 'round_robin',
     description:
       'This is a group chat on Telegram. Multiple Agents and Users are conversing here.',
 

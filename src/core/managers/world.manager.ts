@@ -352,64 +352,79 @@ export class WorldManager {
   public async addLocationAgent(
     locationId: number,
     agentId: number
-  ): Promise<void> {
-    await this.withLocationLock(locationId, async () => {
+  ): Promise<boolean> {
+    return await this.withLocationLock(locationId, async () => {
       const locationState = await this.getOrCreateLocationState(locationId);
       if (locationState.agentIds.includes(agentId)) {
-        return;
+        return false;
       }
 
+      locationState.userIds = locationState.userIds.filter(
+        (id) => id !== agentId
+      );
       locationState.agentIds.push(agentId);
       locationState.dirty = true;
 
       await this.locationRepository.saveLocationState(locationState);
+      return true;
     });
   }
 
   public async removeLocationAgent(
     locationId: number,
     agentId: number
-  ): Promise<void> {
-    await this.withLocationLock(locationId, async () => {
+  ): Promise<boolean> {
+    return await this.withLocationLock(locationId, async () => {
       const locationState = await this.getOrCreateLocationState(locationId);
+      if (!locationState.agentIds.includes(agentId)) {
+        return false;
+      }
+
       locationState.agentIds = locationState.agentIds.filter(
         (id) => id !== agentId
       );
       locationState.dirty = true;
 
       await this.locationRepository.saveLocationState(locationState);
+      return true;
     });
   }
 
   public async addLocationUser(
     locationId: number,
     userId: number
-  ): Promise<void> {
-    await this.withLocationLock(locationId, async () => {
+  ): Promise<boolean> {
+    return await this.withLocationLock(locationId, async () => {
       const locationState = await this.getOrCreateLocationState(locationId);
       if (locationState.userIds.includes(userId)) {
-        return;
+        return false;
       }
 
       locationState.userIds.push(userId);
       locationState.dirty = true;
 
       await this.locationRepository.saveLocationState(locationState);
+      return true;
     });
   }
 
   public async removeLocationUser(
     locationId: number,
     userId: number
-  ): Promise<void> {
-    await this.withLocationLock(locationId, async () => {
+  ): Promise<boolean> {
+    return await this.withLocationLock(locationId, async () => {
       const locationState = await this.getOrCreateLocationState(locationId);
+      if (!locationState.userIds.includes(userId)) {
+        return false;
+      }
+
       locationState.userIds = locationState.userIds.filter(
         (id) => id !== userId
       );
       locationState.dirty = true;
 
       await this.locationRepository.saveLocationState(locationState);
+      return true;
     });
   }
 
@@ -498,6 +513,20 @@ export class WorldManager {
     await this.addLocationMessage(locationId, locationMessage);
   }
 
+  public async addLocationSystemMessage(
+    locationId: number,
+    message: string,
+    createdAt?: Date
+  ): Promise<void> {
+    const locationMessage = new LocationMessage();
+    locationMessage.name = '[SYSTEM]';
+    locationMessage.message = message;
+    if (createdAt) {
+      locationMessage.createdAt = createdAt;
+    }
+    await this.addLocationMessage(locationId, locationMessage);
+  }
+
   private async updateLocationInternal(
     llmApiKeyUserId: number,
     locationId: number,
@@ -557,7 +586,13 @@ export class WorldManager {
       }
     );
 
-    await location.update();
+    const pauseUpdateDuration = await location.update();
+    if (pauseUpdateDuration) {
+      await this.setLocationPauseUpdateUntil(
+        locationId,
+        new Date(Date.now() + pauseUpdateDuration)
+      );
+    }
 
     if (options.postAction) {
       await options.postAction(location);

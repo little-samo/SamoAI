@@ -1,15 +1,9 @@
-import { Location } from '../location';
-
 import { RegisterLocationCore } from './location.core-decorator';
 import { LocationCore } from './location.core';
 
 @RegisterLocationCore('repeat_action')
 export class LocationRepeatActionCore extends LocationCore {
-  public constructor(location: Location) {
-    super(location);
-  }
-
-  public async update(): Promise<void> {
+  public async update(): Promise<number> {
     await super.update();
     await Promise.all(
       Object.values(this.location.agents).map((agent) =>
@@ -21,5 +15,7 @@ export class LocationRepeatActionCore extends LocationCore {
       this.location.state.pauseUpdateUntil = undefined;
       this.location.state.dirty = true;
     }
+
+    return 0;
   }
 }

@@ -195,7 +195,9 @@ export class Location extends EventEmitter {
       messages: this.messagesState.messages.map((message) => ({
         key: message.agentId
           ? (`agent:${message.agentId}` as EntityKey)
-          : (`user:${message.userId}` as EntityKey),
+          : message.userId
+            ? (`user:${message.userId}` as EntityKey)
+            : ('system' as EntityKey),
         name: message.name,
         message: message.message,
         expression: message.expression,
@@ -367,7 +369,7 @@ export class Location extends EventEmitter {
     this.addMessage(locationMessage);
   }
 
-  public async update(): Promise<void> {
-    await this.core.update();
+  public async update(): Promise<number> {
+    return await this.core.update();
   }
 }

@@ -200,6 +200,30 @@ export class LocationsService implements LocationsRepository {
     await this.redis.set(cacheKey, JSON.stringify(state), this.CACHE_TTL);
   }
 
+  private async updateLocation(
+    llmApiKeyUserId: number,
+    locationId: number
+  ): Promise<void> {
+    try {
+      await WorldManager.instance.updateLocationNoRetry(
+        llmApiKeyUserId,
+        locationId,
+        {
+          preAction: async (location) => {
+            await this.locationUpdatePreActions[location.model.platform]!(
+              location
+            );
+          },
+          handleSave: async (save) => {
+            await this.handleLocationSave(save);
+          },
+        }
+      );
+    } catch (error) {
+      this.logger.error(`Error updating location ${locationId}: ${error}`);
+    }
+  }
+
   @Cron(CronExpression.EVERY_5_SECONDS)
   private async updateUnpausedLocations(): Promise<void> {
     const lock = await this.redis.acquireLockNoRetry(
@@ -214,20 +238,7 @@ export class LocationsService implements LocationsRepository {
       const locationIds = await this.getAllUnpausedLocationIds();
       await Promise.all(
         locationIds.map(async (locationId) => {
-          await WorldManager.instance.updateLocationNoRetry(
-            llmApiKeyUserId,
-            locationId,
-            {
-              preAction: async (location) => {
-                await this.locationUpdatePreActions[location.model.platform]!(
-                  location
-                );
-              },
-              handleSave: async (save) => {
-                await this.handleLocationSave(save);
-              },
-            }
-          );
+          await this.updateLocation(llmApiKeyUserId, locationId);
         })
       );
     } finally {

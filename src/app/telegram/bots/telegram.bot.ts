@@ -180,6 +180,12 @@ export abstract class TelegramBot {
         await this.sendChatAction(message.chat.id);
       }
 
+      const agent = await this.agentsService.getAgentByTelegramId(
+        BigInt(message.from.id)
+      );
+      if (agent) {
+        return;
+      }
       const user = await this.usersService.getOrCreateTelegramUserModel(
         message.from.id,
         message.from.first_name,

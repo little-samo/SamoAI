@@ -9,6 +9,7 @@ model AgentModel {
   ownerUserModel UserModel? @relation("agentOwnerUser", fields: [ownerUserId], references: [id])
   ownerUserId    Int?       @map("owner_user_id")
 
+  telegramId       BigInt? @unique @map("telegram_id")
   telegramUsername String? @unique @map("telegram_username")
   telegramBotToken String? @unique @map("telegram_bot_token")
 
