@@ -16,7 +16,7 @@ export class AgentUpdateMemoryAction extends AgentAction {
     switch (this.version) {
       case 1:
       default:
-        return 'Update one of your memories.';
+        return 'Update one of your memory. If you select an index that already has a recorded memory, it will be overwritten. Choose the index carefully, considering the priority of the stored memory.';
     }
   }
 

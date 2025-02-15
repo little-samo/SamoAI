@@ -66,10 +66,11 @@ export class Agent extends Entity {
       state.memories = state.memories.concat(
         Array(this.meta.entityMemoryLimit - state.memories.length).fill('')
       );
+      state.dirty = true;
     } else if (state.memories.length > this.meta.entityMemoryLimit) {
       state.memories = state.memories.slice(0, this.meta.entityMemoryLimit);
+      state.dirty = true;
     }
-    state.dirty = true;
   }
 
   public readonly key: EntityKey;
