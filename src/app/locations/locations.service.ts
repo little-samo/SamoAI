@@ -205,6 +205,7 @@ export class LocationsService implements LocationsRepository {
     llmApiKeyUserId: number,
     locationId: number
   ): Promise<void> {
+    this.shutdownService.incrementActiveRequests();
     try {
       await WorldManager.instance.updateLocationNoRetry(
         llmApiKeyUserId,
@@ -222,11 +223,17 @@ export class LocationsService implements LocationsRepository {
       );
     } catch (error) {
       this.logger.error(`Error updating location ${locationId}: ${error}`);
+    } finally {
+      this.shutdownService.decrementActiveRequests();
     }
   }
 
   @Cron(CronExpression.EVERY_10_SECONDS)
   private async updateUnpausedLocations(): Promise<void> {
+    if (this.shutdownService.isShuttingDown) {
+      return;
+    }
+
     const lock = await this.redis.acquireLockNoRetry(
       this.UPDATE_LOCK_KEY,
       this.UPDATE_LOCK_TTL

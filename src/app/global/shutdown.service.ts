@@ -13,7 +13,7 @@ export class ShutdownService implements OnModuleInit, OnApplicationShutdown {
   private logger = new Logger(ShutdownService.name);
 
   private activeRequests = 0;
-  private isShuttingDown = false;
+  public isShuttingDown = false;
   private readonly resolveShutdowns: (() => void)[] = [];
 
   public constructor(private readonly adapterHost: HttpAdapterHost) {}
