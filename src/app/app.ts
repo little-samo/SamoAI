@@ -18,6 +18,17 @@ export class SamoAiApp {
 
   public async bootstrap(listen: boolean = true) {
     this.app = await NestFactory.create(AppModule);
+
+    process.on('SIGINT', async () => {
+      this.logger.log('SIGINT signal received');
+      await this.app?.close();
+    });
+
+    process.on('SIGTERM', async () => {
+      this.logger.log('SIGTERM signal received');
+      await this.app?.close();
+    });
+
     this.app.enableShutdownHooks();
 
     const redisService = this.app.get(RedisService);
