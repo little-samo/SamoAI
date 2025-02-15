@@ -14,7 +14,7 @@ export class ShutdownService implements OnModuleInit, OnApplicationShutdown {
 
   private activeRequests = 0;
   private isShuttingDown = false;
-  private readonly resolveShutdowns: ((value: unknown) => void)[] = [];
+  private readonly resolveShutdowns: (() => void)[] = [];
 
   public constructor(private readonly adapterHost: HttpAdapterHost) {}
 
@@ -33,7 +33,7 @@ export class ShutdownService implements OnModuleInit, OnApplicationShutdown {
         res.on('finish', () => {
           this.decrementActiveRequests();
           if (this.activeRequests === 0) {
-            this.resolveShutdowns.forEach((resolve) => resolve(true));
+            this.resolveShutdowns.forEach((resolve) => resolve());
           }
         });
       }
@@ -51,15 +51,19 @@ export class ShutdownService implements OnModuleInit, OnApplicationShutdown {
     }
   }
 
-  public incrementActiveRequests() {
+  public incrementActiveRequests(): void {
     this.activeRequests++;
   }
 
-  public decrementActiveRequests() {
+  public decrementActiveRequests(): void {
     this.activeRequests--;
   }
 
-  public waitForShutdown() {
-    return new Promise((resolve) => this.resolveShutdowns.push(resolve));
+  public waitForShutdown(): Promise<void> {
+    if (this.activeRequests > 0) {
+      return new Promise((resolve) => this.resolveShutdowns.push(resolve));
+    }
+
+    return Promise.resolve();
   }
 }
