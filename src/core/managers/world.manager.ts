@@ -91,6 +91,9 @@ export class WorldManager {
       WorldManager.LOCK_TTL
     );
     if (!lock) {
+      if (ENV.DEBUG) {
+        console.log(`Failed to lock location ${locationId} (no retry)`);
+      }
       return null;
     }
     try {
@@ -500,6 +503,10 @@ export class WorldManager {
     locationId: number,
     options: UpdateLocationOptions = {}
   ): Promise<Location> {
+    if (ENV.DEBUG) {
+      console.log(`Updating location ${locationId}`);
+    }
+
     const location = await this.getLocation(llmApiKeyUserId, locationId);
 
     if (
