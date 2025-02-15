@@ -9,6 +9,7 @@ import {
 } from '@anthropic-ai/sdk/resources/messages/messages';
 import zodToJsonSchema from 'zod-to-json-schema';
 import { ENV } from '@common/config';
+import { sleep } from '@common/utils/sleep';
 
 import { LlmMessage, LlmService } from './llm.service';
 import { LlmApiError, LlmInvalidContentError } from './llm.errors';
@@ -26,6 +27,38 @@ export class AnthropicService extends LlmService {
     this.client = new Anthropic({
       apiKey: apiKey,
     });
+  }
+
+  private async createMessageWithRetry(
+    request: MessageCreateParamsNonStreaming,
+    options: { maxTries?: number; retryDelay?: number } = {}
+  ) {
+    const maxTries = options.maxTries ?? 5;
+    const retryDelay = options.retryDelay ?? 1000;
+    const startTime = Date.now();
+
+    for (let attempt = 1; attempt <= maxTries; attempt++) {
+      try {
+        const response = await this.client.messages.create(request);
+        if (ENV.DEBUG) {
+          console.log(response);
+          console.log(
+            `Anthropic time taken: ${((Date.now() - startTime) / 1000).toFixed(2)}s`
+          );
+        }
+        return response;
+      } catch (error) {
+        if (error instanceof APIError) {
+          const status = error.status;
+          if ([429, 500, 501].includes(status) && attempt < maxTries) {
+            await sleep(attempt * retryDelay);
+            continue;
+          }
+        }
+        throw error;
+      }
+    }
+    throw new LlmApiError(500, 'Max retry attempts reached');
   }
 
   public async generate(messages: LlmMessage[]): Promise<string> {
@@ -62,14 +95,7 @@ export class AnthropicService extends LlmService {
         console.log(request);
       }
 
-      const startTime = Date.now();
-      const response = await this.client.messages.create(request);
-      if (ENV.DEBUG) {
-        console.log(response);
-        console.log(
-          `Anthropic generate time taken: ${((Date.now() - startTime) / 1000).toFixed(2)}s`
-        );
-      }
+      const response = await this.createMessageWithRetry(request);
 
       if (response.content.length === 0) {
         throw new LlmInvalidContentError('Anthropic returned no content');
@@ -134,14 +160,7 @@ export class AnthropicService extends LlmService {
         console.log(request);
       }
 
-      const startTime = Date.now();
-      const response = await this.client.messages.create(request);
-      if (ENV.DEBUG) {
-        console.log(response);
-        console.log(
-          `Anthropic useTools time taken: ${((Date.now() - startTime) / 1000).toFixed(2)}s`
-        );
-      }
+      const response = await this.createMessageWithRetry(request);
 
       if (response.content.length === 0) {
         throw new LlmInvalidContentError('Anthropic returned no content');
