@@ -122,7 +122,7 @@ If you invite and activate the bot in a group, it can interact with other group 
 
 For more information, please visit @samo_ai_bot. 🐾
 
-⚠️ Note: ${this.agent!.name} can make mistakes and is talking with multiple people at the same time. Please do not share any personal or confidential information.`
+⚠️ Note: <b>${this.agent!.name}</b> can make mistakes and is talking with multiple people at the same time. Please do not share any personal or confidential information.`
         );
         return;
     }

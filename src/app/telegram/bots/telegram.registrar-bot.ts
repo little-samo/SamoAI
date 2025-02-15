@@ -96,7 +96,7 @@ export class TelegramRegistrarBot extends TelegramBot {
       case '/start':
         await this.sendInlineKeyboard(
           message.chat.id,
-          `Hey there, ${user.nickname}! I'm the Samo AI Bot, your friendly Samoyed, here to help you create, tweak, and manage bots powered by Samo AI! 🦴✨ Tap the button below to get your very first bot up and running!`,
+          `Hey there, <b>${user.nickname}</b>! I'm the Samo AI Bot, your friendly Samoyed, here to help you create, tweak, and manage bots powered by Samo AI! 🦴✨ Tap the button below to get your very first bot up and running!`,
           {
             inline_keyboard: [
               [{ text: '🚀 Register', callback_data: '/register' }],
@@ -338,7 +338,7 @@ export class TelegramRegistrarBot extends TelegramBot {
 
     await this.sendChatTextMessage(
       message.chat.id,
-      `${agent.name} is now ✅ Active! 🎉`
+      `<b>${agent.name}</b> is now ✅ Active! 🎉`
     );
   }
 
@@ -360,7 +360,7 @@ export class TelegramRegistrarBot extends TelegramBot {
     await this.agentsService.setAgentActive(agentId, false);
     await this.sendChatTextMessage(
       message.chat.id,
-      `${agent.name} is now ⛔ Inactive!`
+      `<b>${agent.name}</b> is now ⛔ Inactive!`
     );
   }
 
@@ -388,13 +388,13 @@ export class TelegramRegistrarBot extends TelegramBot {
           );
           await this.sendChatTextMessage(
             message.chat.id,
-            `Please enter ${agent.name}'s appearance (max 500 characters). Here's an example:
+            `Please enter <b>${agent.name}</b>'s appearance (max 500 characters). Here's an example:
 ${TELEGRAM_BOT_APPERANCE_EXAMPLE}`
           );
           if (meta.timeZone) {
             await this.sendChatTextMessage(
               message.chat.id,
-              `Current appearance for ${agent.name}:
+              `Current appearance for <b>${agent.name}</b>:
 ${meta.appearance}`
             );
           }
@@ -419,7 +419,7 @@ ${meta.appearance}`
           );
           await this.sendChatTextMessage(
             message.chat.id,
-            `${agent.name}'s appearance has been updated successfully! Time to test it out! 🚀`
+            `<b>${agent.name}</b>'s appearance has been updated successfully! Time to test it out! 🚀`
           );
         }
         return;
@@ -431,12 +431,12 @@ ${meta.appearance}`
           );
           await this.sendChatTextMessage(
             message.chat.id,
-            `Please enter ${agent.name}'s language (e.g. English, max 30 characters, comma separated).`
+            `Please enter <b>${agent.name}</b>'s language (e.g. English, max 30 characters, comma separated).`
           );
           if (meta.languages && meta.languages.length > 0) {
             await this.sendChatTextMessage(
               message.chat.id,
-              `Current languages for ${agent.name}: ${meta.languages.join(', ')}`
+              `Current languages for <b>${agent.name}</b>: ${meta.languages.join(', ')}`
             );
           }
           return;
@@ -465,7 +465,7 @@ ${meta.appearance}`
           );
           await this.sendChatTextMessage(
             message.chat.id,
-            `${agent.name}'s languages have been updated successfully! Time to test it out! 🚀`
+            `<b>${agent.name}</b>'s languages have been updated successfully! Time to test it out! 🚀`
           );
         }
         return;
@@ -477,7 +477,7 @@ ${meta.appearance}`
           );
           await this.sendChatTextMessage(
             message.chat.id,
-            `Please enter ${agent.name}'s character in JSON format (max 5000 characters). Here's an example:`
+            `Please enter <b>${agent.name}</b>'s character in JSON format (max 5000 characters). Here's an example:`
           );
           await this.sendChatTextMessage(
             message.chat.id,
@@ -487,7 +487,7 @@ ${meta.appearance}`
           if (meta.character) {
             await this.sendChatTextMessage(
               message.chat.id,
-              `Here's the current character for ${agent.name}:`
+              `Here's the current character for <b>${agent.name}</b>:`
             );
             await this.sendChatTextMessage(
               message.chat.id,
@@ -527,7 +527,7 @@ ${meta.appearance}`
           );
           await this.sendChatTextMessage(
             message.chat.id,
-            `${agent.name}'s character has been updated successfully! Time to test it out! 🚀`
+            `<b>${agent.name}</b>'s character has been updated successfully! Time to test it out! 🚀`
           );
         }
         return;
@@ -539,12 +539,12 @@ ${meta.appearance}`
           );
           await this.sendChatTextMessage(
             message.chat.id,
-            `Please enter ${agent.name}'s timezone (e.g. ${TELEGRAM_BOT_TIMEZONE_EXAMPLE}, max 30 characters).`
+            `Please enter <b>${agent.name}</b>'s timezone (e.g. ${TELEGRAM_BOT_TIMEZONE_EXAMPLE}, max 30 characters).`
           );
           if (meta.timeZone) {
             await this.sendChatTextMessage(
               message.chat.id,
-              `Current timezone for ${agent.name}: ${meta.timeZone}`
+              `Current timezone for <b>${agent.name}</b>: ${meta.timeZone}`
             );
           }
           return;
@@ -568,7 +568,7 @@ ${meta.appearance}`
           );
           await this.sendChatTextMessage(
             message.chat.id,
-            `${agent.name}'s timezone has been updated successfully! Time to test it out! 🚀`
+            `<b>${agent.name}</b>'s timezone has been updated successfully! Time to test it out! 🚀`
           );
         }
         return;
@@ -595,7 +595,7 @@ ${meta.appearance}`
         await this.agentsService.deleteAgentModel(agentId);
         await this.sendChatTextMessage(
           message.chat.id,
-          `${agent.name} has been deleted. 😢 Bye-bye! You can create a new one anytime with /register!`
+          `<b>${agent.name}</b> has been deleted. 😢 Bye-bye! You can create a new one anytime with /register!`
         );
         return;
       } else if (args[1] === 'cancel') {
@@ -610,7 +610,7 @@ ${meta.appearance}`
         }
         await this.sendChatTextMessage(
           message.chat.id,
-          `Great choice! ${agent.name} is still safe and sound. ❤️`
+          `Great choice! <b>${agent.name}</b> is still safe and sound. ❤️`
         );
         return;
       }
@@ -618,7 +618,7 @@ ${meta.appearance}`
 
     await this.sendInlineKeyboard(
       message.chat.id,
-      `Are you sure you want to delete ${agent.name}? This action cannot be undone. 💔`,
+      `Are you sure you want to delete <b>${agent.name}</b>? This action cannot be undone. 💔`,
       {
         inline_keyboard: [
           [
