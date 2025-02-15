@@ -89,7 +89,9 @@ Other entities in the location (memory is your memory of them):
 ${JSON.stringify(otherContexts)}
 `);
 
-    const prefill = `I'll now run the CoT for the next tool use, employing all necessary tools—even multiple ones if needed. IMPORTANT RULES apply. First,`;
+    const prefill = `I'll now run the CoT for the next tool use, employing all necessary tools—even multiple ones if needed. IMPORTANT RULES apply. Remember, I only have one chance to respond, so I need to include all necessary tool calls in one go.
+CoT:
+1.`;
 
     return [
       {
