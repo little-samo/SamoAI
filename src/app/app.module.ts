@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
+import { ScheduleModule } from '@nestjs/schedule';
 
 import { AgentsModule } from './agents/agents.module';
 import { LocationsModule } from './locations/locations.module';
@@ -12,6 +13,7 @@ import { AppController } from './app.controller';
   imports: [
     GlobalModule,
     MongooseModule.forRoot(process.env.MONGODB_URL!),
+    ScheduleModule.forRoot(),
     LocationsModule,
     AgentsModule,
     UsersModule,
