@@ -151,6 +151,10 @@ export class AgentsService implements AgentsRepository {
   public async getAgentStates(
     agentIds: number[]
   ): Promise<Record<number, AgentState>> {
+    if (agentIds.length === 0) {
+      return {};
+    }
+
     const states: Record<number, AgentState> = {};
 
     const cacheKeys = agentIds.map((id) => `${this.AGENT_STATE_PREFIX}${id}`);
@@ -266,6 +270,13 @@ export class AgentsService implements AgentsRepository {
     targetAgentIds: number[],
     targetUserIds: number[]
   ): Promise<Record<number, AgentEntityState[]>> {
+    if (
+      agentIds.length === 0 ||
+      (targetAgentIds.length === 0 && targetUserIds.length === 0)
+    ) {
+      return {};
+    }
+
     const states: Record<number, AgentEntityState[]> = {};
 
     const cacheKeys: AgentEntityStateCacheKey[] = [];

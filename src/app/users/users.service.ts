@@ -112,6 +112,10 @@ export class UsersService implements UsersRepository {
   public async getUserStates(
     userIds: number[]
   ): Promise<Record<number, UserState>> {
+    if (userIds.length === 0) {
+      return {};
+    }
+
     const states: Record<number, UserState> = {};
 
     const cacheKeys = userIds.map((id) => `${this.USER_STATE_PREFIX}${id}`);
