@@ -428,16 +428,26 @@ export class WorldManager {
     });
   }
 
+  private async setLocationPauseUpdateUntilInternal(
+    locationId: number,
+    pauseUpdateUntil?: Date
+  ): Promise<void> {
+    const locationState = await this.getOrCreateLocationState(locationId);
+    locationState.pauseUpdateUntil = pauseUpdateUntil;
+    locationState.dirty = true;
+
+    await this.locationRepository.saveLocationState(locationState);
+  }
+
   public async setLocationPauseUpdateUntil(
     locationId: number,
     pauseUpdateUntil?: Date
   ): Promise<void> {
     await this.withLocationLock(locationId, async () => {
-      const locationState = await this.getOrCreateLocationState(locationId);
-      locationState.pauseUpdateUntil = pauseUpdateUntil;
-      locationState.dirty = true;
-
-      await this.locationRepository.saveLocationState(locationState);
+      await this.setLocationPauseUpdateUntilInternal(
+        locationId,
+        pauseUpdateUntil
+      );
     });
   }
 
@@ -538,7 +548,7 @@ export class WorldManager {
 
     const location = await this.getLocation(llmApiKeyUserId, locationId);
     if (Object.keys(location.agents).length === 0) {
-      await this.setLocationPauseUpdateUntil(
+      await this.setLocationPauseUpdateUntilInternal(
         location.model.id,
         new Date(Date.now() + 1000 * 60 * 60 * 24 * 365 * 100)
       );
@@ -601,7 +611,10 @@ export class WorldManager {
           `Setting location ${location.model.name} pause update until ${pauseUpdateUntil}`
         );
       }
-      await this.setLocationPauseUpdateUntil(locationId, pauseUpdateUntil);
+      await this.setLocationPauseUpdateUntilInternal(
+        locationId,
+        pauseUpdateUntil
+      );
     }
 
     if (options.postAction) {
