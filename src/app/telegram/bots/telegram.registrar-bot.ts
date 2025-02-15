@@ -400,7 +400,19 @@ ${meta.appearance}`
           }
           return;
         } else {
-          meta.appearance = args[2].substring(0, 500);
+          if (args[2].length > 500) {
+            await this.usersService.setUserTelegramCommand(
+              user.id,
+              `/json ${agent.id} apperance`
+            );
+            await this.sendChatTextMessage(
+              message.chat.id,
+              `Oops, that's too long! Please keep it under 500 characters.`
+            );
+            return;
+          }
+
+          meta.appearance = args[2];
           await this.agentsService.setAgentMeta(
             agentId,
             meta as object as JsonObject
@@ -429,8 +441,19 @@ ${meta.appearance}`
           }
           return;
         } else {
+          if (args[2].length > 30) {
+            await this.usersService.setUserTelegramCommand(
+              user.id,
+              `/json ${agent.id} language`
+            );
+            await this.sendChatTextMessage(
+              message.chat.id,
+              `Oops, that's too long! Please keep it under 30 characters.`
+            );
+            return;
+          }
+
           meta.languages = args[2]
-            .substring(0, 30)
             .split(',')
             .map((language) => language.trim());
           if (meta.languages.length === 0) {
@@ -474,9 +497,21 @@ ${meta.appearance}`
           }
           return;
         } else {
+          await this.usersService.setUserTelegramCommand(
+            user.id,
+            `/json ${agent.id} character`
+          );
+          if (args[2].length > 5000) {
+            await this.sendChatTextMessage(
+              message.chat.id,
+              `Oops, that's too long! Please keep it under 5000 characters.`
+            );
+            return;
+          }
+
           let character: object;
           try {
-            character = JSON.parse(args[2].substring(0, 5000));
+            character = JSON.parse(args[2]);
           } catch (error) {
             this.logger.warn(`Invalid JSON: ${error}`);
             await this.sendChatTextMessage(
@@ -514,6 +549,18 @@ ${meta.appearance}`
           }
           return;
         } else {
+          await this.usersService.setUserTelegramCommand(
+            user.id,
+            `/json ${agent.id} timezone`
+          );
+          if (args[2].length > 30) {
+            await this.sendChatTextMessage(
+              message.chat.id,
+              `Oops, that's too long! Please keep it under 30 characters.`
+            );
+            return;
+          }
+
           meta.timeZone = args[2];
           await this.agentsService.setAgentMeta(
             agentId,
