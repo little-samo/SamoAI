@@ -70,41 +70,40 @@ export class TelegramChatBot extends TelegramAgentBot {
     const typingInterval = setInterval(() => {
       this.sendChatAction(message.chat.id, 'typing').catch(() => {});
     }, 5000);
-    try {
-      await WorldManager.instance.updateLocation(
-        Number(process.env.TELEGRAM_LLM_API_USER_ID),
-        locationModel.id,
-        {
-          preAction: async (location) => {
-            location.meta = {
-              ...TELEGRAM_BOT_PRIVATE_LOCATION_META,
-              ...(locationModel.meta as object),
-            };
+    void WorldManager.instance.updateLocation(
+      Number(process.env.TELEGRAM_LLM_API_USER_ID),
+      locationModel.id,
+      {
+        preAction: async (location) => {
+          location.meta = {
+            ...TELEGRAM_BOT_PRIVATE_LOCATION_META,
+            ...(locationModel.meta as object),
+          };
 
-            location.addAgentMessageHook(
-              async (location, agent, agentMessage, expression) => {
-                if (ENV.DEBUG) {
-                  this.logger.log(
-                    `[${this.name}] Agent response: ${agentMessage} (${expression})`
-                  );
-                }
-                if (agentMessage) {
-                  await this.sendChatTextMessage(
-                    message.chat.id,
-                    this.changeMarkdownToHtml(agentMessage)
-                  );
-                }
+          location.addAgentMessageHook(
+            async (location, agent, agentMessage, expression) => {
+              if (ENV.DEBUG) {
+                this.logger.log(
+                  `[${this.name}] Agent response: ${agentMessage} (${expression})`
+                );
               }
-            );
-          },
-          handleSave: async (save) => {
-            void this.handleSave(save);
-          },
-        }
-      );
-    } finally {
-      clearInterval(typingInterval!);
-    }
+              if (agentMessage) {
+                await this.sendChatTextMessage(
+                  message.chat.id,
+                  this.changeMarkdownToHtml(agentMessage)
+                );
+              }
+            }
+          );
+        },
+        postAction: async () => {
+          clearInterval(typingInterval!);
+        },
+        handleSave: async (save) => {
+          void this.handleSave(save);
+        },
+      }
+    );
   }
 
   protected async handleCommand(
