@@ -12,6 +12,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { WorldManager } from '@core/managers/world.manager';
 import { ShutdownService } from '@app/global/shutdown.service';
 import { Location } from '@models/locations/location';
+import { ENV } from '@common/config';
 
 @Injectable()
 export class LocationsService implements LocationsRepository {
@@ -231,9 +232,16 @@ export class LocationsService implements LocationsRepository {
       this.UPDATE_LOCK_TTL
     );
     if (!lock) {
+      if (ENV.DEBUG) {
+        this.logger.log('Lock not acquired, skipping update');
+      }
       return;
     }
     try {
+      if (ENV.DEBUG) {
+        this.logger.log('Lock acquired, updating locations');
+      }
+
       const llmApiKeyUserId = Number(process.env.TELEGRAM_LLM_API_USER_ID);
       const locationIds = await this.getAllUnpausedLocationIds();
       await Promise.all(

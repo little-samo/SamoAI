@@ -588,10 +588,13 @@ export class WorldManager {
 
     const pauseUpdateDuration = await location.update();
     if (pauseUpdateDuration) {
-      await this.setLocationPauseUpdateUntil(
-        locationId,
-        new Date(Date.now() + pauseUpdateDuration)
-      );
+      const pauseUpdateUntil = new Date(Date.now() + pauseUpdateDuration);
+      if (ENV.DEBUG) {
+        console.log(
+          `Setting location ${location.model.name} pause update until ${pauseUpdateUntil}`
+        );
+      }
+      await this.setLocationPauseUpdateUntil(locationId, pauseUpdateUntil);
     }
 
     if (options.postAction) {
