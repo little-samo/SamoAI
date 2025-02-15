@@ -11,6 +11,9 @@ export class LocationState {
 
   @Prop({ type: [Number], default: [], index: true })
   public userIds!: number[];
+
+  @Prop({ index: true })
+  public pauseUpdateUntil?: Date;
 }
 
 export interface LocationState {

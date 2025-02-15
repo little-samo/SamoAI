@@ -56,7 +56,10 @@ async function bootstrap() {
 
       const location = await WorldManager.instance.updateLocation(
         userId,
-        locationModel.id
+        locationModel.id,
+        {
+          ignorePauseUpdateUntil: true,
+        }
       );
 
       for (const message of location.messagesState.messages) {

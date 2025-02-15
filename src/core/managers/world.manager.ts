@@ -17,6 +17,7 @@ import {
 import { LocationState } from '@models/locations/states/location.state';
 
 interface UpdateLocationOptions {
+  ignorePauseUpdateUntil?: boolean;
   preAction?: (location: Location) => Promise<void>;
   postAction?: (location: Location) => Promise<void>;
 }
@@ -293,6 +294,21 @@ export class WorldManager {
     });
   }
 
+  public async removeLocationAgent(
+    locationId: number,
+    agentId: number
+  ): Promise<void> {
+    await this.withLocationLock(locationId, async () => {
+      const locationState = await this.getOrCreateLocationState(locationId);
+      locationState.agentIds = locationState.agentIds.filter(
+        (id) => id !== agentId
+      );
+      locationState.dirty = true;
+
+      await this.locationRepository.saveLocationState(locationState);
+    });
+  }
+
   public async addLocationUser(
     locationId: number,
     userId: number
@@ -304,6 +320,34 @@ export class WorldManager {
       }
 
       locationState.userIds.push(userId);
+      locationState.dirty = true;
+
+      await this.locationRepository.saveLocationState(locationState);
+    });
+  }
+
+  public async removeLocationUser(
+    locationId: number,
+    userId: number
+  ): Promise<void> {
+    await this.withLocationLock(locationId, async () => {
+      const locationState = await this.getOrCreateLocationState(locationId);
+      locationState.userIds = locationState.userIds.filter(
+        (id) => id !== userId
+      );
+      locationState.dirty = true;
+
+      await this.locationRepository.saveLocationState(locationState);
+    });
+  }
+
+  public async setLocationPauseUpdateUntil(
+    locationId: number,
+    pauseUpdateUntil?: Date
+  ): Promise<void> {
+    await this.withLocationLock(locationId, async () => {
+      const locationState = await this.getOrCreateLocationState(locationId);
+      locationState.pauseUpdateUntil = pauseUpdateUntil;
       locationState.dirty = true;
 
       await this.locationRepository.saveLocationState(locationState);
@@ -387,23 +431,29 @@ export class WorldManager {
     locationId: number,
     options: UpdateLocationOptions = {}
   ): Promise<Location> {
-    return await this.withLocationAndEntitiesLock(
-      llmApiKeyUserId,
-      locationId,
-      async (location) => {
-        if (options.preAction) {
-          await options.preAction(location);
-        }
+    return await this.withLocationLock(locationId, async () => {
+      const location = await this.getLocation(llmApiKeyUserId, locationId);
 
-        await location.update();
-
-        if (options.postAction) {
-          await options.postAction(location);
-        }
-
-        await this.saveLocation(location);
+      if (
+        !options.ignorePauseUpdateUntil &&
+        location.state.pauseUpdateUntil &&
+        location.state.pauseUpdateUntil > new Date()
+      ) {
         return location;
       }
-    );
+
+      if (options.preAction) {
+        await options.preAction(location);
+      }
+
+      await location.update();
+
+      if (options.postAction) {
+        await options.postAction(location);
+      }
+
+      await this.saveLocation(location);
+      return location;
+    });
   }
 }
