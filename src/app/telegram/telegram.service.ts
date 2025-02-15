@@ -129,7 +129,9 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
 
     await this.locationsService.registerLocationUpdatePreAction(
       UserPlatform.TELEGRAM,
-      this.telegramLocationUpdatePreAction
+      async (location) => {
+        await this.telegramLocationUpdatePreAction(location);
+      }
     );
   }
 
