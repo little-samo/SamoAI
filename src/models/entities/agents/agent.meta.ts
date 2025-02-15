@@ -71,7 +71,7 @@ export interface AgentMeta extends EntityMeta {
 export const DEFAULT_AGENT_META: AgentMeta = {
   core: 'empty',
 
-  temperature: 0.5,
+  temperature: 0,
   maxTokens: 1024,
   llms: [
     { platform: LlmPlatform.ANTHROPIC, model: 'claude-3-5-sonnet-20241022' },
