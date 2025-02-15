@@ -27,6 +27,7 @@ interface UpdateLocationOptions {
 
 export class WorldManager {
   private static readonly LOCK_TTL = 30000; // 30 seconds
+  private static readonly LOCATION_LOCK_TTL = 180000; // 3 minutes
   private static readonly LOCATION_LOCK_PREFIX = 'lock:location:';
   private static readonly AGENT_LOCK_PREFIX = 'lock:agent:';
   private static readonly AGENT_ENTITY_LOCK_PREFIX = 'lock:agent-entity:';
@@ -69,7 +70,7 @@ export class WorldManager {
     const lockKey = `${WorldManager.LOCATION_LOCK_PREFIX}${locationId}`;
     const lock = await this.redisLockService.acquireLock(
       lockKey,
-      WorldManager.LOCK_TTL
+      WorldManager.LOCATION_LOCK_TTL
     );
     if (!lock) {
       throw new Error(`Failed to lock location ${locationId}`);
@@ -88,7 +89,7 @@ export class WorldManager {
     const lockKey = `${WorldManager.LOCATION_LOCK_PREFIX}${locationId}`;
     const lock = await this.redisLockService.acquireLockNoRetry(
       lockKey,
-      WorldManager.LOCK_TTL
+      WorldManager.LOCATION_LOCK_TTL
     );
     if (!lock) {
       if (ENV.DEBUG) {
