@@ -237,6 +237,7 @@ export class LocationsService implements LocationsRepository {
       }
       return;
     }
+    this.shutdownService.incrementActiveRequests();
     try {
       if (ENV.DEBUG) {
         this.logger.log('Lock acquired, updating locations');
@@ -251,6 +252,7 @@ export class LocationsService implements LocationsRepository {
       );
     } finally {
       await lock.release();
+      this.shutdownService.decrementActiveRequests();
     }
   }
 }
