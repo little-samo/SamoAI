@@ -63,13 +63,13 @@ export abstract class TelegramBot {
     params: Record<string, unknown> = {},
     options: TelegramCallOptions = {}
   ): Promise<unknown> {
-    const { maxRetries = 5, token = this.token } = options;
+    const { maxRetries: maxTries = 5, token = this.token } = options;
     const url = `https://api.telegram.org/bot${token}/${method}`;
     const body = JSON.stringify(params);
     if (ENV.DEBUG) {
       this.logger.log(`[${this.name}] Calling ${url} with body: ${body}`);
     }
-    for (let i = 0; i < maxRetries; i++) {
+    for (let i = 0; i < maxTries; i++) {
       const response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -77,7 +77,7 @@ export abstract class TelegramBot {
         },
         body,
       });
-      if (response.status === 429 && i < maxRetries - 1) {
+      if (response.status === 429 && i < maxTries - 1) {
         const retryAfter = i + 1;
         this.logger.warn(
           `[${this.name}] Telegram API rate limited, retrying in ${retryAfter} seconds`
