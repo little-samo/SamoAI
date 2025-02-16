@@ -246,10 +246,6 @@ export class LocationsService implements LocationsRepository {
     }
     this.shutdownService.incrementActiveRequests();
     try {
-      if (ENV.DEBUG) {
-        this.logger.log('Lock acquired, updating locations');
-      }
-
       const llmApiKeyUserId = Number(process.env.TELEGRAM_LLM_API_USER_ID);
       const locationIds = await this.getAllUnpausedLocationIds();
       for (const locationId of locationIds) {
