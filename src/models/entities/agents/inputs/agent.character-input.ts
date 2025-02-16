@@ -135,7 +135,14 @@ CoT:
 
   public override buildActionCondition(): LlmMessage[] {
     const { prompt, rules } = this.buildPrompt(false);
-    const lastMessage = this.location.lastMessageContext;
+    const lastMessages: string[] = [];
+    for (let i = -3; i < 0; ++i) {
+      const message = this.location.messagesState.messages[i];
+      if (message) {
+        lastMessages.push(JSON.stringify(Location.messageToContext(message)));
+      }
+    }
+
     const input = `${this.buildContext()}
 
 You are ${this.agent.name} (@${this.agent.model.telegramUsername}).
@@ -143,7 +150,8 @@ You have the following tools: ${Object.keys(this.agent.actions).join(', ')}.
 
 Apply ${rules.join(', ')}.
 
-Last message: ${lastMessage ? JSON.stringify(lastMessage) : 'None'}
+Last 3 messages:
+${lastMessages.length > 0 ? lastMessages.join('\n') : 'None'}
 
 Should you perform an action? Evaluate the following and explain your reasoning and conclusion. Finally, answer with ✅ or ❌. (No need to actually act.)
 1. Who spoke last?
