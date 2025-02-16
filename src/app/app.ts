@@ -20,13 +20,17 @@ export class SamoAiApp {
     this.app = await NestFactory.create(AppModule);
 
     process.on('SIGINT', async () => {
-      this.logger.log('SIGINT signal received');
+      console.log('SIGINT signal received');
       await this.app?.close();
+      console.log('App closed');
+      process.exit(0);
     });
 
     process.on('SIGTERM', async () => {
-      this.logger.log('SIGTERM signal received');
+      console.log('SIGTERM signal received');
       await this.app?.close();
+      console.log('App closed');
+      process.exit(0);
     });
 
     this.app.enableShutdownHooks();
