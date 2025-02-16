@@ -11,11 +11,6 @@ export class LocationRepeatActionCore extends LocationCore {
       )
     );
 
-    if (this.location.state.pauseUpdateUntil) {
-      this.location.state.pauseUpdateUntil = undefined;
-      this.location.state.dirty = true;
-    }
-
     return 0;
   }
 }
