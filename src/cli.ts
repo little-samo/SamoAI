@@ -46,10 +46,6 @@ async function bootstrap() {
         await locationsService.getOrCreateLocationModelByName({
           name: locationName,
         } as LocationModel);
-      await WorldManager.instance.setLocationPauseUpdateUntil(
-        locationModel.id,
-        new Date(Date.now() + 1000 * 60 * 60 * 24 * 365 * 100) // pause update forever
-      );
 
       await WorldManager.instance.addLocationAgent(locationModel.id, agentId);
       await WorldManager.instance.addLocationUser(locationModel.id, userId);

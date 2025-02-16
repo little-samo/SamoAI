@@ -431,10 +431,10 @@ export class WorldManager {
 
   private async setLocationPauseUpdateUntilInternal(
     locationId: number,
-    pauseUpdateUntil?: Date
+    pauseUpdateUntil: Date | null
   ): Promise<void> {
     const locationState = await this.getOrCreateLocationState(locationId);
-    locationState.pauseUpdateUntil = pauseUpdateUntil ?? null;
+    locationState.pauseUpdateUntil = pauseUpdateUntil;
     locationState.dirty = true;
 
     await this.locationRepository.saveLocationState(locationState);
@@ -442,7 +442,7 @@ export class WorldManager {
 
   public async setLocationPauseUpdateUntil(
     locationId: number,
-    pauseUpdateUntil?: Date
+    pauseUpdateUntil: Date | null
   ): Promise<void> {
     await this.withLocationLock(locationId, async () => {
       await this.setLocationPauseUpdateUntilInternal(
@@ -549,10 +549,7 @@ export class WorldManager {
 
     const location = await this.getLocation(llmApiKeyUserId, locationId);
     if (Object.keys(location.agents).length === 0) {
-      await this.setLocationPauseUpdateUntilInternal(
-        location.model.id,
-        new Date(Date.now() + 1000 * 60 * 60 * 24 * 365 * 100)
-      );
+      await this.setLocationPauseUpdateUntilInternal(location.model.id, null);
       return location;
     }
 
@@ -616,6 +613,11 @@ export class WorldManager {
         locationId,
         pauseUpdateUntil
       );
+    } else {
+      if (ENV.DEBUG) {
+        console.log(`Location ${location.model.name} paused update`);
+      }
+      await this.setLocationPauseUpdateUntilInternal(locationId, null);
     }
 
     if (options.postAction) {

@@ -114,10 +114,6 @@ export class TelegramChatBot extends TelegramAgentBot {
         name: locationName,
         telegramChatId: BigInt(message.chat.id),
       } as LocationModel);
-    await WorldManager.instance.setLocationPauseUpdateUntil(
-      locationModel.id,
-      new Date(Date.now() + 1000 * 60 * 60 * 24 * 365 * 100) // pause update forever
-    );
 
     await WorldManager.instance.addLocationAgent(
       locationModel.id,
@@ -267,7 +263,8 @@ For more information, please visit @samo_ai_bot. 🐾
             telegramChatId: BigInt(message.chat.id),
           } as LocationModel);
         await WorldManager.instance.setLocationPauseUpdateUntil(
-          locationModel.id
+          locationModel.id,
+          new Date()
         );
 
         for (const member of newChatMembers) {
@@ -332,7 +329,8 @@ For more information, please visit @samo_ai_bot. 🐾
             telegramChatId: BigInt(message.chat.id),
           } as LocationModel);
         await WorldManager.instance.setLocationPauseUpdateUntil(
-          locationModel.id
+          locationModel.id,
+          new Date()
         );
 
         if (leftChatMember.is_bot) {
