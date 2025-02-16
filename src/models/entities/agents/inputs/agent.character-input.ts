@@ -147,7 +147,7 @@ Last message: ${lastMessage ? JSON.stringify(lastMessage) : 'None'}
 Should you perform an action? Evaluate the following and explain your reasoning and conclusion. Finally, answer with ✅ or ❌. (No need to actually act.)
 1. Who spoke last?
   i) If you were the last speaker: must you speak again even if it might inconvenience others?
-  ii) If someone else spoke last: did they address you or require your response?
+  ii) If someone else spoke last: did they address you directly, mention something relevant to you, or say something that reasonably requires your response?
 2. Is there an event or has it been a long time since a topic was raised, making your input necessary?
 If any apply, answer ✅. Otherwise, choose ❌ for the sake of efficiency and to avoid annoying others.`;
 
