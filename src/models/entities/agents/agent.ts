@@ -332,7 +332,7 @@ export class Agent extends Entity {
     const llm = this.llms.at(llmIndex) ?? this.llm;
     const result = await llm.generate(messages, {
       maxTokens: 256,
-      temperature: 0,
+      temperature: 0.1,
       verbose: false,
     });
     if (ENV.DEBUG) {
