@@ -46,6 +46,16 @@ export class TelegramChatBot extends TelegramAgentBot {
 
   public async locationUpdatePreAction(location: Location): Promise<void> {
     TelegramChatBot.updateLocationMeta(location);
+
+    location.addAgentExecuteNextActionsPreHook(async (location, agent) => {
+      if (ENV.DEBUG) {
+        this.logger.log(
+          `[${location.model.name}] Agent ${agent.model.name} is executing next actions`
+        );
+      }
+      await this.sendChatAction(Number(location.model.telegramChatId!));
+    });
+
     location.addAgentMessageHook((loc, agent, message, expression) =>
       this.handleAgentMessage(loc, agent, message, expression)
     );
