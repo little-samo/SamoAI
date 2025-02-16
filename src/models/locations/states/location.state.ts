@@ -13,7 +13,7 @@ export class LocationState {
   public userIds!: number[];
 
   @Prop({ index: true })
-  public pauseUpdateUntil?: Date;
+  public pauseUpdateUntil?: Date | null;
 }
 
 export interface LocationState {

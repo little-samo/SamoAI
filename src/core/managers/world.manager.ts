@@ -434,7 +434,7 @@ export class WorldManager {
     pauseUpdateUntil?: Date
   ): Promise<void> {
     const locationState = await this.getOrCreateLocationState(locationId);
-    locationState.pauseUpdateUntil = pauseUpdateUntil;
+    locationState.pauseUpdateUntil = pauseUpdateUntil ?? null;
     locationState.dirty = true;
 
     await this.locationRepository.saveLocationState(locationState);
