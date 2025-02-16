@@ -137,7 +137,7 @@ CoT:
     const { prompt, rules } = this.buildPrompt(false);
     const lastMessages: string[] = [];
     for (let i = -3; i < 0; ++i) {
-      const message = this.location.messagesState.messages[i];
+      const message = this.location.messagesState.messages.at(i);
       if (message) {
         lastMessages.push(JSON.stringify(Location.messageToContext(message)));
       }
