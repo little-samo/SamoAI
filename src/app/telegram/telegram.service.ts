@@ -149,6 +149,11 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
         TelegramChatBot.updateLocationMeta(location);
 
         location.addAgentExecuteNextActionsPreHook(async (location, agent) => {
+          if (ENV.DEBUG) {
+            this.logger.log(
+              `[${location.model.name}] Agent ${agent.model.name} is executing next actions`
+            );
+          }
           const bot = this.bots[agent.model.telegramBotToken!];
           if (bot) {
             await bot.sendChatAction(Number(location.model.telegramChatId!));
