@@ -26,6 +26,7 @@ export const TELEGRAM_BOT_GROUP_LOCATION_META: LocationMeta = {
     messageLengthLimit: TELEGRAM_MESSAGE_LENGTH_LIMIT,
     rules: [
       `You don't have to participate in every conversation. Only respond when you feel it's necessary or when someone specifically needs your answer.`,
+      `You must not annoy others with too many messages. Consider performing other actions without sending a message.`,
     ],
   },
 };
