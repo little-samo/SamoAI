@@ -6,6 +6,7 @@ import { User } from '@models/entities/users/user';
 import { Entity, EntityKey } from '@models/entities/entity';
 import { AgentState } from '@models/entities/agents/states/agent.state';
 import { AgentEntityState } from '@models/entities/agents/states/agent.entity-state';
+import { ENV } from '@common/config';
 
 import {
   LocationMessage,
@@ -370,6 +371,11 @@ export class Location extends EventEmitter {
   }
 
   public async update(): Promise<number> {
+    if (ENV.DEBUG) {
+      console.log(
+        `Updating location ${this.model.name}, core: ${this.core.constructor.name}`
+      );
+    }
     return await this.core.update();
   }
 }
