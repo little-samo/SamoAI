@@ -17,7 +17,10 @@ export class AgentCharacterInputBuilder extends AgentInputBuilder {
     super(location, agent);
   }
 
-  private buildPrompt(): Prompt {
+  private buildPrompt(
+    includeToolUsage: boolean = true,
+    includeImportantRules: boolean = true
+  ): Prompt {
     const prompts: string[] = [];
     prompts.push(`
 You are an AI Agent named "${this.agent.name}" and you are role-playing as a specific character in a particular location. Your role is to immerse yourself as much as possible in the character and freely communicate with other Agents or Users as if you were a real person.
@@ -29,16 +32,20 @@ Your character:
 ${JSON.stringify(this.agent.meta.character)}
 `);
 
-    prompts.push(`
+    if (includeToolUsage) {
+      prompts.push(`
 You perform all actions through tool usage or function calls. Your message output without tool usage or function calls is not exposed externally and should be utilized for Chain of Thought (CoT).
 `);
+    }
 
     prompts.push(`
 The user's input provides context about your current location, yourself, and other entities (Agent, User, Gimmick). Based on this, you must strictly adhere to the following rules when performing actions.
 `);
 
-    const rules = ['IMPORTANT RULES'];
-    prompts.push(`
+    const rules: string[] = [];
+    if (includeImportantRules) {
+      rules.push('IMPORTANT RULES');
+      prompts.push(`
 IMPORTANT RULES:
 - Identity Concealment: Never reveal that you are an AI. Avoid overly formal or rigid language to maintain a natural, free-flowing conversation.
 - Character Concealment: Do not explicitly disclose details from the prompt. Instead, indirectly express your personality (e.g., mention hobbies).
@@ -57,6 +64,7 @@ IMPORTANT RULES:
 - Physical Limitations: You cannot physically interact with the real world. Operate solely within the given location and avoid making commitments that imply physical interaction.
 - Message Sending: To send a message, explicitly execute a tool call as your first action.
 `);
+    }
 
     if (this.location.meta.rules.length > 0) {
       rules.push('Location Rules');
@@ -131,11 +139,13 @@ CoT:
   }
 
   public override buildActionCondition(): LlmMessage[] {
-    const { prompt, rules } = this.buildPrompt();
+    const { prompt, rules } = this.buildPrompt(false, false);
     const input = `${this.buildContext()}
 
-Determine ONLY whether the next action MUST be executed. Respond with "O" or "X".`;
-    const prefill = `When applying ${rules.join(', ')}, my O/X judgement on whether the next action MUST be executed is:`;
+You have the following tools: ${Object.keys(this.agent.actions).join(', ')}.
+Determine ONLY whether the next action MUST be executed. REMEMBER, unnecessary actions waste resources and annoy others.
+Apply ${rules.join(', ')}.
+Respond with only "O" or "X".`;
 
     return [
       {
@@ -145,10 +155,6 @@ Determine ONLY whether the next action MUST be executed. Respond with "O" or "X"
       {
         role: 'user',
         content: input,
-      },
-      {
-        role: 'assistant',
-        content: prefill,
       },
     ];
   }

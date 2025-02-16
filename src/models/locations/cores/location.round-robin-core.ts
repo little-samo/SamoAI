@@ -9,7 +9,7 @@ import { RegisterLocationCore } from './location.core-decorator';
 @RegisterLocationCore('round_robin')
 export class LocationRoundRobinCore extends LocationCore {
   public static readonly AGENT_MESSAGE_COOLDOWN = 1000 * 60 * 3; // 3 minutes
-  public static readonly LOCATION_UPDATE_COOLDOWN_ON_MESSAGE = 1; // No pause
+  public static readonly LOCATION_UPDATE_COOLDOWN_ON_MESSAGE = 5 * 1000; // 5 seconds
   public static readonly LOCATION_UPDATE_SHORT_COOLDOWN_ON_NO_MESSAGE =
     1000 * 60 * 5; // 5 minutes
   public static readonly LOCATION_UPDATE_LONG_COOLDOWN_ON_NO_MESSAGE =
