@@ -29,12 +29,17 @@ export interface LocationConstructorOptions {
   defaultMeta?: LocationMeta;
 }
 
+export type LocationAgentExecuteNextActionsHook = (
+  location: Location,
+  agent: Agent
+) => Promise<void>;
+
 export type LocationAgentMessageHook = (
   location: Location,
   agent: Agent,
   message?: string,
   expression?: string
-) => Promise<void> | void;
+) => Promise<void>;
 
 export type LocationAgentMemoryHook = (
   location: Location,
@@ -42,7 +47,7 @@ export type LocationAgentMemoryHook = (
   state: AgentState,
   index: number,
   memory: string
-) => Promise<void> | void;
+) => Promise<void>;
 
 export type LocationAgentEntityMemoryHook = (
   location: Location,
@@ -50,14 +55,14 @@ export type LocationAgentEntityMemoryHook = (
   state: AgentEntityState,
   index: number,
   memory: string
-) => Promise<void> | void;
+) => Promise<void>;
 
 export type LocationAgentExpressionHook = (
   location: Location,
   agent: Agent,
   state: AgentState,
   expression: string
-) => Promise<void> | void;
+) => Promise<void>;
 
 export class Location extends EventEmitter {
   public static messageToContext(
@@ -92,6 +97,8 @@ export class Location extends EventEmitter {
 
   public readonly apiKeys: Record<string, LlmApiKeyModel> = {};
 
+  private agentExecuteNextActionsPreHooks: LocationAgentExecuteNextActionsHook[] =
+    [];
   private agentMessageHooks: LocationAgentMessageHook[] = [];
   private agentMemoryHooks: LocationAgentMemoryHook[] = [];
   private agentEntityMemoryHooks: LocationAgentEntityMemoryHook[] = [];
@@ -253,6 +260,12 @@ export class Location extends EventEmitter {
     this.messagesState.dirty = true;
   }
 
+  public addAgentExecuteNextActionsPreHook(
+    hook: LocationAgentExecuteNextActionsHook
+  ): void {
+    this.agentExecuteNextActionsPreHooks.push(hook);
+  }
+
   public addAgentMessageHook(hook: LocationAgentMessageHook): void {
     this.agentMessageHooks.push(hook);
   }
@@ -267,6 +280,14 @@ export class Location extends EventEmitter {
 
   public addAgentExpressionHook(hook: LocationAgentExpressionHook): void {
     this.agentExpressionHooks.push(hook);
+  }
+
+  public async executeAgentExecuteNextActionsPreHooks(
+    agent: Agent
+  ): Promise<void> {
+    await Promise.all(
+      this.agentExecuteNextActionsPreHooks.map((hook) => hook(this, agent))
+    );
   }
 
   public async executeAgentMessageHooks(

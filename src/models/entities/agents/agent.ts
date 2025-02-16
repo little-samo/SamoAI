@@ -306,6 +306,8 @@ export class Agent extends Entity {
     inputIndex: number = 0,
     llmIndex: number = Agent.ACTION_LLM_INDEX
   ): Promise<void> {
+    await this.location.executeAgentExecuteNextActionsPreHooks(this);
+
     const input = this.inputs[inputIndex];
     const messages = input.buildNextActions();
     const llm = this.llms.at(llmIndex) ?? this.llm;
