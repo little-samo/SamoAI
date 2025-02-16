@@ -135,16 +135,21 @@ CoT:
 
   public override buildActionCondition(): LlmMessage[] {
     const { prompt, rules } = this.buildPrompt(false);
+    const lastMessage = this.location.messagesState.messages.at(-1);
     const input = `${this.buildContext()}
 
 You have the following tools: ${Object.keys(this.agent.actions).join(', ')}.
+
 Apply ${rules.join(', ')}.
 
-Should you perform the action? Consider the following, log your reasoning and conclusion, and respond with ✅ or ❌ at the end. No need to actually perform the action.
-- If you spoke last, must you speak again?
-- If someone else spoke last, must you respond?
-- Is there an event (e.g., a scheduled task), or do you want to introduce a new topic after a long time?
-If any apply, answer ✅. Otherwise, choose ❌ for efficiency and to avoid unnecessary actions.`;
+Last message: ${lastMessage ? JSON.stringify(lastMessage) : 'None'}
+
+Should you perform an action? Evaluate the following and explain your reasoning and conclusion. Finally, answer with ✅ or ❌. (No need to actually act.)
+1. Who spoke last?
+  i) If you were the last speaker: must you speak again even if it might inconvenience others?
+  ii) If someone else spoke last: is it your turn because no one else can or will respond, and the conversation isn't over?
+2. Is there an event or has it been a long time since a topic was raised, making your input necessary?
+If any condition applies, respond; otherwise, choose not to for the sake of efficiency and to avoid annoying others.`;
 
     return [
       {
