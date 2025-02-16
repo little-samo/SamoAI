@@ -26,8 +26,8 @@ interface UpdateLocationOptions {
 }
 
 export class WorldManager {
-  private static readonly LOCK_TTL = 30000; // 30 seconds
-  private static readonly LOCATION_LOCK_TTL = 180000; // 3 minutes
+  private static readonly LOCK_TTL = 5000; // 5 seconds
+  private static readonly LOCATION_LOCK_TTL = 30000; // 30 seconds
   private static readonly LOCATION_LOCK_PREFIX = 'lock:location:';
   private static readonly AGENT_LOCK_PREFIX = 'lock:agent:';
   private static readonly AGENT_ENTITY_LOCK_PREFIX = 'lock:agent-entity:';
