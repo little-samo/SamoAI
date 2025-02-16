@@ -134,8 +134,8 @@ CoT:
     const { prompt, rules } = this.buildPrompt();
     const input = `${this.buildContext()}
 
-Determine ONLY whether to execute the next action or not. Respond with "O" or "X".`;
-    const prefill = `When applying ${rules.join(', ')}, my O/X judgement on whether to execute the next action or not is:`;
+Determine ONLY whether the next action MUST be executed. Respond with "O" or "X".`;
+    const prefill = `When applying ${rules.join(', ')}, my O/X judgement on whether the next action MUST be executed is:`;
 
     return [
       {
