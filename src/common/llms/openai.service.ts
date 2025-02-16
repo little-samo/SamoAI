@@ -4,7 +4,7 @@ import { ENV } from '@common/config';
 import { ChatCompletionCreateParamsNonStreaming } from 'openai/resources/chat/completions';
 import { sleep } from '@common/utils/sleep';
 
-import { LlmMessage, LlmService } from './llm.service';
+import { LlmMessage, LlmOptions, LlmService } from './llm.service';
 import { LlmApiError } from './llm.errors';
 import { LlmInvalidContentError } from './llm.errors';
 import { LlmTool, LlmToolCall } from './llm.tool';
@@ -26,8 +26,8 @@ export class OpenAIService extends LlmService {
     request: ChatCompletionCreateParamsNonStreaming,
     options: { maxTries?: number; retryDelay?: number } = {}
   ) {
-    const maxTries = options.maxTries ?? 5;
-    const retryDelay = options.retryDelay ?? 1000;
+    const maxTries = options.maxTries ?? LlmService.DEFAULT_MAX_TRIES;
+    const retryDelay = options.retryDelay ?? LlmService.DEFAULT_RETRY_DELAY;
     const startTime = Date.now();
 
     for (let attempt = 1; attempt <= maxTries; attempt++) {
@@ -54,22 +54,22 @@ export class OpenAIService extends LlmService {
     throw new LlmApiError(500, 'Max retry attempts reached');
   }
 
-  public async generate(messages: LlmMessage[]): Promise<string> {
+  public async generate(
+    messages: LlmMessage[],
+    options?: LlmOptions
+  ): Promise<string> {
     try {
       const request: ChatCompletionCreateParamsNonStreaming = {
         model: this.model,
         messages,
-        temperature: this.temperature,
-        max_tokens: this.maxTokens,
+        temperature: options?.temperature ?? LlmService.DEFAULT_TEMPERATURE,
+        max_tokens: options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS,
       };
       if (ENV.DEBUG) {
         console.log(request);
       }
 
-      const response = await this.createCompletionWithRetry(request, {
-        maxTries: 5,
-        retryDelay: 1000,
-      });
+      const response = await this.createCompletionWithRetry(request, options);
 
       if (response.choices[0].message.content === null) {
         throw new LlmInvalidContentError('OpenAI returned no content');
@@ -86,7 +86,8 @@ export class OpenAIService extends LlmService {
 
   public async useTools(
     messages: LlmMessage[],
-    tools: LlmTool[]
+    tools: LlmTool[],
+    options?: LlmOptions
   ): Promise<LlmToolCall[]> {
     try {
       const request: ChatCompletionCreateParamsNonStreaming = {
@@ -99,17 +100,14 @@ export class OpenAIService extends LlmService {
             parameters: tool.parameters,
           })
         ),
-        temperature: this.temperature,
-        max_tokens: this.maxTokens,
+        temperature: options?.temperature ?? LlmService.DEFAULT_TEMPERATURE,
+        max_tokens: options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS,
       };
       if (ENV.DEBUG) {
         console.log(request);
       }
 
-      const response = await this.createCompletionWithRetry(request, {
-        maxTries: 5,
-        retryDelay: 1000,
-      });
+      const response = await this.createCompletionWithRetry(request, options);
 
       if (response.choices.length === 0) {
         throw new LlmInvalidContentError('OpenAI returned no choices');

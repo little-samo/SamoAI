@@ -9,5 +9,7 @@ export abstract class AgentInputBuilder {
     public readonly agent: Agent
   ) {}
 
-  public abstract build(): LlmMessage[];
+  public abstract buildNextActions(): LlmMessage[];
+
+  public abstract buildActionCondition(): LlmMessage[];
 }

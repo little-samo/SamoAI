@@ -21,6 +21,9 @@ import { AgentActionFactory } from './actions';
 import { AgentInputBuilder, AgentInputFactory } from './inputs';
 
 export class Agent extends Entity {
+  public static readonly ACTION_LLM_INDEX = 0;
+  public static readonly MINI_LLM_INDEX = 1;
+
   public static createState(model: AgentModel, meta: AgentMeta): AgentState {
     const state = new AgentState();
     state.agentId = model.id;
@@ -110,8 +113,6 @@ export class Agent extends Entity {
         throw new Error(`API key not found for platform: ${llm.platform}`);
       }
       const llmService = LlmFactory.create(llm.platform, llm.model, apiKey.key);
-      llmService.temperature = meta.temperature;
-      llmService.maxTokens = meta.maxTokens;
       this.llms.push(llmService);
     }
     this.llm = this.llms[0];
@@ -300,15 +301,37 @@ export class Agent extends Entity {
     }
   }
 
-  public async executeNextActions(index: number = 0): Promise<void> {
-    const input = this.inputs[index];
-    const messages = input.build();
-    const toolCalls = await this.llm.useTools(
+  public async executeNextActions(
+    inputIndex: number = 0,
+    llmIndex: number = Agent.ACTION_LLM_INDEX
+  ): Promise<void> {
+    const input = this.inputs[inputIndex];
+    const messages = input.buildNextActions();
+    const llm = this.llms.at(llmIndex) ?? this.llm;
+    const toolCalls = await llm.useTools(
       messages,
-      Object.values(this.actions)
+      Object.values(this.actions),
+      {
+        maxTokens: this.meta.maxTokens,
+        temperature: this.meta.temperature,
+      }
     );
     for (const toolCall of toolCalls) {
       await this.executeToolCall(toolCall);
     }
+  }
+
+  public async evaluateActionCondition(
+    inputIndex: number = 0,
+    llmIndex: number = Agent.MINI_LLM_INDEX
+  ): Promise<boolean> {
+    const input = this.inputs[inputIndex];
+    const messages = input.buildActionCondition();
+    const llm = this.llms.at(llmIndex) ?? this.llm;
+    const result = await llm.generate(messages, {
+      maxTokens: 2,
+      temperature: 0,
+    });
+    return result.trim() === 'O';
   }
 }

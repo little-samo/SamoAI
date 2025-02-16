@@ -1,4 +1,5 @@
 import { shuffle } from '@common/utils/array';
+import { ENV } from '@common/config';
 
 import { LocationMessage } from '../states/location.messages-state';
 
@@ -34,6 +35,13 @@ export class LocationRoundRobinCore extends LocationCore {
         Date.now() - new Date(agentLastMessage.createdAt).getTime() >
           LocationRoundRobinCore.AGENT_MESSAGE_COOLDOWN
       ) {
+        if (!(await agent.evaluateActionCondition())) {
+          if (ENV.DEBUG) {
+            console.log(`Agent ${agent.name} did not execute next actions`);
+          }
+          continue;
+        }
+
         await agent.executeNextActions();
         if (lastMessage !== this.lastMessage) {
           return LocationRoundRobinCore.LOCATION_UPDATE_COOLDOWN_ON_MESSAGE;
@@ -46,6 +54,13 @@ export class LocationRoundRobinCore extends LocationCore {
       if (executedAgentIds.has(agent.model.id)) {
         continue;
       }
+      if (!(await agent.evaluateActionCondition())) {
+        if (ENV.DEBUG) {
+          console.log(`Agent ${agent.name} did not execute next actions`);
+        }
+        continue;
+      }
+
       await agent.executeNextActions();
       if (lastMessage !== this.lastMessage) {
         return LocationRoundRobinCore.LOCATION_UPDATE_COOLDOWN_ON_MESSAGE;

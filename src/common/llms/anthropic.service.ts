@@ -11,7 +11,7 @@ import zodToJsonSchema from 'zod-to-json-schema';
 import { ENV } from '@common/config';
 import { sleep } from '@common/utils/sleep';
 
-import { LlmMessage, LlmService } from './llm.service';
+import { LlmMessage, LlmOptions, LlmService } from './llm.service';
 import { LlmApiError, LlmInvalidContentError } from './llm.errors';
 import { LlmToolCall } from './llm.tool';
 import { LlmTool } from './llm.tool';
@@ -33,8 +33,8 @@ export class AnthropicService extends LlmService {
     request: MessageCreateParamsNonStreaming,
     options: { maxTries?: number; retryDelay?: number } = {}
   ) {
-    const maxTries = options.maxTries ?? 5;
-    const retryDelay = options.retryDelay ?? 1000;
+    const maxTries = options.maxTries ?? LlmService.DEFAULT_MAX_TRIES;
+    const retryDelay = options.retryDelay ?? LlmService.DEFAULT_RETRY_DELAY;
     const startTime = Date.now();
 
     for (let attempt = 1; attempt <= maxTries; attempt++) {
@@ -61,7 +61,10 @@ export class AnthropicService extends LlmService {
     throw new LlmApiError(500, 'Max retry attempts reached');
   }
 
-  public async generate(messages: LlmMessage[]): Promise<string> {
+  public async generate(
+    messages: LlmMessage[],
+    options?: LlmOptions
+  ): Promise<string> {
     try {
       const systemMessages: TextBlockParam[] = messages
         .filter((message) => message.role === 'system')
@@ -88,14 +91,14 @@ export class AnthropicService extends LlmService {
         model: this.model,
         system: systemMessages,
         messages: userAssistantMessages,
-        max_tokens: this.maxTokens,
-        temperature: this.temperature,
+        max_tokens: options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS,
+        temperature: options?.temperature ?? LlmService.DEFAULT_TEMPERATURE,
       };
       if (ENV.DEBUG) {
         console.log(request);
       }
 
-      const response = await this.createMessageWithRetry(request);
+      const response = await this.createMessageWithRetry(request, options);
 
       if (response.content.length === 0) {
         throw new LlmInvalidContentError('Anthropic returned no content');
@@ -113,9 +116,10 @@ export class AnthropicService extends LlmService {
     }
   }
 
-  public async useTools(
+  public override async useTools(
     messages: LlmMessage[],
-    tools: LlmTool[]
+    tools: LlmTool[],
+    options?: LlmOptions
   ): Promise<LlmToolCall[]> {
     try {
       const systemMessages: TextBlockParam[] = messages
@@ -153,14 +157,14 @@ export class AnthropicService extends LlmService {
         system: systemMessages,
         tools: toolMessages,
         messages: userAssistantMessages,
-        max_tokens: this.maxTokens,
-        temperature: this.temperature,
+        max_tokens: options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS,
+        temperature: options?.temperature ?? LlmService.DEFAULT_TEMPERATURE,
       };
       if (ENV.DEBUG) {
         console.log(request);
       }
 
-      const response = await this.createMessageWithRetry(request);
+      const response = await this.createMessageWithRetry(request, options);
 
       if (response.content.length === 0) {
         throw new LlmInvalidContentError('Anthropic returned no content');

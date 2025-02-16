@@ -6,13 +6,18 @@ import { Agent } from '../agent';
 import { RegisterAgentInput } from './agent.input-decorator';
 import { AgentInputBuilder } from './agent.input';
 
+interface Prompt {
+  prompt: string;
+  rules: string[];
+}
+
 @RegisterAgentInput('character')
 export class AgentCharacterInputBuilder extends AgentInputBuilder {
   public constructor(location: Location, agent: Agent) {
     super(location, agent);
   }
 
-  public build(): LlmMessage[] {
+  private buildPrompt(): Prompt {
     const prompts: string[] = [];
     prompts.push(`
 You are an AI Agent named "${this.agent.name}" and you are role-playing as a specific character in a particular location. Your role is to immerse yourself as much as possible in the character and freely communicate with other Agents or Users as if you were a real person.
@@ -69,6 +74,13 @@ Additional Rules for ${this.agent.name}:
 `);
     }
 
+    return {
+      prompt: prompts.map((p) => p.trim()).join('\n\n'),
+      rules,
+    };
+  }
+
+  private buildContext(): string {
     const contexts: string[] = [];
 
     const locationContext = this.location.context;
@@ -92,6 +104,12 @@ Other entities in the location (memory is your memory of them):
 ${JSON.stringify(otherContexts)}
 `);
 
+    return contexts.map((c) => c.trim()).join('\n\n');
+  }
+
+  public override buildNextActions(): LlmMessage[] {
+    const { prompt, rules } = this.buildPrompt();
+    const input = this.buildContext();
     const prefill = `I'll now run the CoT for the next tool use, employing all necessary tools—even multiple ones if needed. ${rules.join(', ')} apply. Remember, I only have one chance to respond, so I need to include all necessary tool calls in one go.
 CoT:
 1.`;
@@ -99,11 +117,34 @@ CoT:
     return [
       {
         role: 'system',
-        content: prompts.map((p) => p.trim()).join('\n\n'),
+        content: prompt,
       },
       {
         role: 'user',
-        content: contexts.map((c) => c.trim()).join('\n\n'),
+        content: input,
+      },
+      {
+        role: 'assistant',
+        content: prefill,
+      },
+    ];
+  }
+
+  public override buildActionCondition(): LlmMessage[] {
+    const { prompt, rules } = this.buildPrompt();
+    const input = `${this.buildContext()}
+
+Determine ONLY whether to execute the next action or not. Respond with "O" or "X".`;
+    const prefill = `When applying ${rules.join(', ')}, my O/X judgement on whether to execute the next action or not is:`;
+
+    return [
+      {
+        role: 'system',
+        content: prompt,
+      },
+      {
+        role: 'user',
+        content: input,
       },
       {
         role: 'assistant',
