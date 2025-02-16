@@ -15,7 +15,7 @@ import {
 import { LocationState } from './states/location.state';
 import { DEFAULT_LOCATION_META, LocationMeta } from './location.meta';
 import { LocationCore } from './cores/location.core';
-import { LocationContext } from './location.context';
+import { LocationContext, LocationMessageContext } from './location.context';
 import { LocationCoreFactory } from './cores';
 
 export type LocationId = number & { __locationId: true };
@@ -60,6 +60,22 @@ export type LocationAgentExpressionHook = (
 ) => Promise<void> | void;
 
 export class Location extends EventEmitter {
+  public static messageToContext(
+    message: LocationMessage
+  ): LocationMessageContext {
+    return {
+      key: message.agentId
+        ? (`agent:${message.agentId}` as EntityKey)
+        : message.userId
+          ? (`user:${message.userId}` as EntityKey)
+          : ('system' as EntityKey),
+      name: message.name,
+      message: message.message,
+      expression: message.expression,
+      created: Math.floor(new Date(message.createdAt).getTime() / 1000),
+    };
+  }
+
   public readonly id: LocationId;
   public readonly key: LocationKey;
 
@@ -193,18 +209,13 @@ export class Location extends EventEmitter {
     return {
       name: this.model.name,
       description: this.meta.description,
-      messages: this.messagesState.messages.map((message) => ({
-        key: message.agentId
-          ? (`agent:${message.agentId}` as EntityKey)
-          : message.userId
-            ? (`user:${message.userId}` as EntityKey)
-            : ('system' as EntityKey),
-        name: message.name,
-        message: message.message,
-        expression: message.expression,
-        created: Math.floor(new Date(message.createdAt).getTime() / 1000),
-      })),
+      messages: this.messagesState.messages.map(Location.messageToContext),
     };
+  }
+
+  public get lastMessageContext(): LocationMessageContext | undefined {
+    const lastMessage = this.messagesState.messages.at(-1);
+    return lastMessage ? Location.messageToContext(lastMessage) : undefined;
   }
 
   public reloadCore(): void {

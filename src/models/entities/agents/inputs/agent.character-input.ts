@@ -135,7 +135,7 @@ CoT:
 
   public override buildActionCondition(): LlmMessage[] {
     const { prompt, rules } = this.buildPrompt(false);
-    const lastMessage = this.location.messagesState.messages.at(-1);
+    const lastMessage = this.location.lastMessageContext;
     const input = `${this.buildContext()}
 
 You have the following tools: ${Object.keys(this.agent.actions).join(', ')}.
