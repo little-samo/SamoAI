@@ -1,6 +1,5 @@
 import { OpenAI } from 'openai';
 import { zodFunction } from 'openai/helpers/zod';
-import { ENV } from '@common/config';
 import { ChatCompletionCreateParamsNonStreaming } from 'openai/resources/chat/completions';
 import { sleep } from '@common/utils/sleep';
 
@@ -24,7 +23,7 @@ export class OpenAIService extends LlmService {
 
   private async createCompletionWithRetry(
     request: ChatCompletionCreateParamsNonStreaming,
-    options: { maxTries?: number; retryDelay?: number } = {}
+    options: { maxTries?: number; retryDelay?: number; verbose?: boolean } = {}
   ) {
     const maxTries = options.maxTries ?? LlmService.DEFAULT_MAX_TRIES;
     const retryDelay = options.retryDelay ?? LlmService.DEFAULT_RETRY_DELAY;
@@ -33,7 +32,7 @@ export class OpenAIService extends LlmService {
     for (let attempt = 1; attempt <= maxTries; attempt++) {
       try {
         const response = await this.client.chat.completions.create(request);
-        if (ENV.DEBUG) {
+        if (options.verbose) {
           console.log(response);
           console.log(
             `OpenAI time taken: ${((Date.now() - startTime) / 1000).toFixed(2)}s`
@@ -65,7 +64,7 @@ export class OpenAIService extends LlmService {
         temperature: options?.temperature ?? LlmService.DEFAULT_TEMPERATURE,
         max_tokens: options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS,
       };
-      if (ENV.DEBUG) {
+      if (options?.verbose) {
         console.log(request);
       }
 
@@ -103,7 +102,7 @@ export class OpenAIService extends LlmService {
         temperature: options?.temperature ?? LlmService.DEFAULT_TEMPERATURE,
         max_tokens: options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS,
       };
-      if (ENV.DEBUG) {
+      if (options?.verbose) {
         console.log(request);
       }
 

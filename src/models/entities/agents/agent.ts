@@ -3,6 +3,7 @@ import { LlmService } from '@common/llms/llm.service';
 import { Location } from '@models/locations/location';
 import { LlmToolCall } from '@common/llms/llm.tool';
 import { LlmFactory } from '@common/llms/llm.factory';
+import { ENV } from '@common/config';
 
 import { Entity, EntityKey } from '../entity';
 
@@ -314,6 +315,7 @@ export class Agent extends Entity {
       {
         maxTokens: this.meta.maxTokens,
         temperature: this.meta.temperature,
+        verbose: ENV.DEBUG,
       }
     );
     for (const toolCall of toolCalls) {
@@ -331,7 +333,13 @@ export class Agent extends Entity {
     const result = await llm.generate(messages, {
       maxTokens: 2,
       temperature: 0,
+      verbose: false,
     });
+    if (ENV.DEBUG) {
+      console.log(
+        `Agent ${this.model.name} evaluated action condition: ${result}`
+      );
+    }
     return result.trim() === 'O';
   }
 }

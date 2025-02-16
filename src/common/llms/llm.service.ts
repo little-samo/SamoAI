@@ -10,6 +10,7 @@ export interface LlmOptions {
   maxTokens?: number;
   maxTries?: number;
   retryDelay?: number;
+  verbose?: boolean;
 }
 
 export abstract class LlmService {
