@@ -138,6 +138,7 @@ CoT:
     const lastMessage = this.location.lastMessageContext;
     const input = `${this.buildContext()}
 
+You are ${this.agent.name} (@${this.agent.model.telegramUsername}).
 You have the following tools: ${Object.keys(this.agent.actions).join(', ')}.
 
 Apply ${rules.join(', ')}.
