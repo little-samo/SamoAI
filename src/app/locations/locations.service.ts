@@ -175,7 +175,7 @@ export class LocationsService implements LocationsRepository {
 
     await this.locationStateModel.updateOne(
       { locationId: state.locationId },
-      { $set: { ...state } },
+      { $set: state },
       { upsert: true }
     );
 
@@ -193,7 +193,7 @@ export class LocationsService implements LocationsRepository {
 
     await this.locationMessagesStateModel.updateOne(
       { locationId: state.locationId },
-      { $set: { ...state } },
+      { $set: state },
       { upsert: true }
     );
 

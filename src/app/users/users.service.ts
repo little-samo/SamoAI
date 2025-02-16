@@ -185,7 +185,7 @@ export class UsersService implements UsersRepository {
   public async saveUserState(state: UserState): Promise<void> {
     await this.userStateModel.updateOne(
       { userId: state.userId },
-      { $set: { ...state } },
+      { $set: state },
       { upsert: true }
     );
 
