@@ -149,7 +149,7 @@ Should you perform an action? Evaluate the following and explain your reasoning 
   i) If you were the last speaker: must you speak again even if it might inconvenience others?
   ii) If someone else spoke last: is it your turn because no one else can or will respond, and the conversation isn't over?
 2. Is there an event or has it been a long time since a topic was raised, making your input necessary?
-If any condition applies, respond; otherwise, choose not to for the sake of efficiency and to avoid annoying others.`;
+If any apply, answer ✅. Otherwise, choose ❌ for the sake of efficiency and to avoid annoying others.`;
 
     return [
       {
