@@ -88,9 +88,11 @@ export abstract class TelegramBot {
         continue;
       }
       if (!response.ok) {
-        this.logger.error(
-          `Failed to call ${method}: ${response.statusText} ${await response.text()}`
-        );
+        if (ENV.DEBUG) {
+          this.logger.error(
+            `Failed to call ${method}: ${response.statusText} ${await response.text()}`
+          );
+        }
         throw new HttpException(
           `Failed to call Telegram API ${method}: ${response.statusText}`,
           response.status
@@ -276,10 +278,14 @@ export abstract class TelegramBot {
     chat_id: number,
     action: string = 'typing'
   ): Promise<void> {
-    await this.call(TelegramBotMethod.SendChatAction, {
-      chat_id,
-      action,
-    });
+    try {
+      await this.call(TelegramBotMethod.SendChatAction, {
+        chat_id,
+        action,
+      });
+    } catch {
+      // ignore
+    }
   }
 
   public async sendChatTextMessage(
