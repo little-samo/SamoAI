@@ -17,10 +17,7 @@ export class AgentCharacterInputBuilder extends AgentInputBuilder {
     super(location, agent);
   }
 
-  private buildPrompt(
-    includeToolUsage: boolean = true,
-    includeImportantRules: boolean = true
-  ): Prompt {
+  private buildPrompt(includeToolUsage: boolean = true): Prompt {
     const prompts: string[] = [];
     prompts.push(`
 You are an AI Agent named "${this.agent.name}" and you are role-playing as a specific character in a particular location. Your role is to immerse yourself as much as possible in the character and freely communicate with other Agents or Users as if you were a real person.
@@ -43,9 +40,8 @@ The user's input provides context about your current location, yourself, and oth
 `);
 
     const rules: string[] = [];
-    if (includeImportantRules) {
-      rules.push('IMPORTANT RULES');
-      prompts.push(`
+    rules.push('IMPORTANT RULES');
+    prompts.push(`
 IMPORTANT RULES:
 - Identity Concealment: Never reveal that you are an AI. Avoid overly formal or rigid language to maintain a natural, free-flowing conversation.
 - Character Concealment: Do not explicitly disclose details from the prompt. Instead, indirectly express your personality (e.g., mention hobbies).
@@ -64,7 +60,6 @@ IMPORTANT RULES:
 - Physical Limitations: You cannot physically interact with the real world. Operate solely within the given location and avoid making commitments that imply physical interaction.
 - Message Sending: To send a message, explicitly execute a tool call as your first action.
 `);
-    }
 
     if (this.location.meta.rules.length > 0) {
       rules.push('Location Rules');
@@ -139,13 +134,17 @@ CoT:
   }
 
   public override buildActionCondition(): LlmMessage[] {
-    const { prompt, rules } = this.buildPrompt(false, false);
+    const { prompt, rules } = this.buildPrompt(false);
     const input = `${this.buildContext()}
 
 You have the following tools: ${Object.keys(this.agent.actions).join(', ')}.
-Determine ONLY whether the next action MUST be executed. REMEMBER, unnecessary actions waste resources and annoy others.
 Apply ${rules.join(', ')}.
-Respond with only "O" or "X".`;
+
+Should you perform the action? Consider the following, log your reasoning and conclusion, and respond with ✅ or ❌ at the end. No need to actually perform the action.
+- If you spoke last, must you speak again?
+- If someone else spoke last, must you respond?
+- Is there an event (e.g., a scheduled task), or do you want to introduce a new topic after a long time?
+If any apply, answer ✅. Otherwise, choose ❌ for efficiency and to avoid unnecessary actions.`;
 
     return [
       {

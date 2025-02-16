@@ -340,6 +340,6 @@ export class Agent extends Entity {
         `Agent ${this.model.name} evaluated action condition: ${result}`
       );
     }
-    return result.trim() === 'O';
+    return result.includes('✅');
   }
 }
