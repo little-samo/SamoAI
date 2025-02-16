@@ -136,7 +136,7 @@ CoT:
   public override buildActionCondition(): LlmMessage[] {
     const { prompt, rules } = this.buildPrompt(false);
     const lastMessages: string[] = [];
-    for (let i = -3; i < 0; ++i) {
+    for (let i = -5; i < 0; ++i) {
       const message = this.location.messagesState.messages.at(i);
       if (message) {
         lastMessages.push(JSON.stringify(Location.messageToContext(message)));
@@ -150,13 +150,13 @@ You have the following tools: ${Object.keys(this.agent.actions).join(', ')}.
 
 Apply ${rules.join(', ')}.
 
-Last 3 messages:
+Last 5 messages:
 ${lastMessages.length > 0 ? lastMessages.join('\n') : 'None'}
 
-Should you perform an action? Evaluate the following and explain your reasoning and conclusion. Finally, answer with ✅ or ❌. (No need to actually act.)
+Should you perform an action? Evaluate the following and explain your reasoning and conclusion. Finally, answer with ✅ or ❌. (Do not actually act.)
 1. Who spoke last?
   i) If you were the last speaker: must you speak again even if it might inconvenience others?
-  ii) If someone else spoke last: did they address you directly, mention something relevant to you, or say something that reasonably requires your response?
+  ii) If someone else spoke last: did they address you directly, mention something relevant to you, say something that reasonably requires your response, or seem to expect your reply?
 2. Is there an event or has it been a long time since a topic was raised, making your input necessary?
 If any apply, answer ✅. Otherwise, choose ❌ for the sake of efficiency and to avoid annoying others.`;
 
