@@ -285,11 +285,6 @@ export class Location extends EventEmitter {
   public async executeAgentExecuteNextActionsPreHooks(
     agent: Agent
   ): Promise<void> {
-    if (ENV.DEBUG) {
-      console.log(
-        `Executing ${this.agentExecuteNextActionsPreHooks.length} pre hooks`
-      );
-    }
     await Promise.all(
       this.agentExecuteNextActionsPreHooks.map((hook) => hook(this, agent))
     );
