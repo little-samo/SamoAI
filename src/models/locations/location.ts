@@ -65,7 +65,7 @@ export class Location extends EventEmitter {
 
   public meta: LocationMeta;
 
-  public readonly core: LocationCore;
+  public core: LocationCore;
 
   public readonly entities: Record<EntityKey, Entity> = {};
   public readonly agents: Record<number, Agent> = {};
@@ -205,6 +205,13 @@ export class Location extends EventEmitter {
         created: Math.floor(new Date(message.createdAt).getTime() / 1000),
       })),
     };
+  }
+
+  public reloadCore(): void {
+    if (this.core.name === this.meta.core) {
+      return;
+    }
+    this.core = LocationCoreFactory.createCore(this);
   }
 
   public addMessage(message: LocationMessage): void {
@@ -371,6 +378,7 @@ export class Location extends EventEmitter {
   }
 
   public async update(): Promise<number> {
+    this.reloadCore();
     if (ENV.DEBUG) {
       console.log(
         `Updating location ${this.model.name}, core: ${this.core.constructor.name}`
