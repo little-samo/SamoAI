@@ -141,7 +141,7 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
     );
   }
 
-  private async telegramLocationUpdatePreAction(
+  public async telegramLocationUpdatePreAction(
     location: Location
   ): Promise<void> {
     switch (location.model.platform) {

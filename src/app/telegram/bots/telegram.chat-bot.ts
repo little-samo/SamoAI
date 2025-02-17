@@ -45,32 +45,6 @@ export class TelegramChatBot extends TelegramAgentBot {
     return text.replace(/\*(.*?)\*/g, '<i>$1</i>');
   }
 
-  public async locationUpdatePreAction(location: Location): Promise<void> {
-    TelegramChatBot.updateLocationMeta(location);
-
-    location.addAgentExecuteNextActionsPreHook(async (location, agent) => {
-      if (ENV.DEBUG) {
-        this.logger.log(
-          `[${location.model.name}] Agent ${agent.model.name} is executing next actions`
-        );
-      }
-      await this.sendChatAction(
-        Number(location.model.telegramChatId!),
-        'typing'
-      );
-      setTimeout(() => {
-        void this.sendChatAction(
-          Number(location.model.telegramChatId!),
-          'typing'
-        );
-      }, 5000);
-    });
-
-    location.addAgentMessageHook((loc, agent, message, expression) =>
-      this.handleAgentMessage(loc, agent, message, expression)
-    );
-  }
-
   public async handleAgentMessage(
     location: Location,
     agent: Agent,
@@ -87,15 +61,6 @@ export class TelegramChatBot extends TelegramAgentBot {
         Number(location.model.telegramChatId),
         TelegramChatBot.changeMarkdownToHtml(agentMessage)
       );
-    }
-  }
-
-  private async handleSave(save: Promise<void>): Promise<void> {
-    this.shutdownService.incrementActiveRequests();
-    try {
-      await save;
-    } finally {
-      this.shutdownService.decrementActiveRequests();
     }
   }
 
@@ -159,21 +124,25 @@ export class TelegramChatBot extends TelegramAgentBot {
     const typingInterval = setInterval(() => {
       void this.sendChatAction(message.chat.id, 'typing');
     }, 5000);
-    void WorldManager.instance.updateLocation(
-      Number(process.env.TELEGRAM_LLM_API_USER_ID),
-      locationModel.id,
-      {
-        preAction: async (location) => {
-          await this.locationUpdatePreAction(location);
-        },
-        postAction: async () => {
-          clearInterval(typingInterval!);
-        },
-        handleSave: async (save) => {
-          void this.handleSave(save);
-        },
-      }
-    );
+    this.shutdownService.incrementActiveRequests();
+    try {
+      await WorldManager.instance.updateLocation(
+        Number(process.env.TELEGRAM_LLM_API_USER_ID),
+        locationModel.id,
+        {
+          preAction: async (location) => {
+            await this.telegramService.telegramLocationUpdatePreAction(
+              location
+            );
+          },
+          postAction: async () => {
+            clearInterval(typingInterval!);
+          },
+        }
+      );
+    } finally {
+      this.shutdownService.decrementActiveRequests();
+    }
   }
 
   private async handleGroupMessage(
@@ -221,18 +190,22 @@ export class TelegramChatBot extends TelegramAgentBot {
       new Date(message.date * 1000)
     );
 
-    await WorldManager.instance.updateLocation(
-      Number(process.env.TELEGRAM_LLM_API_USER_ID),
-      locationModel.id,
-      {
-        preAction: async (location) => {
-          await this.locationUpdatePreAction(location);
-        },
-        handleSave: async (save) => {
-          void this.handleSave(save);
-        },
-      }
-    );
+    this.shutdownService.incrementActiveRequests();
+    try {
+      await WorldManager.instance.updateLocation(
+        Number(process.env.TELEGRAM_LLM_API_USER_ID),
+        locationModel.id,
+        {
+          preAction: async (location) => {
+            await this.telegramService.telegramLocationUpdatePreAction(
+              location
+            );
+          },
+        }
+      );
+    } finally {
+      this.shutdownService.decrementActiveRequests();
+    }
   }
 
   protected async handleCommand(

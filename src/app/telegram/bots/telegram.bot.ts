@@ -51,7 +51,7 @@ export abstract class TelegramBot {
 
   public constructor(
     protected readonly shutdownService: ShutdownService,
-    protected readonly telegram: TelegramService,
+    protected readonly telegramService: TelegramService,
     protected readonly prisma: PrismaService,
     protected readonly usersService: UsersService,
     protected readonly agentsService: AgentsService,

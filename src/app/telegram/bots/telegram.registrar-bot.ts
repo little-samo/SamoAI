@@ -189,10 +189,10 @@ export class TelegramRegistrarBot extends TelegramBot {
         botUser.username
       );
 
-      await this.telegram.registerBot(
+      await this.telegramService.registerBot(
         new TelegramChatBot(
           this.shutdownService,
-          this.telegram,
+          this.telegramService,
           this.prisma,
           this.usersService,
           this.agentsService,
@@ -332,10 +332,10 @@ export class TelegramRegistrarBot extends TelegramBot {
 
     await this.agentsService.setAgentActive(agentId, true);
 
-    await this.telegram.registerBot(
+    await this.telegramService.registerBot(
       new TelegramChatBot(
         this.shutdownService,
-        this.telegram,
+        this.telegramService,
         this.prisma,
         this.usersService,
         this.agentsService,
