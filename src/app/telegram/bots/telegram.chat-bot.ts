@@ -107,10 +107,10 @@ export class TelegramChatBot extends TelegramAgentBot {
   ): Promise<void> {
     switch (message.chat.type) {
       case 'private':
-        await this.handlePrivateMessage(user, message, from, text);
+        void this.handlePrivateMessage(user, message, from, text);
         break;
       case 'group':
-        await this.handleGroupMessage(user, message, from, text);
+        void this.handleGroupMessage(user, message, from, text);
         break;
     }
   }
@@ -187,6 +187,13 @@ export class TelegramChatBot extends TelegramAgentBot {
         text.slice(0, TELEGRAM_MESSAGE_LENGTH_LIMIT - 14) + '...[TRUNCATED]';
     }
 
+    const fromAgent = await this.agentsService.getAgentByTelegramId(
+      BigInt(message.from!.id)
+    );
+    if (fromAgent) {
+      return;
+    }
+
     const locationName = `${TELEGRAM_BOT_GROUP_LOCATION_PREFIX}/${message.chat.id}`;
     const locationModel =
       await this.locationsService.getOrCreateLocationModelByName({
@@ -214,7 +221,7 @@ export class TelegramChatBot extends TelegramAgentBot {
       new Date(message.date * 1000)
     );
 
-    void WorldManager.instance.updateLocation(
+    await WorldManager.instance.updateLocation(
       Number(process.env.TELEGRAM_LLM_API_USER_ID),
       locationModel.id,
       {
