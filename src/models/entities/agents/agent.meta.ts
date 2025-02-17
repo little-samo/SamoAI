@@ -16,6 +16,7 @@ export interface AgentMeta extends EntityMeta {
   inputs: string[];
   languages: string[];
   timeZone: string;
+  greeting?: string;
 
   actionLimit: number;
   actions: string[];

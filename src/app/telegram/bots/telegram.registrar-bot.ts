@@ -297,6 +297,12 @@ export class TelegramRegistrarBot extends TelegramBot {
         },
       ]);
       inlineKeyboard.push([
+        {
+          text: '💬 Update Greeting',
+          callback_data: `/json ${agent.id} greeting`,
+        },
+      ]);
+      inlineKeyboard.push([
         { text: '💀 Delete', callback_data: `/delete ${agent.id}` },
       ]);
       await this.sendInlineKeyboard(
@@ -394,7 +400,7 @@ export class TelegramRegistrarBot extends TelegramBot {
             `Please enter <b>${agent.name}</b>'s appearance (max 500 characters). Here's an example:
 ${TELEGRAM_BOT_APPERANCE_EXAMPLE}`
           );
-          if (meta.timeZone) {
+          if (meta.appearance) {
             await this.sendChatTextMessage(
               message.chat.id,
               `Current appearance for <b>${agent.name}</b>:
@@ -500,11 +506,11 @@ ${meta.appearance}`
           }
           return;
         } else {
-          await this.usersService.setUserTelegramCommand(
-            user.id,
-            `/json ${agent.id} character`
-          );
           if (args[2].length > 5000) {
+            await this.usersService.setUserTelegramCommand(
+              user.id,
+              `/json ${agent.id} character`
+            );
             await this.sendChatTextMessage(
               message.chat.id,
               `Oops, that's too long! Please keep it under 5000 characters.`
@@ -552,11 +558,11 @@ ${meta.appearance}`
           }
           return;
         } else {
-          await this.usersService.setUserTelegramCommand(
-            user.id,
-            `/json ${agent.id} timezone`
-          );
           if (args[2].length > 30) {
+            await this.usersService.setUserTelegramCommand(
+              user.id,
+              `/json ${agent.id} timezone`
+            );
             await this.sendChatTextMessage(
               message.chat.id,
               `Oops, that's too long! Please keep it under 30 characters.`
@@ -572,6 +578,46 @@ ${meta.appearance}`
           await this.sendChatTextMessage(
             message.chat.id,
             `<b>${agent.name}</b>'s timezone has been updated successfully! Time to test it out! 🚀`
+          );
+        }
+        return;
+      case 'greeting':
+        if (args.length === 2) {
+          await this.usersService.setUserTelegramCommand(
+            user.id,
+            `/json ${agent.id} greeting`
+          );
+          await this.sendChatTextMessage(
+            message.chat.id,
+            `Please enter <b>${agent.name}</b>'s greeting (max 500 characters).`
+          );
+          if (meta.greeting) {
+            await this.sendChatTextMessage(
+              message.chat.id,
+              `Current greeting for <b>${agent.name}</b>: ${meta.greeting}`
+            );
+          }
+          return;
+        } else {
+          if (args[2].length > 500) {
+            await this.usersService.setUserTelegramCommand(
+              user.id,
+              `/json ${agent.id} greeting`
+            );
+            await this.sendChatTextMessage(
+              message.chat.id,
+              `Oops, that's too long! Please keep it under 500 characters.`
+            );
+            return;
+          }
+          meta.greeting = args[2];
+          await this.agentsService.setAgentMeta(
+            agentId,
+            meta as object as JsonObject
+          );
+          await this.sendChatTextMessage(
+            message.chat.id,
+            `<b>${agent.name}</b>'s greeting has been updated successfully! Time to test it out! 🚀`
           );
         }
         return;

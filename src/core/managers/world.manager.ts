@@ -507,6 +507,40 @@ export class WorldManager {
     await this.addLocationMessage(locationId, locationMessage);
   }
 
+  public async addLocationAgentGreetingMessage(
+    locationId: number,
+    agentId: number,
+    name: string,
+    greeting: string,
+    createdAt?: Date
+  ): Promise<void> {
+    await this.withLocationLock(locationId, async () => {
+      const locationMessagesState =
+        await this.getOrCreateLocationMessagesState(locationId);
+      if (locationMessagesState.messages.length > 0) {
+        return;
+      }
+
+      const message = new LocationMessage();
+      message.agentId = agentId;
+      message.name = name;
+      message.message = greeting;
+      if (createdAt) {
+        message.createdAt = createdAt;
+      } else {
+        message.createdAt = new Date();
+      }
+      message.updatedAt = new Date();
+
+      locationMessagesState.messages.push(message);
+      locationMessagesState.dirty = true;
+
+      await this.locationRepository.saveLocationMessagesState(
+        locationMessagesState
+      );
+    });
+  }
+
   public async addLocationUserMessage(
     locationId: number,
     userId: number,

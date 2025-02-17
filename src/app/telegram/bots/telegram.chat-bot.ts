@@ -8,6 +8,7 @@ import { ENV } from '@common/config';
 import { WorldManager } from '@core/managers/world.manager';
 import { Agent } from '@models/entities/agents/agent';
 import { Location } from '@models/locations/location';
+import { AgentMeta } from '@models/entities/agents/agent.meta';
 
 import { TelegramMessageDto } from '../dto/telegram.message-dto';
 import { TelegramUserDto } from '../dto/telegram.user-dto';
@@ -121,8 +122,11 @@ export class TelegramChatBot extends TelegramAgentBot {
     text: string
   ): Promise<void> {
     if (text.length > TELEGRAM_MESSAGE_LENGTH_LIMIT) {
-      text =
-        text.slice(0, TELEGRAM_MESSAGE_LENGTH_LIMIT - 14) + '...[TRUNCATED]';
+      await this.sendChatTextMessage(
+        message.chat.id,
+        `Oops, that's too long! Please keep it under ${TELEGRAM_MESSAGE_LENGTH_LIMIT} characters.`
+      );
+      return;
     }
 
     const locationName = `${TELEGRAM_BOT_PRIVATE_LOCATION_PREFIX}/agent:${this.agent!.id}/user:${user.id}`;
@@ -253,8 +257,31 @@ For more information, please visit @samo_ai_bot. 🐾
 
 ⚠️ Note: <b>${this.agent!.name}</b> can make mistakes and is talking with multiple people at the same time. Please do not share any personal or confidential information.`
         );
+
+        const meta = this.agent!.meta as object as AgentMeta;
+        if (meta.greeting) {
+          await this.sendChatTextMessage(message.chat.id, meta.greeting);
+
+          const locationName = `${TELEGRAM_BOT_PRIVATE_LOCATION_PREFIX}/agent:${this.agent!.id}/user:${user.id}`;
+          const locationModel =
+            await this.locationsService.getOrCreateLocationModelByName({
+              platform: UserPlatform.TELEGRAM,
+              type: LocationType.PRIVATE,
+              name: locationName,
+              telegramChatId: BigInt(message.chat.id),
+            } as LocationModel);
+
+          await WorldManager.instance.addLocationAgentGreetingMessage(
+            locationModel.id,
+            this.agent!.id,
+            this.agent!.name,
+            meta.greeting
+          );
+        }
+
         return;
     }
+
     return await this.handleTextMessage(
       user,
       message,
