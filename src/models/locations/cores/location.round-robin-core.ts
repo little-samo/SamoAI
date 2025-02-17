@@ -25,8 +25,11 @@ export class LocationRoundRobinCore extends LocationCore {
     const messages = [...this.location.messagesState.messages].reverse();
     const lastMessage = this.lastMessage;
     const agents = shuffle(Object.values(this.location.agents));
-    const executedAgentIds: Set<number> = new Set();
+    const evaluatedAgentIds: Set<number> = new Set();
     for (const agent of agents) {
+      if (lastMessage?.agentId === agent.model.id) {
+        continue;
+      }
       const agentLastMessage = messages.find(
         (message) => message.agentId === agent.model.id
       );
@@ -35,6 +38,7 @@ export class LocationRoundRobinCore extends LocationCore {
         Date.now() - new Date(agentLastMessage.createdAt).getTime() >
           LocationRoundRobinCore.AGENT_MESSAGE_COOLDOWN
       ) {
+        evaluatedAgentIds.add(agent.model.id);
         if (!(await agent.evaluateActionCondition())) {
           if (ENV.DEBUG) {
             console.log(`Agent ${agent.name} did not execute next actions`);
@@ -46,12 +50,14 @@ export class LocationRoundRobinCore extends LocationCore {
         if (lastMessage !== this.lastMessage) {
           return LocationRoundRobinCore.LOCATION_UPDATE_COOLDOWN_ON_MESSAGE;
         }
-        executedAgentIds.add(agent.model.id);
       }
     }
 
     for (const agent of agents) {
-      if (executedAgentIds.has(agent.model.id)) {
+      if (lastMessage?.agentId === agent.model.id) {
+        continue;
+      }
+      if (evaluatedAgentIds.has(agent.model.id)) {
         continue;
       }
       if (!(await agent.evaluateActionCondition())) {
