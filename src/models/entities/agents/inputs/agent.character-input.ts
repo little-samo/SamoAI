@@ -160,7 +160,7 @@ ${entityMemories.map((m, i) => `${i}:${JSON.stringify(m)}`).join('\n')}
   public override buildNextActions(): LlmMessage[] {
     const { prompt, rules } = this.buildPrompt();
     const input = this.buildContext();
-    const prefill = `I'll now run the CoT for the next tool use, employing all necessary tools—even multiple ones if needed. ${rules.join(', ')} apply. Remember, I only have one chance to respond, so I need to include all necessary tool calls in one go. However, I should avoid redundant tool calls.
+    const prefill = `I will carefully observe location messages and use CoT for the next tool use, employing all necessary tools—even multiple ones if needed. ${rules.join(', ')} apply. Remember, I only have one chance to respond, so I need to include all necessary tool calls in one go. However, I should avoid redundant tool calls. In particular, I will be mindful that unnecessary messages can annoy others.
 CoT:
 1.`;
 
@@ -257,6 +257,11 @@ Should you execute the next action? Consider if you need to respond to requests 
 (Do not actually perform the action.)
 `;
 
+    const prefill = `
+I will carefully observe location messages and use CoT to determine whether the next action is necessary.
+CoT:
+1.`;
+
     return [
       {
         role: 'system',
@@ -265,6 +270,10 @@ Should you execute the next action? Consider if you need to respond to requests 
       {
         role: 'user',
         content: input,
+      },
+      {
+        role: 'assistant',
+        content: prefill,
       },
     ];
   }
