@@ -24,7 +24,7 @@ export class RedisService
     this.redlock = new Redlock([this.redis], {
       // Configuration for the Redlock instance
       driftFactor: 0.01, // Safety factor for clock drift (1% of TTL)
-      retryCount: 20, // Maximum number of retries
+      retryCount: 40, // Maximum number of retries
       retryDelay: 1000, // Time in ms between retries
       retryJitter: 500, // Variance in retry delay
       automaticExtensionThreshold: 1000, // Time in ms for automatic lock extension
