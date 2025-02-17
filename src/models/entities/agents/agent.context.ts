@@ -1,11 +1,18 @@
-import { EntityContext } from '@models/entities/entity.context';
+import {
+  EntityContext,
+  EntityContextOptions,
+} from '@models/entities/entity.context';
 
-export interface AgentContext extends EntityContext {}
+export interface AgentContextOptions extends EntityContextOptions {}
 
-export interface AgentSelfContext extends AgentContext {
-  memory: string[];
-}
+export class AgentContext extends EntityContext implements AgentContextOptions {
+  public static readonly FORMAT = EntityContext.FORMAT;
 
-export interface AgentOtherContext extends AgentContext {
-  memory: string[];
+  public constructor(options: AgentContextOptions) {
+    super(options);
+  }
+
+  public build(): string {
+    return super.build();
+  }
 }

@@ -1,7 +1,13 @@
 import { LlmMessage } from '@common/llms/llm.service';
 import { Location } from '@models/locations/location';
+import {
+  LocationContext,
+  LocationMessageContext,
+} from '@models/locations/location.context';
+import { UserContext } from '@models/entities/users/user.context';
 
 import { Agent } from '../agent';
+import { AgentContext } from '../agent.context';
 
 import { RegisterAgentInput } from './agent.input-decorator';
 import { AgentInputBuilder } from './agent.input';
@@ -17,7 +23,7 @@ export class AgentCharacterInputBuilder extends AgentInputBuilder {
     super(location, agent);
   }
 
-  private buildPrompt(includeToolUsage: boolean = true): Prompt {
+  private buildPrompt(): Prompt {
     const prompts: string[] = [];
     prompts.push(`
 You are an AI Agent named "${this.agent.name}" and you are role-playing as a specific character in a particular location. Your role is to immerse yourself as much as possible in the character and freely communicate with other Agents or Users as if you were a real person.
@@ -29,11 +35,9 @@ Your character:
 ${JSON.stringify(this.agent.meta.character)}
 `);
 
-    if (includeToolUsage) {
-      prompts.push(`
+    prompts.push(`
 You perform all actions through tool usage or function calls. Your message output without tool usage or function calls is not exposed externally and should be utilized for Chain of Thought (CoT).
 `);
-    }
 
     prompts.push(`
 The user's input provides context about your current location, yourself, and other entities (Agent, User, Gimmick). Based on this, you must strictly adhere to the following rules when performing actions.
@@ -86,26 +90,68 @@ Additional Rules for ${this.agent.name}:
   private buildContext(): string {
     const contexts: string[] = [];
 
-    const locationContext = this.location.context;
     contexts.push(`
 The current time is ${Math.floor(Date.now() / 1000)}.
-You are currently in the following location context:
-${JSON.stringify(locationContext)}
 `);
 
-    const selfContext = this.agent.selfContext;
+    const locationContext = this.location.context;
+    contexts.push(`
+You are currently in the following location:
+${LocationContext.FORMAT}
+${locationContext.build()}
+`);
+
+    const messages = locationContext.messages.map((m) => m.build()).join('\n');
+    contexts.push(`
+Last ${this.location.meta.messageLimit} messages in the location:
+${LocationMessageContext.FORMAT}
+${messages}
+`);
+
     contexts.push(`
 You are currently in the following context:
-${JSON.stringify(selfContext)}
+${AgentContext.FORMAT}
+${this.agent.context.build()}
 `);
 
-    const otherContexts = Object.values(this.location.entities)
-      .filter((entity) => entity !== this.agent)
-      .map((entity) => this.agent.otherContext(entity));
     contexts.push(`
-Other entities in the location (memory is your memory of them):
-${JSON.stringify(otherContexts)}
+Your memories:
+${this.agent.memories.map((m, i) => `${i}:${JSON.stringify(m)}`).join('\n')}
 `);
+
+    const otherAgentContexts = Object.values(this.location.agents)
+      .filter((agent) => agent !== this.agent)
+      .map((agent) => agent.context.build());
+    contexts.push(`
+Other agents in the location:
+${AgentContext.FORMAT}
+${otherAgentContexts.join('\n')}
+`);
+
+    const usersContexts = Object.values(this.location.users).map((user) =>
+      user.context.build()
+    );
+    contexts.push(`
+Other users in the location:
+${UserContext.FORMAT}
+${usersContexts.join('\n')}
+`);
+
+    for (const entity of Object.values(this.location.entities)) {
+      if (entity === this.agent) {
+        continue;
+      }
+
+      const entityMemories = this.agent.getEntityMemories(entity.key);
+      if (!entityMemories) {
+        continue;
+      }
+
+      contexts.push(`
+Your memories of "${entity.key}":
+${entityMemories.map((m, i) => `${i}:${JSON.stringify(m)}`).join('\n')}
+`);
+    }
 
     return contexts.map((c) => c.trim()).join('\n\n');
   }
@@ -116,6 +162,9 @@ ${JSON.stringify(otherContexts)}
     const prefill = `I'll now run the CoT for the next tool use, employing all necessary tools—even multiple ones if needed. ${rules.join(', ')} apply. Remember, I only have one chance to respond, so I need to include all necessary tool calls in one go.
 CoT:
 1.`;
+
+    console.log(prompt);
+    console.log(input);
 
     return [
       {
@@ -133,32 +182,65 @@ CoT:
     ];
   }
 
+  private buildActionConditionPrompt(): string {
+    const prompts: string[] = [];
+    prompts.push(`
+You are an AI Agent named "${this.agent.name}" and you are role-playing as a specific character in a particular location. Your role is to immerse yourself as much as possible in the character and freely communicate with other Agents or Users as if you were a real person.
+`);
+
+    prompts.push(`
+Your time zone: ${this.agent.meta.timeZone}
+Your character:
+${JSON.stringify(this.agent.meta.character)}
+`);
+
+    return prompts.map((p) => p.trim()).join('\n\n');
+  }
+
+  private buildActionConditionContext(): string {
+    const contexts: string[] = [];
+
+    contexts.push(`
+The current time is ${Math.floor(Date.now() / 1000)} (Unix timestamp).
+`);
+
+    const locationContext = this.location.context;
+    contexts.push(`
+You are currently in the following location:
+${LocationContext.FORMAT}
+${locationContext.build()}
+`);
+
+    const messages = locationContext.messages.map((m) => m.build()).join('\n');
+    contexts.push(`
+Last ${this.location.meta.messageLimit} messages in the location:
+${LocationMessageContext.FORMAT}
+${messages}
+`);
+
+    contexts.push(`
+You are currently in the following context:
+${AgentContext.FORMAT}
+${this.agent.context.build()}
+`);
+
+    contexts.push(`
+  Your memories:
+  ${this.agent.memories.map((m, i) => `${i}:${JSON.stringify(m)}`).join('\n')}
+  `);
+
+    return contexts.map((c) => c.trim()).join('\n\n');
+  }
+
   public override buildActionCondition(): LlmMessage[] {
-    const { prompt, rules } = this.buildPrompt(false);
-    const lastMessages: string[] = [];
-    for (let i = -5; i < 0; ++i) {
-      const message = this.location.messagesState.messages.at(i);
-      if (message) {
-        lastMessages.push(JSON.stringify(Location.messageToContext(message)));
-      }
-    }
+    const prompt = this.buildActionConditionPrompt();
 
-    const input = `${this.buildContext()}
+    const input = `${this.buildActionConditionContext()}
 
-You are ${this.agent.name} (@${this.agent.model.telegramUsername}).
 You have the following tools: ${Object.keys(this.agent.actions).join(', ')}.
 
-Apply ${rules.join(', ')}.
-
-Last 5 messages:
-${lastMessages.length > 0 ? lastMessages.join('\n') : 'None'}
-
-Should you perform an action? Evaluate the following and explain your reasoning and conclusion. Finally, answer with ✅ or ❌. (Do not actually act.)
-1. Who spoke last?
-  i) If you were the last speaker: must you speak again even if it might inconvenience others?
-  ii) If someone else spoke last: did they address you directly, mention something relevant to you, say something that reasonably requires your response, or seem to expect your reply?
-2. Is there an event or has it been a long time since a topic was raised, making your input necessary?
-If any apply, answer ✅. Otherwise, choose ❌ for the sake of efficiency and to avoid annoying others.`;
+Should you perform an action again? If you need to respond to requests or conversations from other agents or users, take action. Explain your reasoning and conclusion. Finally, answer with ✅ or ❌. (Do not actually act.)
+`;
 
     return [
       {

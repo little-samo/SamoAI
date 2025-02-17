@@ -31,12 +31,12 @@ export abstract class Entity {
   }
 
   public get context(): EntityContext {
-    return {
+    return new EntityContext({
       key: this.key,
       name: this.name,
       appearance: this.meta.appearance,
       expression: this.state.expression,
-    };
+    });
   }
 
   public abstract update(): Promise<void>;

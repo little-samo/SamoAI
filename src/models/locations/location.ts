@@ -68,7 +68,7 @@ export class Location extends EventEmitter {
   public static messageToContext(
     message: LocationMessage
   ): LocationMessageContext {
-    return {
+    return new LocationMessageContext({
       key: message.agentId
         ? (`agent:${message.agentId}` as EntityKey)
         : message.userId
@@ -78,7 +78,7 @@ export class Location extends EventEmitter {
       message: message.message,
       expression: message.expression,
       created: Math.floor(new Date(message.createdAt).getTime() / 1000),
-    };
+    });
   }
 
   public readonly id: LocationId;
@@ -213,11 +213,11 @@ export class Location extends EventEmitter {
   }
 
   public get context(): LocationContext {
-    return {
-      name: this.model.name,
+    return new LocationContext({
+      key: this.key,
       description: this.meta.description,
       messages: this.messagesState.messages.map(Location.messageToContext),
-    };
+    });
   }
 
   public get lastMessageContext(): LocationMessageContext | undefined {

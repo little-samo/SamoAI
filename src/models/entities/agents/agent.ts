@@ -9,11 +9,7 @@ import { Entity, EntityKey } from '../entity';
 
 import { AgentCore } from './cores/agent.core';
 import { AgentState } from './states/agent.state';
-import {
-  AgentContext,
-  AgentOtherContext,
-  AgentSelfContext,
-} from './agent.context';
+import { AgentContext } from './agent.context';
 import { AgentMeta, DEFAULT_AGENT_META } from './agent.meta';
 import { AgentAction } from './actions/agent.action';
 import { AgentEntityState } from './states/agent.entity-state';
@@ -150,26 +146,23 @@ export class Agent extends Entity {
   }
 
   public override get context(): AgentContext {
-    const context = super.context as AgentContext;
-    if (this.model.telegramUsername) {
-      context.handle = `@${this.model.telegramUsername}`;
-    }
+    const handle = this.model.telegramUsername
+      ? `@${this.model.telegramUsername}`
+      : undefined;
+    const context = new AgentContext({
+      ...super.context,
+      handle,
+    });
     return context;
   }
 
-  public get selfContext(): AgentSelfContext {
-    return {
-      ...this.context,
-      memory: this.state.memories,
-    };
+  public get memories(): string[] {
+    return this.state.memories;
   }
 
-  public otherContext(other: Entity): AgentOtherContext {
-    const entityState = this._entityStates[other.key];
-    return {
-      ...other.context,
-      memory: entityState?.memories ?? [],
-    };
+  public getEntityMemories(key: EntityKey): string[] | undefined {
+    const entityState = this._entityStates[key];
+    return entityState?.memories;
   }
 
   public getEntityState(key: EntityKey): AgentEntityState | undefined {
@@ -334,7 +327,7 @@ export class Agent extends Entity {
     const llm = this.llms.at(llmIndex) ?? this.llm;
     const result = await llm.generate(messages, {
       maxTokens: 256,
-      temperature: 1,
+      temperature: 0.1,
       verbose: false,
     });
     if (ENV.DEBUG) {
