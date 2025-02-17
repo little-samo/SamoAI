@@ -163,9 +163,6 @@ ${entityMemories.map((m, i) => `${i}:${JSON.stringify(m)}`).join('\n')}
 CoT:
 1.`;
 
-    console.log(prompt);
-    console.log(input);
-
     return [
       {
         role: 'system',
