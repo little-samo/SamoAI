@@ -27,8 +27,8 @@ export class TelegramController {
         'X-Telegram-Bot-Api-Secret-Token is required'
       );
     }
-    const secrets = secret.split('-', 2);
-    const token = `${secrets[0]}:${secrets[1]}`;
+    const [num, ...rest] = secret.split('-');
+    const token = `${num}:${rest.join('-')}`;
     await this.telegramService.handleUpdate(token, update);
   }
 }
