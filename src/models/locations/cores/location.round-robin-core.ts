@@ -12,8 +12,7 @@ export class LocationRoundRobinCore extends LocationCore {
   public static readonly LOCATION_UPDATE_COOLDOWN_ON_MESSAGE = 5 * 1000; // 5 seconds
   public static readonly LOCATION_UPDATE_SHORT_COOLDOWN_ON_NO_MESSAGE =
     1000 * 30; // 30 seconds
-  public static readonly LOCATION_UPDATE_LONG_COOLDOWN_ON_NO_MESSAGE =
-    1000 * 60 * 60; // 1 hour
+  public static readonly LOCATION_UPDATE_LONG_COOLDOWN_ON_NO_MESSAGE = 0; // pause
 
   private get lastMessage(): LocationMessage | undefined {
     return this.location.messagesState.messages.at(-1);

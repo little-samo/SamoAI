@@ -147,6 +147,10 @@ export class TelegramChatBot extends TelegramAgentBot {
       text,
       new Date(message.date * 1000)
     );
+    await WorldManager.instance.setLocationPauseUpdateUntil(
+      locationModel.id,
+      new Date()
+    );
 
     const typingInterval = setInterval(() => {
       void this.sendChatAction(message.chat.id, 'typing');
@@ -155,7 +159,6 @@ export class TelegramChatBot extends TelegramAgentBot {
       Number(process.env.TELEGRAM_LLM_API_USER_ID),
       locationModel.id,
       {
-        ignorePauseUpdateUntil: true,
         preAction: async (location) => {
           await this.locationUpdatePreAction(location);
         },
@@ -190,7 +193,7 @@ export class TelegramChatBot extends TelegramAgentBot {
       } as LocationModel);
     await WorldManager.instance.setLocationPauseUpdateUntil(
       locationModel.id,
-      new Date(Date.now() + 1000 * 60 * 5)
+      new Date()
     );
 
     await WorldManager.instance.addLocationAgent(
@@ -211,7 +214,6 @@ export class TelegramChatBot extends TelegramAgentBot {
       Number(process.env.TELEGRAM_LLM_API_USER_ID),
       locationModel.id,
       {
-        ignorePauseUpdateUntil: true,
         preAction: async (location) => {
           await this.locationUpdatePreAction(location);
         },
