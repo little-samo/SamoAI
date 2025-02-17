@@ -53,7 +53,16 @@ export class TelegramChatBot extends TelegramAgentBot {
           `[${location.model.name}] Agent ${agent.model.name} is executing next actions`
         );
       }
-      await this.sendChatAction(Number(location.model.telegramChatId!));
+      await this.sendChatAction(
+        Number(location.model.telegramChatId!),
+        'typing'
+      );
+      setTimeout(() => {
+        void this.sendChatAction(
+          Number(location.model.telegramChatId!),
+          'typing'
+        );
+      }, 5000);
     });
 
     location.addAgentMessageHook((loc, agent, message, expression) =>
@@ -140,7 +149,7 @@ export class TelegramChatBot extends TelegramAgentBot {
     );
 
     const typingInterval = setInterval(() => {
-      this.sendChatAction(message.chat.id, 'typing').catch(() => {});
+      void this.sendChatAction(message.chat.id, 'typing');
     }, 5000);
     void WorldManager.instance.updateLocation(
       Number(process.env.TELEGRAM_LLM_API_USER_ID),
@@ -220,7 +229,7 @@ export class TelegramChatBot extends TelegramAgentBot {
     _args: string[]
   ): Promise<void> {
     if (message.chat.type !== 'private') {
-      await this.sendChatAction(message.chat.id, 'typing');
+      await this.handleTextMessage(user, message, message.from!, command);
       return;
     }
     switch (command) {

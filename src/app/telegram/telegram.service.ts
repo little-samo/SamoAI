@@ -157,6 +157,12 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
           const bot = this.bots[agent.model.telegramBotToken!];
           if (bot) {
             await bot.sendChatAction(Number(location.model.telegramChatId!));
+            setTimeout(() => {
+              void bot.sendChatAction(
+                Number(location.model.telegramChatId!),
+                'typing'
+              );
+            }, 5000);
           }
         });
 
