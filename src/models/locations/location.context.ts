@@ -13,7 +13,7 @@ export class LocationMessageContext
   extends Context
   implements LocationMessageContextOptions
 {
-  public static readonly FORMAT = 'TIME\tENTITY_KEY\tNAME\tMESSAGE';
+  public static readonly FORMAT = 'TIMESTAMP\tENTITY_KEY\tNAME\tMESSAGE';
 
   public readonly key: EntityKey;
   public readonly name: string;

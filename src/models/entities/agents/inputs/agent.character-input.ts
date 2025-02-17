@@ -236,7 +236,10 @@ ${this.agent.context.build()}
 
 You have the following tools: ${Object.keys(this.agent.actions).join(', ')}.
 
-Should you perform an action again? If you need to respond to requests or conversations from other agents or users, take action. Explain your reasoning and conclusion. Finally, answer with ✅ or ❌. (Do not actually act.)
+Should you execute the next action? Consider if you need to respond to requests or conversations from other agents or users. Explain your reasoning and conclusion. Finally, indicate your decision by responding with:
+✅ if you decide to perform the action, or
+❌ if you decide not to perform the action.
+(Do not actually perform the action.)
 `;
 
     return [
