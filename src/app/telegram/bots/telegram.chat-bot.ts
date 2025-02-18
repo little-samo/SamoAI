@@ -121,28 +121,10 @@ export class TelegramChatBot extends TelegramAgentBot {
       new Date()
     );
 
-    const typingInterval = setInterval(() => {
-      void this.sendChatAction(message.chat.id, 'typing');
-    }, 5000);
-    this.shutdownService.incrementActiveRequests();
-    try {
-      await WorldManager.instance.updateLocation(
-        Number(process.env.TELEGRAM_LLM_API_USER_ID),
-        locationModel.id,
-        {
-          preAction: async (location) => {
-            await this.telegramService.telegramLocationUpdatePreAction(
-              location
-            );
-          },
-          postAction: async () => {
-            clearInterval(typingInterval!);
-          },
-        }
-      );
-    } finally {
-      this.shutdownService.decrementActiveRequests();
-    }
+    await this.locationsService.updateLocationNoRetry(
+      Number(process.env.TELEGRAM_LLM_API_USER_ID),
+      locationModel.id
+    );
   }
 
   private async handleGroupMessage(
@@ -190,22 +172,10 @@ export class TelegramChatBot extends TelegramAgentBot {
       new Date(message.date * 1000)
     );
 
-    this.shutdownService.incrementActiveRequests();
-    try {
-      await WorldManager.instance.updateLocation(
-        Number(process.env.TELEGRAM_LLM_API_USER_ID),
-        locationModel.id,
-        {
-          preAction: async (location) => {
-            await this.telegramService.telegramLocationUpdatePreAction(
-              location
-            );
-          },
-        }
-      );
-    } finally {
-      this.shutdownService.decrementActiveRequests();
-    }
+    await this.locationsService.updateLocationNoRetry(
+      Number(process.env.TELEGRAM_LLM_API_USER_ID),
+      locationModel.id
+    );
   }
 
   protected async handleCommand(

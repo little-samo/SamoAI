@@ -8,7 +8,7 @@ import { LocationModel, UserPlatform } from '@prisma/client';
 import { PrismaService } from '@app/global/prisma.service';
 import { RedisService } from '@app/global/redis.service';
 import { JsonObject } from '@prisma/client/runtime/library';
-import { Cron, CronExpression } from '@nestjs/schedule';
+import { Cron } from '@nestjs/schedule';
 import { WorldManager } from '@core/managers/world.manager';
 import { ShutdownService } from '@app/global/shutdown.service';
 import { Location } from '@models/locations/location';
@@ -201,7 +201,7 @@ export class LocationsService implements LocationsRepository {
     await this.redis.set(cacheKey, JSON.stringify(state), this.CACHE_TTL);
   }
 
-  private async updateLocation(
+  public async updateLocationNoRetry(
     llmApiKeyUserId: number,
     locationId: number
   ): Promise<void> {
@@ -228,7 +228,7 @@ export class LocationsService implements LocationsRepository {
     }
   }
 
-  @Cron(CronExpression.EVERY_10_SECONDS)
+  @Cron(`*/3 * * * * *`) // every 3 seconds
   private async updateUnpausedLocations(): Promise<void> {
     if (this.shutdownService.isShuttingDown) {
       return;
@@ -249,7 +249,7 @@ export class LocationsService implements LocationsRepository {
       const llmApiKeyUserId = Number(process.env.TELEGRAM_LLM_API_USER_ID);
       const locationIds = await this.getAllUnpausedLocationIds();
       for (const locationId of locationIds) {
-        void this.updateLocation(llmApiKeyUserId, locationId);
+        void this.updateLocationNoRetry(llmApiKeyUserId, locationId);
       }
     } finally {
       await lock.release();

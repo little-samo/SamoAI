@@ -144,48 +144,47 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
   public async telegramLocationUpdatePreAction(
     location: Location
   ): Promise<void> {
-    switch (location.model.platform) {
-      case UserPlatform.TELEGRAM:
-        TelegramChatBot.updateLocationMeta(location);
+    TelegramChatBot.updateLocationMeta(location);
 
-        location.addAgentExecuteNextActionsPreHook(async (location, agent) => {
-          if (ENV.DEBUG) {
-            this.logger.log(
-              `[${location.model.name}] Agent ${agent.model.name} is executing next actions`
-            );
-          }
+    location.addAgentExecuteNextActionsPreHook(async (location, agent) => {
+      if (ENV.DEBUG) {
+        this.logger.log(
+          `[${location.model.name}] Agent ${agent.model.name} is executing next actions`
+        );
+      }
+      const bot = this.bots[agent.model.telegramBotToken!];
+      if (bot) {
+        await bot.sendChatAction(
+          Number(location.model.telegramChatId!),
+          'typing'
+        );
+        setTimeout(() => {
+          void bot.sendChatAction(
+            Number(location.model.telegramChatId!),
+            'typing'
+          );
+        }, 5000);
+      }
+    });
+
+    location.addAgentMessageHook(
+      async (location, agent, agentMessage, expression) => {
+        if (ENV.DEBUG) {
+          this.logger.log(
+            `[${location.model.name}] Agent response: ${agentMessage} (${expression})`
+          );
+        }
+        if (agentMessage) {
           const bot = this.bots[agent.model.telegramBotToken!];
           if (bot) {
-            await bot.sendChatAction(Number(location.model.telegramChatId!));
-            setTimeout(() => {
-              void bot.sendChatAction(
-                Number(location.model.telegramChatId!),
-                'typing'
-              );
-            }, 5000);
+            await bot.sendChatTextMessage(
+              Number(location.model.telegramChatId!),
+              TelegramChatBot.changeMarkdownToHtml(agentMessage)
+            );
           }
-        });
-
-        location.addAgentMessageHook(
-          async (location, agent, agentMessage, expression) => {
-            if (ENV.DEBUG) {
-              this.logger.log(
-                `[${location.model.name}] Agent response: ${agentMessage} (${expression})`
-              );
-            }
-            if (agentMessage) {
-              const bot = this.bots[agent.model.telegramBotToken!];
-              if (bot) {
-                await bot.sendChatTextMessage(
-                  Number(location.model.telegramChatId!),
-                  TelegramChatBot.changeMarkdownToHtml(agentMessage)
-                );
-              }
-            }
-          }
-        );
-        break;
-    }
+        }
+      }
+    );
   }
 
   public async handleUpdate(
