@@ -76,7 +76,7 @@ export const DEFAULT_AGENT_META: AgentMeta = {
 
   temperature: 0.5,
   maxTokens: 1024,
-  evaluateTemperature: 0.1,
+  evaluateTemperature: 0.3,
   evaluateMaxTokens: 256,
   llms: [
     { platform: LlmPlatform.ANTHROPIC, model: 'claude-3-5-sonnet-20241022' },
