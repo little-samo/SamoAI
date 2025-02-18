@@ -2,8 +2,8 @@ import { ENV } from '@common/config';
 import { Controller, Get, HttpCode, HttpStatus, Logger } from '@nestjs/common';
 
 @Controller()
-export class AppController {
-  private readonly logger = new Logger(AppController.name);
+export class SamoAiAppController {
+  private readonly logger = new Logger(SamoAiAppController.name);
 
   @Get('health')
   @HttpCode(HttpStatus.OK)

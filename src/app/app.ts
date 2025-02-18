@@ -1,11 +1,11 @@
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { WorldManager } from '@core/managers/world.manager';
-import { INestApplication, Logger } from '@nestjs/common';
+import { INestApplication, Logger, Provider } from '@nestjs/common';
 
 import * as packageJson from '../../package.json';
 
-import { AppModule } from './app.module';
+import { AppModule as SamoAiAppModule } from './app.module';
 import { RedisService } from './global/redis.service';
 import { AgentsService } from './agents/agents.service';
 import { LocationsService } from './locations/locations.service';
@@ -16,8 +16,12 @@ export class SamoAiApp {
 
   public app?: INestApplication;
 
-  public async bootstrap(listen: boolean = true) {
-    this.app = await NestFactory.create(AppModule);
+  public async bootstrap(providers: Provider[] = [], listen: boolean = true) {
+    this.app = await NestFactory.create(
+      SamoAiAppModule.register({
+        providers,
+      })
+    );
 
     process.on('SIGINT', async () => {
       console.log('SIGINT signal received');

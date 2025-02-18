@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { DynamicModule, Module, Provider } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ScheduleModule } from '@nestjs/schedule';
 
@@ -7,19 +7,28 @@ import { LocationsModule } from './locations/locations.module';
 import { UsersModule } from './users/users.module';
 import { TelegramModule } from './telegram/telegram.module';
 import { GlobalModule } from './global/global.module';
-import { AppController } from './app.controller';
+import { SamoAiAppController } from './app.controller';
 
 @Module({
-  imports: [
-    GlobalModule,
-    MongooseModule.forRoot(process.env.MONGODB_URL!),
-    ScheduleModule.forRoot(),
-    LocationsModule,
-    AgentsModule,
-    UsersModule,
-    TelegramModule,
-  ],
-  controllers: [AppController],
-  providers: [],
+  controllers: [SamoAiAppController],
 })
-export class AppModule {}
+export class AppModule {
+  public static register(
+    options: { providers?: Provider[] } = {}
+  ): DynamicModule {
+    return {
+      module: AppModule,
+      imports: [
+        GlobalModule,
+        MongooseModule.forRoot(process.env.MONGODB_URL!),
+        ScheduleModule.forRoot(),
+        LocationsModule,
+        AgentsModule,
+        UsersModule,
+        TelegramModule,
+      ],
+      controllers: [SamoAiAppController],
+      providers: [...(options.providers || [])],
+    };
+  }
+}

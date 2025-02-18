@@ -8,7 +8,7 @@ import { LocationModel } from '@prisma/client';
 
 async function bootstrap() {
   const samoai = new SamoAiApp();
-  await samoai.bootstrap(false);
+  await samoai.bootstrap([], false);
 
   const program = new Command();
 
