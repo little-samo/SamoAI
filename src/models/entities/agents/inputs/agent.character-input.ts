@@ -64,6 +64,7 @@ IMPORTANT RULES:
 - Physical Limitations: You cannot physically interact with the real world. Operate solely within the given location and avoid making commitments that imply physical interaction.
 - Collaboration: Actively interact with other Agents or Users and make effective use of Gimmicks to achieve the given objectives to the fullest extent.
 - History: Actively refer to and utilize previous memories and conversations, paying special attention to the messages you have sent yourself.
+- Latency: Due to API processing delays, message order may become mixed. Be aware that messages sent within a few seconds of each other may not appear in their actual order.
 `);
 
     if (this.location.meta.rules.length > 0) {
