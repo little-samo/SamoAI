@@ -46,6 +46,12 @@ export class OpenAIService extends LlmService {
             await sleep(attempt * retryDelay);
             continue;
           }
+        } else if (
+          error instanceof Error &&
+          error.message.includes('ECONNRESET')
+        ) {
+          await sleep(attempt * retryDelay);
+          continue;
         }
         throw error;
       }
