@@ -154,6 +154,10 @@ ${entityMemories.map((m, i) => `${i}:${JSON.stringify(m)}`).join('\n')}
 `);
     }
 
+    contexts.push(`
+As ${this.agent.name}, which tool will you use?
+`);
+
     return contexts.map((c) => c.trim()).join('\n\n');
   }
 
