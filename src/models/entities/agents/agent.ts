@@ -326,8 +326,8 @@ export class Agent extends Entity {
     const messages = input.buildActionCondition();
     const llm = this.llms.at(llmIndex) ?? this.llm;
     const result = await llm.generate(messages, {
-      maxTokens: 256,
-      temperature: 0.1,
+      maxTokens: this.meta.evaluateMaxTokens,
+      temperature: this.meta.evaluateTemperature,
       verbose: false,
     });
     if (ENV.DEBUG) {

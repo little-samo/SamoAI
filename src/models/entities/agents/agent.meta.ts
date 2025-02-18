@@ -12,6 +12,8 @@ export interface AgentMeta extends EntityMeta {
 
   temperature: number;
   maxTokens: number;
+  evaluateTemperature: number;
+  evaluateMaxTokens: number;
   llms: AgentLlmMeta[];
   inputs: string[];
   languages: string[];
@@ -72,8 +74,10 @@ export interface AgentMeta extends EntityMeta {
 export const DEFAULT_AGENT_META: AgentMeta = {
   core: 'empty',
 
-  temperature: 0,
+  temperature: 0.5,
   maxTokens: 1024,
+  evaluateTemperature: 0.1,
+  evaluateMaxTokens: 256,
   llms: [
     { platform: LlmPlatform.ANTHROPIC, model: 'claude-3-5-sonnet-20241022' },
     { platform: LlmPlatform.OPENAI, model: 'gpt-4o-mini-2024-07-18' },
