@@ -11,6 +11,7 @@
     "node": ">=22.0.0"
   },
   "scripts": {
+    "postinstall": "prisma generate",
     "build": "nest build",
     "generate:prisma": "prisma generate",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",

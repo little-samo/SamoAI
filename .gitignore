@@ -3,9 +3,6 @@
 /node_modules/*
 /build
 
-# Include only the Prisma client
-!/node_modules/.prisma
-
 # Logs
 logs
 *.log
