@@ -181,6 +181,28 @@ export class TelegramRegistrarBot extends TelegramBot {
       const botName = botUser.last_name
         ? `${botUser.first_name} ${botUser.last_name}`
         : botUser.first_name;
+      const bot = new TelegramChatBot(
+        this.shutdownService,
+        this.telegramService,
+        this.prisma,
+        this.usersService,
+        this.agentsService,
+        this.locationsService,
+        botName,
+        token
+      );
+
+      const success = await bot.registerWebhook();
+      if (!success) {
+        this.logger.error(`Failed to register webhook for bot ${botName}`);
+        await this.sendChatTextMessage(
+          message.chat.id,
+          `Oops! I couldn't register the bot. Please try again later!`
+        );
+        return;
+      }
+      await bot.setMyCommands();
+
       agent = await this.agentsService.getOrCreateTelegramAgentModel(
         user.id,
         botName,
@@ -189,18 +211,7 @@ export class TelegramRegistrarBot extends TelegramBot {
         botUser.username
       );
 
-      await this.telegramService.registerBot(
-        new TelegramChatBot(
-          this.shutdownService,
-          this.telegramService,
-          this.prisma,
-          this.usersService,
-          this.agentsService,
-          this.locationsService,
-          botName,
-          token
-        )
-      );
+      await this.telegramService.registerBot(bot);
 
       await this.sendChatTextMessage(
         message.chat.id,

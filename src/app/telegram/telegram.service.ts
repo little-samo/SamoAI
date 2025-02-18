@@ -39,11 +39,13 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
         return;
       }
 
-      const success = await bot.registerWebhook();
-      if (!success) {
-        return;
+      if (ENV.DEBUG) {
+        const success = await bot.registerWebhook();
+        if (!success) {
+          return;
+        }
+        await bot.setMyCommands();
       }
-      await bot.setMyCommands();
 
       const agent = await this.agentsService.getAgentByTelegramBotToken(
         bot.token
