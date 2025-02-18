@@ -688,7 +688,13 @@ export class WorldManager {
       }
     );
 
-    const pauseUpdateDuration = await location.update();
+    let pauseUpdateDuration;
+    try {
+      pauseUpdateDuration = await location.update();
+    } catch (error) {
+      await this.setLocationPauseUpdateUntilInternal(locationId, null);
+      throw error;
+    }
     if (pauseUpdateDuration) {
       const pauseUpdateUntil = new Date(Date.now() + pauseUpdateDuration);
       if (ENV.DEBUG) {
