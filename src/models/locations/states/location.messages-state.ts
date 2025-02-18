@@ -12,6 +12,9 @@ export class LocationMessage {
   @Prop()
   public userId?: number;
 
+  @Prop()
+  public targetEntityKey?: string;
+
   @Prop({ required: true })
   public name!: string;
 

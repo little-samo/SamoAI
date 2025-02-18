@@ -53,6 +53,16 @@ export class UsersService implements UsersRepository {
     return userApiKey.userModel;
   }
 
+  public async getUserModelByTelegramId(
+    telegramUserId: bigint
+  ): Promise<UserModel | null> {
+    return await this.prisma.userModel.findUnique({
+      where: {
+        platform_pid: { platform: UserPlatform.TELEGRAM, pid: telegramUserId },
+      },
+    });
+  }
+
   public async getOrCreateTelegramUserModel(
     telegramUserId: number,
     firstName: string,

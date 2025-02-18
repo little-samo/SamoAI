@@ -354,8 +354,13 @@ export class WorldManager {
     locationId: number,
     agentId: number
   ): Promise<boolean> {
+    let locationState =
+      await this.locationRepository.getLocationState(locationId);
+    if (locationState && locationState.agentIds.includes(agentId)) {
+      return false;
+    }
     return await this.withLocationLock(locationId, async () => {
-      const locationState = await this.getOrCreateLocationState(locationId);
+      locationState = await this.getOrCreateLocationState(locationId);
       if (locationState.agentIds.includes(agentId)) {
         return false;
       }
@@ -375,8 +380,13 @@ export class WorldManager {
     locationId: number,
     agentId: number
   ): Promise<boolean> {
+    let locationState =
+      await this.locationRepository.getLocationState(locationId);
+    if (locationState && !locationState.agentIds.includes(agentId)) {
+      return false;
+    }
     return await this.withLocationLock(locationId, async () => {
-      const locationState = await this.getOrCreateLocationState(locationId);
+      locationState = await this.getOrCreateLocationState(locationId);
       if (!locationState.agentIds.includes(agentId)) {
         return false;
       }
@@ -395,8 +405,13 @@ export class WorldManager {
     locationId: number,
     userId: number
   ): Promise<boolean> {
+    let locationState =
+      await this.locationRepository.getLocationState(locationId);
+    if (locationState && locationState.userIds.includes(userId)) {
+      return false;
+    }
     return await this.withLocationLock(locationId, async () => {
-      const locationState = await this.getOrCreateLocationState(locationId);
+      locationState = await this.getOrCreateLocationState(locationId);
       if (locationState.userIds.includes(userId)) {
         return false;
       }
@@ -413,8 +428,13 @@ export class WorldManager {
     locationId: number,
     userId: number
   ): Promise<boolean> {
+    let locationState =
+      await this.locationRepository.getLocationState(locationId);
+    if (locationState && !locationState.userIds.includes(userId)) {
+      return false;
+    }
     return await this.withLocationLock(locationId, async () => {
-      const locationState = await this.getOrCreateLocationState(locationId);
+      locationState = await this.getOrCreateLocationState(locationId);
       if (!locationState.userIds.includes(userId)) {
         return false;
       }
@@ -444,6 +464,11 @@ export class WorldManager {
     locationId: number,
     pauseUpdateUntil: Date | null
   ): Promise<void> {
+    const locationState = await this.getOrCreateLocationState(locationId);
+    if (locationState.pauseUpdateUntil === pauseUpdateUntil) {
+      return;
+    }
+
     await this.withLocationLock(locationId, async () => {
       await this.setLocationPauseUpdateUntilInternal(
         locationId,
@@ -456,6 +481,22 @@ export class WorldManager {
     locationId: number,
     message: LocationMessage
   ): Promise<void> {
+    const locationMessagesState =
+      await this.locationRepository.getLocationMessagesState(locationId);
+    if (
+      locationMessagesState &&
+      locationMessagesState.messages.find(
+        (m) =>
+          m.agentId === message.agentId &&
+          m.userId === message.userId &&
+          m.name === message.name &&
+          new Date(m.createdAt).getTime() ===
+            new Date(message.createdAt).getTime()
+      )
+    ) {
+      return;
+    }
+
     await this.withLocationLock(locationId, async () => {
       const locationMessagesState =
         await this.getOrCreateLocationMessagesState(locationId);
@@ -495,7 +536,10 @@ export class WorldManager {
     agentId: number,
     name: string,
     message: string,
-    createdAt?: Date
+    createdAt?: Date,
+    options: {
+      targetEntityKey?: string;
+    } = {}
   ): Promise<void> {
     const locationMessage = new LocationMessage();
     locationMessage.agentId = agentId;
@@ -503,6 +547,9 @@ export class WorldManager {
     locationMessage.message = message;
     if (createdAt) {
       locationMessage.createdAt = createdAt;
+    }
+    if (options.targetEntityKey) {
+      locationMessage.targetEntityKey = options.targetEntityKey;
     }
     await this.addLocationMessage(locationId, locationMessage);
   }
@@ -546,7 +593,10 @@ export class WorldManager {
     userId: number,
     name: string,
     message: string,
-    createdAt?: Date
+    createdAt?: Date,
+    options: {
+      targetEntityKey?: string;
+    } = {}
   ): Promise<void> {
     const locationMessage = new LocationMessage();
     locationMessage.userId = userId;
@@ -554,6 +604,9 @@ export class WorldManager {
     locationMessage.message = message;
     if (createdAt) {
       locationMessage.createdAt = createdAt;
+    }
+    if (options.targetEntityKey) {
+      locationMessage.targetEntityKey = options.targetEntityKey;
     }
     await this.addLocationMessage(locationId, locationMessage);
   }

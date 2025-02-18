@@ -1,4 +1,5 @@
 import {
+  AgentModel,
   LocationModel,
   LocationType,
   UserModel,
@@ -164,12 +165,31 @@ export class TelegramChatBot extends TelegramAgentBot {
     );
     await WorldManager.instance.addLocationUser(locationModel.id, user.id);
 
+    let replyToAgent: AgentModel | null = null;
+    let targetToUser: UserModel | null = null;
+    if (message.reply_to_message?.from?.id) {
+      replyToAgent = await this.agentsService.getAgentByTelegramId(
+        BigInt(message.reply_to_message.from.id)
+      );
+      targetToUser = replyToAgent
+        ? null
+        : await this.usersService.getUserModelByTelegramId(
+            BigInt(message.reply_to_message.from.id)
+          );
+    }
     await WorldManager.instance.addLocationUserMessage(
       locationModel.id,
       user.id,
       user.nickname,
       text,
-      new Date(message.date * 1000)
+      new Date(message.date * 1000),
+      {
+        targetEntityKey: replyToAgent
+          ? `agent:${replyToAgent.id}`
+          : targetToUser
+            ? `user:${targetToUser.id}`
+            : undefined,
+      }
     );
 
     await this.locationsService.updateLocationNoRetry(
