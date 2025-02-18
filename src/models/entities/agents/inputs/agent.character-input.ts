@@ -155,16 +155,17 @@ ${entityMemories.map((m, i) => `${i}:${JSON.stringify(m)}`).join('\n')}
 `);
     }
 
-    contexts.push(`
-As ${this.agent.name}, which tool will you use?
-`);
-
     return contexts.map((c) => c.trim()).join('\n\n');
   }
 
   public override buildNextActions(): LlmMessage[] {
     const { prompt, rules } = this.buildPrompt();
-    const input = this.buildContext();
+    const input = `
+${this.buildContext()}
+
+As ${this.agent.name}, which tool will you use?
+`.trim();
+
     const prefill = `I will carefully observe location messages and use CoT for the next tool use, employing all necessary tools—even multiple ones if needed. ${rules.join(', ')} apply. Remember, I only have one chance to respond, so I need to include all necessary tool calls in one go. However, I should avoid redundant tool calls. In particular, I will be mindful that unnecessary or duplicate messages can annoy others.
 CoT:
 1.`;
@@ -228,13 +229,6 @@ ${LocationContext.FORMAT}
 ${locationContext.build()}
 `);
 
-    const messages = locationContext.messages.map((m) => m.build()).join('\n');
-    contexts.push(`
-Last ${this.location.meta.messageLimit} messages in the location:
-${LocationMessageContext.FORMAT}
-${messages}
-`);
-
     contexts.push(`
 You are currently in the following context:
 ${AgentContext.FORMAT}
@@ -242,9 +236,34 @@ ${this.agent.context.build()}
 `);
 
     contexts.push(`
-  Your memories:
-  ${this.agent.memories.map((m, i) => `${i}:${JSON.stringify(m)}`).join('\n')}
-  `);
+Your memories:
+${this.agent.memories.map((m, i) => `${i}:${JSON.stringify(m)}`).join('\n')}
+`);
+
+    const otherAgentContexts = Object.values(this.location.agents)
+      .filter((agent) => agent !== this.agent)
+      .map((agent) => agent.context.build());
+    contexts.push(`
+Other agents in the location:
+${AgentContext.FORMAT}
+${otherAgentContexts.join('\n')}
+`);
+
+    const usersContexts = Object.values(this.location.users).map((user) =>
+      user.context.build()
+    );
+    contexts.push(`
+Other users in the location:
+${UserContext.FORMAT}
+${usersContexts.join('\n')}
+`);
+
+    const messages = locationContext.messages.map((m) => m.build()).join('\n');
+    contexts.push(`
+Last ${this.location.meta.messageLimit} messages in the location:
+${LocationMessageContext.FORMAT}
+${messages}
+`);
 
     return contexts.map((c) => c.trim()).join('\n\n');
   }
@@ -260,7 +279,7 @@ Should you execute the next action? Consider if you need to respond to requests 
 ✅ if you decide to perform the action, or
 ❌ if you decide not to perform the action.
 (Do not actually perform the action.)
-`;
+`.trim();
 
     const prefill = `
 I will carefully observe location messages and use CoT to determine whether the next action is necessary.
