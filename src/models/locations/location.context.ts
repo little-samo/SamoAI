@@ -3,6 +3,7 @@ import { Context } from '@models/context';
 
 export interface LocationMessageContextOptions {
   key: EntityKey;
+  targetKey?: EntityKey;
   name: string;
   message?: string;
   expression?: string;
@@ -13,9 +14,11 @@ export class LocationMessageContext
   extends Context
   implements LocationMessageContextOptions
 {
-  public static readonly FORMAT = 'TIMESTAMP\tENTITY_KEY\tNAME\tMESSAGE';
+  public static readonly FORMAT =
+    'TIMESTAMP\tENTITY_KEY\tTARGET_KEY\tNAME\tMESSAGE';
 
   public readonly key: EntityKey;
+  public readonly targetKey?: EntityKey;
   public readonly name: string;
   public readonly message?: string;
   public readonly expression?: string;
@@ -25,6 +28,7 @@ export class LocationMessageContext
     super();
 
     this.key = options.key;
+    this.targetKey = options.targetKey;
     this.name = options.name;
     this.message = options.message;
     this.expression = options.expression;
@@ -33,7 +37,7 @@ export class LocationMessageContext
 
   public build(): string {
     const message = this.message ?? `*${this.expression}*`;
-    return `${this.created}\t${this.key}\t${JSON.stringify(this.name)}\t${JSON.stringify(message)}`;
+    return `${this.created}\t${this.key}\t${this.targetKey}\t${JSON.stringify(this.name)}\t${JSON.stringify(message)}`;
   }
 }
 

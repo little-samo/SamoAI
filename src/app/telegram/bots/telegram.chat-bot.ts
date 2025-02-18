@@ -167,7 +167,7 @@ export class TelegramChatBot extends TelegramAgentBot {
 
     let replyToAgent: AgentModel | null = null;
     let targetToUser: UserModel | null = null;
-    if (message.reply_to_message?.from?.id) {
+    if (message.reply_to_message?.from) {
       replyToAgent = await this.agentsService.getAgentByTelegramId(
         BigInt(message.reply_to_message.from.id)
       );

@@ -164,7 +164,7 @@ As ${this.agent.name}, which tool will you use?
   public override buildNextActions(): LlmMessage[] {
     const { prompt, rules } = this.buildPrompt();
     const input = this.buildContext();
-    const prefill = `I will carefully observe location messages and use CoT for the next tool use, employing all necessary tools—even multiple ones if needed. ${rules.join(', ')} apply. Remember, I only have one chance to respond, so I need to include all necessary tool calls in one go. However, I should avoid redundant tool calls. In particular, I will be mindful that unnecessary messages can annoy others.
+    const prefill = `I will carefully observe location messages and use CoT for the next tool use, employing all necessary tools—even multiple ones if needed. ${rules.join(', ')} apply. Remember, I only have one chance to respond, so I need to include all necessary tool calls in one go. However, I should avoid redundant tool calls. In particular, I will be mindful that unnecessary or duplicate messages can annoy others.
 CoT:
 1.`;
 
