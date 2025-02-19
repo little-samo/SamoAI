@@ -1,7 +1,7 @@
 import { ENV } from '@common/config';
 import { z } from 'zod';
 import { LlmToolCall } from '@common/llms/llm.tool';
-import { EntityKey } from '@models/entities/entity';
+import { EntityKey } from '@models/entities/entity.types';
 
 import { RegisterAgentAction } from './agent.action-decorator';
 import { AgentAction } from './agent.action';

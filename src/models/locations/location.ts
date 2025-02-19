@@ -3,10 +3,11 @@ import { EventEmitter } from 'events';
 import { LlmApiKeyModel, LocationModel } from '@prisma/client';
 import { Agent } from '@models/entities/agents/agent';
 import { User } from '@models/entities/users/user';
-import { Entity, EntityKey } from '@models/entities/entity';
+import { Entity } from '@models/entities/entity';
 import { AgentState } from '@models/entities/agents/states/agent.state';
 import { AgentEntityState } from '@models/entities/agents/states/agent.entity-state';
 import { ENV } from '@common/config';
+import { EntityKey, EntityType } from '@models/entities/entity.types';
 
 import {
   LocationMessage,
@@ -17,6 +18,7 @@ import { DEFAULT_LOCATION_META, LocationMeta } from './location.meta';
 import { LocationCore } from './cores/location.core';
 import { LocationContext, LocationMessageContext } from './location.context';
 import { LocationCoreFactory } from './cores';
+import { LocationEntityState } from './states/location.entity-state';
 
 export type LocationId = number & { __locationId: true };
 
@@ -60,7 +62,7 @@ export type LocationAgentEntityMemoryHook = (
 export type LocationAgentExpressionHook = (
   location: Location,
   agent: Agent,
-  state: AgentState,
+  state: LocationEntityState,
   expression: string
 ) => Promise<void>;
 
@@ -103,6 +105,8 @@ export class Location extends EventEmitter {
   private agentMemoryHooks: LocationAgentMemoryHook[] = [];
   private agentEntityMemoryHooks: LocationAgentEntityMemoryHook[] = [];
   private agentExpressionHooks: LocationAgentExpressionHook[] = [];
+
+  private readonly _entityStates: Record<EntityKey, LocationEntityState> = {};
 
   public static createState(
     model: LocationModel,
@@ -212,6 +216,56 @@ export class Location extends EventEmitter {
     }
   }
 
+  public createEntityState(
+    model: LocationModel,
+    type: EntityType,
+    id: number
+  ): LocationEntityState {
+    const state = new LocationEntityState();
+    state.locationId = model.id;
+    state.targetType = type;
+    state.targetId = id;
+    return state;
+  }
+
+  public fixEntityState(_state: LocationEntityState): void {}
+
+  public getEntityState(key: EntityKey): LocationEntityState | undefined {
+    return this._entityStates[key];
+  }
+
+  public getOrCreateEntityState(
+    type: EntityType,
+    id: number
+  ): LocationEntityState {
+    const key = `${type}:${id}` as EntityKey;
+    const state = this._entityStates[key];
+    if (state) {
+      return state;
+    }
+    const newState = this.createEntityState(this.model, type, id);
+    this._entityStates[key] = newState;
+    return newState;
+  }
+
+  public getOrCreateEntityStateByTarget(target: Entity): LocationEntityState {
+    return this.getOrCreateEntityState(target.type, target.id);
+  }
+
+  public addEntityState(state: LocationEntityState): LocationEntityState {
+    const key: EntityKey = `${state.targetType}:${state.targetId}` as EntityKey;
+
+    this.fixEntityState(state);
+    this._entityStates[key] = state;
+
+    return state;
+  }
+
+  public removeEntityStateByTarget(target: Entity): void {
+    const key = target.key;
+    delete this._entityStates[key];
+  }
+
   public get context(): LocationContext {
     return new LocationContext({
       key: this.key,
@@ -223,6 +277,10 @@ export class Location extends EventEmitter {
   public get lastMessageContext(): LocationMessageContext | undefined {
     const lastMessage = this.messagesState.messages.at(-1);
     return lastMessage ? Location.messageToContext(lastMessage) : undefined;
+  }
+
+  public getEntityStates(): LocationEntityState[] {
+    return Object.values(this._entityStates);
   }
 
   public reloadCore(): void {
@@ -348,7 +406,7 @@ export class Location extends EventEmitter {
 
   public async executeAgentExpressionHooks(
     agent: Agent,
-    state: AgentState,
+    state: LocationEntityState,
     expression: string
   ): Promise<void> {
     await Promise.all(

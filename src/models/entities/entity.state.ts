@@ -1,10 +1,4 @@
-import { Prop, Schema } from '@nestjs/mongoose';
-
-@Schema({ timestamps: true, versionKey: false })
-export abstract class EntityState {
-  @Prop()
-  public expression?: string;
-}
+export abstract class EntityState {}
 
 export interface EntityState {
   updatedAt: Date;

@@ -5,7 +5,8 @@ import { LlmToolCall } from '@common/llms/llm.tool';
 import { LlmFactory } from '@common/llms/llm.factory';
 import { ENV } from '@common/config';
 
-import { Entity, EntityKey } from '../entity';
+import { Entity } from '../entity';
+import { EntityType, EntityKey } from '../entity.types';
 
 import { AgentCore } from './cores/agent.core';
 import { AgentState } from './states/agent.state';
@@ -18,6 +19,7 @@ import { AgentActionFactory } from './actions';
 import { AgentInputBuilder, AgentInputFactory } from './inputs';
 
 export class Agent extends Entity {
+  public static readonly TYPE: EntityType = 'agent';
   public static readonly ACTION_LLM_INDEX = 0;
   public static readonly MINI_LLM_INDEX = 1;
 
@@ -79,8 +81,6 @@ export class Agent extends Entity {
     }
   }
 
-  public readonly key: EntityKey;
-
   public readonly core: AgentCore;
 
   public readonly inputs: AgentInputBuilder[] = [];
@@ -100,7 +100,6 @@ export class Agent extends Entity {
     Agent.fixState(state, meta);
 
     super(location, model.name, meta, state);
-    this.key = `agent:${model.id}` as EntityKey;
 
     this.core = AgentCoreFactory.createCore(this);
 
@@ -127,6 +126,10 @@ export class Agent extends Entity {
         return [action.name, action];
       })
     );
+  }
+
+  public override get id(): number {
+    return this.model.id;
   }
 
   public override get meta(): AgentMeta {
@@ -272,12 +275,13 @@ export class Agent extends Entity {
     if (expression.startsWith('*') && expression.endsWith('*')) {
       expression = expression.slice(1, -1);
     }
+    const entityState = this.location.getOrCreateEntityStateByTarget(this);
     await this.location.executeAgentExpressionHooks(
       this,
-      this.state,
+      entityState,
       expression
     );
-    this.state.expression = expression;
+    entityState.expression = expression;
   }
 
   public async update(): Promise<void> {

@@ -31,5 +31,4 @@ export interface AgentsRepository {
     index: number,
     memory: string
   ): Promise<void>;
-  saveAgentExpression(state: AgentState, expression: string): Promise<void>;
 }

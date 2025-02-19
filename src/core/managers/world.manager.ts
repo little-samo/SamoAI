@@ -12,6 +12,7 @@ import {
   DEFAULT_LOCATION_META,
   LocationMeta,
 } from '@models/locations/location.meta';
+import { LocationEntityState } from '@models/locations/states/location.entity-state';
 import {
   LocationMessage,
   LocationMessagesState,
@@ -769,7 +770,7 @@ export class WorldManager {
         return;
       }
 
-      if (agentState.memories[index]) {
+      if (!state.memories[index] && agentState.memories[index]) {
         const emptyIndex = agentState.memories.findIndex((m) => !m);
         if (emptyIndex !== -1) {
           index = emptyIndex;
@@ -829,26 +830,32 @@ export class WorldManager {
   }
 
   public async updateAgentExpression(
-    state: AgentState,
+    state: LocationEntityState,
     expression: string
   ): Promise<void> {
-    await this.withAgentLock(state.agentId, async () => {
+    await this.withAgentLock(state.targetId, async () => {
       if (ENV.DEBUG) {
         console.log(
-          `Updating agent ${state.agentId} expression to ${expression}`
+          `Updating agent ${state.targetId} expression to ${expression}`
         );
       }
 
-      const agentState = await this.agentRepository.getAgentState(
-        state.agentId
-      );
-      if (!agentState) {
-        await this.agentRepository.saveAgentState(state);
+      const locationEntityState =
+        await this.locationRepository.getLocationEntityState(
+          state.locationId,
+          state.targetType,
+          state.targetId
+        );
+      if (!locationEntityState) {
+        await this.locationRepository.saveLocationEntityState(state);
         return;
       }
 
-      agentState.expression = expression;
-      await this.agentRepository.saveAgentExpression(agentState, expression);
+      locationEntityState.expression = expression;
+      await this.locationRepository.saveLocationEntityStateExpression(
+        locationEntityState,
+        expression
+      );
     });
   }
 }

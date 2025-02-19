@@ -1,4 +1,4 @@
-import { EntityKey } from '@models/entities/entity';
+import { EntityKey } from '@models/entities/entity.types';
 import { Context } from '@models/context';
 
 export interface LocationMessageContextOptions {

@@ -1,14 +1,12 @@
 import { UserModel } from '@prisma/client';
 import { Location } from '@models/locations/location';
 
-import { Entity, EntityKey } from '../entity';
+import { Entity } from '../entity';
 
 import { UserState } from './states/user.state';
 import { DEFAULT_USER_META, UserMeta } from './user.meta';
 
 export class User extends Entity {
-  public readonly key: EntityKey;
-
   public static createState(model: UserModel, _meta: UserMeta): UserState {
     const state = new UserState();
     state.userId = model.id;
@@ -28,7 +26,10 @@ export class User extends Entity {
     User.fixState(state, meta);
 
     super(location, model.nickname, meta, state);
-    this.key = `user:${model.id}` as EntityKey;
+  }
+
+  public override get id(): number {
+    return this.model.id;
   }
 
   public override get meta(): UserMeta {

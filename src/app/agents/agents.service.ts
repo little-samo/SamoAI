@@ -482,20 +482,6 @@ export class AgentsService implements AgentsRepository {
     await this.redis.set(cacheKey, JSON.stringify(state), this.CACHE_TTL);
   }
 
-  public async saveAgentExpression(
-    state: AgentState,
-    expression: string
-  ): Promise<void> {
-    await this.agentStateModel.updateOne(
-      { agentId: state.agentId },
-      { $set: { expression } },
-      { upsert: true }
-    );
-
-    const cacheKey = `${this.AGENT_STATE_PREFIX}${state.agentId}`;
-    await this.redis.set(cacheKey, JSON.stringify(state), this.CACHE_TTL);
-  }
-
   public async setAgentMeta(agentId: number, meta: JsonObject): Promise<void> {
     await this.prisma.agentModel.update({
       where: { id: agentId },

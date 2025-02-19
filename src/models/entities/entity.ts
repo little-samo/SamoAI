@@ -3,11 +3,10 @@ import { Location } from '@models/locations/location';
 import { EntityContext } from './entity.context';
 import { EntityState } from './entity.state';
 import { EntityMeta } from './entity.meta';
-
-export type EntityKey = string & { __entityKey: true };
+import { EntityKey, EntityType } from './entity.types';
 
 export abstract class Entity {
-  public abstract get key(): EntityKey;
+  public static readonly TYPE: EntityType;
 
   protected _meta: EntityMeta;
   protected _state: EntityState;
@@ -22,6 +21,16 @@ export abstract class Entity {
     this._state = state;
   }
 
+  public abstract get id(): number;
+
+  public get type(): EntityType {
+    return (this.constructor as typeof Entity).TYPE;
+  }
+
+  public get key(): EntityKey {
+    return `${this.type}:${this.id}` as EntityKey;
+  }
+
   public get meta(): EntityMeta {
     return this._meta;
   }
@@ -31,11 +40,12 @@ export abstract class Entity {
   }
 
   public get context(): EntityContext {
+    const entityState = this.location.getEntityState(this.key);
     return new EntityContext({
       key: this.key,
       name: this.name,
       appearance: this.meta.appearance,
-      expression: this.state.expression,
+      expression: entityState?.expression ?? undefined,
     });
   }
 

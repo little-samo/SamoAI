@@ -13,6 +13,8 @@ import { WorldManager } from '@core/managers/world.manager';
 import { ShutdownService } from '@app/global/shutdown.service';
 import { Location } from '@models/locations/location';
 import { ENV } from '@common/config';
+import { LocationEntityState } from '@models/locations/states/location.entity-state';
+import { EntityType } from '@models/entities/entity.types';
 
 @Injectable()
 export class LocationsService implements LocationsRepository {
@@ -20,6 +22,8 @@ export class LocationsService implements LocationsRepository {
   private readonly LOCATION_STATE_PREFIX = 'cache:location_state:';
   private readonly LOCATION_MESSAGES_STATE_PREFIX =
     'cache:location_messages_state:';
+  private readonly LOCATION_ENTITY_STATE_PREFIX =
+    'cache:location_entity_state:';
   private readonly UPDATE_LOCK_KEY = 'locations:update';
   private readonly UPDATE_LOCK_TTL = 30000; // 30 seconds
 
@@ -40,7 +44,9 @@ export class LocationsService implements LocationsRepository {
     @InjectModel(LocationState.name)
     private locationStateModel: Model<LocationState>,
     @InjectModel(LocationMessagesState.name)
-    private locationMessagesStateModel: Model<LocationMessagesState>
+    private locationMessagesStateModel: Model<LocationMessagesState>,
+    @InjectModel(LocationEntityState.name)
+    private locationEntityStateModel: Model<LocationEntityState>
   ) {}
 
   public registerLocationUpdatePreAction(
@@ -149,6 +155,33 @@ export class LocationsService implements LocationsRepository {
     return state;
   }
 
+  public async getLocationEntityState(
+    locationId: number,
+    type: EntityType,
+    id: number
+  ): Promise<null | LocationEntityState> {
+    const cacheKey = `${this.LOCATION_ENTITY_STATE_PREFIX}${locationId}:${type}:${id}`;
+    const cachedState = await this.redis.get(cacheKey);
+
+    if (cachedState) {
+      return JSON.parse(cachedState);
+    }
+
+    const state = await this.locationEntityStateModel
+      .findOne({
+        locationId,
+        targetType: type,
+        targetId: id,
+      })
+      .exec();
+
+    if (state) {
+      await this.redis.set(cacheKey, JSON.stringify(state), this.CACHE_TTL);
+    }
+
+    return state;
+  }
+
   public async saveLocationModel(model: LocationModel): Promise<LocationModel> {
     if (!model.id) {
       return await this.prisma.locationModel.create({
@@ -198,6 +231,59 @@ export class LocationsService implements LocationsRepository {
     );
 
     const cacheKey = `${this.LOCATION_MESSAGES_STATE_PREFIX}${state.locationId}`;
+    await this.redis.set(cacheKey, JSON.stringify(state), this.CACHE_TTL);
+  }
+
+  public async saveLocationEntityState(
+    state: LocationEntityState
+  ): Promise<void> {
+    await this.locationEntityStateModel.updateOne(
+      {
+        locationId: state.locationId,
+        targetType: state.targetType,
+        targetId: state.targetId,
+      },
+      { $set: state },
+      { upsert: true }
+    );
+
+    const cacheKey = `${this.LOCATION_ENTITY_STATE_PREFIX}${state.locationId}:${state.targetType}:${state.targetId}`;
+    await this.redis.set(cacheKey, JSON.stringify(state), this.CACHE_TTL);
+  }
+
+  public async saveLocationEntityStateIsActive(
+    state: LocationEntityState,
+    isActive: boolean
+  ): Promise<void> {
+    await this.locationEntityStateModel.updateOne(
+      {
+        locationId: state.locationId,
+        targetType: state.targetType,
+        targetId: state.targetId,
+      },
+      { $set: { isActive } },
+      { upsert: true }
+    );
+
+    const cacheKey = `${this.LOCATION_ENTITY_STATE_PREFIX}${state.locationId}:${state.targetType}:${state.targetId}`;
+    await this.redis.set(cacheKey, JSON.stringify(state), this.CACHE_TTL);
+  }
+
+  public async saveLocationEntityStateExpression(
+    state: LocationEntityState,
+    expression: string
+  ): Promise<void> {
+    await this.locationEntityStateModel.updateOne(
+      {
+        locationId: state.locationId,
+        targetType: state.targetType,
+        targetId: state.targetId,
+      },
+      { $set: { expression } },
+      { upsert: true }
+    );
+
+    const cacheKey = `${this.LOCATION_ENTITY_STATE_PREFIX}${state.locationId}:${state.targetType}:${state.targetId}`;
     await this.redis.set(cacheKey, JSON.stringify(state), this.CACHE_TTL);
   }
 
