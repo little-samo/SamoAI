@@ -7,7 +7,13 @@ import { Entity } from '@models/entities/entity';
 import { AgentState } from '@models/entities/agents/states/agent.state';
 import { AgentEntityState } from '@models/entities/agents/states/agent.entity-state';
 import { ENV } from '@common/config';
-import { EntityKey, EntityType } from '@models/entities/entity.types';
+import {
+  AgentId,
+  EntityId,
+  EntityKey,
+  EntityType,
+  UserId,
+} from '@models/entities/entity.types';
 
 import {
   LocationMessage,
@@ -113,7 +119,7 @@ export class Location extends EventEmitter {
     _meta: LocationMeta
   ): LocationState {
     const state = new LocationState();
-    state.locationId = model.id;
+    state.locationId = model.id as LocationId;
     state.agentIds = [];
     state.userIds = [];
     state.dirty = true;
@@ -127,7 +133,7 @@ export class Location extends EventEmitter {
     _meta: LocationMeta
   ): LocationMessagesState {
     const state = new LocationMessagesState();
-    state.locationId = model.id;
+    state.locationId = model.id as LocationId;
     state.messages = [];
     state.dirty = true;
     return state;
@@ -187,9 +193,9 @@ export class Location extends EventEmitter {
     }
     if (updateIds) {
       if (entity instanceof Agent) {
-        this.state.agentIds.push(entity.model.id);
+        this.state.agentIds.push(entity.model.id as AgentId);
       } else if (entity instanceof User) {
-        this.state.userIds.push(entity.model.id);
+        this.state.userIds.push(entity.model.id as UserId);
       }
       this.state.dirty = true;
     }
@@ -216,15 +222,11 @@ export class Location extends EventEmitter {
     }
   }
 
-  public createEntityState(
-    model: LocationModel,
-    type: EntityType,
-    id: number
-  ): LocationEntityState {
+  public createEntityState(type: EntityType, id: number): LocationEntityState {
     const state = new LocationEntityState();
-    state.locationId = model.id;
+    state.locationId = this.id;
     state.targetType = type;
-    state.targetId = id;
+    state.targetId = id as EntityId;
     return state;
   }
 
@@ -243,7 +245,7 @@ export class Location extends EventEmitter {
     if (state) {
       return state;
     }
-    const newState = this.createEntityState(this.model, type, id);
+    const newState = this.createEntityState(type, id);
     this._entityStates[key] = newState;
     return newState;
   }
@@ -431,7 +433,7 @@ export class Location extends EventEmitter {
     await this.executeAgentMessageHooks(agent, message, expression);
 
     const locationMessage = new LocationMessage();
-    locationMessage.agentId = agent.model.id;
+    locationMessage.agentId = agent.model.id as AgentId;
     locationMessage.name = agent.name;
     if (message) {
       locationMessage.message = message.substring(
@@ -456,7 +458,7 @@ export class Location extends EventEmitter {
     this.emit('userMessage', user, message, expression);
 
     const locationMessage = new LocationMessage();
-    locationMessage.userId = user.model.id;
+    locationMessage.userId = user.model.id as UserId;
     locationMessage.name = user.name;
     if (message) {
       locationMessage.message = message.substring(

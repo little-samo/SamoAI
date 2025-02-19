@@ -1,3 +1,4 @@
+import { AgentId, EntityId } from '@models/entities/entity.types';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
@@ -5,17 +6,14 @@ export type AgentEntityStateTargetType = 'agent' | 'user';
 
 @Schema({ timestamps: true, versionKey: false })
 export class AgentEntityState {
-  @Prop({ required: true })
-  public agentId!: number;
+  @Prop({ type: Number, required: true })
+  public agentId!: AgentId;
 
   @Prop({ required: true, enum: ['agent', 'user'] })
   public targetType!: AgentEntityStateTargetType;
 
-  @Prop({ required: false })
-  public targetAgentId?: number;
-
-  @Prop({ required: false })
-  public targetUserId?: number;
+  @Prop({ type: Number, required: true })
+  public targetId!: EntityId;
 
   @Prop({ type: [String], default: [] })
   public memories!: string[];
@@ -31,6 +29,6 @@ export const AgentEntityStateSchema =
   SchemaFactory.createForClass(AgentEntityState);
 
 AgentEntityStateSchema.index(
-  { agentId: 1, targetAgentId: 1, targetUserId: 1 },
+  { agentId: 1, targetType: 1, targetId: 1 },
   { unique: true }
 );

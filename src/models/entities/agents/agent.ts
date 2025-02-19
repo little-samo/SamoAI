@@ -6,7 +6,13 @@ import { LlmFactory } from '@common/llms/llm.factory';
 import { ENV } from '@common/config';
 
 import { Entity } from '../entity';
-import { EntityType, EntityKey } from '../entity.types';
+import {
+  EntityType,
+  EntityKey,
+  EntityId,
+  AgentId,
+  AgentType,
+} from '../entity.types';
 
 import { AgentCore } from './cores/agent.core';
 import { AgentState } from './states/agent.state';
@@ -25,7 +31,7 @@ export class Agent extends Entity {
 
   public static createState(model: AgentModel, meta: AgentMeta): AgentState {
     const state = new AgentState();
-    state.agentId = model.id;
+    state.agentId = model.id as AgentId;
     state.memories = Array(meta.memoryLimit).fill('');
     return state;
   }
@@ -46,21 +52,11 @@ export class Agent extends Entity {
     }
   }
 
-  public createEntityState(
-    targetAgentId?: number,
-    targetUserId?: number
-  ): AgentEntityState {
+  public createEntityState(type: EntityType, id: EntityId): AgentEntityState {
     const state = new AgentEntityState();
-    state.agentId = this.model.id;
-    if (targetAgentId) {
-      state.targetType = 'agent';
-      state.targetAgentId = targetAgentId;
-    } else if (targetUserId) {
-      state.targetType = 'user';
-      state.targetUserId = targetUserId;
-    } else {
-      throw new Error('No target agent or user provided');
-    }
+    state.agentId = this.model.id as AgentId;
+    state.targetType = type;
+    state.targetId = id;
     state.memories = Array(this.meta.entityMemoryLimit).fill('');
     return state;
   }
@@ -128,8 +124,12 @@ export class Agent extends Entity {
     );
   }
 
-  public override get id(): number {
-    return this.model.id;
+  public override get type(): AgentType {
+    return 'agent';
+  }
+
+  public override get id(): AgentId {
+    return this.model.id as AgentId;
   }
 
   public override get meta(): AgentMeta {
@@ -168,58 +168,38 @@ export class Agent extends Entity {
     return entityState?.memories;
   }
 
-  public getEntityState(key: EntityKey): AgentEntityState | undefined {
-    return this._entityStates[key];
-  }
-
   public getEntityStates(): AgentEntityState[] {
     return Object.values(this._entityStates);
   }
 
-  public getEntityStateKeyByTarget(
-    targetAgentId?: number,
-    targetUserId?: number
-  ): EntityKey {
-    if (targetAgentId) {
-      return `agent:${targetAgentId}` as EntityKey;
-    } else if (targetUserId) {
-      return `user:${targetUserId}` as EntityKey;
-    } else {
-      throw new Error('No target agent or user provided');
-    }
+  public getEntityState(key: EntityKey): AgentEntityState | undefined {
+    return this._entityStates[key];
   }
 
   public getEntityStateByTarget(
-    targetAgentId?: number,
-    targetUserId?: number
+    type: EntityType,
+    id: EntityId
   ): AgentEntityState | undefined {
-    const key = this.getEntityStateKeyByTarget(targetAgentId, targetUserId);
+    const key = `${type}:${id}` as EntityKey;
     return this._entityStates[key];
   }
 
   public getOrCreateEntityStateByTarget(
-    targetAgentId?: number,
-    targetUserId?: number
+    type: EntityType,
+    id: EntityId
   ): AgentEntityState {
-    const key = this.getEntityStateKeyByTarget(targetAgentId, targetUserId);
+    const key = `${type}:${id}` as EntityKey;
     const state = this._entityStates[key];
     if (state) {
       return state;
     }
-    const newState = this.createEntityState(targetAgentId, targetUserId);
+    const newState = this.createEntityState(type, id);
     this._entityStates[key] = newState;
     return newState;
   }
 
   public addEntityState(state: AgentEntityState): AgentEntityState {
-    let key: EntityKey;
-    if (state.targetAgentId) {
-      key = `agent:${state.targetAgentId}` as EntityKey;
-    } else if (state.targetUserId) {
-      key = `user:${state.targetUserId}` as EntityKey;
-    } else {
-      throw new Error('Invalid entity state');
-    }
+    const key = `${state.targetType}:${state.targetId}` as EntityKey;
 
     this.fixEntityState(state);
     this._entityStates[key] = state;
@@ -227,18 +207,8 @@ export class Agent extends Entity {
     return state;
   }
 
-  public removeEntityState(
-    targetAgentId?: number,
-    targetUserId?: number
-  ): void {
-    let key: EntityKey;
-    if (targetAgentId) {
-      key = `agent:${targetAgentId}` as EntityKey;
-    } else if (targetUserId) {
-      key = `user:${targetUserId}` as EntityKey;
-    } else {
-      throw new Error('No target agent or user provided');
-    }
+  public removeEntityState(type: EntityType, id: EntityId): void {
+    const key = `${type}:${id}` as EntityKey;
     delete this._entityStates[key];
   }
 

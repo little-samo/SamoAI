@@ -6,9 +6,15 @@ import { RedisLockService } from '@core/services/redis-lock.service';
 import { Agent } from '@models/entities/agents/agent';
 import { AgentEntityState } from '@models/entities/agents/states/agent.entity-state';
 import { AgentState } from '@models/entities/agents/states/agent.state';
-import { EntityType } from '@models/entities/entity.types';
+import {
+  AgentId,
+  EntityId,
+  EntityKey,
+  EntityType,
+  UserId,
+} from '@models/entities/entity.types';
 import { User } from '@models/entities/users/user';
-import { Location } from '@models/locations/location';
+import { Location, LocationId } from '@models/locations/location';
 import {
   DEFAULT_LOCATION_META,
   LocationMeta,
@@ -182,13 +188,11 @@ export class WorldManager {
 
   private async withAgentEntityLock<T>(
     agentId: number,
-    targetAgentId: number | undefined,
-    targetUserId: number | undefined,
+    type: EntityType,
+    id: EntityId,
     operation: () => Promise<T>
   ): Promise<T> {
-    const entityKey = targetAgentId
-      ? `agent:${targetAgentId}`
-      : `user:${targetUserId}`;
+    const entityKey = `${type}:${id}` as EntityKey;
     const lockKey = `${WorldManager.AGENT_ENTITY_LOCK_PREFIX}${agentId}:${entityKey}`;
     const lock = await this.redisLockService.acquireLock(
       lockKey,
@@ -301,8 +305,8 @@ export class WorldManager {
 
   private async getAgents(
     location: Location,
-    agentIds: number[],
-    userIds: number[]
+    agentIds: AgentId[],
+    userIds: UserId[]
   ): Promise<Record<number, Agent>> {
     const agentModels = await this.agentRepository.getAgentModels(agentIds);
     agentIds = agentIds.filter((agentId) => agentModels[agentId]?.isActive);
@@ -333,10 +337,10 @@ export class WorldManager {
         if (otherAgentId === agentId) {
           continue;
         }
-        agent.getOrCreateEntityStateByTarget(otherAgentId);
+        agent.getOrCreateEntityStateByTarget('agent', otherAgentId);
       }
       for (const otherUserId of userIds) {
-        agent.getOrCreateEntityStateByTarget(undefined, otherUserId);
+        agent.getOrCreateEntityStateByTarget('user', otherUserId);
       }
 
       agents[agentId] = agent;
@@ -377,8 +381,8 @@ export class WorldManager {
   }
 
   public async addLocationAgent(
-    locationId: number,
-    agentId: number
+    locationId: LocationId,
+    agentId: AgentId
   ): Promise<boolean> {
     let locationState =
       await this.locationRepository.getLocationState(locationId);
@@ -392,7 +396,7 @@ export class WorldManager {
       }
 
       locationState.userIds = locationState.userIds.filter(
-        (id) => id !== agentId
+        (id) => (id as EntityId) !== (agentId as EntityId)
       );
       locationState.agentIds.push(agentId);
       locationState.dirty = true;
@@ -403,8 +407,8 @@ export class WorldManager {
   }
 
   public async removeLocationAgent(
-    locationId: number,
-    agentId: number
+    locationId: LocationId,
+    agentId: AgentId
   ): Promise<boolean> {
     let locationState =
       await this.locationRepository.getLocationState(locationId);
@@ -428,8 +432,8 @@ export class WorldManager {
   }
 
   public async addLocationUser(
-    locationId: number,
-    userId: number
+    locationId: LocationId,
+    userId: UserId
   ): Promise<boolean> {
     let locationState =
       await this.locationRepository.getLocationState(locationId);
@@ -451,8 +455,8 @@ export class WorldManager {
   }
 
   public async removeLocationUser(
-    locationId: number,
-    userId: number
+    locationId: LocationId,
+    userId: UserId
   ): Promise<boolean> {
     let locationState =
       await this.locationRepository.getLocationState(locationId);
@@ -558,8 +562,8 @@ export class WorldManager {
   }
 
   public async addLocationAgentMessage(
-    locationId: number,
-    agentId: number,
+    locationId: LocationId,
+    agentId: AgentId,
     name: string,
     message: string,
     createdAt?: Date,
@@ -581,8 +585,8 @@ export class WorldManager {
   }
 
   public async addLocationAgentGreetingMessage(
-    locationId: number,
-    agentId: number,
+    locationId: LocationId,
+    agentId: AgentId,
     name: string,
     greeting: string,
     createdAt?: Date
@@ -615,8 +619,8 @@ export class WorldManager {
   }
 
   public async addLocationUserMessage(
-    locationId: number,
-    userId: number,
+    locationId: LocationId,
+    userId: UserId,
     name: string,
     message: string,
     createdAt?: Date,
@@ -638,7 +642,7 @@ export class WorldManager {
   }
 
   public async addLocationSystemMessage(
-    locationId: number,
+    locationId: LocationId,
     message: string,
     createdAt?: Date
   ): Promise<void> {
@@ -652,8 +656,8 @@ export class WorldManager {
   }
 
   private async updateLocationInternal(
-    llmApiKeyUserId: number,
-    locationId: number,
+    llmApiKeyUserId: UserId,
+    locationId: LocationId,
     options: UpdateLocationOptions = {}
   ): Promise<Location> {
     if (ENV.DEBUG) {
@@ -748,8 +752,8 @@ export class WorldManager {
   }
 
   public async updateLocation(
-    llmApiKeyUserId: number,
-    locationId: number,
+    llmApiKeyUserId: UserId,
+    locationId: LocationId,
     options: UpdateLocationOptions = {}
   ): Promise<Location> {
     return await this.withLocationLock(locationId, async () => {
@@ -762,8 +766,8 @@ export class WorldManager {
   }
 
   public async updateLocationNoRetry(
-    llmApiKeyUserId: number,
-    locationId: number,
+    llmApiKeyUserId: UserId,
+    locationId: LocationId,
     options: UpdateLocationOptions = {}
   ): Promise<Location | null> {
     return await this.withLocationLockNoRetry(locationId, async () => {
@@ -818,19 +822,19 @@ export class WorldManager {
   ): Promise<void> {
     await this.withAgentEntityLock(
       state.agentId,
-      state.targetAgentId,
-      state.targetUserId,
+      state.targetType,
+      state.targetId,
       async () => {
         if (ENV.DEBUG) {
           console.log(
-            `Updating agent entity ${state.agentId}:${state.targetAgentId}:${state.targetUserId} memory at index ${index} to ${memory}`
+            `Updating agent entity ${state.agentId}:${state.targetType}:${state.targetId} memory at index ${index} to ${memory}`
           );
         }
 
         const agentEntityState = await this.agentRepository.getAgentEntityState(
           state.agentId,
-          state.targetAgentId,
-          state.targetUserId
+          state.targetType,
+          state.targetId
         );
         if (!agentEntityState) {
           await this.agentRepository.saveAgentEntityState(state);

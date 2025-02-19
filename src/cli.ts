@@ -5,6 +5,8 @@ import { LocationsService } from '@app/locations/locations.service';
 import { UsersService } from '@app/users/users.service';
 import { WorldManager } from '@core/managers/world.manager';
 import { LocationModel } from '@prisma/client';
+import { AgentId, UserId } from '@models/entities/entity.types';
+import { LocationId } from '@models/locations/location';
 
 async function bootstrap() {
   const samoai = new SamoAiApp();
@@ -32,12 +34,12 @@ async function bootstrap() {
     .action(async (agentIdStr: string, message: string) => {
       const startTime = Date.now();
 
-      const agentId = parseInt(agentIdStr);
+      const agentId = parseInt(agentIdStr) as AgentId;
       const agentsService = samoai.app!.get(AgentsService);
       await agentsService.getAgentModel(agentId);
 
       const usersService = samoai.app!.get(UsersService);
-      const userId = 1;
+      const userId = 1 as UserId;
       const userModel = await usersService.getUserModel(userId);
 
       const locationsService = samoai.app!.get(LocationsService);
@@ -46,12 +48,13 @@ async function bootstrap() {
         await locationsService.getOrCreateLocationModelByName({
           name: locationName,
         } as LocationModel);
+      const locationId = locationModel.id as LocationId;
 
-      await WorldManager.instance.addLocationAgent(locationModel.id, agentId);
-      await WorldManager.instance.addLocationUser(locationModel.id, userId);
+      await WorldManager.instance.addLocationAgent(locationId, agentId);
+      await WorldManager.instance.addLocationUser(locationId, userId);
 
       await WorldManager.instance.addLocationUserMessage(
-        locationModel.id,
+        locationId,
         userId,
         userModel.nickname,
         message
@@ -59,7 +62,7 @@ async function bootstrap() {
 
       const location = await WorldManager.instance.updateLocation(
         userId,
-        locationModel.id,
+        locationId,
         {
           ignorePauseUpdateUntil: true,
         }

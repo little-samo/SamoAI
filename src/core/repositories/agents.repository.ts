@@ -1,5 +1,7 @@
 import { AgentEntityState } from '@models/entities/agents/states/agent.entity-state';
 import { AgentState } from '@models/entities/agents/states/agent.state';
+import { AgentId, EntityType, UserId } from '@models/entities/entity.types';
+import { EntityId } from '@models/entities/entity.types';
 import { AgentModel } from '@prisma/client';
 
 export interface AgentsRepository {
@@ -8,14 +10,14 @@ export interface AgentsRepository {
   getAgentState(agentId: number): Promise<null | AgentState>;
   getAgentStates(agentIds: number[]): Promise<Record<number, AgentState>>;
   getAgentEntityState(
-    agentId: number,
-    targetAgentId?: number,
-    targetUserId?: number
+    agentId: AgentId,
+    type: EntityType,
+    id: EntityId
   ): Promise<null | AgentEntityState>;
   getAgentEntityStates(
-    agentIds: number[],
-    targetAgentIds: number[],
-    targetUserIds: number[]
+    agentIds: AgentId[],
+    targetAgentIds: AgentId[],
+    targetUserIds: UserId[]
   ): Promise<Record<number, AgentEntityState[]>>;
 
   saveAgentModel(model: AgentModel): Promise<AgentModel>;

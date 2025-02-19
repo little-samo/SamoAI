@@ -8,8 +8,10 @@ import {
 import { ENV } from '@common/config';
 import { WorldManager } from '@core/managers/world.manager';
 import { Agent } from '@models/entities/agents/agent';
-import { Location } from '@models/locations/location';
+import { Location, LocationId } from '@models/locations/location';
 import { AgentMeta } from '@models/entities/agents/agent.meta';
+import { UserId } from '@models/entities/entity.types';
+import { AgentId } from '@models/entities/entity.types';
 
 import { TelegramMessageDto } from '../dto/telegram.message-dto';
 import { TelegramUserDto } from '../dto/telegram.user-dto';
@@ -103,28 +105,29 @@ export class TelegramChatBot extends TelegramAgentBot {
         name: locationName,
         telegramChatId: BigInt(message.chat.id),
       } as LocationModel);
+    const locationId = locationModel.id as LocationId;
 
     await WorldManager.instance.addLocationAgent(
-      locationModel.id,
-      this.agent!.id
+      locationId,
+      this.agent!.id as AgentId
     );
-    await WorldManager.instance.addLocationUser(locationModel.id, user.id);
+    await WorldManager.instance.addLocationUser(locationId, user.id as UserId);
 
     await WorldManager.instance.addLocationUserMessage(
-      locationModel.id,
-      user.id,
+      locationId,
+      user.id as UserId,
       user.nickname,
       text,
       new Date(message.date * 1000)
     );
     await WorldManager.instance.setLocationPauseUpdateUntil(
-      locationModel.id,
+      locationId,
       new Date()
     );
 
     await this.locationsService.updateLocationNoRetry(
-      Number(process.env.TELEGRAM_LLM_API_USER_ID),
-      locationModel.id
+      Number(process.env.TELEGRAM_LLM_API_USER_ID) as UserId,
+      locationId
     );
   }
 
@@ -154,16 +157,18 @@ export class TelegramChatBot extends TelegramAgentBot {
         name: locationName,
         telegramChatId: BigInt(message.chat.id),
       } as LocationModel);
+    const locationId = locationModel.id as LocationId;
+
     await WorldManager.instance.setLocationPauseUpdateUntil(
-      locationModel.id,
+      locationId,
       new Date()
     );
 
     await WorldManager.instance.addLocationAgent(
-      locationModel.id,
-      this.agent!.id
+      locationModel.id as LocationId,
+      this.agent!.id as AgentId
     );
-    await WorldManager.instance.addLocationUser(locationModel.id, user.id);
+    await WorldManager.instance.addLocationUser(locationId, user.id as UserId);
 
     let replyToAgent: AgentModel | null = null;
     let targetToUser: UserModel | null = null;
@@ -178,8 +183,8 @@ export class TelegramChatBot extends TelegramAgentBot {
           );
     }
     await WorldManager.instance.addLocationUserMessage(
-      locationModel.id,
-      user.id,
+      locationId,
+      user.id as UserId,
       user.nickname,
       text,
       new Date(message.date * 1000),
@@ -193,8 +198,8 @@ export class TelegramChatBot extends TelegramAgentBot {
     );
 
     await this.locationsService.updateLocationNoRetry(
-      Number(process.env.TELEGRAM_LLM_API_USER_ID),
-      locationModel.id
+      Number(process.env.TELEGRAM_LLM_API_USER_ID) as UserId,
+      locationId
     );
   }
 
@@ -211,7 +216,7 @@ export class TelegramChatBot extends TelegramAgentBot {
     switch (command) {
       case '/start':
         const ownerUser = await this.usersService.getUserModel(
-          this.agent!.ownerUserId!
+          this.agent!.ownerUserId as UserId
         );
         const ownerUsername = ownerUser.username
           ? `@${ownerUser.username}`
@@ -240,10 +245,11 @@ For more information, please visit @samo_ai_bot. 🐾
               name: locationName,
               telegramChatId: BigInt(message.chat.id),
             } as LocationModel);
+          const locationId = locationModel.id as LocationId;
 
           await WorldManager.instance.addLocationAgentGreetingMessage(
-            locationModel.id,
-            this.agent!.id,
+            locationId,
+            this.agent!.id as AgentId,
             this.agent!.name,
             meta.greeting
           );
@@ -280,8 +286,10 @@ For more information, please visit @samo_ai_bot. 🐾
             name: locationName,
             telegramChatId: BigInt(message.chat.id),
           } as LocationModel);
+        const locationId = locationModel.id as LocationId;
+
         await WorldManager.instance.setLocationPauseUpdateUntil(
-          locationModel.id,
+          locationId,
           new Date()
         );
 
@@ -293,12 +301,12 @@ For more information, please visit @samo_ai_bot. 🐾
             if (agent) {
               if (
                 await WorldManager.instance.addLocationAgent(
-                  locationModel.id,
-                  agent.id
+                  locationId,
+                  agent.id as AgentId
                 )
               ) {
                 await WorldManager.instance.addLocationSystemMessage(
-                  locationModel.id,
+                  locationId,
                   `New agent ${agent.name} joined the group.`
                 );
               }
@@ -314,12 +322,12 @@ For more information, please visit @samo_ai_bot. 🐾
           );
           if (
             await WorldManager.instance.addLocationUser(
-              locationModel.id,
-              user.id
+              locationId,
+              user.id as UserId
             )
           ) {
             await WorldManager.instance.addLocationSystemMessage(
-              locationModel.id,
+              locationId,
               `New user ${user.nickname} joined the group.`
             );
           }
@@ -346,6 +354,8 @@ For more information, please visit @samo_ai_bot. 🐾
             name: locationName,
             telegramChatId: BigInt(message.chat.id),
           } as LocationModel);
+        const locationId = locationModel.id as LocationId;
+
         await WorldManager.instance.setLocationPauseUpdateUntil(
           locationModel.id,
           new Date()
@@ -358,12 +368,12 @@ For more information, please visit @samo_ai_bot. 🐾
           if (agent) {
             if (
               await WorldManager.instance.removeLocationAgent(
-                locationModel.id,
-                agent.id
+                locationId,
+                agent.id as AgentId
               )
             ) {
               await WorldManager.instance.addLocationSystemMessage(
-                locationModel.id,
+                locationId,
                 `Agent ${agent.name} left the group.`
               );
             }
@@ -379,12 +389,12 @@ For more information, please visit @samo_ai_bot. 🐾
         );
         if (
           await WorldManager.instance.removeLocationUser(
-            locationModel.id,
-            user.id
+            locationId,
+            user.id as UserId
           )
         ) {
           await WorldManager.instance.addLocationSystemMessage(
-            locationModel.id,
+            locationId,
             `User ${user.nickname} left the group.`
           );
         }

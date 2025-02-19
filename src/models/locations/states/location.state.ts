@@ -1,16 +1,19 @@
 import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
+import { AgentId, UserId } from '@models/entities/entity.types';
+
+import { LocationId } from '../location';
 
 @Schema({ timestamps: true, versionKey: false })
 export class LocationState {
-  @Prop({ required: true, unique: true })
-  public locationId!: number;
+  @Prop({ type: Number, required: true, unique: true })
+  public locationId!: LocationId;
 
   @Prop({ type: [Number], default: [], index: true })
-  public agentIds!: number[];
+  public agentIds!: AgentId[];
 
   @Prop({ type: [Number], default: [], index: true })
-  public userIds!: number[];
+  public userIds!: UserId[];
 
   @Prop({ type: Date, index: true, default: null })
   public pauseUpdateUntil: Date | null = null;

@@ -7,6 +7,7 @@ import { UserModel, LlmApiKeyModel, UserPlatform } from '@prisma/client';
 import { PrismaService } from '@app/global/prisma.service';
 import { RedisService } from '@app/global/redis.service';
 import { JsonObject } from '@prisma/client/runtime/library';
+import { UserId } from '@models/entities/entity.types';
 
 @Injectable()
 export class UsersService implements UsersRepository {
@@ -22,13 +23,13 @@ export class UsersService implements UsersRepository {
     private userStateModel: Model<UserState>
   ) {}
 
-  public async getUserLlmApiKeys(userId: number): Promise<LlmApiKeyModel[]> {
+  public async getUserLlmApiKeys(userId: UserId): Promise<LlmApiKeyModel[]> {
     return this.prisma.llmApiKeyModel.findMany({
       where: { userModelId: userId },
     });
   }
 
-  public async getUserModel(userId: number): Promise<UserModel> {
+  public async getUserModel(userId: UserId): Promise<UserModel> {
     const user = await this.prisma.userModel.findUnique({
       where: { id: userId },
     });
@@ -87,7 +88,7 @@ export class UsersService implements UsersRepository {
   }
 
   public async getUserModels(
-    userIds: number[]
+    userIds: UserId[]
   ): Promise<Record<number, UserModel>> {
     const users = await this.prisma.userModel.findMany({
       where: { id: { in: userIds } },
@@ -102,7 +103,7 @@ export class UsersService implements UsersRepository {
     );
   }
 
-  public async getUserState(userId: number): Promise<null | UserState> {
+  public async getUserState(userId: UserId): Promise<null | UserState> {
     const cacheKey = `${this.USER_STATE_PREFIX}${userId}`;
     const cachedState = await this.redis.get(cacheKey);
 
@@ -120,7 +121,7 @@ export class UsersService implements UsersRepository {
   }
 
   public async getUserStates(
-    userIds: number[]
+    userIds: UserId[]
   ): Promise<Record<number, UserState>> {
     if (userIds.length === 0) {
       return {};
@@ -204,7 +205,7 @@ export class UsersService implements UsersRepository {
   }
 
   public async setUserTelegramCommand(
-    userId: number,
+    userId: UserId,
     command: string | null
   ): Promise<void> {
     await this.prisma.userModel.update({

@@ -12,6 +12,9 @@ import { AgentModel } from '@prisma/client';
 import { PrismaService } from '@app/global/prisma.service';
 import { RedisService } from '@app/global/redis.service';
 import { JsonObject } from '@prisma/client/runtime/library';
+import { AgentId, UserId } from '@models/entities/entity.types';
+import { EntityType } from '@models/entities/entity.types';
+import { EntityId } from '@models/entities/entity.types';
 
 interface AgentEntityStateCacheKey {
   agentId: number;
@@ -202,43 +205,12 @@ export class AgentsService implements AgentsRepository {
     return states;
   }
 
-  private getAgentEntityStateCacheKeyById(
-    agentId: number,
-    targetAgentId?: number,
-    targetUserId?: number
-  ): string {
-    if (targetAgentId) {
-      return `${this.AGENT_ENTITY_STATE_PREFIX}${agentId}:agent:${targetAgentId}`;
-    } else if (targetUserId) {
-      return `${this.AGENT_ENTITY_STATE_PREFIX}${agentId}:user:${targetUserId}`;
-    }
-    throw new Error('No target agent or user provided');
-  }
-
-  private getAgentEntityStateCacheKey(
-    agentEntityState: AgentEntityState
-  ): string {
-    return this.getAgentEntityStateCacheKeyById(
-      agentEntityState.agentId,
-      agentEntityState.targetAgentId,
-      agentEntityState.targetUserId
-    );
-  }
-
   public async getAgentEntityState(
-    agentId: number,
-    targetAgentId?: number,
-    targetUserId?: number
+    agentId: AgentId,
+    targetType: EntityType,
+    targetId: EntityId
   ): Promise<null | AgentEntityState> {
-    if (!targetAgentId && !targetUserId) {
-      throw new Error('No target agent or user provided');
-    }
-
-    const cacheKey = this.getAgentEntityStateCacheKeyById(
-      agentId,
-      targetAgentId,
-      targetUserId
-    );
+    const cacheKey = `${this.AGENT_ENTITY_STATE_PREFIX}${agentId}:${targetType}:${targetId}`;
 
     const cachedState = await this.redis.get(cacheKey);
 
@@ -249,8 +221,8 @@ export class AgentsService implements AgentsRepository {
     const entityState = await this.agentEntityStateModel
       .findOne({
         agentId,
-        targetAgentId,
-        targetUserId,
+        targetType,
+        targetId,
       })
       .exec();
 
@@ -266,9 +238,9 @@ export class AgentsService implements AgentsRepository {
   }
 
   public async getAgentEntityStates(
-    agentIds: number[],
-    targetAgentIds: number[],
-    targetUserIds: number[]
+    agentIds: AgentId[],
+    targetAgentIds: AgentId[],
+    targetUserIds: UserId[]
   ): Promise<Record<number, AgentEntityState[]>> {
     if (
       agentIds.length === 0 ||
@@ -286,10 +258,7 @@ export class AgentsService implements AgentsRepository {
         if (agentId === targetAgentId) {
           continue;
         }
-        const cacheKey = this.getAgentEntityStateCacheKeyById(
-          agentId,
-          targetAgentId
-        );
+        const cacheKey = `${this.AGENT_ENTITY_STATE_PREFIX}${agentId}:agent:${targetAgentId}`;
         cacheKeys.push({
           agentId,
           targetAgentId,
@@ -297,11 +266,7 @@ export class AgentsService implements AgentsRepository {
         });
       }
       for (const targetUserId of targetUserIds) {
-        const cacheKey = this.getAgentEntityStateCacheKeyById(
-          agentId,
-          undefined,
-          targetUserId
-        );
+        const cacheKey = `${this.AGENT_ENTITY_STATE_PREFIX}${agentId}:user:${targetUserId}`;
         cacheKeys.push({
           agentId,
           targetUserId,
@@ -381,7 +346,7 @@ export class AgentsService implements AgentsRepository {
       const cacheEntries = Object.values(states).reduce(
         (acc, entityStates) => {
           for (const entityState of entityStates) {
-            const cacheKey = this.getAgentEntityStateCacheKey(entityState);
+            const cacheKey = `${this.AGENT_ENTITY_STATE_PREFIX}${entityState.agentId}:${entityState.targetType}:${entityState.targetId}`;
             acc[cacheKey] = JSON.stringify(entityState);
           }
           return acc;
@@ -448,19 +413,14 @@ export class AgentsService implements AgentsRepository {
     await this.agentEntityStateModel.updateOne(
       {
         agentId: state.agentId,
-        targetAgentId: state.targetAgentId,
-        targetUserId: state.targetUserId,
+        targetType: state.targetType,
+        targetId: state.targetId,
       },
       { $set: state },
       { upsert: true }
     );
 
-    let cacheKey = `${this.AGENT_ENTITY_STATE_PREFIX}${state.agentId}:`;
-    if (state.targetAgentId) {
-      cacheKey += `agent:${state.targetAgentId}`;
-    } else if (state.targetUserId) {
-      cacheKey += `user:${state.targetUserId}`;
-    }
+    const cacheKey = `${this.AGENT_ENTITY_STATE_PREFIX}${state.agentId}:${state.targetType}:${state.targetId}`;
     await this.redis.set(cacheKey, JSON.stringify(state), this.CACHE_TTL);
   }
 
@@ -472,13 +432,13 @@ export class AgentsService implements AgentsRepository {
     await this.agentEntityStateModel.updateOne(
       {
         agentId: state.agentId,
-        targetAgentId: state.targetAgentId,
-        targetUserId: state.targetUserId,
+        targetType: state.targetType,
+        targetId: state.targetId,
       },
       { $set: { [`memories.${index}`]: memory } }
     );
 
-    const cacheKey = this.getAgentEntityStateCacheKey(state);
+    const cacheKey = `${this.AGENT_ENTITY_STATE_PREFIX}${state.agentId}:${state.targetType}:${state.targetId}`;
     await this.redis.set(cacheKey, JSON.stringify(state), this.CACHE_TTL);
   }
 

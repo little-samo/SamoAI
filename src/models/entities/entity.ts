@@ -3,11 +3,9 @@ import { Location } from '@models/locations/location';
 import { EntityContext } from './entity.context';
 import { EntityState } from './entity.state';
 import { EntityMeta } from './entity.meta';
-import { EntityKey, EntityType } from './entity.types';
+import { EntityId, EntityKey, EntityType } from './entity.types';
 
 export abstract class Entity {
-  public static readonly TYPE: EntityType;
-
   protected _meta: EntityMeta;
   protected _state: EntityState;
 
@@ -21,11 +19,9 @@ export abstract class Entity {
     this._state = state;
   }
 
-  public abstract get id(): number;
+  public abstract get id(): EntityId;
 
-  public get type(): EntityType {
-    return (this.constructor as typeof Entity).TYPE;
-  }
+  public abstract get type(): EntityType;
 
   public get key(): EntityKey {
     return `${this.type}:${this.id}` as EntityKey;

@@ -1,17 +1,19 @@
-import { EntityType } from '@models/entities/entity.types';
+import { EntityId, EntityType } from '@models/entities/entity.types';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
+import { LocationId } from '../location';
+
 @Schema({ timestamps: true, versionKey: false })
 export class LocationEntityState {
-  @Prop({ required: true })
-  public locationId!: number;
+  @Prop({ type: Number, required: true })
+  public locationId!: LocationId;
 
   @Prop({ required: true, enum: ['agent', 'user'] })
   public targetType!: EntityType;
 
-  @Prop({ required: true })
-  public targetId!: number;
+  @Prop({ type: Number, required: true })
+  public targetId!: EntityId;
 
   @Prop({ type: Boolean, default: null })
   public isActive: boolean | null = null;

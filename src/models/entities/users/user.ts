@@ -2,6 +2,7 @@ import { UserModel } from '@prisma/client';
 import { Location } from '@models/locations/location';
 
 import { Entity } from '../entity';
+import { UserId, UserType } from '../entity.types';
 
 import { UserState } from './states/user.state';
 import { DEFAULT_USER_META, UserMeta } from './user.meta';
@@ -9,7 +10,7 @@ import { DEFAULT_USER_META, UserMeta } from './user.meta';
 export class User extends Entity {
   public static createState(model: UserModel, _meta: UserMeta): UserState {
     const state = new UserState();
-    state.userId = model.id;
+    state.userId = model.id as UserId;
     state.dirty = true;
     return state;
   }
@@ -28,8 +29,12 @@ export class User extends Entity {
     super(location, model.nickname, meta, state);
   }
 
-  public override get id(): number {
-    return this.model.id;
+  public override get type(): UserType {
+    return 'user';
+  }
+
+  public override get id(): UserId {
+    return this.model.id as UserId;
   }
 
   public override get meta(): UserMeta {

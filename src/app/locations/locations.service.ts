@@ -11,10 +11,10 @@ import { JsonObject } from '@prisma/client/runtime/library';
 import { Cron } from '@nestjs/schedule';
 import { WorldManager } from '@core/managers/world.manager';
 import { ShutdownService } from '@app/global/shutdown.service';
-import { Location } from '@models/locations/location';
+import { Location, LocationId } from '@models/locations/location';
 import { ENV } from '@common/config';
 import { LocationEntityState } from '@models/locations/states/location.entity-state';
-import { EntityType } from '@models/entities/entity.types';
+import { EntityType, UserId } from '@models/entities/entity.types';
 
 @Injectable()
 export class LocationsService implements LocationsRepository {
@@ -102,7 +102,7 @@ export class LocationsService implements LocationsRepository {
     }
   }
 
-  public async getAllUnpausedLocationIds(): Promise<number[]> {
+  public async getAllUnpausedLocationIds(): Promise<LocationId[]> {
     const locations = await this.locationStateModel.find(
       {
         pauseUpdateUntil: {
@@ -288,8 +288,8 @@ export class LocationsService implements LocationsRepository {
   }
 
   public async updateLocationNoRetry(
-    llmApiKeyUserId: number,
-    locationId: number
+    llmApiKeyUserId: UserId,
+    locationId: LocationId
   ): Promise<void> {
     this.shutdownService.incrementActiveRequests();
     try {
@@ -332,7 +332,9 @@ export class LocationsService implements LocationsRepository {
     }
     this.shutdownService.incrementActiveRequests();
     try {
-      const llmApiKeyUserId = Number(process.env.TELEGRAM_LLM_API_USER_ID);
+      const llmApiKeyUserId = Number(
+        process.env.TELEGRAM_LLM_API_USER_ID
+      ) as UserId;
       const locationIds = await this.getAllUnpausedLocationIds();
       for (const locationId of locationIds) {
         void this.updateLocationNoRetry(llmApiKeyUserId, locationId);

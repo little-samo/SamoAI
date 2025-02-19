@@ -3,6 +3,7 @@ import { Logger } from '@nestjs/common';
 import { UserModel } from '@prisma/client';
 import { JsonObject } from '@prisma/client/runtime/library';
 import { AgentMeta } from '@models/entities/agents/agent.meta';
+import { UserId } from '@models/entities/entity.types';
 
 import { TelegramMessageDto } from '../dto/telegram.message-dto';
 import { TelegramUserDto } from '../dto/telegram.user-dto';
@@ -89,7 +90,7 @@ export class TelegramRegistrarBot extends TelegramBot {
     }
 
     if (user.telegramCommand) {
-      await this.usersService.setUserTelegramCommand(user.id, null);
+      await this.usersService.setUserTelegramCommand(user.id as UserId, null);
     }
 
     switch (command) {
@@ -133,7 +134,10 @@ export class TelegramRegistrarBot extends TelegramBot {
     args: string[]
   ): Promise<void> {
     if (args.length === 0) {
-      await this.usersService.setUserTelegramCommand(user.id, '/register');
+      await this.usersService.setUserTelegramCommand(
+        user.id as UserId,
+        '/register'
+      );
       await this.sendChatTextMessage(
         message.chat.id,
         `Are you ready to create a new bot? Just go to @BotFather, make a bot, and register the API Token! Please enter the API Token in the chat! 🐾`
@@ -403,7 +407,7 @@ export class TelegramRegistrarBot extends TelegramBot {
       case 'apperance':
         if (args.length === 2) {
           await this.usersService.setUserTelegramCommand(
-            user.id,
+            user.id as UserId,
             `/json ${agent.id} apperance`
           );
           await this.sendChatTextMessage(
@@ -422,7 +426,7 @@ ${meta.appearance}`
         } else {
           if (args[2].length > 500) {
             await this.usersService.setUserTelegramCommand(
-              user.id,
+              user.id as UserId,
               `/json ${agent.id} apperance`
             );
             await this.sendChatTextMessage(
@@ -446,7 +450,7 @@ ${meta.appearance}`
       case 'language':
         if (args.length === 2) {
           await this.usersService.setUserTelegramCommand(
-            user.id,
+            user.id as UserId,
             `/json ${agent.id} language`
           );
           await this.sendChatTextMessage(
@@ -463,7 +467,7 @@ ${meta.appearance}`
         } else {
           if (args[2].length > 30) {
             await this.usersService.setUserTelegramCommand(
-              user.id,
+              user.id as UserId,
               `/json ${agent.id} language`
             );
             await this.sendChatTextMessage(
@@ -492,7 +496,7 @@ ${meta.appearance}`
       case 'character':
         if (args.length === 2) {
           await this.usersService.setUserTelegramCommand(
-            user.id,
+            user.id as UserId,
             `/json ${agent.id} character`
           );
           await this.sendChatTextMessage(
@@ -519,7 +523,7 @@ ${meta.appearance}`
         } else {
           if (args[2].length > 5000) {
             await this.usersService.setUserTelegramCommand(
-              user.id,
+              user.id as UserId,
               `/json ${agent.id} character`
             );
             await this.sendChatTextMessage(
@@ -554,7 +558,7 @@ ${meta.appearance}`
       case 'timezone':
         if (args.length === 2) {
           await this.usersService.setUserTelegramCommand(
-            user.id,
+            user.id as UserId,
             `/json ${agent.id} timezone`
           );
           await this.sendChatTextMessage(
@@ -571,7 +575,7 @@ ${meta.appearance}`
         } else {
           if (args[2].length > 30) {
             await this.usersService.setUserTelegramCommand(
-              user.id,
+              user.id as UserId,
               `/json ${agent.id} timezone`
             );
             await this.sendChatTextMessage(
@@ -595,7 +599,7 @@ ${meta.appearance}`
       case 'greeting':
         if (args.length === 2) {
           await this.usersService.setUserTelegramCommand(
-            user.id,
+            user.id as UserId,
             `/json ${agent.id} greeting`
           );
           await this.sendChatTextMessage(
@@ -612,7 +616,7 @@ ${meta.appearance}`
         } else {
           if (args[2].length > 500) {
             await this.usersService.setUserTelegramCommand(
-              user.id,
+              user.id as UserId,
               `/json ${agent.id} greeting`
             );
             await this.sendChatTextMessage(

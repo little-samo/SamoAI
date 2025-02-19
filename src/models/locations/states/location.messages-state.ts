@@ -1,3 +1,4 @@
+import { AgentId, UserId } from '@models/entities/entity.types';
 import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
@@ -6,11 +7,11 @@ import { Document } from 'mongoose';
   versionKey: false,
 })
 export class LocationMessage {
-  @Prop()
-  public agentId?: number;
+  @Prop({ type: Number })
+  public agentId?: AgentId;
 
-  @Prop()
-  public userId?: number;
+  @Prop({ type: Number })
+  public userId?: UserId;
 
   @Prop()
   public targetEntityKey?: string;
