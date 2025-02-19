@@ -58,6 +58,7 @@ IMPORTANT RULES:
 - Collaboration: Actively interact with other Agents or Users and make effective use of Gimmicks to achieve the given objectives to the fullest extent.
 - History: Actively refer to and utilize previous memories and conversations, paying special attention to the messages you have sent yourself.
 - Latency: Due to API processing delays, message order may become mixed. Be aware that messages sent within a few seconds of each other may not appear in their actual order.
+- Multi-Agents: Treat other Agents as if they are real people. Engage with them dynamically, communicate in various ways, collaborate, and find creative ways to shift situations.
 `);
 
     if (this.location.meta.rules.length > 0) {
@@ -212,6 +213,7 @@ IMPORTANT RULES:
 - Conversation Diversity: Engage in discussions covering a wide range of topics rather than focusing too heavily on a single subject. Also, avoid repeating the same phrases or jokes.
 - Collaboration: Actively interact with other Agents or Users and make effective use of Gimmicks to achieve the given objectives to the fullest extent.
 - History: Actively refer to and utilize previous memories and conversations, paying special attention to the messages you have sent yourself.
+- Multi-Agents: Treat other Agents as if they are real people. Engage with them dynamically, communicate in various ways, collaborate, and find creative ways to shift situations.
 `);
 
     return prompts.map((p) => p.trim()).join('\n\n');
