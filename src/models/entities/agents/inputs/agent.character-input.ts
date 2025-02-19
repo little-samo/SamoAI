@@ -243,13 +243,6 @@ ${this.agent.context.build()}
 </YourContext>
 `);
 
-    contexts.push(`
-<YourMemories>
-Your memories:
-${this.agent.memories.map((m, i) => `${i}:${JSON.stringify(m)}`).join('\n')}
-</YourMemories>
-`);
-
     const otherAgentContexts = Object.values(this.location.agents)
       .filter((agent) => agent !== this.agent)
       .map((agent) => agent.context.build());
@@ -270,6 +263,13 @@ Other users in the location:
 ${UserContext.FORMAT}
 ${usersContexts.join('\n')}
 </OtherUsers>
+`);
+
+    contexts.push(`
+<YourMemories>
+Your memories:
+${this.agent.memories.map((m, i) => `${i}:${JSON.stringify(m)}`).join('\n')}
+</YourMemories>
 `);
 
     const messages = locationContext.messages.map((m) => m.build()).join('\n');
