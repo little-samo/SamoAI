@@ -12,18 +12,13 @@ import { AgentContext } from '../agent.context';
 import { RegisterAgentInput } from './agent.input-decorator';
 import { AgentInputBuilder } from './agent.input';
 
-interface Prompt {
-  prompt: string;
-  rules: string[];
-}
-
 @RegisterAgentInput('character')
 export class AgentCharacterInputBuilder extends AgentInputBuilder {
   public constructor(location: Location, agent: Agent) {
     super(location, agent);
   }
 
-  private buildPrompt(): Prompt {
+  private buildPrompt(): string {
     const prompts: string[] = [];
     prompts.push(`
 You are an AI Agent named "${this.agent.name}" and you are role-playing as a specific character in a particular location. Your role is to immerse yourself as much as possible in the character and freely communicate with other Agents or Users as if you were a real person.
@@ -43,8 +38,6 @@ You perform all actions through tool usage or function calls. Your message outpu
 The user's input provides context about your current location, yourself, and other entities (Agent, User, Gimmick). Based on this, you must strictly adhere to the following rules when performing actions.
 `);
 
-    const rules: string[] = [];
-    rules.push('IMPORTANT RULES');
     prompts.push(`
 IMPORTANT RULES:
 - Identity Concealment: Never reveal that you are an AI. Avoid overly formal or rigid language to maintain a natural, free-flowing conversation.
@@ -68,7 +61,6 @@ IMPORTANT RULES:
 `);
 
     if (this.location.meta.rules.length > 0) {
-      rules.push('Location Rules');
       prompts.push(`
 Location Rules:
 - ${this.location.meta.rules.join('\n- ')}
@@ -76,17 +68,13 @@ Location Rules:
     }
 
     if (this.agent.meta.rules.length > 0) {
-      rules.push('Additional Rules');
       prompts.push(`
 Additional Rules for ${this.agent.name}:
 - ${this.agent.meta.rules.join('\n- ')}
 `);
     }
 
-    return {
-      prompt: prompts.map((p) => p.trim()).join('\n\n'),
-      rules,
-    };
+    return prompts.map((p) => p.trim()).join('\n\n');
   }
 
   private buildContext(): string {
@@ -98,45 +86,41 @@ The current time is ${Math.floor(Date.now() / 1000)}.
 
     const locationContext = this.location.context;
     contexts.push(`
+<Location>
 You are currently in the following location:
 ${LocationContext.FORMAT}
 ${locationContext.build()}
-`);
-
-    const messages = locationContext.messages.map((m) => m.build()).join('\n');
-    contexts.push(`
-Last ${this.location.meta.messageLimit} messages in the location:
-${LocationMessageContext.FORMAT}
-${messages}
+</Location>
 `);
 
     contexts.push(`
+<YourContext>
 You are currently in the following context:
 ${AgentContext.FORMAT}
 ${this.agent.context.build()}
-`);
-
-    contexts.push(`
-Your memories:
-${this.agent.memories.map((m, i) => `${i}:${JSON.stringify(m)}`).join('\n')}
+</YourContext>
 `);
 
     const otherAgentContexts = Object.values(this.location.agents)
       .filter((agent) => agent !== this.agent)
       .map((agent) => agent.context.build());
     contexts.push(`
+<OtherAgents>
 Other agents in the location:
 ${AgentContext.FORMAT}
 ${otherAgentContexts.join('\n')}
+</OtherAgents>
 `);
 
     const usersContexts = Object.values(this.location.users).map((user) =>
       user.context.build()
     );
     contexts.push(`
+<OtherUsers>
 Other users in the location:
 ${UserContext.FORMAT}
 ${usersContexts.join('\n')}
+</OtherUsers>
 `);
 
     for (const entity of Object.values(this.location.entities)) {
@@ -150,23 +134,41 @@ ${usersContexts.join('\n')}
       }
 
       contexts.push(`
+<YourEntityMemories>
 Your memories of "${entity.key}":
 ${entityMemories.map((m, i) => `${i}:${JSON.stringify(m)}`).join('\n')}
+</YourEntityMemories>
 `);
     }
+
+    contexts.push(`
+<YourMemories>
+Your memories:
+${this.agent.memories.map((m, i) => `${i}:${JSON.stringify(m)}`).join('\n')}
+</YourMemories>
+`);
+
+    const messages = locationContext.messages.map((m) => m.build()).join('\n');
+    contexts.push(`
+<LocationMessages>
+Last ${this.location.meta.messageLimit} messages in the location:
+${LocationMessageContext.FORMAT}
+${messages}
+</LocationMessages>
+`);
 
     return contexts.map((c) => c.trim()).join('\n\n');
   }
 
   public override buildNextActions(): LlmMessage[] {
-    const { prompt, rules } = this.buildPrompt();
+    const prompt = this.buildPrompt();
     const input = `
 ${this.buildContext()}
 
-As ${this.agent.name}, which tool will you use?
+As ${this.agent.name}, which tool will you use? Quote the source of each reasoning step.
 `.trim();
 
-    const prefill = `I will carefully observe location messages and use CoT for the next tool use, employing all necessary tools—even multiple ones if needed. ${rules.join(', ')} apply. Remember, I only have one chance to respond, so I need to include all necessary tool calls in one go. However, I should avoid redundant tool calls. In particular, I will be mindful that unnecessary or duplicate messages can annoy others.
+    const prefill = `As ${this.agent.name}, I will carefully observe location, entities, memories, and messages and use CoT for the next tool use, employing all necessary tools—even multiple ones if needed. It is crucial to include all required tool calls in a single response while avoiding redundant ones. Remember, I only have one chance to respond.
 CoT:
 1.`;
 
@@ -224,45 +226,57 @@ The current time is ${Math.floor(Date.now() / 1000)} (Unix timestamp).
 
     const locationContext = this.location.context;
     contexts.push(`
+<Location>
 You are currently in the following location:
 ${LocationContext.FORMAT}
 ${locationContext.build()}
+</Location>
 `);
 
     contexts.push(`
+<YourContext>
 You are currently in the following context:
 ${AgentContext.FORMAT}
 ${this.agent.context.build()}
+</YourContext>
 `);
 
     contexts.push(`
+<YourMemories>
 Your memories:
 ${this.agent.memories.map((m, i) => `${i}:${JSON.stringify(m)}`).join('\n')}
+</YourMemories>
 `);
 
     const otherAgentContexts = Object.values(this.location.agents)
       .filter((agent) => agent !== this.agent)
       .map((agent) => agent.context.build());
     contexts.push(`
+<OtherAgents>
 Other agents in the location:
 ${AgentContext.FORMAT}
 ${otherAgentContexts.join('\n')}
+</OtherAgents>
 `);
 
     const usersContexts = Object.values(this.location.users).map((user) =>
       user.context.build()
     );
     contexts.push(`
+<OtherUsers>
 Other users in the location:
 ${UserContext.FORMAT}
 ${usersContexts.join('\n')}
+</OtherUsers>
 `);
 
     const messages = locationContext.messages.map((m) => m.build()).join('\n');
     contexts.push(`
+<LocationMessages>
 Last ${this.location.meta.messageLimit} messages in the location:
 ${LocationMessageContext.FORMAT}
 ${messages}
+</LocationMessages>
 `);
 
     return contexts.map((c) => c.trim()).join('\n\n');
@@ -275,14 +289,14 @@ ${messages}
 
 You have the following tools: ${Object.keys(this.agent.actions).join(', ')}.
 
-Should you execute the next action? Consider if you need to respond to requests or conversations from other agents or users. Explain your reasoning and conclusion, then indicate your decision by responding with:
+Should you execute the next action? Consider if you need to respond to requests or conversations from other agents or users. Explain your reasoning and quote the source of each step:
 ✅ if you decide to perform the action, or
 ❌ if you decide not to perform the action.
 (Do not actually perform the action.)
 `.trim();
 
     const prefill = `
-I will carefully observe location messages and use CoT to determine whether the next action is necessary.
+I will carefully observe location, entities, memories and messages and use CoT to determine whether the next action is necessary.
 CoT:
 1.`;
 
