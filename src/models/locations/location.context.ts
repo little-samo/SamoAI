@@ -36,8 +36,9 @@ export class LocationMessageContext
   }
 
   public build(): string {
+    const targetKey = this.targetKey ?? '';
     const message = this.message ?? `*${this.expression}*`;
-    return `${this.created}\t${this.key}\t${this.targetKey}\t${JSON.stringify(this.name)}\t${JSON.stringify(message)}`;
+    return `${this.created}\t${this.key}\t${targetKey}\t${JSON.stringify(this.name)}\t${JSON.stringify(message)}`;
   }
 }
 
