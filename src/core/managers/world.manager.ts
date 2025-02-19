@@ -6,6 +6,7 @@ import { RedisLockService } from '@core/services/redis-lock.service';
 import { Agent } from '@models/entities/agents/agent';
 import { AgentEntityState } from '@models/entities/agents/states/agent.entity-state';
 import { AgentState } from '@models/entities/agents/states/agent.state';
+import { EntityType } from '@models/entities/entity.types';
 import { User } from '@models/entities/users/user';
 import { Location } from '@models/locations/location';
 import {
@@ -30,6 +31,7 @@ export class WorldManager {
   private static readonly LOCK_TTL = 5000; // 5 seconds
   private static readonly LOCATION_LOCK_TTL = 30000; // 30 seconds
   private static readonly LOCATION_LOCK_PREFIX = 'lock:location:';
+  private static readonly LOCATION_ENTITY_LOCK_PREFIX = 'lock:location-entity:';
   private static readonly AGENT_LOCK_PREFIX = 'lock:agent:';
   private static readonly AGENT_ENTITY_LOCK_PREFIX = 'lock:agent-entity:';
   private static readonly USER_LOCK_PREFIX = 'lock:user:';
@@ -134,6 +136,29 @@ export class WorldManager {
         await lock.release();
       }
     });
+  }
+
+  private async withLocationEntityLock<T>(
+    locationId: number,
+    targetType: EntityType,
+    targetId: number,
+    operation: () => Promise<T>
+  ): Promise<T> {
+    const lockKey = `${WorldManager.LOCATION_ENTITY_LOCK_PREFIX}${locationId}:${targetType}:${targetId}`;
+    const lock = await this.redisLockService.acquireLock(
+      lockKey,
+      WorldManager.LOCK_TTL
+    );
+    if (!lock) {
+      throw new Error(
+        `Failed to lock location entity ${locationId}:${targetType}:${targetId}`
+      );
+    }
+    try {
+      return await operation();
+    } finally {
+      await lock.release();
+    }
   }
 
   private async withAgentLock<T>(
@@ -656,7 +681,7 @@ export class WorldManager {
     location.addAgentMemoryHook(
       async (location, agent, state, index, memory) => {
         if (options.handleSave) {
-          await options.handleSave(
+          void options.handleSave(
             this.updateAgentStateMemory(state, index, memory)
           );
         } else {
@@ -668,7 +693,7 @@ export class WorldManager {
     location.addAgentEntityMemoryHook(
       async (location, agent, state, index, memory) => {
         if (options.handleSave) {
-          await options.handleSave(
+          void options.handleSave(
             this.updateAgentEntityStateMemory(state, index, memory)
           );
         } else {
@@ -680,7 +705,7 @@ export class WorldManager {
     location.addAgentExpressionHook(
       async (location, agent, state, expression) => {
         if (options.handleSave) {
-          await options.handleSave(
+          void options.handleSave(
             this.updateAgentExpression(state, expression)
           );
         } else {
@@ -833,29 +858,34 @@ export class WorldManager {
     state: LocationEntityState,
     expression: string
   ): Promise<void> {
-    await this.withAgentLock(state.targetId, async () => {
-      if (ENV.DEBUG) {
-        console.log(
-          `Updating agent ${state.targetId} expression to ${expression}`
+    await this.withLocationEntityLock(
+      state.locationId,
+      state.targetType,
+      state.targetId,
+      async () => {
+        if (ENV.DEBUG) {
+          console.log(
+            `Updating agent ${state.targetId} expression to ${expression}`
+          );
+        }
+
+        const locationEntityState =
+          await this.locationRepository.getLocationEntityState(
+            state.locationId,
+            state.targetType,
+            state.targetId
+          );
+        if (!locationEntityState) {
+          await this.locationRepository.saveLocationEntityState(state);
+          return;
+        }
+
+        locationEntityState.expression = expression;
+        await this.locationRepository.saveLocationEntityStateExpression(
+          locationEntityState,
+          expression
         );
       }
-
-      const locationEntityState =
-        await this.locationRepository.getLocationEntityState(
-          state.locationId,
-          state.targetType,
-          state.targetId
-        );
-      if (!locationEntityState) {
-        await this.locationRepository.saveLocationEntityState(state);
-        return;
-      }
-
-      locationEntityState.expression = expression;
-      await this.locationRepository.saveLocationEntityStateExpression(
-        locationEntityState,
-        expression
-      );
-    });
+    );
   }
 }

@@ -409,11 +409,17 @@ export class Location extends EventEmitter {
     state: LocationEntityState,
     expression: string
   ): Promise<void> {
-    await Promise.all(
-      this.agentExpressionHooks.map((hook) =>
-        hook(this, agent, state, expression)
-      )
-    );
+    try {
+      await Promise.all(
+        this.agentExpressionHooks.map((hook) =>
+          hook(this, agent, state, expression)
+        )
+      );
+    } catch (error: unknown) {
+      throw new Error(
+        `Expression hook failed: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
   }
 
   public async addAgentMessage(
