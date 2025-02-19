@@ -5,10 +5,10 @@ import { EntityId } from '@models/entities/entity.types';
 import { AgentModel } from '@prisma/client';
 
 export interface AgentsRepository {
-  getAgentModel(agentId: number): Promise<AgentModel>;
-  getAgentModels(agentIds: number[]): Promise<Record<number, AgentModel>>;
-  getAgentState(agentId: number): Promise<null | AgentState>;
-  getAgentStates(agentIds: number[]): Promise<Record<number, AgentState>>;
+  getAgentModel(agentId: AgentId): Promise<AgentModel>;
+  getAgentModels(agentIds: AgentId[]): Promise<Record<AgentId, AgentModel>>;
+  getAgentState(agentId: AgentId): Promise<null | AgentState>;
+  getAgentStates(agentIds: AgentId[]): Promise<Record<AgentId, AgentState>>;
   getAgentEntityState(
     agentId: AgentId,
     type: EntityType,
@@ -18,7 +18,7 @@ export interface AgentsRepository {
     agentIds: AgentId[],
     targetAgentIds: AgentId[],
     targetUserIds: UserId[]
-  ): Promise<Record<number, AgentEntityState[]>>;
+  ): Promise<Record<AgentId, AgentEntityState[]>>;
 
   saveAgentModel(model: AgentModel): Promise<AgentModel>;
   saveAgentState(state: AgentState): Promise<void>;

@@ -1,19 +1,20 @@
 import { LocationState } from '@models/locations/states/location.state';
 import { LocationMessagesState } from '@models/locations/states/location.messages-state';
 import { LocationModel } from '@prisma/client';
-import { EntityType } from '@models/entities/entity.types';
+import { EntityId, EntityType } from '@models/entities/entity.types';
 import { LocationEntityState } from '@models/locations/states/location.entity-state';
+import { LocationId } from '@models/locations/location';
 
 export interface LocationsRepository {
-  getLocationModel(locationId: number): Promise<LocationModel>;
-  getLocationState(locationId: number): Promise<null | LocationState>;
+  getLocationModel(locationId: LocationId): Promise<LocationModel>;
+  getLocationState(locationId: LocationId): Promise<null | LocationState>;
   getLocationMessagesState(
-    locationId: number
+    locationId: LocationId
   ): Promise<null | LocationMessagesState>;
   getLocationEntityState(
-    locationId: number,
+    locationId: LocationId,
     type: EntityType,
-    id: number
+    id: EntityId
   ): Promise<null | LocationEntityState>;
 
   saveLocationModel(model: LocationModel): Promise<LocationModel>;

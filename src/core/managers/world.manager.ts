@@ -114,8 +114,8 @@ export class WorldManager {
   }
 
   private async withLocationAndEntitiesLock<T>(
-    llmApiKeyUserId: number,
-    locationId: number,
+    llmApiKeyUserId: UserId,
+    locationId: LocationId,
     operation: (location: Location) => Promise<T>
   ): Promise<T> {
     return await this.withLocationLock(locationId, async () => {
@@ -228,8 +228,8 @@ export class WorldManager {
   }
 
   private async getLocation(
-    llmApiKeyUserId: number,
-    locationId: number,
+    llmApiKeyUserId: UserId,
+    locationId: LocationId,
     defaultMeta?: LocationMeta
   ): Promise<Location> {
     const apiKeys =
@@ -267,7 +267,7 @@ export class WorldManager {
   }
 
   private async getOrCreateLocationState(
-    locationId: number
+    locationId: LocationId
   ): Promise<LocationState> {
     let locationState =
       await this.locationRepository.getLocationState(locationId);
@@ -284,7 +284,7 @@ export class WorldManager {
   }
 
   private async getOrCreateLocationMessagesState(
-    locationId: number
+    locationId: LocationId
   ): Promise<LocationMessagesState> {
     let locationMessagesState =
       await this.locationRepository.getLocationMessagesState(locationId);
@@ -351,12 +351,12 @@ export class WorldManager {
 
   private async getUsers(
     location: Location,
-    userIds: number[]
-  ): Promise<Record<number, User>> {
+    userIds: UserId[]
+  ): Promise<Record<UserId, User>> {
     const userModels = await this.userRepository.getUserModels(userIds);
     const userStates = await this.userRepository.getUserStates(userIds);
 
-    const users: Record<number, User> = {};
+    const users: Record<UserId, User> = {};
     for (const userId of userIds) {
       users[userId] = new User(
         location,
@@ -480,7 +480,7 @@ export class WorldManager {
   }
 
   private async setLocationPauseUpdateUntilInternal(
-    locationId: number,
+    locationId: LocationId,
     pauseUpdateUntil: Date | null
   ): Promise<void> {
     const locationState = await this.getOrCreateLocationState(locationId);
@@ -491,7 +491,7 @@ export class WorldManager {
   }
 
   public async setLocationPauseUpdateUntil(
-    locationId: number,
+    locationId: LocationId,
     pauseUpdateUntil: Date | null
   ): Promise<void> {
     const locationState = await this.getOrCreateLocationState(locationId);
@@ -508,7 +508,7 @@ export class WorldManager {
   }
 
   private async addLocationMessage(
-    locationId: number,
+    locationId: LocationId,
     message: LocationMessage
   ): Promise<void> {
     const locationMessagesState =
@@ -666,7 +666,10 @@ export class WorldManager {
 
     const location = await this.getLocation(llmApiKeyUserId, locationId);
     if (Object.keys(location.agents).length === 0) {
-      await this.setLocationPauseUpdateUntilInternal(location.model.id, null);
+      await this.setLocationPauseUpdateUntilInternal(
+        location.model.id as LocationId,
+        null
+      );
       return location;
     }
 

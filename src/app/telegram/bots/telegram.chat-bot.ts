@@ -357,7 +357,7 @@ For more information, please visit @samo_ai_bot. 🐾
         const locationId = locationModel.id as LocationId;
 
         await WorldManager.instance.setLocationPauseUpdateUntil(
-          locationModel.id,
+          locationId,
           new Date()
         );
 
