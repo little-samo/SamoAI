@@ -102,9 +102,24 @@ ${this.agent.context.build()}
 </YourContext>
 `);
 
-    const otherAgentContexts = Object.values(this.location.agents)
-      .filter((agent) => agent !== this.agent)
-      .map((agent) => agent.context.build());
+    const otherAgentContexts: string[] = [];
+    for (const agent of Object.values(this.location.agents)) {
+      if (agent === this.agent) {
+        continue;
+      }
+      let otherAgentContext = `<OtherAgent>
+${agent.context.build()}`;
+      const otherAgentMemories = this.agent.getEntityMemories(agent.key);
+      if (otherAgentMemories) {
+        otherAgentContext += `
+<YourMemoriesAboutOtherAgent>
+${otherAgentMemories.map((m, i) => `${i}:${JSON.stringify(m)}`).join('\n')}
+</YourMemoriesAboutOtherAgent>`;
+      }
+      otherAgentContext += `
+</OtherAgent>`;
+      otherAgentContexts.push(otherAgentContext);
+    }
     contexts.push(`
 <OtherAgents>
 Other agents in the location:
@@ -113,9 +128,21 @@ ${otherAgentContexts.join('\n')}
 </OtherAgents>
 `);
 
-    const usersContexts = Object.values(this.location.users).map((user) =>
-      user.context.build()
-    );
+    const usersContexts = [];
+    for (const user of Object.values(this.location.users)) {
+      let userContext = `<OtherUser>
+${user.context.build()}`;
+      const userMemories = this.agent.getEntityMemories(user.key);
+      if (userMemories) {
+        userContext += `
+<YourMemoriesAboutOtherUser>
+${userMemories.map((m, i) => `${i}:${JSON.stringify(m)}`).join('\n')}
+</YourMemoriesAboutOtherUser>`;
+      }
+      userContext += `
+</OtherUser>`;
+      usersContexts.push(userContext);
+    }
     contexts.push(`
 <OtherUsers>
 Other users in the location:
@@ -124,27 +151,8 @@ ${usersContexts.join('\n')}
 </OtherUsers>
 `);
 
-    for (const entity of Object.values(this.location.entities)) {
-      if (entity === this.agent) {
-        continue;
-      }
-
-      const entityMemories = this.agent.getEntityMemories(entity.key);
-      if (!entityMemories) {
-        continue;
-      }
-
-      contexts.push(`
-<YourEntityMemories>
-Your memories of "${entity.key}":
-${entityMemories.map((m, i) => `${i}:${JSON.stringify(m)}`).join('\n')}
-</YourEntityMemories>
-`);
-    }
-
     contexts.push(`
 <YourMemories>
-Your memories:
 ${this.agent.memories.map((m, i) => `${i}:${JSON.stringify(m)}`).join('\n')}
 </YourMemories>
 `);
