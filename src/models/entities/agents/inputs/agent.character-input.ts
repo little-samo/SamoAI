@@ -1,13 +1,13 @@
-import { LlmMessage } from '@little-samo/samo-ai/common/llms/llm.service';
-import { Location } from '@little-samo/samo-ai/models/locations/location';
 import {
+  Location,
   LocationContext,
   LocationMessageContext,
-} from '@little-samo/samo-ai/models/locations/location.context';
-import { UserContext } from '@little-samo/samo-ai/models/entities/users/user.context';
+} from '@little-samo/samo-ai/models';
+import { LlmMessage } from '@little-samo/samo-ai/common';
 
 import { Agent } from '../agent';
 import { AgentContext } from '../agent.context';
+import { UserContext } from '../../users';
 
 import { RegisterAgentInput } from './agent.input-decorator';
 import { AgentInputBuilder } from './agent.input';

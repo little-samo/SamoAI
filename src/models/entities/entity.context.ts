@@ -1,4 +1,4 @@
-import { Context } from '@little-samo/samo-ai/models/context';
+import { Context } from '../context';
 
 export interface EntityContextOptions {
   key: string;

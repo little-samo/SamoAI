@@ -1,7 +1,7 @@
-import { ENV } from '@little-samo/samo-ai/common/config';
 import { z } from 'zod';
-import { LlmToolCall } from '@little-samo/samo-ai/common/llms/llm.tool';
-import { EntityKey } from '@little-samo/samo-ai/models/entities/entity.types';
+import { ENV, LlmToolCall } from '@little-samo/samo-ai/common';
+
+import { EntityKey } from '../../entity.types';
 
 import { RegisterAgentAction } from './agent.action-decorator';
 import { AgentAction } from './agent.action';

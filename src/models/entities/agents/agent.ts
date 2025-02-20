@@ -1,9 +1,10 @@
 import { AgentModel } from '@prisma/client';
-import { LlmService } from '@little-samo/samo-ai/common/llms/llm.service';
-import { Location } from '@little-samo/samo-ai/models/locations/location';
-import { LlmToolCall } from '@little-samo/samo-ai/common/llms/llm.tool';
-import { LlmFactory } from '@little-samo/samo-ai/common/llms/llm.factory';
-import { ENV } from '@little-samo/samo-ai/common/config';
+import {
+  ENV,
+  LlmFactory,
+  LlmService,
+  LlmToolCall,
+} from '@little-samo/samo-ai/common';
 
 import { Entity } from '../entity';
 import {
@@ -13,6 +14,7 @@ import {
   AgentId,
   AgentType,
 } from '../entity.types';
+import { Location } from '../../locations';
 
 import { AgentCore } from './cores/agent.core';
 import { AgentState } from './states/agent.state';

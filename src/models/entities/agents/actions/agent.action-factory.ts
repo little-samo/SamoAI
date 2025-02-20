@@ -1,4 +1,4 @@
-import { Location } from '@little-samo/samo-ai/models/locations/location';
+import { Location } from '@little-samo/samo-ai/models/locations';
 
 import { Agent } from '../agent';
 

@@ -1,7 +1,4 @@
-import {
-  EntityContext,
-  EntityContextOptions,
-} from '@little-samo/samo-ai/models/entities/entity.context';
+import { EntityContext, EntityContextOptions } from '../entity.context';
 
 export interface AgentContextOptions extends EntityContextOptions {}
 

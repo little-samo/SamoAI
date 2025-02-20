@@ -1,32 +1,30 @@
-import { ENV } from '@little-samo/samo-ai/common/config';
-import { AgentsRepository } from '@little-samo/samo-ai/core/repositories/agents.repository';
-import { LocationsRepository } from '@little-samo/samo-ai/core/repositories/locations.repository';
-import { UsersRepository } from '@little-samo/samo-ai/core/repositories/users.repository';
-import { RedisLockService } from '@little-samo/samo-ai/core/services/redis-lock.service';
-import { Agent } from '@little-samo/samo-ai/models/entities/agents/agent';
-import { AgentEntityState } from '@little-samo/samo-ai/models/entities/agents/states/agent.entity-state';
-import { AgentState } from '@little-samo/samo-ai/models/entities/agents/states/agent.state';
+import { ENV } from '@little-samo/samo-ai/common';
 import {
+  Agent,
+  AgentEntityState,
   AgentId,
+  AgentState,
+  DEFAULT_LOCATION_META,
   EntityId,
   EntityKey,
   EntityType,
-  UserId,
-} from '@little-samo/samo-ai/models/entities/entity.types';
-import { User } from '@little-samo/samo-ai/models/entities/users/user';
-import { Location } from '@little-samo/samo-ai/models/locations/location';
-import {
-  DEFAULT_LOCATION_META,
-  LocationMeta,
-} from '@little-samo/samo-ai/models/locations/location.meta';
-import { LocationEntityState } from '@little-samo/samo-ai/models/locations/states/location.entity-state';
-import {
+  Location,
+  LocationEntityState,
+  LocationId,
   LocationMessage,
   LocationMessagesState,
-} from '@little-samo/samo-ai/models/locations/states/location.messages-state';
-import { LocationState } from '@little-samo/samo-ai/models/locations/states/location.state';
+  LocationMeta,
+  LocationState,
+  User,
+  UserId,
+} from '@little-samo/samo-ai/models';
 
-import { LocationId } from '../../models';
+import {
+  AgentsRepository,
+  LocationsRepository,
+  UsersRepository,
+} from '../repositories';
+import { RedisLockService } from '../services';
 
 interface UpdateLocationOptions {
   ignorePauseUpdateUntil?: boolean;
@@ -309,7 +307,7 @@ export class WorldManager {
     location: Location,
     agentIds: AgentId[],
     userIds: UserId[]
-  ): Promise<Record<number, Agent>> {
+  ): Promise<Record<AgentId, Agent>> {
     const agentModels = await this.agentRepository.getAgentModels(agentIds);
     agentIds = agentIds.filter((agentId) => agentModels[agentId]?.isActive);
 

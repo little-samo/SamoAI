@@ -14,11 +14,13 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
-    ".": "./dist/index.js"
+    ".": "./dist/index.js",
+    "./common": "./dist/common/index.js",
+    "./models": "./dist/models/index.js"
   },
   "scripts": {
     "postinstall": "prisma generate",
-    "clean": "rimraf dist *.tsbuildinfo",
+    "clean": "rimraf dist *.tsbuildinfo || true",
     "build": "yarn clean && tsc -p tsconfig.build.json",
     "generate:prisma": "prisma generate",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
