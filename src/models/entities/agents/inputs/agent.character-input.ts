@@ -161,6 +161,19 @@ ${messages}
     return contexts.map((c) => c.trim()).join('\n\n');
   }
 
+  private buildPrefill(): string {
+    let requiredActions;
+    if (this.location.meta.requiredActions.length > 0) {
+      requiredActions = ` I must perform the following actions: ${this.location.meta.requiredActions.join(', ')}.`;
+    } else {
+      requiredActions = ``;
+    }
+
+    return `As ${this.agent.name}, I will use CoT for the next tool use, employing all necessary tools—even multiple ones if needed. It is crucial to include all required tool calls in a single response while avoiding redundant ones. Remember, I only have one chance to respond.${requiredActions}
+CoT:
+1.`;
+  }
+
   public override buildNextActions(): LlmMessage[] {
     const prompt = this.buildPrompt();
     const input = `
@@ -169,9 +182,7 @@ ${this.buildContext()}
 As ${this.agent.name}, which tool will you use? Quote the source of each reasoning step.
 `.trim();
 
-    const prefill = `As ${this.agent.name}, I will carefully observe location, entities, memories, and messages and use CoT for the next tool use, employing all necessary tools—even multiple ones if needed. It is crucial to include all required tool calls in a single response while avoiding redundant ones. Remember, I only have one chance to respond.
-CoT:
-1.`;
+    const prefill = this.buildPrefill();
 
     return [
       {

@@ -12,6 +12,7 @@ export const TELEGRAM_BOT_PRIVATE_LOCATION_META: LocationMeta = {
       'This is a private chat on Telegram. Here, the Agent and the User are having a one-on-one conversation, and the Agent must respond to every message from the User.',
 
     messageLengthLimit: TELEGRAM_MESSAGE_LENGTH_LIMIT,
+    requiredActions: ['send_casual_message'],
     rules: ['You must generate at least one Message with every response.'],
   },
 };

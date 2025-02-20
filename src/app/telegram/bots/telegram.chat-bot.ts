@@ -19,7 +19,7 @@ import {
   TELEGRAM_BOT_GROUP_LOCATION_META,
   TELEGRAM_BOT_PRIVATE_LOCATION_META,
   TELEGRAM_MESSAGE_LENGTH_LIMIT,
-} from '../meta/location.meta';
+} from '../meta/telegram.location.meta';
 
 import { TelegramAgentBot } from './telegram.agent-bot';
 
