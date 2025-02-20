@@ -16,12 +16,12 @@
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
     "resolveJsonModule": true,
-    "rootDir": ".",
+    "rootDir": "./src",
     "outDir": "./dist",
-    "baseUrl": "./src",
     "paths": {
-      "@little-samo/samo-ai/*": ["./*"]
+      "@little-samo/samo-ai": ["./src/index.ts"],
+      "@little-samo/samo-ai/*": ["./src/*"]
     }
   },
-  "include": ["src/**/*", "test/**/*"]
+  "include": ["src/**/*"]
 }
