@@ -17,9 +17,9 @@
     "noFallthroughCasesInSwitch": true,
     "resolveJsonModule": true,
     "outDir": "./dist",
-    "baseUrl": "./src",
+    "rootDir": "./src",
     "paths": {
-      "@little-samo/samo-ai/*": ["./*"]
+      "@little-samo/samo-ai/*": ["./src/*"]
     }
   }
 }

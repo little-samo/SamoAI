@@ -6,7 +6,7 @@ import {
   EntityType,
 } from '@little-samo/samo-ai/models/entities/entity.types';
 import { LocationEntityState } from '@little-samo/samo-ai/models/locations/states/location.entity-state';
-import { LocationId } from '@little-samo/samo-ai/models/locations/location';
+import { LocationId } from '@little-samo/samo-ai/models/locations/location.type';
 
 export interface LocationsRepository {
   getLocationModel(locationId: LocationId): Promise<LocationModel>;

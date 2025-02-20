@@ -25,10 +25,7 @@ import { LocationCore } from './cores/location.core';
 import { LocationContext, LocationMessageContext } from './location.context';
 import { LocationCoreFactory } from './cores';
 import { LocationEntityState } from './states/location.entity-state';
-
-export type LocationId = number & { __locationId: true };
-
-export type LocationKey = string & { __locationKey: true };
+import { LocationId, LocationKey } from './location.type';
 
 export interface LocationConstructorOptions {
   state?: null | LocationState;

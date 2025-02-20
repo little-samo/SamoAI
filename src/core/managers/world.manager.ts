@@ -14,10 +14,7 @@ import {
   UserId,
 } from '@little-samo/samo-ai/models/entities/entity.types';
 import { User } from '@little-samo/samo-ai/models/entities/users/user';
-import {
-  Location,
-  LocationId,
-} from '@little-samo/samo-ai/models/locations/location';
+import { Location } from '@little-samo/samo-ai/models/locations/location';
 import {
   DEFAULT_LOCATION_META,
   LocationMeta,
@@ -28,6 +25,8 @@ import {
   LocationMessagesState,
 } from '@little-samo/samo-ai/models/locations/states/location.messages-state';
 import { LocationState } from '@little-samo/samo-ai/models/locations/states/location.state';
+
+import { LocationId } from '../../models';
 
 interface UpdateLocationOptions {
   ignorePauseUpdateUntil?: boolean;

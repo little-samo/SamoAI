@@ -3,7 +3,7 @@ import {
   UserId,
 } from '@little-samo/samo-ai/models/entities/entity.types';
 
-import { LocationId } from '../location';
+import { LocationId } from '../location.type';
 
 export interface LocationMessage {
   agentId?: AgentId;

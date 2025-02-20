@@ -3,7 +3,7 @@ import {
   EntityType,
 } from '@little-samo/samo-ai/models/entities/entity.types';
 
-import { LocationId } from '../location';
+import { LocationId } from '../location.type';
 
 export interface LocationEntityState {
   locationId: LocationId;
