@@ -1,5 +1,8 @@
-import { Location } from '@models/locations/location';
-import { LlmTool, LlmToolCall } from '@common/llms/llm.tool';
+import { Location } from '@little-samo/samo-ai/models/locations/location';
+import {
+  LlmTool,
+  LlmToolCall,
+} from '@little-samo/samo-ai/common/llms/llm.tool';
 import { z } from 'zod';
 
 import { Agent } from '../agent';

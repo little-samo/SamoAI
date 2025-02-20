@@ -5,13 +5,13 @@ import {
   Logger,
   ServiceUnavailableException,
 } from '@nestjs/common';
-import { ENV } from '@common/config';
-import { PrismaService } from '@app/global/prisma.service';
-import { AgentsService } from '@app/agents/agents.service';
-import { UsersService } from '@app/users/users.service';
-import { LocationsService } from '@app/locations/locations.service';
-import { ShutdownService } from '@app/global/shutdown.service';
-import { Location } from '@models/locations/location';
+import { ENV } from '@little-samo/samo-ai/common/config';
+import { PrismaService } from '@little-samo/samo-ai/app/global/prisma.service';
+import { AgentsService } from '@little-samo/samo-ai/app/agents/agents.service';
+import { UsersService } from '@little-samo/samo-ai/app/users/users.service';
+import { LocationsService } from '@little-samo/samo-ai/app/locations/locations.service';
+import { ShutdownService } from '@little-samo/samo-ai/app/global/shutdown.service';
+import { Location } from '@little-samo/samo-ai/models/locations/location';
 import { UserPlatform } from '@prisma/client';
 
 import { TelegramBot } from './bots/telegram.bot';

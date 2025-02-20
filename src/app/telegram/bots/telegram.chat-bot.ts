@@ -5,13 +5,16 @@ import {
   UserModel,
   UserPlatform,
 } from '@prisma/client';
-import { ENV } from '@common/config';
-import { WorldManager } from '@core/managers/world.manager';
-import { Agent } from '@models/entities/agents/agent';
-import { Location, LocationId } from '@models/locations/location';
-import { AgentMeta } from '@models/entities/agents/agent.meta';
-import { UserId } from '@models/entities/entity.types';
-import { AgentId } from '@models/entities/entity.types';
+import { ENV } from '@little-samo/samo-ai/common/config';
+import { WorldManager } from '@little-samo/samo-ai/core/managers/world.manager';
+import { Agent } from '@little-samo/samo-ai/models/entities/agents/agent';
+import {
+  Location,
+  LocationId,
+} from '@little-samo/samo-ai/models/locations/location';
+import { AgentMeta } from '@little-samo/samo-ai/models/entities/agents/agent.meta';
+import { UserId } from '@little-samo/samo-ai/models/entities/entity.types';
+import { AgentId } from '@little-samo/samo-ai/models/entities/entity.types';
 
 import { TelegramMessageDto } from '../dto/telegram.message-dto';
 import { TelegramUserDto } from '../dto/telegram.user-dto';

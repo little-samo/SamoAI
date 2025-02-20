@@ -1,5 +1,5 @@
-import { shuffle } from '@common/utils/array';
-import { ENV } from '@common/config';
+import { shuffle } from '@little-samo/samo-ai/common/utils/array';
+import { ENV } from '@little-samo/samo-ai/common/config';
 
 import { LocationMessage } from '../states/location.messages-state';
 

@@ -3,13 +3,13 @@ import { MongooseModule } from '@nestjs/mongoose';
 import {
   AgentEntityState,
   AgentEntityStateSchema,
-} from '@models/entities/agents/states/agent.entity-state';
-import { AgentsController } from '@app/agents/agents.controller';
-import { AgentsService } from '@app/agents/agents.service';
+} from '@little-samo/samo-ai/models/entities/agents/states/agent.entity-state';
+import { AgentsController } from '@little-samo/samo-ai/app/agents/agents.controller';
+import { AgentsService } from '@little-samo/samo-ai/app/agents/agents.service';
 import {
   AgentState,
   AgentStateSchema,
-} from '@models/entities/agents/states/agent.state';
+} from '@little-samo/samo-ai/models/entities/agents/states/agent.state';
 
 @Module({
   imports: [

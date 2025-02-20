@@ -1,30 +1,33 @@
-import { ENV } from '@common/config';
-import { AgentsRepository } from '@core/repositories/agents.repository';
-import { LocationsRepository } from '@core/repositories/locations.repository';
-import { UsersRepository } from '@core/repositories/users.repository';
-import { RedisLockService } from '@core/services/redis-lock.service';
-import { Agent } from '@models/entities/agents/agent';
-import { AgentEntityState } from '@models/entities/agents/states/agent.entity-state';
-import { AgentState } from '@models/entities/agents/states/agent.state';
+import { ENV } from '@little-samo/samo-ai/common/config';
+import { AgentsRepository } from '@little-samo/samo-ai/core/repositories/agents.repository';
+import { LocationsRepository } from '@little-samo/samo-ai/core/repositories/locations.repository';
+import { UsersRepository } from '@little-samo/samo-ai/core/repositories/users.repository';
+import { RedisLockService } from '@little-samo/samo-ai/core/services/redis-lock.service';
+import { Agent } from '@little-samo/samo-ai/models/entities/agents/agent';
+import { AgentEntityState } from '@little-samo/samo-ai/models/entities/agents/states/agent.entity-state';
+import { AgentState } from '@little-samo/samo-ai/models/entities/agents/states/agent.state';
 import {
   AgentId,
   EntityId,
   EntityKey,
   EntityType,
   UserId,
-} from '@models/entities/entity.types';
-import { User } from '@models/entities/users/user';
-import { Location, LocationId } from '@models/locations/location';
+} from '@little-samo/samo-ai/models/entities/entity.types';
+import { User } from '@little-samo/samo-ai/models/entities/users/user';
+import {
+  Location,
+  LocationId,
+} from '@little-samo/samo-ai/models/locations/location';
 import {
   DEFAULT_LOCATION_META,
   LocationMeta,
-} from '@models/locations/location.meta';
-import { LocationEntityState } from '@models/locations/states/location.entity-state';
+} from '@little-samo/samo-ai/models/locations/location.meta';
+import { LocationEntityState } from '@little-samo/samo-ai/models/locations/states/location.entity-state';
 import {
   LocationMessage,
   LocationMessagesState,
-} from '@models/locations/states/location.messages-state';
-import { LocationState } from '@models/locations/states/location.state';
+} from '@little-samo/samo-ai/models/locations/states/location.messages-state';
+import { LocationState } from '@little-samo/samo-ai/models/locations/states/location.state';
 
 interface UpdateLocationOptions {
   ignorePauseUpdateUntil?: boolean;

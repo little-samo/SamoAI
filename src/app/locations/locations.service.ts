@@ -1,20 +1,26 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { LocationState } from '@models/locations/states/location.state';
-import { LocationMessagesState } from '@models/locations/states/location.messages-state';
-import { LocationsRepository } from '@core/repositories/locations.repository';
+import { LocationState } from '@little-samo/samo-ai/models/locations/states/location.state';
+import { LocationMessagesState } from '@little-samo/samo-ai/models/locations/states/location.messages-state';
+import { LocationsRepository } from '@little-samo/samo-ai/core/repositories/locations.repository';
 import { LocationModel, UserPlatform } from '@prisma/client';
-import { PrismaService } from '@app/global/prisma.service';
-import { RedisService } from '@app/global/redis.service';
+import { PrismaService } from '@little-samo/samo-ai/app/global/prisma.service';
+import { RedisService } from '@little-samo/samo-ai/app/global/redis.service';
 import { JsonObject } from '@prisma/client/runtime/library';
 import { Cron } from '@nestjs/schedule';
-import { WorldManager } from '@core/managers/world.manager';
-import { ShutdownService } from '@app/global/shutdown.service';
-import { Location, LocationId } from '@models/locations/location';
-import { ENV } from '@common/config';
-import { LocationEntityState } from '@models/locations/states/location.entity-state';
-import { EntityType, UserId } from '@models/entities/entity.types';
+import { WorldManager } from '@little-samo/samo-ai/core/managers/world.manager';
+import { ShutdownService } from '@little-samo/samo-ai/app/global/shutdown.service';
+import {
+  Location,
+  LocationId,
+} from '@little-samo/samo-ai/models/locations/location';
+import { ENV } from '@little-samo/samo-ai/common/config';
+import { LocationEntityState } from '@little-samo/samo-ai/models/locations/states/location.entity-state';
+import {
+  EntityType,
+  UserId,
+} from '@little-samo/samo-ai/models/entities/entity.types';
 
 @Injectable()
 export class LocationsService implements LocationsRepository {

@@ -1,4 +1,7 @@
-import { EntityId, EntityType } from '@models/entities/entity.types';
+import {
+  EntityId,
+  EntityType,
+} from '@little-samo/samo-ai/models/entities/entity.types';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 

@@ -1,6 +1,6 @@
-import { ENV } from '@common/config';
+import { ENV } from '@little-samo/samo-ai/common/config';
 import { z } from 'zod';
-import { LlmToolCall } from '@common/llms/llm.tool';
+import { LlmToolCall } from '@little-samo/samo-ai/common/llms/llm.tool';
 
 import { RegisterAgentAction } from './agent.action-decorator';
 import { AgentAction } from './agent.action';

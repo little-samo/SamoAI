@@ -1,4 +1,4 @@
-import { ENV } from '@common/config';
+import { ENV } from '@little-samo/samo-ai/common/config';
 import { Controller, Get, HttpCode, HttpStatus, Logger } from '@nestjs/common';
 
 @Controller()

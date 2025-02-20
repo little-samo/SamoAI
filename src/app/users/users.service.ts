@@ -1,13 +1,13 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { UserState } from '@models/entities/users/states/user.state';
-import { UsersRepository } from '@core/repositories/users.repository';
+import { UserState } from '@little-samo/samo-ai/models/entities/users/states/user.state';
+import { UsersRepository } from '@little-samo/samo-ai/core/repositories/users.repository';
 import { UserModel, LlmApiKeyModel, UserPlatform } from '@prisma/client';
-import { PrismaService } from '@app/global/prisma.service';
-import { RedisService } from '@app/global/redis.service';
+import { PrismaService } from '@little-samo/samo-ai/app/global/prisma.service';
+import { RedisService } from '@little-samo/samo-ai/app/global/redis.service';
 import { JsonObject } from '@prisma/client/runtime/library';
-import { UserId } from '@models/entities/entity.types';
+import { UserId } from '@little-samo/samo-ai/models/entities/entity.types';
 
 @Injectable()
 export class UsersService implements UsersRepository {

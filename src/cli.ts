@@ -1,12 +1,15 @@
 import { Command } from 'commander';
-import { SamoAiApp } from '@app/app';
-import { AgentsService } from '@app/agents/agents.service';
-import { LocationsService } from '@app/locations/locations.service';
-import { UsersService } from '@app/users/users.service';
-import { WorldManager } from '@core/managers/world.manager';
+import { SamoAiApp } from '@little-samo/samo-ai/app/app';
+import { AgentsService } from '@little-samo/samo-ai/app/agents/agents.service';
+import { LocationsService } from '@little-samo/samo-ai/app/locations/locations.service';
+import { UsersService } from '@little-samo/samo-ai/app/users/users.service';
+import { WorldManager } from '@little-samo/samo-ai/core/managers/world.manager';
 import { LocationModel } from '@prisma/client';
-import { AgentId, UserId } from '@models/entities/entity.types';
-import { LocationId } from '@models/locations/location';
+import {
+  AgentId,
+  UserId,
+} from '@little-samo/samo-ai/models/entities/entity.types';
+import { LocationId } from '@little-samo/samo-ai/models/locations/location';
 
 async function bootstrap() {
   const samoai = new SamoAiApp();

@@ -1,4 +1,4 @@
-import { SamoAiApp } from '@app/app';
+import { SamoAiApp } from '@little-samo/samo-ai/app/app';
 
 export { SamoAiApp };
 

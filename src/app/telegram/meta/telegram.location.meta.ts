@@ -1,7 +1,7 @@
 import {
   DEFAULT_LOCATION_META,
   LocationMeta,
-} from '@models/locations/location.meta';
+} from '@little-samo/samo-ai/models/locations/location.meta';
 
 export const TELEGRAM_MESSAGE_LENGTH_LIMIT = 500;
 

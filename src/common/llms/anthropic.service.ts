@@ -8,7 +8,7 @@ import {
   ToolUseBlock,
 } from '@anthropic-ai/sdk/resources/messages/messages';
 import zodToJsonSchema from 'zod-to-json-schema';
-import { sleep } from '@common/utils/sleep';
+import { sleep } from '@little-samo/samo-ai/common/utils/sleep';
 
 import { LlmMessage, LlmOptions, LlmService } from './llm.service';
 import { LlmApiError, LlmInvalidContentError } from './llm.errors';

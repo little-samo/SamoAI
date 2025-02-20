@@ -1,5 +1,5 @@
-import { UserId } from '@models/entities/entity.types';
-import { UserState } from '@models/entities/users/states/user.state';
+import { UserId } from '@little-samo/samo-ai/models/entities/entity.types';
+import { UserState } from '@little-samo/samo-ai/models/entities/users/states/user.state';
 import { LlmApiKeyModel, UserModel } from '@prisma/client';
 
 export interface UsersRepository {

@@ -1,7 +1,11 @@
-import { AgentEntityState } from '@models/entities/agents/states/agent.entity-state';
-import { AgentState } from '@models/entities/agents/states/agent.state';
-import { AgentId, EntityType, UserId } from '@models/entities/entity.types';
-import { EntityId } from '@models/entities/entity.types';
+import { AgentEntityState } from '@little-samo/samo-ai/models/entities/agents/states/agent.entity-state';
+import { AgentState } from '@little-samo/samo-ai/models/entities/agents/states/agent.state';
+import {
+  AgentId,
+  EntityType,
+  UserId,
+} from '@little-samo/samo-ai/models/entities/entity.types';
+import { EntityId } from '@little-samo/samo-ai/models/entities/entity.types';
 import { AgentModel } from '@prisma/client';
 
 export interface AgentsRepository {

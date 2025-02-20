@@ -1,20 +1,23 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { FilterQuery, Model } from 'mongoose';
-import { AgentEntityStateDocument } from '@models/entities/agents/states/agent.entity-state';
-import { AgentEntityState } from '@models/entities/agents/states/agent.entity-state';
-import { AgentsRepository } from '@core/repositories/agents.repository';
+import { AgentEntityStateDocument } from '@little-samo/samo-ai/models/entities/agents/states/agent.entity-state';
+import { AgentEntityState } from '@little-samo/samo-ai/models/entities/agents/states/agent.entity-state';
+import { AgentsRepository } from '@little-samo/samo-ai/core/repositories/agents.repository';
 import {
   AgentState,
   AgentStateDocument,
-} from '@models/entities/agents/states/agent.state';
+} from '@little-samo/samo-ai/models/entities/agents/states/agent.state';
 import { AgentModel } from '@prisma/client';
-import { PrismaService } from '@app/global/prisma.service';
-import { RedisService } from '@app/global/redis.service';
+import { PrismaService } from '@little-samo/samo-ai/app/global/prisma.service';
+import { RedisService } from '@little-samo/samo-ai/app/global/redis.service';
 import { JsonObject } from '@prisma/client/runtime/library';
-import { AgentId, UserId } from '@models/entities/entity.types';
-import { EntityType } from '@models/entities/entity.types';
-import { EntityId } from '@models/entities/entity.types';
+import {
+  AgentId,
+  UserId,
+} from '@little-samo/samo-ai/models/entities/entity.types';
+import { EntityType } from '@little-samo/samo-ai/models/entities/entity.types';
+import { EntityId } from '@little-samo/samo-ai/models/entities/entity.types';
 
 interface AgentEntityStateCacheKey {
   agentId: number;

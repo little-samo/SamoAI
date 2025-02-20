@@ -1,9 +1,9 @@
-import { ENV } from '@common/config';
+import { ENV } from '@little-samo/samo-ai/common/config';
 import { Logger } from '@nestjs/common';
 import { UserModel } from '@prisma/client';
 import { JsonObject } from '@prisma/client/runtime/library';
-import { AgentMeta } from '@models/entities/agents/agent.meta';
-import { UserId } from '@models/entities/entity.types';
+import { AgentMeta } from '@little-samo/samo-ai/models/entities/agents/agent.meta';
+import { UserId } from '@little-samo/samo-ai/models/entities/entity.types';
 
 import { TelegramMessageDto } from '../dto/telegram.message-dto';
 import { TelegramUserDto } from '../dto/telegram.user-dto';

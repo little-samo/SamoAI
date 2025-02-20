@@ -19,10 +19,10 @@
     "outDir": "./dist",
     "baseUrl": "./src",
     "paths": {
-      "@common/*": ["common/*"],
-      "@models/*": ["models/*"],
-      "@core/*": ["core/*"],
-      "@app/*": ["app/*"]
+      "@little-samo/samo-ai/common/*": ["common/*"],
+      "@little-samo/samo-ai/models/*": ["models/*"],
+      "@little-samo/samo-ai/core/*": ["core/*"],
+      "@little-samo/samo-ai/app/*": ["app/*"]
     }
   }
 }

@@ -1,5 +1,5 @@
-import { Location } from '@models/locations/location';
-import { LlmMessage } from '@common/llms/llm.service';
+import { Location } from '@little-samo/samo-ai/models/locations/location';
+import { LlmMessage } from '@little-samo/samo-ai/common/llms/llm.service';
 
 import { Agent } from '../agent';
 

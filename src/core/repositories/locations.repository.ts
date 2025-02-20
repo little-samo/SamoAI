@@ -1,9 +1,12 @@
-import { LocationState } from '@models/locations/states/location.state';
-import { LocationMessagesState } from '@models/locations/states/location.messages-state';
+import { LocationState } from '@little-samo/samo-ai/models/locations/states/location.state';
+import { LocationMessagesState } from '@little-samo/samo-ai/models/locations/states/location.messages-state';
 import { LocationModel } from '@prisma/client';
-import { EntityId, EntityType } from '@models/entities/entity.types';
-import { LocationEntityState } from '@models/locations/states/location.entity-state';
-import { LocationId } from '@models/locations/location';
+import {
+  EntityId,
+  EntityType,
+} from '@little-samo/samo-ai/models/entities/entity.types';
+import { LocationEntityState } from '@little-samo/samo-ai/models/locations/states/location.entity-state';
+import { LocationId } from '@little-samo/samo-ai/models/locations/location';
 
 export interface LocationsRepository {
   getLocationModel(locationId: LocationId): Promise<LocationModel>;

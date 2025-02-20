@@ -1,13 +1,13 @@
 import { Logger, HttpException } from '@nestjs/common';
 import { fetch } from 'undici';
-import { ENV } from '@common/config';
-import { sleep } from '@common/utils/sleep';
-import { PrismaService } from '@app/global/prisma.service';
-import { AgentsService } from '@app/agents/agents.service';
-import { UsersService } from '@app/users/users.service';
+import { ENV } from '@little-samo/samo-ai/common/config';
+import { sleep } from '@little-samo/samo-ai/common/utils/sleep';
+import { PrismaService } from '@little-samo/samo-ai/app/global/prisma.service';
+import { AgentsService } from '@little-samo/samo-ai/app/agents/agents.service';
+import { UsersService } from '@little-samo/samo-ai/app/users/users.service';
 import { UserModel } from '@prisma/client';
-import { LocationsService } from '@app/locations/locations.service';
-import { ShutdownService } from '@app/global/shutdown.service';
+import { LocationsService } from '@little-samo/samo-ai/app/locations/locations.service';
+import { ShutdownService } from '@little-samo/samo-ai/app/global/shutdown.service';
 
 import { TelegramUpdateDto } from '../dto/telegram.update-dto';
 import { TelegramMessageDto } from '../dto/telegram.message-dto';

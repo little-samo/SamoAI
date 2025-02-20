@@ -1,19 +1,19 @@
 import { EventEmitter } from 'events';
 
 import { LlmApiKeyModel, LocationModel } from '@prisma/client';
-import { Agent } from '@models/entities/agents/agent';
-import { User } from '@models/entities/users/user';
-import { Entity } from '@models/entities/entity';
-import { AgentState } from '@models/entities/agents/states/agent.state';
-import { AgentEntityState } from '@models/entities/agents/states/agent.entity-state';
-import { ENV } from '@common/config';
+import { Agent } from '@little-samo/samo-ai/models/entities/agents/agent';
+import { User } from '@little-samo/samo-ai/models/entities/users/user';
+import { Entity } from '@little-samo/samo-ai/models/entities/entity';
+import { AgentState } from '@little-samo/samo-ai/models/entities/agents/states/agent.state';
+import { AgentEntityState } from '@little-samo/samo-ai/models/entities/agents/states/agent.entity-state';
+import { ENV } from '@little-samo/samo-ai/common/config';
 import {
   AgentId,
   EntityId,
   EntityKey,
   EntityType,
   UserId,
-} from '@models/entities/entity.types';
+} from '@little-samo/samo-ai/models/entities/entity.types';
 
 import {
   LocationMessage,

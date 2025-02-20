@@ -3,13 +3,13 @@ import { MongooseModule } from '@nestjs/mongoose';
 import {
   LocationState,
   LocationStateSchema,
-} from '@models/locations/states/location.state';
+} from '@little-samo/samo-ai/models/locations/states/location.state';
 import {
   LocationMessagesState,
   LocationMessagesStateSchema,
-} from '@models/locations/states/location.messages-state';
-import { LocationEntityStateSchema } from '@models/locations/states/location.entity-state';
-import { LocationEntityState } from '@models/locations/states/location.entity-state';
+} from '@little-samo/samo-ai/models/locations/states/location.messages-state';
+import { LocationEntityStateSchema } from '@little-samo/samo-ai/models/locations/states/location.entity-state';
+import { LocationEntityState } from '@little-samo/samo-ai/models/locations/states/location.entity-state';
 
 import { LocationsController } from './locations.controller';
 import { LocationsService } from './locations.service';

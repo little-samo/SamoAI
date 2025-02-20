@@ -1,5 +1,5 @@
 import { UserModel } from '@prisma/client';
-import { Location } from '@models/locations/location';
+import { Location } from '@little-samo/samo-ai/models/locations/location';
 
 import { Entity } from '../entity';
 import { UserId, UserType } from '../entity.types';

@@ -1,5 +1,5 @@
-import { EntityKey } from '@models/entities/entity.types';
-import { Context } from '@models/context';
+import { EntityKey } from '@little-samo/samo-ai/models/entities/entity.types';
+import { Context } from '@little-samo/samo-ai/models/context';
 
 export interface LocationMessageContextOptions {
   key: EntityKey;

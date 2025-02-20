@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { WorldManager } from '@core/managers/world.manager';
+import { WorldManager } from '@little-samo/samo-ai/core/managers/world.manager';
 import { INestApplication, Logger, Provider } from '@nestjs/common';
 
 import * as packageJson from '../../package.json';

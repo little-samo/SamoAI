@@ -1,7 +1,7 @@
 import { OpenAI } from 'openai';
 import { zodFunction } from 'openai/helpers/zod';
 import { ChatCompletionCreateParamsNonStreaming } from 'openai/resources/chat/completions';
-import { sleep } from '@common/utils/sleep';
+import { sleep } from '@little-samo/samo-ai/common/utils/sleep';
 
 import { LlmMessage, LlmOptions, LlmService } from './llm.service';
 import { LlmApiError } from './llm.errors';

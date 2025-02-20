@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { Redis } from 'ioredis';
 import Redlock, { Lock } from 'redlock';
-import { RedisLockService } from '@core/services/redis-lock.service';
+import { RedisLockService } from '@little-samo/samo-ai/core/services/redis-lock.service';
 
 import { ShutdownService } from './shutdown.service';
 
