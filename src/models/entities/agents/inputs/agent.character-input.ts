@@ -172,7 +172,7 @@ ${messages}
   private buildPrefill(): string {
     let requiredActions;
     if (this.location.meta.requiredActions.length > 0) {
-      requiredActions = ` I must perform the following actions: ${this.location.meta.requiredActions.join(', ')}.`;
+      requiredActions = ` I must perform the following actions: ${this.location.meta.requiredActions.join(', ')}, before any other actions.`;
     } else {
       requiredActions = ``;
     }
