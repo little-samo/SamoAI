@@ -10,6 +10,7 @@
   "engines": {
     "node": ">=22.0.0"
   },
+  "packageManager": "yarn@4.6.0",
   "scripts": {
     "postinstall": "prisma generate",
     "clean": "rimraf dist",
@@ -62,6 +63,5 @@
     "ts-node": "^10.9.1",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.7.2"
-  },
-  "packageManager": "yarn@4.6.0"
+  }
 }
