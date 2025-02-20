@@ -114,7 +114,9 @@ Through these scenarios, **SamoAI** not only serves as a testbed for multi-agent
 ### Installation
 
 ```bash
-# Installation steps to be added
+npm install -g yarn
+yarn set version berry
+yarn install
 ```
 
 ### Configuration

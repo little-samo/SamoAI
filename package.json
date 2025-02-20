@@ -11,7 +11,7 @@
     "node": ">=22.0.0"
   },
   "scripts": {
-    "prepare": "prisma generate",
+    "postinstall": "prisma generate",
     "clean": "rimraf dist",
     "build": "yarn clean && tsc -p tsconfig.build.json",
     "generate:prisma": "prisma generate",
