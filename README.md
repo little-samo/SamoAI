@@ -1,9 +1,9 @@
 
 <div align="center">
 
-<img src="./docs/static/img/samo_mascot.png" alt="Samo-AI Mascot" width="250" />
+<img src="./docs/static/img/samo_mascot.png" alt="SamoAI Mascot" width="250" />
 
-# Samo-AI
+# SamoAI
 
 <p>
   <em><strong>The Multi-Agent AI Gaming Framework: Compete, Evolve, Adapt</strong></em>
@@ -17,11 +17,11 @@
 
 <div align="center">
 
-<img src="./docs/static/img/overview.png" alt="Samo-AI Overview" width="500" />
+<img src="./docs/static/img/overview.png" alt="SamoAI Overview" width="500" />
 
 </div>
 
-Samo-AI is a multi-agent gaming framework that enables sophisticated interactions between agents and their environment through chains of actions. By leveraging cooperative and competitive strategies, Samo-AI supports the long-term maintenance of context, allowing AI agents to develop emergent behaviors over extended gameplay sessions.
+SamoAI is a multi-agent gaming framework that enables sophisticated interactions between agents and their environment through chains of actions. By leveraging cooperative and competitive strategies, SamoAI supports the long-term maintenance of context, allowing AI agents to develop emergent behaviors over extended gameplay sessions.
 
 ## 🧠 Core Concepts
 
@@ -71,7 +71,7 @@ Samo-AI is a multi-agent gaming framework that enables sophisticated interaction
 
 ## 🎮 Multi-AI Gaming Use Cases
 
-Building upon its core architecture, **Samo-AI** provides a robust environment for multi-AI gaming scenarios:
+Building upon its core architecture, **SamoAI** provides a robust environment for multi-AI gaming scenarios:
 
 1. **Cooperative Missions**
     - AI agents form alliances to achieve shared objectives.
@@ -85,7 +85,7 @@ Building upon its core architecture, **Samo-AI** provides a robust environment f
     - Seamlessly combine cooperative and adversarial elements for richer gameplay.
     - Agents dynamically switch roles between allies and competitors.
 
-Through these scenarios, **Samo-AI** not only serves as a testbed for multi-agent research but also as a platform for creating engaging, context-rich AI-driven games.
+Through these scenarios, **SamoAI** not only serves as a testbed for multi-agent research but also as a platform for creating engaging, context-rich AI-driven games.
 
 ## 🏗️ Architecture
 
@@ -148,6 +148,6 @@ We welcome contributions! Please see our [Contributing Guidelines](#) for detail
 
 <div align="center">
   
-Made with ❤️ by the Samo-AI Team
+Made with ❤️ by the SamoAI Team
 
 </div>
