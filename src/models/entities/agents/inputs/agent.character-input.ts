@@ -65,7 +65,7 @@ IMPORTANT RULES:
       this.location.meta.rules.length > 0 ||
       this.location.meta.requiredActions.length > 0
     ) {
-      const locationRules = this.location.meta.rules;
+      const locationRules = [...this.location.meta.rules];
       if (this.location.meta.requiredActions.length > 0) {
         locationRules.push(
           `You must use the following tools: ${this.location.meta.requiredActions.join(', ')}, before using any other tools.`
