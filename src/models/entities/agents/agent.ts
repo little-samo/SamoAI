@@ -30,9 +30,12 @@ export class Agent extends Entity {
   public static readonly MINI_LLM_INDEX = 1;
 
   public static createState(model: AgentModel, meta: AgentMeta): AgentState {
-    const state = new AgentState();
-    state.agentId = model.id as AgentId;
-    state.memories = Array(meta.memoryLimit).fill('');
+    const state: AgentState = {
+      agentId: model.id as AgentId,
+      memories: Array(meta.memoryLimit).fill(''),
+      updatedAt: new Date(),
+      createdAt: new Date(),
+    };
     return state;
   }
 
@@ -53,11 +56,14 @@ export class Agent extends Entity {
   }
 
   public createEntityState(type: EntityType, id: EntityId): AgentEntityState {
-    const state = new AgentEntityState();
-    state.agentId = this.model.id as AgentId;
-    state.targetType = type;
-    state.targetId = id;
-    state.memories = Array(this.meta.entityMemoryLimit).fill('');
+    const state: AgentEntityState = {
+      agentId: this.model.id as AgentId,
+      targetType: type,
+      targetId: id,
+      memories: Array(this.meta.entityMemoryLimit).fill(''),
+      updatedAt: new Date(),
+      createdAt: new Date(),
+    };
     return state;
   }
 

@@ -9,9 +9,11 @@ import { DEFAULT_USER_META, UserMeta } from './user.meta';
 
 export class User extends Entity {
   public static createState(model: UserModel, _meta: UserMeta): UserState {
-    const state = new UserState();
-    state.userId = model.id as UserId;
-    state.dirty = true;
+    const state: UserState = {
+      userId: model.id as UserId,
+      updatedAt: new Date(),
+      createdAt: new Date(),
+    };
     return state;
   }
 

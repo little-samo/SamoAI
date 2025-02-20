@@ -574,16 +574,14 @@ export class WorldManager {
       targetEntityKey?: string;
     } = {}
   ): Promise<void> {
-    const locationMessage = new LocationMessage();
-    locationMessage.agentId = agentId;
-    locationMessage.name = name;
-    locationMessage.message = message;
-    if (createdAt) {
-      locationMessage.createdAt = createdAt;
-    }
-    if (options.targetEntityKey) {
-      locationMessage.targetEntityKey = options.targetEntityKey;
-    }
+    const locationMessage: LocationMessage = {
+      agentId,
+      targetEntityKey: options?.targetEntityKey,
+      name,
+      message,
+      createdAt: createdAt ?? new Date(),
+      updatedAt: new Date(),
+    };
     await this.addLocationMessage(locationId, locationMessage);
   }
 
@@ -601,16 +599,13 @@ export class WorldManager {
         return;
       }
 
-      const message = new LocationMessage();
-      message.agentId = agentId;
-      message.name = name;
-      message.message = greeting;
-      if (createdAt) {
-        message.createdAt = createdAt;
-      } else {
-        message.createdAt = new Date();
-      }
-      message.updatedAt = new Date();
+      const message: LocationMessage = {
+        agentId,
+        name,
+        message: greeting,
+        createdAt: createdAt ?? new Date(),
+        updatedAt: new Date(),
+      };
 
       locationMessagesState.messages.push(message);
       locationMessagesState.dirty = true;
@@ -631,16 +626,14 @@ export class WorldManager {
       targetEntityKey?: string;
     } = {}
   ): Promise<void> {
-    const locationMessage = new LocationMessage();
-    locationMessage.userId = userId;
-    locationMessage.name = name;
-    locationMessage.message = message;
-    if (createdAt) {
-      locationMessage.createdAt = createdAt;
-    }
-    if (options.targetEntityKey) {
-      locationMessage.targetEntityKey = options.targetEntityKey;
-    }
+    const locationMessage: LocationMessage = {
+      userId,
+      targetEntityKey: options?.targetEntityKey,
+      name,
+      message,
+      createdAt: createdAt ?? new Date(),
+      updatedAt: new Date(),
+    };
     await this.addLocationMessage(locationId, locationMessage);
   }
 
@@ -649,12 +642,12 @@ export class WorldManager {
     message: string,
     createdAt?: Date
   ): Promise<void> {
-    const locationMessage = new LocationMessage();
-    locationMessage.name = '[SYSTEM]';
-    locationMessage.message = message;
-    if (createdAt) {
-      locationMessage.createdAt = createdAt;
-    }
+    const locationMessage: LocationMessage = {
+      name: '[SYSTEM]',
+      message,
+      createdAt: createdAt ?? new Date(),
+      updatedAt: new Date(),
+    };
     await this.addLocationMessage(locationId, locationMessage);
   }
 

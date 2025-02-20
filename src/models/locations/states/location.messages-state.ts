@@ -2,66 +2,28 @@ import {
   AgentId,
   UserId,
 } from '@little-samo/samo-ai/models/entities/entity.types';
-import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
 
-@Schema({
-  validateBeforeSave: true,
-  versionKey: false,
-})
-export class LocationMessage {
-  @Prop({ type: Number })
-  public agentId?: AgentId;
+import { LocationId } from '../location';
 
-  @Prop({ type: Number })
-  public userId?: UserId;
+export interface LocationMessage {
+  agentId?: AgentId;
+  userId?: UserId;
+  targetEntityKey?: string;
 
-  @Prop()
-  public targetEntityKey?: string;
-
-  @Prop({ required: true })
-  public name!: string;
-
-  @Prop()
-  public expression?: string;
-
-  @Prop()
-  public message?: string;
-
-  @Prop({ required: true })
-  public updatedAt!: Date;
-
-  @Prop({ required: true })
-  public createdAt!: Date;
-
-  public static validate(doc: LocationMessage): boolean {
-    return (
-      (doc.agentId !== undefined) !== (doc.userId !== undefined) &&
-      (doc.expression !== undefined || doc.message !== undefined)
-    );
-  }
-}
-
-@Schema({
-  timestamps: true,
-  versionKey: false,
-})
-export class LocationMessagesState {
-  @Prop({ required: true, unique: true })
-  public locationId!: number;
-
-  @Prop({ type: [LocationMessage], default: [] })
-  public messages!: LocationMessage[];
-}
-
-export interface LocationMessagesState {
-  dirty?: boolean;
+  name: string;
+  expression?: string;
+  message?: string;
 
   updatedAt: Date;
   createdAt: Date;
 }
 
-export type LocationMessagesStateDocument = LocationMessagesState & Document;
-export const LocationMessagesStateSchema = SchemaFactory.createForClass(
-  LocationMessagesState
-);
+export interface LocationMessagesState {
+  locationId: LocationId;
+  messages: LocationMessage[];
+
+  updatedAt: Date;
+  createdAt: Date;
+
+  dirty?: boolean;
+}

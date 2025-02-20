@@ -118,11 +118,15 @@ export class Location extends EventEmitter {
     model: LocationModel,
     _meta: LocationMeta
   ): LocationState {
-    const state = new LocationState();
-    state.locationId = model.id as LocationId;
-    state.agentIds = [];
-    state.userIds = [];
-    state.dirty = true;
+    const state: LocationState = {
+      locationId: model.id as LocationId,
+      agentIds: [],
+      userIds: [],
+      pauseUpdateUntil: null,
+      updatedAt: new Date(),
+      createdAt: new Date(),
+      dirty: true,
+    };
     return state;
   }
 
@@ -132,10 +136,13 @@ export class Location extends EventEmitter {
     model: LocationModel,
     _meta: LocationMeta
   ): LocationMessagesState {
-    const state = new LocationMessagesState();
-    state.locationId = model.id as LocationId;
-    state.messages = [];
-    state.dirty = true;
+    const state: LocationMessagesState = {
+      locationId: model.id as LocationId,
+      messages: [],
+      updatedAt: new Date(),
+      createdAt: new Date(),
+      dirty: true,
+    };
     return state;
   }
 
@@ -222,11 +229,19 @@ export class Location extends EventEmitter {
     }
   }
 
-  public createEntityState(type: EntityType, id: number): LocationEntityState {
-    const state = new LocationEntityState();
-    state.locationId = this.id;
-    state.targetType = type;
-    state.targetId = id as EntityId;
+  public createEntityState(
+    type: EntityType,
+    id: EntityId
+  ): LocationEntityState {
+    const state: LocationEntityState = {
+      locationId: this.id,
+      targetType: type,
+      targetId: id,
+      isActive: null,
+      expression: null,
+      updatedAt: new Date(),
+      createdAt: new Date(),
+    };
     return state;
   }
 
@@ -238,7 +253,7 @@ export class Location extends EventEmitter {
 
   public getOrCreateEntityState(
     type: EntityType,
-    id: number
+    id: EntityId
   ): LocationEntityState {
     const key = `${type}:${id}` as EntityKey;
     const state = this._entityStates[key];
@@ -432,21 +447,14 @@ export class Location extends EventEmitter {
     this.emit('agentMessage', agent, message, expression);
     await this.executeAgentMessageHooks(agent, message, expression);
 
-    const locationMessage = new LocationMessage();
-    locationMessage.agentId = agent.model.id as AgentId;
-    locationMessage.name = agent.name;
-    if (message) {
-      locationMessage.message = message.substring(
-        0,
-        this.meta.messageLengthLimit
-      );
-    }
-    if (expression) {
-      locationMessage.expression = expression.substring(
-        0,
-        this.meta.messageLengthLimit
-      );
-    }
+    const locationMessage: LocationMessage = {
+      agentId: agent.model.id as AgentId,
+      name: agent.name,
+      message: message?.substring(0, this.meta.messageLengthLimit),
+      expression: expression?.substring(0, this.meta.messageLengthLimit),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
     this.addMessage(locationMessage);
   }
 
@@ -457,21 +465,14 @@ export class Location extends EventEmitter {
   ): void {
     this.emit('userMessage', user, message, expression);
 
-    const locationMessage = new LocationMessage();
-    locationMessage.userId = user.model.id as UserId;
-    locationMessage.name = user.name;
-    if (message) {
-      locationMessage.message = message.substring(
-        0,
-        this.meta.messageLengthLimit
-      );
-    }
-    if (expression) {
-      locationMessage.expression = expression.substring(
-        0,
-        this.meta.messageLengthLimit
-      );
-    }
+    const locationMessage: LocationMessage = {
+      userId: user.model.id as UserId,
+      name: user.name,
+      message: message?.substring(0, this.meta.messageLengthLimit),
+      expression: expression?.substring(0, this.meta.messageLengthLimit),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
     this.addMessage(locationMessage);
   }
 
