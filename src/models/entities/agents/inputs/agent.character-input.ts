@@ -61,10 +61,19 @@ IMPORTANT RULES:
 - Multi-Agents: Treat other Agents as if they are real people. Engage with them dynamically, communicate in various ways, collaborate, and find creative ways to shift situations.
 `);
 
-    if (this.location.meta.rules.length > 0) {
+    if (
+      this.location.meta.rules.length > 0 ||
+      this.location.meta.requiredActions.length > 0
+    ) {
+      const locationRules = this.location.meta.rules;
+      if (this.location.meta.requiredActions.length > 0) {
+        locationRules.push(
+          `You must use the following tools: ${this.location.meta.requiredActions.join(', ')}, before using any other tools.`
+        );
+      }
       prompts.push(`
 Location Rules:
-- ${this.location.meta.rules.join('\n- ')}
+- ${locationRules.join('\n- ')}
 `);
     }
 
@@ -172,7 +181,7 @@ ${messages}
   private buildPrefill(): string {
     let requiredActions;
     if (this.location.meta.requiredActions.length > 0) {
-      requiredActions = ` I must perform the following actions: ${this.location.meta.requiredActions.join(', ')}, before any other actions.`;
+      requiredActions = ` I must use the following tools: ${this.location.meta.requiredActions.join(', ')}, before using any other tools.`;
     } else {
       requiredActions = ``;
     }
