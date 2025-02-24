@@ -34,7 +34,6 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.33.1",
-    "@prisma/client": "^6.1.0",
     "dotenv": "^16.4.7",
     "openai": "^4.83.0",
     "prisma": "^6.1.0",
@@ -43,6 +42,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.1.0",
     "@eslint/js": "^9.13.0",
+    "@prisma/client": "^6.1.0",
     "@types/express": "^5.0.0",
     "@types/jest": "^29.5.2",
     "@types/node": "^20.3.1",
@@ -72,6 +72,7 @@
     "zod-to-json-schema": "^3.24.1"
   },
   "peerDependencies": {
+    "@prisma/client": "^6.1.0",
     "ioredis": "^5.4.2",
     "mongoose": "^8.9.5",
     "redlock": "^5.0.0-beta.2",

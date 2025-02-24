@@ -1072,6 +1072,7 @@ __metadata:
     zod: "npm:^3.24.1"
     zod-to-json-schema: "npm:^3.24.1"
   peerDependencies:
+    "@prisma/client": ^6.1.0
     ioredis: ^5.4.2
     mongoose: ^8.9.5
     redlock: ^5.0.0-beta.2
