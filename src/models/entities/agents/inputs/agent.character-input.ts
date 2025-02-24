@@ -68,7 +68,7 @@ IMPORTANT RULES:
       const locationRules = [...this.location.meta.rules];
       if (this.location.meta.requiredActions.length > 0) {
         locationRules.push(
-          `You must use the following tools: ${this.location.meta.requiredActions.join(', ')}, before using any other tools.`
+          `You MUST use the following tools: ${this.location.meta.requiredActions.join(', ')}, before using any other tools.`
         );
       }
       prompts.push(`
@@ -181,7 +181,7 @@ ${messages}
   private buildPrefill(): string {
     let requiredActions;
     if (this.location.meta.requiredActions.length > 0) {
-      requiredActions = ` I must use the following tools: ${this.location.meta.requiredActions.join(', ')}, before using any other tools.`;
+      requiredActions = ` I MUST use the following tools: ${this.location.meta.requiredActions.join(', ')}, BEFORE using any other tools.`;
     } else {
       requiredActions = ``;
     }
