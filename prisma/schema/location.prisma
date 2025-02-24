@@ -8,10 +8,6 @@ model LocationModel {
 
   name String @unique
   meta Json   @default("{}")
-
-  telegramChatId BigInt? @map("telegram_chat_id")
-
-  @@index([telegramChatId])
 }
 
 enum LocationType {

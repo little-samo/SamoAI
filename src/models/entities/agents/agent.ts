@@ -157,12 +157,9 @@ export class Agent extends Entity {
   }
 
   public override get context(): AgentContext {
-    const handle = this.model.telegramUsername
-      ? `@${this.model.telegramUsername}`
-      : undefined;
     const context = new AgentContext({
       ...super.context,
-      handle,
+      handle: this.model.username ?? undefined,
     });
     return context;
   }

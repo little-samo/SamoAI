@@ -4,14 +4,12 @@ model AgentModel {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   name String
+  username String?
+
   meta Json   @default("{}")
 
   ownerUserModel UserModel? @relation("agentOwnerUser", fields: [ownerUserId], references: [id])
   ownerUserId    Int?       @map("owner_user_id")
-
-  telegramId       BigInt? @unique @map("telegram_id")
-  telegramUsername String? @unique @map("telegram_username")
-  telegramBotToken String? @unique @map("telegram_bot_token")
 
   isActive  Boolean @default(true) @map("is_active")
   isDeleted Boolean @default(false) @map("is_deleted")
