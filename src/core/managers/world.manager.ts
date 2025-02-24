@@ -263,6 +263,15 @@ export class WorldManager {
       location.addEntity(user, false);
     }
 
+    const entityStates = await this.locationRepository.getLocationEntityStates(
+      locationId,
+      location.state.agentIds,
+      location.state.userIds
+    );
+    for (const entityState of entityStates) {
+      location.addEntityState(entityState);
+    }
+
     return location;
   }
 

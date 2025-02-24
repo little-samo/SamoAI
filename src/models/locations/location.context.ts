@@ -1,5 +1,4 @@
-import { Context } from '@little-samo/samo-ai';
-
+import { Context } from '../context';
 import { EntityKey } from '../entities';
 
 export interface LocationMessageContextOptions {
