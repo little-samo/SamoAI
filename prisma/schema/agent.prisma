@@ -3,10 +3,10 @@ model AgentModel {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  name String
+  name     String
   username String?
 
-  meta Json   @default("{}")
+  meta Json @default("{}")
 
   ownerUserModel UserModel? @relation("agentOwnerUser", fields: [ownerUserId], references: [id])
   ownerUserId    Int?       @map("owner_user_id")
