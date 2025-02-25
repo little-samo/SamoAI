@@ -24,5 +24,4 @@ model UserModel {
 
 enum UserPlatform {
   API
-  TELEGRAM
 }
