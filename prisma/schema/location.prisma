@@ -6,8 +6,10 @@ model LocationModel {
   platform UserPlatform @default(API)
   type     LocationType @default(PRIVATE)
 
-  name String @unique
+  name String
   meta Json   @default("{}")
+
+  @@index([name])
 }
 
 enum LocationType {
