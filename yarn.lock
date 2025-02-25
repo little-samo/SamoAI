@@ -15,9 +15,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@anthropic-ai/sdk@npm:^0.33.1":
-  version: 0.33.1
-  resolution: "@anthropic-ai/sdk@npm:0.33.1"
+"@anthropic-ai/sdk@npm:^0.37.0":
+  version: 0.37.0
+  resolution: "@anthropic-ai/sdk@npm:0.37.0"
   dependencies:
     "@types/node": "npm:^18.11.18"
     "@types/node-fetch": "npm:^2.6.4"
@@ -26,7 +26,7 @@ __metadata:
     form-data-encoder: "npm:1.7.2"
     formdata-node: "npm:^4.3.2"
     node-fetch: "npm:^2.6.7"
-  checksum: 10c0/8f40282d2274f61269f783ac89d4dc8b48e881c37bbb244c664801824a8f672a9e97b367be469f93574d92af6cad75753be13f71133a7a818bd1d4af11fe299c
+  checksum: 10c0/557195a066bc2685877cf00fc44b7928cc8c92f5031550c34e4d2c3ad898defcc2776040b5269d4fefe1da59a21df1481b636133c9591b1a33c52aa9c0d7c75f
   languageName: node
   linkType: hard
 
@@ -1036,7 +1036,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@little-samo/samo-ai@workspace:."
   dependencies:
-    "@anthropic-ai/sdk": "npm:^0.33.1"
+    "@anthropic-ai/sdk": "npm:^0.37.0"
     "@eslint/eslintrc": "npm:^3.1.0"
     "@eslint/js": "npm:^9.13.0"
     "@prisma/client": "npm:^6.1.0"

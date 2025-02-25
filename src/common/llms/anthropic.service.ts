@@ -1,6 +1,5 @@
 import { Anthropic, AnthropicError, APIError } from '@anthropic-ai/sdk';
 import {
-  MessageCreateParamsNonStreaming,
   MessageParam,
   TextBlock,
   TextBlockParam,
@@ -8,6 +7,7 @@ import {
   ToolUseBlock,
 } from '@anthropic-ai/sdk/resources/messages/messages';
 import zodToJsonSchema from 'zod-to-json-schema';
+import { MessageCreateParamsNonStreaming } from '@anthropic-ai/sdk/resources/beta/messages/messages';
 
 import { sleep } from '../utils';
 
@@ -43,7 +43,7 @@ export class AnthropicService extends LlmService {
 
     for (let attempt = 1; attempt <= maxTries; attempt++) {
       try {
-        const response = await this.client.messages.create(request);
+        const response = await this.client.beta.messages.create(request);
         if (options.verbose) {
           console.log(response);
           console.log(
@@ -163,6 +163,7 @@ export class AnthropicService extends LlmService {
         messages: userAssistantMessages,
         max_tokens: options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS,
         temperature: options?.temperature ?? LlmService.DEFAULT_TEMPERATURE,
+        betas: ['token-efficient-tools-2025-02-19'],
       };
       if (options?.verbose) {
         console.log(request);
