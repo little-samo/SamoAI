@@ -7,6 +7,7 @@ model LocationModel {
   type     LocationType @default(PRIVATE)
 
   name String
+  key  String @unique
   meta Json   @default("{}")
 
   @@index([name])
