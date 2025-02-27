@@ -65,31 +65,73 @@ export class AnthropicService extends LlmService {
     throw new LlmApiError(500, 'Max retry attempts reached');
   }
 
+  private llmMessagesToAnthropicMessages(
+    messages: LlmMessage[]
+  ): [TextBlockParam[], MessageParam[]] {
+    const systemMessages: TextBlockParam[] = [];
+    const userAssistantMessages: MessageParam[] = [];
+
+    for (const message of messages) {
+      switch (message.role) {
+        case 'system':
+        case 'assistant':
+          systemMessages.push({
+            type: 'text',
+            text: message.content,
+          });
+          break;
+        case 'user':
+          if (Array.isArray(message.content)) {
+            userAssistantMessages.push({
+              role: message.role,
+              content: message.content.map((content) => {
+                switch (content.type) {
+                  case 'text':
+                    return {
+                      type: 'text',
+                      text: content.text,
+                    };
+                  case 'image':
+                    return {
+                      type: 'image',
+                      source: {
+                        type: 'base64',
+                        data: content.image,
+                        media_type: 'image/png',
+                      },
+                      cache_control: {
+                        type: 'ephemeral',
+                      },
+                    };
+                }
+              }),
+            });
+          } else {
+            userAssistantMessages.push({
+              role: message.role,
+              content: message.content,
+            });
+          }
+          break;
+      }
+    }
+
+    if (systemMessages.length > 0) {
+      systemMessages[systemMessages.length - 1].cache_control = {
+        type: 'ephemeral',
+      };
+    }
+
+    return [systemMessages, userAssistantMessages];
+  }
+
   public async generate(
     messages: LlmMessage[],
     options?: LlmOptions
   ): Promise<string> {
     try {
-      const systemMessages: TextBlockParam[] = messages
-        .filter((message) => message.role === 'system')
-        .map((message) => {
-          return {
-            type: 'text',
-            text: message.content,
-          };
-        });
-      systemMessages[systemMessages.length - 1].cache_control = {
-        type: 'ephemeral',
-      };
-
-      const userAssistantMessages: MessageParam[] = messages
-        .filter(
-          (message) => message.role === 'user' || message.role === 'assistant'
-        )
-        .map((message) => ({
-          role: message.role as 'user' | 'assistant',
-          content: message.content,
-        }));
+      const [systemMessages, userAssistantMessages] =
+        this.llmMessagesToAnthropicMessages(messages);
 
       const request: MessageCreateParamsNonStreaming = {
         model: this.model,
@@ -126,17 +168,8 @@ export class AnthropicService extends LlmService {
     options?: LlmOptions
   ): Promise<LlmToolCall[]> {
     try {
-      const systemMessages: TextBlockParam[] = messages
-        .filter((message) => message.role === 'system')
-        .map((message) => {
-          return {
-            type: 'text',
-            text: message.content,
-          };
-        });
-      systemMessages[systemMessages.length - 1].cache_control = {
-        type: 'ephemeral',
-      };
+      const [systemMessages, userAssistantMessages] =
+        this.llmMessagesToAnthropicMessages(messages);
 
       const toolMessages: Tool[] = tools.map((tool) => ({
         name: tool.name,
@@ -146,15 +179,6 @@ export class AnthropicService extends LlmService {
       toolMessages[toolMessages.length - 1].cache_control = {
         type: 'ephemeral',
       };
-
-      const userAssistantMessages: MessageParam[] = messages
-        .filter(
-          (message) => message.role === 'user' || message.role === 'assistant'
-        )
-        .map((message) => ({
-          role: message.role as 'user' | 'assistant',
-          content: message.content,
-        }));
 
       const request: MessageCreateParamsNonStreaming = {
         model: this.model,

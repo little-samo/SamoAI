@@ -1,9 +1,36 @@
 import { LlmTool, LlmToolCall } from './llm.tool';
 
-export interface LlmMessage {
-  role: 'user' | 'assistant' | 'system';
+export interface LlmMessageImageContent {
+  type: 'image';
+  image: string;
+}
+
+export interface LlmMessageTextContent {
+  type: 'text';
+  text: string;
+}
+
+export type LlmMessageContent = LlmMessageImageContent | LlmMessageTextContent;
+
+export interface LlmUserMessage {
+  role: 'user';
+  content: string | LlmMessageContent[];
+}
+
+export interface LlmAssistantMessage {
+  role: 'assistant';
   content: string;
 }
+
+export interface LlmSystemMessage {
+  role: 'system';
+  content: string;
+}
+
+export type LlmMessage =
+  | LlmUserMessage
+  | LlmAssistantMessage
+  | LlmSystemMessage;
 
 export interface LlmOptions {
   temperature?: number;

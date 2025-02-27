@@ -204,20 +204,43 @@ As ${this.agent.name}, which tool will you use? Quote the source of each reasoni
 
     const prefill = this.buildPrefill();
 
-    return [
-      {
-        role: 'system',
-        content: prompt,
-      },
-      {
+    const messages: LlmMessage[] = [];
+    messages.push({
+      role: 'system',
+      content: prompt,
+    });
+
+    if (this.location.state.image) {
+      messages.push({
+        role: 'user',
+        content: [
+          {
+            type: 'text',
+            text: `Location image:`,
+          },
+          {
+            type: 'image',
+            image: this.location.state.image,
+          },
+          {
+            type: 'text',
+            text: input,
+          },
+        ],
+      });
+    } else {
+      messages.push({
         role: 'user',
         content: input,
-      },
-      {
-        role: 'assistant',
-        content: prefill,
-      },
-    ];
+      });
+    }
+
+    messages.push({
+      role: 'assistant',
+      content: prefill,
+    });
+
+    return messages;
   }
 
   private buildActionConditionPrompt(): string {

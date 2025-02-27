@@ -1,6 +1,9 @@
 import { OpenAI } from 'openai';
 import { zodFunction } from 'openai/helpers/zod';
-import { ChatCompletionCreateParamsNonStreaming } from 'openai/resources/chat/completions';
+import {
+  ChatCompletionCreateParamsNonStreaming,
+  ChatCompletionMessageParam,
+} from 'openai/resources/chat/completions';
 
 import { sleep } from '../utils';
 
@@ -60,6 +63,48 @@ export class OpenAIService extends LlmService {
     throw new LlmApiError(500, 'Max retry attempts reached');
   }
 
+  private llmMessagesToOpenAiMessages(
+    messages: LlmMessage[]
+  ): ChatCompletionMessageParam[] {
+    return messages.map((message) => {
+      switch (message.role) {
+        case 'system':
+        case 'assistant':
+          return {
+            role: message.role,
+            content: message.content,
+          };
+        case 'user':
+          if (Array.isArray(message.content)) {
+            return {
+              role: message.role,
+              content: message.content.map((content) => {
+                switch (content.type) {
+                  case 'text':
+                    return {
+                      type: 'text',
+                      text: content.text,
+                    };
+                  case 'image':
+                    return {
+                      type: 'image_url',
+                      image_url: {
+                        url: `data:image/png;base64,${content.image}`,
+                      },
+                    };
+                }
+              }),
+            };
+          } else {
+            return {
+              role: message.role,
+              content: message.content,
+            };
+          }
+      }
+    });
+  }
+
   public async generate(
     messages: LlmMessage[],
     options?: LlmOptions
@@ -67,7 +112,7 @@ export class OpenAIService extends LlmService {
     try {
       const request: ChatCompletionCreateParamsNonStreaming = {
         model: this.model,
-        messages,
+        messages: this.llmMessagesToOpenAiMessages(messages),
         temperature: options?.temperature ?? LlmService.DEFAULT_TEMPERATURE,
         max_tokens: options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS,
       };
@@ -98,7 +143,7 @@ export class OpenAIService extends LlmService {
     try {
       const request: ChatCompletionCreateParamsNonStreaming = {
         model: this.model,
-        messages,
+        messages: this.llmMessagesToOpenAiMessages(messages),
         tools: tools.map((tool) =>
           zodFunction({
             name: tool.name,
