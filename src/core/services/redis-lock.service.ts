@@ -1,5 +1,5 @@
 export interface RedisLock {
-  release(): Promise<void>;
+  release(): Promise<unknown>;
 }
 
 export interface RedisLockService {
