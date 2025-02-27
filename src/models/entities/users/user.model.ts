@@ -1,5 +1,3 @@
-import { LlmApiKeyModel } from '../../llms';
-
 export interface UserModel {
   id: number;
   createdAt: Date;
@@ -11,6 +9,4 @@ export interface UserModel {
   lastName: string | null;
 
   meta: unknown;
-
-  llmApiKeys: LlmApiKeyModel[];
 }
