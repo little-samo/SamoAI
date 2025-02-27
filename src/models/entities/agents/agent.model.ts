@@ -1,5 +1,3 @@
-import { UserModel } from '../users';
-
 export interface AgentModel {
   id: number;
   createdAt: Date;
@@ -10,9 +8,5 @@ export interface AgentModel {
 
   meta: object;
 
-  ownerUserModel: UserModel | null;
-  ownerUserId: number | null;
-
   isActive: boolean;
-  isDeleted: boolean;
 }
