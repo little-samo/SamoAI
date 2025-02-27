@@ -1,4 +1,4 @@
-import { LlmPlatform } from '@prisma/client';
+import { LlmPlatform } from '@little-samo/samo-ai/common';
 
 import { EntityMeta } from '../entity.meta';
 

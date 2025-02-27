@@ -19,12 +19,9 @@
     "./models": "./dist/models/index.js"
   },
   "scripts": {
-    "postinstall": "prisma generate",
     "clean": "rimraf dist *.tsbuildinfo || true",
     "build": "yarn clean && tsc -p tsconfig.build.json",
-    "generate:prisma": "prisma generate",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "studio": "prisma studio",
     "lint": "eslint --fix",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
@@ -36,13 +33,11 @@
     "@anthropic-ai/sdk": "^0.37.0",
     "dotenv": "^16.4.7",
     "openai": "^4.83.0",
-    "prisma": "^6.1.0",
     "reflect-metadata": "^0.2.2"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.1.0",
     "@eslint/js": "^9.13.0",
-    "@prisma/client": "^6.1.0",
     "@types/express": "^5.0.0",
     "@types/jest": "^29.5.2",
     "@types/node": "^20.3.1",
@@ -71,7 +66,6 @@
     "zod-to-json-schema": "^3.24.1"
   },
   "peerDependencies": {
-    "@prisma/client": "^6.1.0",
     "ioredis": "^5.4.2",
     "redlock": "^5.0.0-beta.2",
     "zod": "^3.24.1",

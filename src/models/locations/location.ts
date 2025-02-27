@@ -1,6 +1,5 @@
 import { EventEmitter } from 'events';
 
-import { LlmApiKeyModel, LocationModel } from '@prisma/client';
 import { ENV } from '@little-samo/samo-ai/common';
 
 import {
@@ -15,6 +14,7 @@ import {
   User,
   UserId,
 } from '../entities';
+import { LlmApiKeyModel } from '../llms';
 
 import {
   LocationMessage,
@@ -27,6 +27,7 @@ import { LocationContext, LocationMessageContext } from './location.context';
 import { LocationCoreFactory } from './cores';
 import { LocationEntityState } from './states/location.entity-state';
 import { LocationId, LocationKey } from './location.type';
+import { LocationModel } from './location.model';
 
 export interface LocationConstructorOptions {
   state?: null | LocationState;

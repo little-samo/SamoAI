@@ -1,4 +1,3 @@
-import { UserModel } from '@prisma/client';
 import { Location } from '@little-samo/samo-ai/models/locations/location';
 
 import { Entity } from '../entity';
@@ -6,6 +5,7 @@ import { UserId, UserType } from '../entity.types';
 
 import { UserState } from './states/user.state';
 import { DEFAULT_USER_META, UserMeta } from './user.meta';
+import { UserModel } from './user.model';
 
 export class User extends Entity {
   public static createState(model: UserModel, _meta: UserMeta): UserState {

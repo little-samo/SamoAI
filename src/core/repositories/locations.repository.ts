@@ -7,8 +7,8 @@ import {
   EntityType,
   AgentId,
   UserId,
+  LocationModel,
 } from '@little-samo/samo-ai';
-import { LocationModel } from '@prisma/client';
 
 export interface LocationsRepository {
   getLocationModel(locationId: LocationId): Promise<LocationModel>;

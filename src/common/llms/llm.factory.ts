@@ -1,8 +1,7 @@
-import { LlmPlatform } from '@prisma/client';
-
 import { LlmService } from './llm.service';
 import { AnthropicService } from './anthropic.service';
 import { OpenAIService } from './openai.service';
+import { LlmPlatform } from './llm.types';
 
 export class LlmFactory {
   public static create(

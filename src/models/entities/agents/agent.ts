@@ -1,4 +1,3 @@
-import { AgentModel } from '@prisma/client';
 import {
   ENV,
   LlmFactory,
@@ -25,6 +24,7 @@ import { AgentEntityState } from './states/agent.entity-state';
 import { AgentCoreFactory } from './cores';
 import { AgentActionFactory } from './actions';
 import { AgentInputBuilder, AgentInputFactory } from './inputs';
+import { AgentModel } from './agent.model';
 
 export class Agent extends Entity {
   public static readonly TYPE: EntityType = 'agent';
