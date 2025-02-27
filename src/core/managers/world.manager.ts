@@ -249,12 +249,60 @@ export class WorldManager {
       defaultMeta,
     });
 
+    let lastUserMessageAt: Record<UserId, Date> | undefined = undefined;
+    let agentContextUserIds = location.state.userIds;
+    if (agentContextUserIds.length > location.meta.agentUserContextLimit) {
+      lastUserMessageAt = location.messagesState.messages.reduce(
+        (acc, message) => {
+          if (message.entityType == EntityType.USER) {
+            acc[message.entityId as UserId] = message.createdAt;
+          }
+          return acc;
+        },
+        {} as Record<UserId, Date>
+      );
+      agentContextUserIds = [...agentContextUserIds];
+      agentContextUserIds.sort(
+        (a, b) =>
+          (lastUserMessageAt![b]?.getTime() ?? Math.random()) -
+          (lastUserMessageAt![a]?.getTime() ?? Math.random())
+      );
+      agentContextUserIds = agentContextUserIds.slice(
+        0,
+        location.meta.agentUserContextLimit
+      );
+    }
     const agents = await this.getAgents(
       location,
       location.state.agentIds,
-      location.state.userIds
+      agentContextUserIds
     );
-    const users = await this.getUsers(location, location.state.userIds);
+
+    let locationContextUserIds = location.state.userIds;
+    if (locationContextUserIds.length > location.meta.userContextLimit) {
+      if (!lastUserMessageAt) {
+        lastUserMessageAt = location.messagesState.messages.reduce(
+          (acc, message) => {
+            if (message.entityType == EntityType.USER) {
+              acc[message.entityId as UserId] = message.createdAt;
+            }
+            return acc;
+          },
+          {} as Record<UserId, Date>
+        );
+      }
+      locationContextUserIds = [...locationContextUserIds];
+      locationContextUserIds.sort(
+        (a, b) =>
+          (lastUserMessageAt![b]?.getTime() ?? Math.random()) -
+          (lastUserMessageAt![a]?.getTime() ?? Math.random())
+      );
+      locationContextUserIds = locationContextUserIds.slice(
+        0,
+        location.meta.userContextLimit
+      );
+    }
+    const users = await this.getUsers(location, locationContextUserIds);
 
     for (const agent of Object.values(agents)) {
       location.addEntity(agent, false);
@@ -346,10 +394,10 @@ export class WorldManager {
         if (otherAgentId === agentId) {
           continue;
         }
-        agent.getOrCreateEntityStateByTarget('agent', otherAgentId);
+        agent.getOrCreateEntityStateByTarget(EntityType.AGENT, otherAgentId);
       }
       for (const otherUserId of userIds) {
-        agent.getOrCreateEntityStateByTarget('user', otherUserId);
+        agent.getOrCreateEntityStateByTarget(EntityType.USER, otherUserId);
       }
 
       agents[agentId] = agent;
@@ -526,8 +574,8 @@ export class WorldManager {
       locationMessagesState &&
       locationMessagesState.messages.find(
         (m) =>
-          m.agentId === message.agentId &&
-          m.userId === message.userId &&
+          m.entityType === message.entityType &&
+          m.entityId === message.entityId &&
           m.name === message.name &&
           new Date(m.createdAt).getTime() ===
             new Date(message.createdAt).getTime()
@@ -543,8 +591,8 @@ export class WorldManager {
       if (
         locationMessagesState.messages.find(
           (m) =>
-            m.agentId === message.agentId &&
-            m.userId === message.userId &&
+            m.entityType === message.entityType &&
+            m.entityId === message.entityId &&
             m.name === message.name &&
             new Date(m.createdAt).getTime() ===
               new Date(message.createdAt).getTime()
@@ -577,12 +625,15 @@ export class WorldManager {
     message: string,
     createdAt?: Date,
     options: {
-      targetEntityKey?: string;
+      targetEntityType?: EntityType;
+      targetEntityId?: EntityId;
     } = {}
   ): Promise<void> {
     const locationMessage: LocationMessage = {
-      agentId,
-      targetEntityKey: options?.targetEntityKey,
+      entityType: EntityType.AGENT,
+      entityId: agentId,
+      targetEntityType: options?.targetEntityType,
+      targetEntityId: options?.targetEntityId,
       name,
       message,
       createdAt: createdAt ?? new Date(),
@@ -606,7 +657,8 @@ export class WorldManager {
       }
 
       const message: LocationMessage = {
-        agentId,
+        entityType: EntityType.AGENT,
+        entityId: agentId,
         name,
         message: greeting,
         createdAt: createdAt ?? new Date(),
@@ -629,12 +681,15 @@ export class WorldManager {
     message: string,
     createdAt?: Date,
     options: {
-      targetEntityKey?: string;
+      targetEntityType?: EntityType;
+      targetEntityId?: EntityId;
     } = {}
   ): Promise<void> {
     const locationMessage: LocationMessage = {
-      userId,
-      targetEntityKey: options?.targetEntityKey,
+      entityType: EntityType.USER,
+      entityId: userId,
+      targetEntityType: options?.targetEntityType,
+      targetEntityId: options?.targetEntityId,
       name,
       message,
       createdAt: createdAt ?? new Date(),
@@ -649,6 +704,8 @@ export class WorldManager {
     createdAt?: Date
   ): Promise<void> {
     const locationMessage: LocationMessage = {
+      entityType: EntityType.SYSTEM,
+      entityId: 0 as EntityId,
       name: '[SYSTEM]',
       message,
       createdAt: createdAt ?? new Date(),

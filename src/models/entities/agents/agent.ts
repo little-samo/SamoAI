@@ -6,13 +6,7 @@ import {
 } from '@little-samo/samo-ai/common';
 
 import { Entity } from '../entity';
-import {
-  EntityType,
-  EntityKey,
-  EntityId,
-  AgentId,
-  AgentType,
-} from '../entity.types';
+import { EntityType, EntityKey, EntityId } from '../entity.types';
 import { Location } from '../../locations';
 
 import { AgentCore } from './cores/agent.core';
@@ -25,9 +19,9 @@ import { AgentCoreFactory } from './cores';
 import { AgentActionFactory } from './actions';
 import { AgentInputBuilder, AgentInputFactory } from './inputs';
 import { AgentModel } from './agent.model';
+import { AgentId } from './agent.types';
 
 export class Agent extends Entity {
-  public static readonly TYPE: EntityType = 'agent';
   public static readonly ACTION_LLM_INDEX = 0;
   public static readonly MINI_LLM_INDEX = 1;
 
@@ -132,8 +126,8 @@ export class Agent extends Entity {
     );
   }
 
-  public override get type(): AgentType {
-    return 'agent';
+  public override get type(): 'agent' {
+    return EntityType.AGENT;
   }
 
   public override get id(): AgentId {

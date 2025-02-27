@@ -1,14 +1,16 @@
 import {
-  AgentId,
-  UserId,
+  EntityId,
+  EntityType,
 } from '@little-samo/samo-ai/models/entities/entity.types';
 
 import { LocationId } from '../location.type';
 
 export interface LocationMessage {
-  agentId?: AgentId;
-  userId?: UserId;
-  targetEntityKey?: string;
+  entityType: EntityType;
+  entityId: EntityId;
+
+  targetEntityType?: EntityType;
+  targetEntityId?: EntityId;
 
   name: string;
   expression?: string;

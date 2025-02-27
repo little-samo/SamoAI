@@ -140,15 +140,18 @@ ${otherAgentContexts.join('\n')}
     const usersContexts = [];
     for (const user of Object.values(this.location.users)) {
       let userContext = `<OtherUser>
-${user.context.build()}`;
+${user.context.build()}
+<YourMemoriesAboutOtherUser>`;
       const userMemories = this.agent.getEntityMemories(user.key);
       if (userMemories) {
         userContext += `
-<YourMemoriesAboutOtherUser>
-${userMemories.map((m, i) => `${i}:${JSON.stringify(m)}`).join('\n')}
-</YourMemoriesAboutOtherUser>`;
+${userMemories.map((m, i) => `${i}:${JSON.stringify(m)}`).join('\n')}`;
+      } else {
+        userContext += `
+[Omitted]`;
       }
       userContext += `
+</YourMemoriesAboutOtherUser>
 </OtherUser>`;
       usersContexts.push(userContext);
     }

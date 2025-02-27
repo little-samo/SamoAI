@@ -1,7 +1,4 @@
-import {
-  AgentId,
-  UserId,
-} from '@little-samo/samo-ai/models/entities/entity.types';
+import { AgentId, UserId } from '@little-samo/samo-ai';
 
 import { LocationId } from '../location.type';
 

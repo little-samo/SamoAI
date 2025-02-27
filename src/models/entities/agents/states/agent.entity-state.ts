@@ -1,8 +1,4 @@
-import {
-  AgentId,
-  EntityId,
-  EntityType,
-} from '@little-samo/samo-ai/models/entities/entity.types';
+import { AgentId, EntityId, EntityType } from '@little-samo/samo-ai';
 
 export interface AgentEntityState {
   agentId: AgentId;

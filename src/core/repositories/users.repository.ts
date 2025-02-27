@@ -1,5 +1,4 @@
-import { LlmApiKeyModel, UserModel } from '@little-samo/samo-ai/models';
-import { UserId } from '@little-samo/samo-ai/models/entities/entity.types';
+import { LlmApiKeyModel, UserId, UserModel } from '@little-samo/samo-ai/models';
 import { UserState } from '@little-samo/samo-ai/models/entities/users/states/user.state';
 
 export interface UsersRepository {

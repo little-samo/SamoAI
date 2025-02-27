@@ -1,12 +1,12 @@
-import { AgentModel } from '@little-samo/samo-ai/models';
-import { AgentEntityState } from '@little-samo/samo-ai/models/entities/agents/states/agent.entity-state';
-import { AgentState } from '@little-samo/samo-ai/models/entities/agents/states/agent.state';
 import {
   AgentId,
+  AgentModel,
+  EntityId,
   EntityType,
   UserId,
-} from '@little-samo/samo-ai/models/entities/entity.types';
-import { EntityId } from '@little-samo/samo-ai/models/entities/entity.types';
+} from '@little-samo/samo-ai/models';
+import { AgentEntityState } from '@little-samo/samo-ai/models/entities/agents/states/agent.entity-state';
+import { AgentState } from '@little-samo/samo-ai/models/entities/agents/states/agent.state';
 
 export interface AgentsRepository {
   getAgentModel(agentId: AgentId): Promise<AgentModel>;

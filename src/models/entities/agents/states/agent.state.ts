@@ -1,5 +1,4 @@
-import { EntityState } from '@little-samo/samo-ai/models/entities/entity.state';
-import { AgentId } from '@little-samo/samo-ai/models/entities/entity.types';
+import { AgentId, EntityState } from '@little-samo/samo-ai';
 
 export interface AgentState extends EntityState {
   agentId: AgentId;

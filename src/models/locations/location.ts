@@ -76,11 +76,13 @@ export class Location extends EventEmitter {
     message: LocationMessage
   ): LocationMessageContext {
     return new LocationMessageContext({
-      key: message.agentId
-        ? (`agent:${message.agentId}` as EntityKey)
-        : message.userId
-          ? (`user:${message.userId}` as EntityKey)
-          : ('system' as EntityKey),
+      key:
+        message.entityType === EntityType.SYSTEM
+          ? ('system' as EntityKey)
+          : (`${message.entityType}:${message.entityId}` as EntityKey),
+      targetKey: message.targetEntityType
+        ? (`${message.targetEntityType}:${message.targetEntityId}` as EntityKey)
+        : undefined,
       name: message.name,
       message: message.message,
       expression: message.expression,
@@ -447,7 +449,8 @@ export class Location extends EventEmitter {
     await this.executeAgentMessageHooks(agent, message, expression);
 
     const locationMessage: LocationMessage = {
-      agentId: agent.model.id as AgentId,
+      entityType: EntityType.AGENT,
+      entityId: agent.model.id as AgentId,
       name: agent.name,
       message: message?.substring(0, this.meta.messageLengthLimit),
       expression: expression?.substring(0, this.meta.messageLengthLimit),
@@ -465,7 +468,8 @@ export class Location extends EventEmitter {
     this.emit('userMessage', user, message, expression);
 
     const locationMessage: LocationMessage = {
-      userId: user.model.id as UserId,
+      entityType: EntityType.USER,
+      entityId: user.model.id as UserId,
       name: user.name,
       message: message?.substring(0, this.meta.messageLengthLimit),
       expression: expression?.substring(0, this.meta.messageLengthLimit),

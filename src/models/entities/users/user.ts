@@ -1,11 +1,12 @@
 import { Location } from '@little-samo/samo-ai/models/locations/location';
 
 import { Entity } from '../entity';
-import { UserId, UserType } from '../entity.types';
+import { EntityType } from '../entity.types';
 
 import { UserState } from './states/user.state';
 import { DEFAULT_USER_META, UserMeta } from './user.meta';
 import { UserModel } from './user.model';
+import { UserId } from './user.types';
 
 export class User extends Entity {
   public static createState(model: UserModel, _meta: UserMeta): UserState {
@@ -31,8 +32,8 @@ export class User extends Entity {
     super(location, model.nickname, meta, state);
   }
 
-  public override get type(): UserType {
-    return 'user';
+  public override get type(): 'user' {
+    return EntityType.USER;
   }
 
   public override get id(): UserId {

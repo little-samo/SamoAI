@@ -1,4 +1,5 @@
 import { ENV, shuffle } from '@little-samo/samo-ai/common';
+import { EntityType } from '@little-samo/samo-ai';
 
 import { LocationMessage } from '../states/location.messages-state';
 
@@ -23,11 +24,16 @@ export class LocationRoundRobinCore extends LocationCore {
     const agents = shuffle(Object.values(this.location.agents));
     const evaluatedAgentIds: Set<number> = new Set();
     for (const agent of agents) {
-      if (lastMessage?.agentId === agent.model.id) {
+      if (
+        lastMessage?.entityType == EntityType.AGENT &&
+        lastMessage.entityId === agent.model.id
+      ) {
         continue;
       }
       const agentLastMessage = messages.find(
-        (message) => message.agentId === agent.model.id
+        (message) =>
+          message.entityType == EntityType.AGENT &&
+          message.entityId === agent.model.id
       );
       if (
         !agentLastMessage ||
@@ -49,7 +55,10 @@ export class LocationRoundRobinCore extends LocationCore {
     }
 
     for (const agent of agents) {
-      if (lastMessage?.agentId === agent.model.id) {
+      if (
+        lastMessage?.entityType == EntityType.AGENT &&
+        lastMessage.entityId === agent.model.id
+      ) {
         continue;
       }
       if (evaluatedAgentIds.has(agent.model.id)) {
