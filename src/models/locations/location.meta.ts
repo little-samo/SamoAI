@@ -10,7 +10,7 @@ export interface LocationMeta {
 }
 
 export const DEFAULT_LOCATION_META: LocationMeta = {
-  core: 'repeat_action',
+  core: 'update_once',
   description: '',
 
   messageLimit: 20,

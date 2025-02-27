@@ -18,8 +18,6 @@ export class LocationRoundRobinCore extends LocationCore {
   }
 
   public async update(): Promise<number> {
-    await super.update();
-
     const messages = [...this.location.messagesState.messages].reverse();
     const lastMessage = this.lastMessage;
     const agents = shuffle(Object.values(this.location.agents));
@@ -37,14 +35,13 @@ export class LocationRoundRobinCore extends LocationCore {
           LocationRoundRobinCore.AGENT_MESSAGE_COOLDOWN
       ) {
         evaluatedAgentIds.add(agent.model.id);
-        if (!(await agent.evaluateActionCondition())) {
+        if (!(await agent.update())) {
           if (ENV.DEBUG) {
             console.log(`Agent ${agent.name} did not execute next actions`);
           }
           continue;
         }
 
-        await agent.executeNextActions();
         if (lastMessage !== this.lastMessage) {
           return LocationRoundRobinCore.LOCATION_UPDATE_COOLDOWN_ON_MESSAGE;
         }
@@ -58,14 +55,13 @@ export class LocationRoundRobinCore extends LocationCore {
       if (evaluatedAgentIds.has(agent.model.id)) {
         continue;
       }
-      if (!(await agent.evaluateActionCondition())) {
+      if (!(await agent.update())) {
         if (ENV.DEBUG) {
           console.log(`Agent ${agent.name} did not execute next actions`);
         }
         continue;
       }
 
-      await agent.executeNextActions();
       if (lastMessage !== this.lastMessage) {
         return LocationRoundRobinCore.LOCATION_UPDATE_COOLDOWN_ON_MESSAGE;
       }

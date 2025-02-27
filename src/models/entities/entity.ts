@@ -45,5 +45,5 @@ export abstract class Entity {
     });
   }
 
-  public abstract update(): Promise<void>;
+  public abstract update(): Promise<boolean>;
 }

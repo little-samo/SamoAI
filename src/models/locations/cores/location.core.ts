@@ -9,12 +9,5 @@ export abstract class LocationCore {
     return Reflect.getMetadata(LOCATION_CORE_METADATA_KEY, this.constructor);
   }
 
-  public async update(): Promise<number> {
-    await Promise.all(
-      Array.from(Object.values(this.location.entities)).map((entity) =>
-        entity.update()
-      )
-    );
-    return 0;
-  }
+  public abstract update(): Promise<number>;
 }

@@ -55,5 +55,7 @@ export class User extends Entity {
     this._state = value;
   }
 
-  public async update(): Promise<void> {}
+  public async update(): Promise<boolean> {
+    return true;
+  }
 }

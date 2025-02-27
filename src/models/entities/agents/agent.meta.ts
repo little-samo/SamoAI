@@ -72,7 +72,7 @@ export interface AgentMeta extends EntityMeta {
 }
 
 export const DEFAULT_AGENT_META: AgentMeta = {
-  core: 'empty',
+  core: 'execute_actions',
 
   temperature: 0.5,
   maxTokens: 1024,

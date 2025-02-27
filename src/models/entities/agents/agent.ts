@@ -259,8 +259,8 @@ export class Agent extends Entity {
     entityState.expression = expression;
   }
 
-  public async update(): Promise<void> {
-    await this.core.update();
+  public async update(): Promise<boolean> {
+    return await this.core.update();
   }
 
   private async executeToolCall(toolCall: LlmToolCall): Promise<void> {
