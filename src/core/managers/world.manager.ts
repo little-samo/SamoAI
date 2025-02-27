@@ -674,6 +674,38 @@ export class WorldManager {
     });
   }
 
+  public async addLocationAgentActionMessage(
+    locationId: LocationId,
+    agentId: AgentId,
+    name: string,
+    action: string,
+    createdAt?: Date
+  ): Promise<void> {
+    await this.withLocationLock(locationId, async () => {
+      const locationMessagesState =
+        await this.getOrCreateLocationMessagesState(locationId);
+      if (locationMessagesState.messages.length > 0) {
+        return;
+      }
+
+      const message: LocationMessage = {
+        entityType: EntityType.AGENT,
+        entityId: agentId,
+        name,
+        action,
+        createdAt: createdAt ?? new Date(),
+        updatedAt: new Date(),
+      };
+
+      locationMessagesState.messages.push(message);
+      locationMessagesState.dirty = true;
+
+      await this.locationRepository.saveLocationMessagesState(
+        locationMessagesState
+      );
+    });
+  }
+
   public async addLocationUserMessage(
     locationId: LocationId,
     userId: UserId,
