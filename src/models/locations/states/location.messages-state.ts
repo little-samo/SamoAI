@@ -15,6 +15,7 @@ export interface LocationMessage {
   name: string;
   expression?: string;
   message?: string;
+  action?: string;
 
   updatedAt: Date;
   createdAt: Date;
