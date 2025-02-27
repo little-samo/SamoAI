@@ -5,5 +5,5 @@ export interface LocationModel {
 
   name: string;
   key: string;
-  meta: object;
+  meta: unknown;
 }

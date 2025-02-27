@@ -6,7 +6,7 @@ export interface AgentModel {
   name: string;
   username: string | null;
 
-  meta: object;
+  meta: unknown;
 
   isActive: boolean;
 }

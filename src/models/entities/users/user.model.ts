@@ -10,7 +10,7 @@ export interface UserModel {
   firstName: string | null;
   lastName: string | null;
 
-  meta: object;
+  meta: unknown;
 
   llmApiKeys: LlmApiKeyModel[];
 }
