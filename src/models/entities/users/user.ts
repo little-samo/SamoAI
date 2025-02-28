@@ -33,7 +33,7 @@ export class User extends Entity {
   }
 
   public override get type(): 'user' {
-    return EntityType.USER;
+    return EntityType.User;
   }
 
   public override get id(): UserId {

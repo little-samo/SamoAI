@@ -1,8 +1,8 @@
 export const EntityType = {
-  SYSTEM: 'system',
-  AGENT: 'agent',
-  USER: 'user',
-  GIMMICK: 'gimmick',
+  System: 'system',
+  Agent: 'agent',
+  User: 'user',
+  Gimmick: 'gimmick',
 } as const;
 export type EntityType = (typeof EntityType)[keyof typeof EntityType];
 

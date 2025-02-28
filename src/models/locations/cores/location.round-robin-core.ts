@@ -25,14 +25,14 @@ export class LocationRoundRobinCore extends LocationCore {
     const evaluatedAgentIds: Set<number> = new Set();
     for (const agent of agents) {
       if (
-        lastMessage?.entityType == EntityType.AGENT &&
+        lastMessage?.entityType == EntityType.Agent &&
         lastMessage.entityId === agent.model.id
       ) {
         continue;
       }
       const agentLastMessage = messages.find(
         (message) =>
-          message.entityType == EntityType.AGENT &&
+          message.entityType == EntityType.Agent &&
           message.entityId === agent.model.id
       );
       if (
@@ -56,7 +56,7 @@ export class LocationRoundRobinCore extends LocationCore {
 
     for (const agent of agents) {
       if (
-        lastMessage?.entityType == EntityType.AGENT &&
+        lastMessage?.entityType == EntityType.Agent &&
         lastMessage.entityId === agent.model.id
       ) {
         continue;

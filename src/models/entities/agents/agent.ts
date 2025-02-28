@@ -127,7 +127,7 @@ export class Agent extends Entity {
   }
 
   public override get type(): 'agent' {
-    return EntityType.AGENT;
+    return EntityType.Agent;
   }
 
   public override get id(): AgentId {

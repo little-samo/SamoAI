@@ -31,7 +31,7 @@ export class Location extends AsyncEventEmitter {
   ): LocationMessageContext {
     return new LocationMessageContext({
       key:
-        message.entityType === EntityType.SYSTEM
+        message.entityType === EntityType.System
           ? ('system' as EntityKey)
           : (`${message.entityType}:${message.entityId}` as EntityKey),
       targetKey: message.targetEntityType
@@ -296,7 +296,7 @@ export class Location extends AsyncEventEmitter {
     expression?: string
   ): Promise<void> {
     const locationMessage: LocationMessage = {
-      entityType: EntityType.AGENT,
+      entityType: EntityType.Agent,
       entityId: agent.model.id as AgentId,
       name: agent.name,
       message: message?.substring(0, this.meta.messageLengthLimit),
@@ -313,7 +313,7 @@ export class Location extends AsyncEventEmitter {
     expression?: string
   ): Promise<void> {
     const locationMessage: LocationMessage = {
-      entityType: EntityType.USER,
+      entityType: EntityType.User,
       entityId: user.model.id as UserId,
       name: user.name,
       message: message?.substring(0, this.meta.messageLengthLimit),
