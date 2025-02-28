@@ -1,12 +1,8 @@
-import { EventEmitter } from 'events';
-
-import { ENV } from '@little-samo/samo-ai/common';
+import { AsyncEventEmitter, ENV } from '@little-samo/samo-ai/common';
 
 import {
   Agent,
-  AgentEntityState,
   AgentId,
-  AgentState,
   Entity,
   EntityId,
   EntityType,
@@ -29,42 +25,7 @@ import { LocationEntityState } from './states/location.entity-state';
 import { LocationId, LocationKey } from './location.type';
 import { LocationModel } from './location.model';
 
-export type LocationAgentExecuteNextActionsHook = (
-  location: Location,
-  agent: Agent
-) => Promise<void>;
-
-export type LocationAgentMessageHook = (
-  location: Location,
-  agent: Agent,
-  message?: string,
-  expression?: string
-) => Promise<void>;
-
-export type LocationAgentMemoryHook = (
-  location: Location,
-  agent: Agent,
-  state: AgentState,
-  index: number,
-  memory: string
-) => Promise<void>;
-
-export type LocationAgentEntityMemoryHook = (
-  location: Location,
-  agent: Agent,
-  state: AgentEntityState,
-  index: number,
-  memory: string
-) => Promise<void>;
-
-export type LocationAgentExpressionHook = (
-  location: Location,
-  agent: Agent,
-  state: LocationEntityState,
-  expression: string
-) => Promise<void>;
-
-export class Location extends EventEmitter {
+export class Location extends AsyncEventEmitter {
   public static messageToContext(
     message: LocationMessage
   ): LocationMessageContext {
@@ -98,13 +59,6 @@ export class Location extends EventEmitter {
   public readonly messagesState: LocationMessagesState;
 
   public readonly apiKeys: Record<string, LlmApiKeyModel> = {};
-
-  private agentExecuteNextActionsPreHooks: LocationAgentExecuteNextActionsHook[] =
-    [];
-  private agentMessageHooks: LocationAgentMessageHook[] = [];
-  private agentMemoryHooks: LocationAgentMemoryHook[] = [];
-  private agentEntityMemoryHooks: LocationAgentEntityMemoryHook[] = [];
-  private agentExpressionHooks: LocationAgentExpressionHook[] = [];
 
   private readonly _entityStates: Record<EntityKey, LocationEntityState> = {};
 
@@ -334,117 +288,12 @@ export class Location extends EventEmitter {
     this.messagesState.dirty = true;
   }
 
-  public addAgentExecuteNextActionsPreHook(
-    hook: LocationAgentExecuteNextActionsHook
-  ): void {
-    this.agentExecuteNextActionsPreHooks.push(hook);
-  }
-
-  public addAgentMessageHook(hook: LocationAgentMessageHook): void {
-    this.agentMessageHooks.push(hook);
-  }
-
-  public addAgentMemoryHook(hook: LocationAgentMemoryHook): void {
-    this.agentMemoryHooks.push(hook);
-  }
-
-  public addAgentEntityMemoryHook(hook: LocationAgentEntityMemoryHook): void {
-    this.agentEntityMemoryHooks.push(hook);
-  }
-
-  public addAgentExpressionHook(hook: LocationAgentExpressionHook): void {
-    this.agentExpressionHooks.push(hook);
-  }
-
-  public async executeAgentExecuteNextActionsPreHooks(
-    agent: Agent
-  ): Promise<void> {
-    await Promise.all(
-      this.agentExecuteNextActionsPreHooks.map((hook) => hook(this, agent))
-    );
-  }
-
-  public async executeAgentMessageHooks(
-    agent: Agent,
-    message?: string,
-    expression?: string
-  ): Promise<void> {
-    try {
-      await Promise.all(
-        this.agentMessageHooks.map((hook) =>
-          hook(this, agent, message, expression)
-        )
-      );
-    } catch (error: unknown) {
-      throw new Error(
-        `Message hook failed: ${error instanceof Error ? error.message : String(error)}`
-      );
-    }
-  }
-
-  public async executeAgentMemoryHooks(
-    agent: Agent,
-    state: AgentState,
-    index: number,
-    memory: string
-  ): Promise<void> {
-    try {
-      await Promise.all(
-        this.agentMemoryHooks.map((hook) =>
-          hook(this, agent, state, index, memory)
-        )
-      );
-    } catch (error: unknown) {
-      throw new Error(
-        `Memory hook failed: ${error instanceof Error ? error.message : String(error)}`
-      );
-    }
-  }
-
-  public async executeAgentEntityMemoryHooks(
-    agent: Agent,
-    state: AgentEntityState,
-    index: number,
-    memory: string
-  ): Promise<void> {
-    try {
-      await Promise.all(
-        this.agentEntityMemoryHooks.map((hook) =>
-          hook(this, agent, state, index, memory)
-        )
-      );
-    } catch (error: unknown) {
-      throw new Error(
-        `Entity memory hook failed: ${error instanceof Error ? error.message : String(error)}`
-      );
-    }
-  }
-
-  public async executeAgentExpressionHooks(
-    agent: Agent,
-    state: LocationEntityState,
-    expression: string
-  ): Promise<void> {
-    try {
-      await Promise.all(
-        this.agentExpressionHooks.map((hook) =>
-          hook(this, agent, state, expression)
-        )
-      );
-    } catch (error: unknown) {
-      throw new Error(
-        `Expression hook failed: ${error instanceof Error ? error.message : String(error)}`
-      );
-    }
-  }
-
   public async addAgentMessage(
     agent: Agent,
     message?: string,
     expression?: string
   ): Promise<void> {
-    this.emit('agentMessage', agent, message, expression);
-    await this.executeAgentMessageHooks(agent, message, expression);
+    await this.emitAsync('agentMessage', agent, message, expression);
 
     const locationMessage: LocationMessage = {
       entityType: EntityType.AGENT,
@@ -458,12 +307,12 @@ export class Location extends EventEmitter {
     this.addMessage(locationMessage);
   }
 
-  public addUserMessage(
+  public async addUserMessage(
     user: User,
     message?: string,
     expression?: string
-  ): void {
-    this.emit('userMessage', user, message, expression);
+  ): Promise<void> {
+    await this.emitAsync('userMessage', user, message, expression);
 
     const locationMessage: LocationMessage = {
       entityType: EntityType.USER,

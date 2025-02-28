@@ -18,6 +18,7 @@ import {
   User,
   UserId,
 } from '@little-samo/samo-ai/models';
+import { AsyncEventEmitter } from '@little-samo/samo-ai/common';
 
 import {
   AgentsRepository,
@@ -33,7 +34,7 @@ interface UpdateLocationOptions {
   handleSave?: (save: Promise<void>) => Promise<void>;
 }
 
-export class WorldManager {
+export class WorldManager extends AsyncEventEmitter {
   private static readonly LOCK_TTL = 5000; // 5 seconds
   private static readonly LOCATION_LOCK_TTL = 30000; // 30 seconds
   private static readonly LOCATION_LOCK_PREFIX = 'lock:location:';
@@ -70,7 +71,9 @@ export class WorldManager {
     private readonly locationRepository: LocationsRepository,
     private readonly agentRepository: AgentsRepository,
     private readonly userRepository: UsersRepository
-  ) {}
+  ) {
+    super();
+  }
 
   private async withLocationLock<T>(
     locationId: number,
@@ -759,8 +762,14 @@ export class WorldManager {
       await options.preAction(location);
     }
 
-    location.addAgentMemoryHook(
-      async (location, agent, state, index, memory) => {
+    location.on(
+      'agentUpdateMemory',
+      async (
+        agent: Agent,
+        state: AgentState,
+        index: number,
+        memory: string
+      ) => {
         if (options.handleSave) {
           void options.handleSave(
             this.updateAgentStateMemory(state, index, memory)
@@ -771,8 +780,14 @@ export class WorldManager {
       }
     );
 
-    location.addAgentEntityMemoryHook(
-      async (location, agent, state, index, memory) => {
+    location.on(
+      'agentUpdateEntityMemory',
+      async (
+        agent: Agent,
+        state: AgentEntityState,
+        index: number,
+        memory: string
+      ) => {
         if (options.handleSave) {
           void options.handleSave(
             this.updateAgentEntityStateMemory(state, index, memory)
@@ -783,8 +798,9 @@ export class WorldManager {
       }
     );
 
-    location.addAgentExpressionHook(
-      async (location, agent, state, expression) => {
+    location.on(
+      'agentUpdateExpression',
+      async (agent: Agent, state: LocationEntityState, expression: string) => {
         if (options.handleSave) {
           void options.handleSave(
             this.updateAgentExpression(state, expression)

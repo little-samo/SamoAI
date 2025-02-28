@@ -212,7 +212,8 @@ export class Agent extends Entity {
   }
 
   public async setMemory(index: number, memory: string): Promise<void> {
-    await this.location.executeAgentMemoryHooks(
+    await this.location.emitAsync(
+      'agentUpdateMemory',
       this,
       this.state,
       index,
@@ -231,7 +232,8 @@ export class Agent extends Entity {
       throw new Error(`Entity with key ${key} not found`);
     }
 
-    await this.location.executeAgentEntityMemoryHooks(
+    await this.location.emitAsync(
+      'agentUpdateEntityMemory',
       this,
       entityState,
       index,
@@ -245,7 +247,8 @@ export class Agent extends Entity {
       expression = expression.slice(1, -1);
     }
     const entityState = this.location.getOrCreateEntityStateByTarget(this);
-    await this.location.executeAgentExpressionHooks(
+    await this.location.emitAsync(
+      'agentUpdateExpression',
       this,
       entityState,
       expression
@@ -272,7 +275,7 @@ export class Agent extends Entity {
     inputIndex: number = 0,
     llmIndex: number = Agent.ACTION_LLM_INDEX
   ): Promise<void> {
-    await this.location.executeAgentExecuteNextActionsPreHooks(this);
+    await this.location.emitAsync('agentExecuteNextActions', this);
 
     const input = this.inputs[inputIndex];
     const messages = input.buildNextActions();
