@@ -113,37 +113,6 @@ export class WorldManager {
     }
   }
 
-  private async withLocationAndEntitiesLock<T>(
-    llmApiKeyUserId: UserId,
-    locationId: LocationId,
-    operation: (location: Location) => Promise<T>
-  ): Promise<T> {
-    return await this.withLocationLock(locationId, async () => {
-      const location = await this.getLocation(llmApiKeyUserId, locationId);
-
-      const lockKeys: string[] = [];
-      for (const agentId of location.state.agentIds) {
-        lockKeys.push(`${WorldManager.AGENT_LOCK_PREFIX}${agentId}`);
-      }
-      for (const userId of location.state.userIds) {
-        lockKeys.push(`${WorldManager.USER_LOCK_PREFIX}${userId}`);
-      }
-
-      const lock = await this.redisLockService.multiLock(
-        lockKeys,
-        WorldManager.LOCK_TTL
-      );
-      if (!lock) {
-        throw new Error(`Failed to lock location ${locationId}`);
-      }
-      try {
-        return await operation(location);
-      } finally {
-        await lock.release();
-      }
-    });
-  }
-
   private async withLocationEntityLock<T>(
     locationId: number,
     targetType: EntityType,
@@ -228,12 +197,15 @@ export class WorldManager {
   }
 
   private async getLocation(
-    llmApiKeyUserId: UserId,
     locationId: LocationId,
-    defaultMeta?: LocationMeta
+    options: {
+      defaultMeta?: LocationMeta;
+      llmApiKeyUserId?: UserId;
+    } = {}
   ): Promise<Location> {
     const apiKeys =
-      await this.userRepository.getUserLlmApiKeys(llmApiKeyUserId);
+      options.llmApiKeyUserId &&
+      (await this.userRepository.getUserLlmApiKeys(options.llmApiKeyUserId));
 
     const locationModel =
       await this.locationRepository.getLocationModel(locationId);
@@ -246,7 +218,7 @@ export class WorldManager {
       state: locationState,
       messagesState: locationMessagesState,
       apiKeys,
-      defaultMeta,
+      defaultMeta: options.defaultMeta,
     });
 
     let lastUserMessageAt: Record<UserId, Date> | undefined = undefined;
@@ -490,7 +462,8 @@ export class WorldManager {
 
   public async addLocationUser(
     locationId: LocationId,
-    userId: UserId
+    userId: UserId,
+    callback?: (userAdded: boolean, location: Location) => Promise<void>
   ): Promise<boolean> {
     let locationState =
       await this.locationRepository.getLocationState(locationId);
@@ -500,6 +473,10 @@ export class WorldManager {
     return await this.withLocationLock(locationId, async () => {
       locationState = await this.getOrCreateLocationState(locationId);
       if (locationState.userIds.includes(userId)) {
+        if (callback) {
+          const location = await this.getLocation(locationId);
+          await callback(false, location);
+        }
         return false;
       }
 
@@ -507,6 +484,10 @@ export class WorldManager {
       locationState.dirty = true;
 
       await this.locationRepository.saveLocationState(locationState);
+      if (callback) {
+        const location = await this.getLocation(locationId);
+        await callback(true, location);
+      }
       return true;
     });
   }
@@ -755,7 +736,9 @@ export class WorldManager {
       console.log(`Updating location ${locationId}`);
     }
 
-    const location = await this.getLocation(llmApiKeyUserId, locationId);
+    const location = await this.getLocation(locationId, {
+      llmApiKeyUserId,
+    });
     if (Object.keys(location.agents).length === 0) {
       await this.setLocationPauseUpdateUntilInternal(
         location.model.id as LocationId,
