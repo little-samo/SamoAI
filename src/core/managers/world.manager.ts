@@ -878,6 +878,22 @@ export class WorldManager extends AsyncEventEmitter {
     });
   }
 
+  public async updateLocationImage(
+    locationId: LocationId,
+    image: string
+  ): Promise<void> {
+    await this.withLocationLock(locationId, async () => {
+      const locationState =
+        await this.locationRepository.getLocationState(locationId);
+      if (!locationState) {
+        throw new Error(`Location ${locationId} not found`);
+      }
+
+      locationState.image = image;
+      await this.locationRepository.saveLocationState(locationState);
+    });
+  }
+
   public async updateAgentStateMemory(
     state: AgentState,
     index: number,
