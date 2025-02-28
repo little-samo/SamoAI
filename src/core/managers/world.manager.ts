@@ -599,6 +599,8 @@ export class WorldManager extends AsyncEventEmitter {
       await this.locationRepository.saveLocationMessagesState(
         locationMessagesState
       );
+
+      await this.emitAsync('locationMessageAdded', locationId, message);
     });
   }
 
@@ -761,6 +763,10 @@ export class WorldManager extends AsyncEventEmitter {
     if (options.preAction) {
       await options.preAction(location);
     }
+
+    location.on('messageAdded', async (message: LocationMessage) => {
+      await this.emitAsync('locationMessageAdded', locationId, message);
+    });
 
     location.on(
       'agentUpdateMemory',

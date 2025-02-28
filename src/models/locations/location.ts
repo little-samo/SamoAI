@@ -260,7 +260,7 @@ export class Location extends AsyncEventEmitter {
     this.core = LocationCoreFactory.createCore(this);
   }
 
-  public addMessage(message: LocationMessage): void {
+  public async addMessage(message: LocationMessage): Promise<void> {
     if (message.expression) {
       message.expression = message.expression.substring(
         0,
@@ -286,6 +286,8 @@ export class Location extends AsyncEventEmitter {
       this.messagesState.messages.shift();
     }
     this.messagesState.dirty = true;
+
+    await this.emitAsync('messageAdded', message);
   }
 
   public async addAgentMessage(
@@ -293,8 +295,6 @@ export class Location extends AsyncEventEmitter {
     message?: string,
     expression?: string
   ): Promise<void> {
-    await this.emitAsync('agentMessage', agent, message, expression);
-
     const locationMessage: LocationMessage = {
       entityType: EntityType.AGENT,
       entityId: agent.model.id as AgentId,
@@ -304,7 +304,7 @@ export class Location extends AsyncEventEmitter {
       createdAt: new Date(),
       updatedAt: new Date(),
     };
-    this.addMessage(locationMessage);
+    await this.addMessage(locationMessage);
   }
 
   public async addUserMessage(
@@ -312,8 +312,6 @@ export class Location extends AsyncEventEmitter {
     message?: string,
     expression?: string
   ): Promise<void> {
-    await this.emitAsync('userMessage', user, message, expression);
-
     const locationMessage: LocationMessage = {
       entityType: EntityType.USER,
       entityId: user.model.id as UserId,
@@ -323,7 +321,7 @@ export class Location extends AsyncEventEmitter {
       createdAt: new Date(),
       updatedAt: new Date(),
     };
-    this.addMessage(locationMessage);
+    await this.addMessage(locationMessage);
   }
 
   public async update(): Promise<number> {
