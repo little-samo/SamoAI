@@ -76,7 +76,7 @@ export class WorldManager extends AsyncEventEmitter {
   }
 
   private async withLocationLock<T>(
-    locationId: number,
+    locationId: LocationId,
     operation: () => Promise<T>
   ): Promise<T> {
     const lockKey = `${WorldManager.LOCATION_LOCK_PREFIX}${locationId}`;
@@ -95,7 +95,7 @@ export class WorldManager extends AsyncEventEmitter {
   }
 
   private async withLocationLockNoRetry<T>(
-    locationId: number,
+    locationId: LocationId,
     operation: () => Promise<T>
   ): Promise<T | null> {
     const lockKey = `${WorldManager.LOCATION_LOCK_PREFIX}${locationId}`;
@@ -117,9 +117,9 @@ export class WorldManager extends AsyncEventEmitter {
   }
 
   private async withLocationEntityLock<T>(
-    locationId: number,
+    locationId: LocationId,
     targetType: EntityType,
-    targetId: number,
+    targetId: EntityId,
     operation: () => Promise<T>
   ): Promise<T> {
     const lockKey = `${WorldManager.LOCATION_ENTITY_LOCK_PREFIX}${locationId}:${targetType}:${targetId}`;
@@ -140,7 +140,7 @@ export class WorldManager extends AsyncEventEmitter {
   }
 
   private async withAgentLock<T>(
-    agentId: number,
+    agentId: AgentId,
     operation: () => Promise<T>
   ): Promise<T> {
     const lockKey = `${WorldManager.AGENT_LOCK_PREFIX}${agentId}`;
@@ -159,7 +159,7 @@ export class WorldManager extends AsyncEventEmitter {
   }
 
   private async withAgentEntityLock<T>(
-    agentId: number,
+    agentId: AgentId,
     type: EntityType,
     id: EntityId,
     operation: () => Promise<T>
@@ -181,7 +181,7 @@ export class WorldManager extends AsyncEventEmitter {
   }
 
   private async withUserLock<T>(
-    userId: number,
+    userId: UserId,
     operation: () => Promise<T>
   ): Promise<T> {
     const lockKey = `${WorldManager.USER_LOCK_PREFIX}${userId}`;
@@ -968,6 +968,44 @@ export class WorldManager extends AsyncEventEmitter {
           agentEntityState,
           index,
           memory
+        );
+      }
+    );
+  }
+
+  public async updateAgentIsActive(
+    state: LocationEntityState,
+    isActive: boolean
+  ): Promise<void> {
+    await this.withLocationEntityLock(
+      state.locationId,
+      state.targetType,
+      state.targetId,
+      async () => {
+        if (ENV.DEBUG) {
+          console.log(
+            `Updating location entity ${state.locationId}:${state.targetType}:${state.targetId} isActive to ${isActive}`
+          );
+        }
+
+        const locationEntityState =
+          await this.locationRepository.getLocationEntityState(
+            state.locationId,
+            state.targetType,
+            state.targetId
+          );
+        if (!locationEntityState) {
+          await this.locationRepository.saveLocationEntityState(state);
+          return;
+        }
+
+        if (locationEntityState.isActive === isActive) {
+          return;
+        }
+
+        locationEntityState.isActive = isActive;
+        await this.locationRepository.saveLocationEntityState(
+          locationEntityState
         );
       }
     );
