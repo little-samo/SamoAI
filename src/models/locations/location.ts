@@ -29,13 +29,6 @@ import { LocationEntityState } from './states/location.entity-state';
 import { LocationId, LocationKey } from './location.type';
 import { LocationModel } from './location.model';
 
-export interface LocationConstructorOptions {
-  state?: null | LocationState;
-  messagesState?: null | LocationMessagesState;
-  apiKeys?: LlmApiKeyModel[];
-  defaultMeta?: LocationMeta;
-}
-
 export type LocationAgentExecuteNextActionsHook = (
   location: Location,
   agent: Agent
@@ -161,7 +154,12 @@ export class Location extends EventEmitter {
 
   public constructor(
     public readonly model: LocationModel,
-    options: LocationConstructorOptions = {}
+    options: {
+      state?: null | LocationState;
+      messagesState?: null | LocationMessagesState;
+      apiKeys?: LlmApiKeyModel[];
+      defaultMeta?: LocationMeta;
+    } = {}
   ) {
     super();
     this.id = model.id as LocationId;
