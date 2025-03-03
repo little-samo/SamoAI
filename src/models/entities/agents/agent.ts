@@ -256,6 +256,17 @@ export class Agent extends Entity {
     entityState.expression = expression;
   }
 
+  public async setActive(active: boolean): Promise<void> {
+    const entityState = this.location.getOrCreateEntityStateByTarget(this);
+    await this.location.emitAsync(
+      'agentUpdateActive',
+      this,
+      entityState,
+      active
+    );
+    entityState.isActive = active;
+  }
+
   public async update(): Promise<boolean> {
     if (this.location.getEntityState(this.key)?.isActive === false) {
       return false;
