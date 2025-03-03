@@ -65,10 +65,9 @@ export class AgentSendCasualMessageAction extends AgentAction {
       }
     }
 
-    await this.location.addAgentMessage(
-      this.agent,
-      action.casualPolicyViolatingAnswer,
-      action.expression ?? undefined
-    );
+    await this.location.addAgentMessage(this.agent, {
+      message: action.casualPolicyViolatingAnswer,
+      expression: action.expression ?? undefined,
+    });
   }
 }

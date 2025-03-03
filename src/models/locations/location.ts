@@ -292,15 +292,22 @@ export class Location extends AsyncEventEmitter {
 
   public async addAgentMessage(
     agent: Agent,
-    message?: string,
-    expression?: string
+    options: {
+      message?: string;
+      expression?: string;
+      action?: string;
+    } = {}
   ): Promise<void> {
     const locationMessage: LocationMessage = {
       entityType: EntityType.Agent,
       entityId: agent.model.id as AgentId,
       name: agent.name,
-      message: message?.substring(0, this.meta.messageLengthLimit),
-      expression: expression?.substring(0, this.meta.messageLengthLimit),
+      message: options.message?.substring(0, this.meta.messageLengthLimit),
+      expression: options.expression?.substring(
+        0,
+        this.meta.messageLengthLimit
+      ),
+      action: options.action,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
