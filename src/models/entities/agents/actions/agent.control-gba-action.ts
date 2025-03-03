@@ -34,6 +34,8 @@ export class AgentControlGbaAction extends AgentAction {
         return z.object({
           inputs: z
             .array(z.nativeEnum(AgentControlGbaActionInput))
+            .min(1)
+            .max(8)
             .describe('The inputs to control the GBA.'),
         });
     }
