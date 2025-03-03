@@ -302,11 +302,8 @@ export class Location extends AsyncEventEmitter {
       entityType: EntityType.Agent,
       entityId: agent.model.id as AgentId,
       name: agent.name,
-      message: options.message?.substring(0, this.meta.messageLengthLimit),
-      expression: options.expression?.substring(
-        0,
-        this.meta.messageLengthLimit
-      ),
+      message: options.message,
+      expression: options.expression,
       action: options.action,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -323,8 +320,8 @@ export class Location extends AsyncEventEmitter {
       entityType: EntityType.User,
       entityId: user.model.id as UserId,
       name: user.name,
-      message: message?.substring(0, this.meta.messageLengthLimit),
-      expression: expression?.substring(0, this.meta.messageLengthLimit),
+      message: message,
+      expression: expression,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
