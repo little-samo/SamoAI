@@ -414,16 +414,27 @@ export class WorldManager extends AsyncEventEmitter {
 
   public async addLocationAgent(
     locationId: LocationId,
-    agentId: AgentId
+    agentId: AgentId,
+    callback?: (agentAdded: boolean, location: Location) => Promise<void>
   ): Promise<boolean> {
     let locationState =
       await this.locationRepository.getLocationState(locationId);
     if (locationState && locationState.agentIds.includes(agentId)) {
+      if (callback) {
+        await this.withLocationLock(locationId, async () => {
+          const location = await this.getLocation(locationId);
+          await callback(false, location);
+        });
+      }
       return false;
     }
     return await this.withLocationLock(locationId, async () => {
       locationState = await this.getOrCreateLocationState(locationId);
       if (locationState.agentIds.includes(agentId)) {
+        if (callback) {
+          const location = await this.getLocation(locationId);
+          await callback(false, location);
+        }
         return false;
       }
 
@@ -434,6 +445,10 @@ export class WorldManager extends AsyncEventEmitter {
       locationState.dirty = true;
 
       await this.locationRepository.saveLocationState(locationState);
+      if (callback) {
+        const location = await this.getLocation(locationId);
+        await callback(true, location);
+      }
       return true;
     });
   }
@@ -471,6 +486,12 @@ export class WorldManager extends AsyncEventEmitter {
     let locationState =
       await this.locationRepository.getLocationState(locationId);
     if (locationState && locationState.userIds.includes(userId)) {
+      if (callback) {
+        await this.withLocationLock(locationId, async () => {
+          const location = await this.getLocation(locationId);
+          await callback(false, location);
+        });
+      }
       return false;
     }
     return await this.withLocationLock(locationId, async () => {
