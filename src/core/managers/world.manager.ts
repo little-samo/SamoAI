@@ -922,6 +922,7 @@ export class WorldManager extends AsyncEventEmitter {
       }
 
       locationState.image = image;
+      locationState.dirty = true;
       await this.locationRepository.saveLocationState(locationState);
     });
   }
