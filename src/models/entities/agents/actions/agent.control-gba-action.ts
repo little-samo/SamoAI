@@ -5,10 +5,10 @@ import { RegisterAgentAction } from './agent.action-decorator';
 import { AgentAction } from './agent.action';
 
 export enum AgentControlGbaActionInput {
-  Up = '↑',
-  Down = '↓',
-  Left = '←',
-  Right = '→',
+  Up = 'Up',
+  Down = 'Down',
+  Left = 'Left',
+  Right = 'Right',
   A = 'A',
   B = 'B',
 }
@@ -50,7 +50,7 @@ export class AgentControlGbaAction extends AgentAction {
     }
 
     await this.location.addAgentMessage(this.agent, {
-      action: `GBA:${action.inputs.join('')}`,
+      action: `GBA:${action.inputs.join(',')}`,
     });
   }
 }
