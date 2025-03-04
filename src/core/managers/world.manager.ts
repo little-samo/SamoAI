@@ -838,6 +838,17 @@ export class WorldManager extends AsyncEventEmitter {
       }
     );
 
+    location.on(
+      'agentUpdateActive',
+      async (agent: Agent, state: LocationEntityState, isActive: boolean) => {
+        if (options.handleSave) {
+          void options.handleSave(this.updateAgentIsActive(state, isActive));
+        } else {
+          void this.updateAgentIsActive(state, isActive);
+        }
+      }
+    );
+
     let pauseUpdateDuration;
     try {
       pauseUpdateDuration = await location.update();
