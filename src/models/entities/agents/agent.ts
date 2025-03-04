@@ -82,7 +82,6 @@ export class Agent extends Entity {
   public readonly core: AgentCore;
 
   public readonly inputs: AgentInputBuilder[] = [];
-  public readonly llm: LlmService;
   public readonly llms: LlmService[] = [];
   public readonly actions: Record<string, AgentAction> = {};
 
@@ -103,13 +102,15 @@ export class Agent extends Entity {
 
     for (const llm of meta.llms) {
       const apiKey = location.apiKeys[llm.platform];
-      if (!apiKey) {
-        throw new Error(`API key not found for platform: ${llm.platform}`);
+      if (apiKey) {
+        const llmService = LlmFactory.create(
+          llm.platform,
+          llm.model,
+          apiKey.key
+        );
+        this.llms.push(llmService);
       }
-      const llmService = LlmFactory.create(llm.platform, llm.model, apiKey.key);
-      this.llms.push(llmService);
     }
-    this.llm = this.llms[0];
     for (const input of meta.inputs) {
       this.inputs.push(AgentInputFactory.createInput(input, location, this));
     }
@@ -293,7 +294,10 @@ export class Agent extends Entity {
 
     const input = this.inputs[inputIndex];
     const messages = input.buildNextActions();
-    const llm = this.llms.at(llmIndex) ?? this.llm;
+    const llm = this.llms.at(llmIndex) ?? this.llms.at(0);
+    if (!llm) {
+      throw new Error('No LlmService found');
+    }
     const toolCalls = await llm.useTools(
       messages,
       Object.values(this.actions),
@@ -314,7 +318,10 @@ export class Agent extends Entity {
   ): Promise<boolean> {
     const input = this.inputs[inputIndex];
     const messages = input.buildActionCondition();
-    const llm = this.llms.at(llmIndex) ?? this.llm;
+    const llm = this.llms.at(llmIndex) ?? this.llms.at(0);
+    if (!llm) {
+      throw new Error('No LlmService found');
+    }
     const result = await llm.generate(messages, {
       maxTokens: this.meta.evaluateMaxTokens,
       temperature: this.meta.evaluateTemperature,
