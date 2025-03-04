@@ -230,7 +230,7 @@ export class WorldManager extends AsyncEventEmitter {
       lastUserMessageAt = location.messagesState.messages.reduce(
         (acc, message) => {
           if (message.entityType == EntityType.User) {
-            acc[message.entityId as UserId] = message.createdAt;
+            acc[message.entityId as UserId] = new Date(message.createdAt);
           }
           return acc;
         },
@@ -259,7 +259,7 @@ export class WorldManager extends AsyncEventEmitter {
         lastUserMessageAt = location.messagesState.messages.reduce(
           (acc, message) => {
             if (message.entityType == EntityType.User) {
-              acc[message.entityId as UserId] = message.createdAt;
+              acc[message.entityId as UserId] = new Date(message.createdAt);
             }
             return acc;
           },
