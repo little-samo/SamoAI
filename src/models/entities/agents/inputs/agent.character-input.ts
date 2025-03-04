@@ -61,14 +61,15 @@ IMPORTANT RULES:
 - Multi-Agents: Treat other Agents as if they are real people. Engage with them dynamically, communicate in various ways, collaborate, and find creative ways to shift situations.
 `);
 
-    if (
-      this.location.meta.rules.length > 0 ||
-      this.location.meta.requiredActions.length > 0
-    ) {
+    const requiredActions = [
+      ...this.agent.meta.requiredActions,
+      ...this.location.meta.requiredActions,
+    ];
+    if (this.location.meta.rules.length > 0 || requiredActions.length > 0) {
       const locationRules = [...this.location.meta.rules];
-      if (this.location.meta.requiredActions.length > 0) {
+      if (requiredActions.length > 0) {
         locationRules.push(
-          `You MUST use the following tools: ${this.location.meta.requiredActions.join(', ')}, before using any other tools.`
+          `You MUST use the following tools: ${requiredActions.join(', ')}, before using any other tools.`
         );
       }
       prompts.push(`
@@ -182,14 +183,18 @@ ${messages}
   }
 
   private buildPrefill(): string {
-    let requiredActions;
-    if (this.location.meta.requiredActions.length > 0) {
-      requiredActions = ` I MUST use the following tools: ${this.location.meta.requiredActions.join(', ')}, BEFORE using any other tools.`;
+    const requiredActions = [
+      ...this.agent.meta.requiredActions,
+      ...this.location.meta.requiredActions,
+    ];
+    let requiredActionsPrefill;
+    if (requiredActions.length > 0) {
+      requiredActionsPrefill = ` I MUST use the following tools: ${requiredActions.join(', ')}, BEFORE using any other tools.`;
     } else {
-      requiredActions = ``;
+      requiredActionsPrefill = ``;
     }
 
-    return `As ${this.agent.name}, I will use CoT for the next tool use, employing all necessary tools—even multiple ones if needed. It is crucial to include all required tool calls in a single response while avoiding redundant ones. Remember, I only have one chance to respond.${requiredActions}
+    return `As ${this.agent.name}, I will use CoT for the next tool use, employing all necessary tools—even multiple ones if needed. It is crucial to include all required tool calls in a single response while avoiding redundant ones. Remember, I only have one chance to respond.${requiredActionsPrefill}
 CoT:
 1.`;
   }
