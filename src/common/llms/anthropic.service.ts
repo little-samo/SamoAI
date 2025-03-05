@@ -104,9 +104,6 @@ export class AnthropicService extends LlmService {
                         data: content.image,
                         media_type: 'image/png',
                       },
-                      cache_control: {
-                        type: 'ephemeral',
-                      },
                     };
                 }
               }),
