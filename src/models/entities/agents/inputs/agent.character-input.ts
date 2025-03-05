@@ -230,15 +230,14 @@ ${messages}
     ];
     let requiredActionsPrefill;
     if (requiredActions.length > 0) {
-      requiredActionsPrefill = ` I will prioritize executing all required tool calls—${requiredActions.join(', ')}—before any other tool usage.`;
+      requiredActionsPrefill = ` I MUST use the following tools: ${requiredActions.join(', ')}, BEFORE using any other tools.`;
     } else {
       requiredActionsPrefill = ``;
     }
 
-    return `As ${this.agent.name}, I will determine the necessary tools for the next action, ensuring efficiency and completeness.${requiredActionsPrefill}
-
-Reasoning approach: Instead of defaulting to Chain-of-Thought (CoT), I will select the most appropriate reasoning strategy based on the context, such as direct rule-based selection, heuristic decision-making, or model-guided inference.
-Step 1:`;
+    return `As ${this.agent.name}, I will use CoT for the next tool use, employing all necessary tools—even multiple ones if needed. It is crucial to include all required tool calls in a single response while avoiding redundant ones. Remember, I only have one chance to respond.${requiredActionsPrefill}
+CoT:
+1.`;
   }
 
   public override buildNextActions(): LlmMessage[] {
@@ -246,7 +245,7 @@ Step 1:`;
     const input = `
 ${this.buildContext()}
 
-As ${this.agent.name}, use the required tools to achieve the given objective. Provide reasoning and cite sources for each step.
+As ${this.agent.name}, which tool will you use? Quote the source of each reasoning step.
 `.trim();
 
     const prefill = this.buildPrefill();
