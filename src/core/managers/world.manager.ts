@@ -996,8 +996,13 @@ export class WorldManager extends AsyncEventEmitter {
           return;
         }
 
-        if (agentEntityState.memories[index]) {
-          const emptyIndex = agentEntityState.memories.findIndex((m) => !m);
+        if (
+          !state.memories[index].memory ||
+          agentEntityState.memories[index].memory
+        ) {
+          const emptyIndex = agentEntityState.memories.findIndex(
+            (m) => !m.memory
+          );
           if (emptyIndex !== -1) {
             index = emptyIndex;
           }

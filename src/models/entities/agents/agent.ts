@@ -31,7 +31,9 @@ export class Agent extends Entity {
   public static createState(model: AgentModel, meta: AgentMeta): AgentState {
     const state: AgentState = {
       agentId: model.id as AgentId,
-      memories: Array(meta.memoryLimit).fill(''),
+      memories: Array(meta.memoryLimit).fill({
+        memory: '',
+      }),
       updatedAt: new Date(),
       createdAt: new Date(),
     };
@@ -41,18 +43,12 @@ export class Agent extends Entity {
   public static fixState(state: AgentState, meta: AgentMeta): void {
     if (state.memories.length < meta.memoryLimit) {
       state.memories = state.memories.concat(
-        Array(meta.memoryLimit - state.memories.length).fill('')
+        Array(meta.memoryLimit - state.memories.length).fill({
+          memory: '',
+        })
       );
     } else if (state.memories.length > meta.memoryLimit) {
       state.memories = state.memories.slice(0, meta.memoryLimit);
-    }
-
-    for (let i = 0; i < state.memories.length; i++) {
-      if (!state.memories[i]) {
-        state.memories[i] = {
-          memory: '',
-        };
-      }
     }
   }
 
@@ -61,7 +57,9 @@ export class Agent extends Entity {
       agentId: this.model.id as AgentId,
       targetType: type,
       targetId: id,
-      memories: Array(this.meta.entityMemoryLimit).fill(''),
+      memories: Array(this.meta.entityMemoryLimit).fill({
+        memory: '',
+      }),
       updatedAt: new Date(),
       createdAt: new Date(),
     };
@@ -71,18 +69,12 @@ export class Agent extends Entity {
   public fixEntityState(state: AgentEntityState): void {
     if (state.memories.length < this.meta.entityMemoryLimit) {
       state.memories = state.memories.concat(
-        Array(this.meta.entityMemoryLimit - state.memories.length).fill('')
+        Array(this.meta.entityMemoryLimit - state.memories.length).fill({
+          memory: '',
+        })
       );
     } else if (state.memories.length > this.meta.entityMemoryLimit) {
       state.memories = state.memories.slice(0, this.meta.entityMemoryLimit);
-    }
-
-    for (let i = 0; i < state.memories.length; i++) {
-      if (!state.memories[i]) {
-        state.memories[i] = {
-          memory: '',
-        };
-      }
     }
   }
 
