@@ -1,6 +1,7 @@
 export interface LocationMeta {
   core: string;
   description: string;
+  imageDescriptions: string[];
 
   messageLimit: number;
   messageLengthLimit: number;
@@ -16,6 +17,7 @@ export interface LocationMeta {
 export const DEFAULT_LOCATION_META: LocationMeta = {
   core: 'update_once',
   description: '',
+  imageDescriptions: [],
 
   messageLimit: 20,
   messageLengthLimit: 250,

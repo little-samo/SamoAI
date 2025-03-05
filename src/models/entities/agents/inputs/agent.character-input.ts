@@ -257,26 +257,33 @@ As ${this.agent.name}, which tool will you use? Quote the source of each reasoni
     });
 
     if (this.location.state.images.length > 0) {
-      const imageContents: LlmMessageContent[] = [];
-      for (const image of this.location.state.images) {
-        imageContents.push({
+      const contents: LlmMessageContent[] = [];
+      contents.push({
+        type: 'text',
+        text: input,
+      });
+      for (let i = 0; i < this.location.state.images.length; ++i) {
+        const image = this.location.state.images[i];
+        const imageDescription = this.location.meta.imageDescriptions[i];
+        if (imageDescription) {
+          contents.push({
+            type: 'text',
+            text: imageDescription,
+          });
+        } else {
+          contents.push({
+            type: 'text',
+            text: `Location image ${i + 1}:`,
+          });
+        }
+        contents.push({
           type: 'image',
           image,
         });
       }
       messages.push({
         role: 'user',
-        content: [
-          {
-            type: 'text',
-            text: `Location images:`,
-          },
-          ...imageContents,
-          {
-            type: 'text',
-            text: input,
-          },
-        ],
+        content: contents,
       });
     } else {
       messages.push({
