@@ -40,7 +40,7 @@ export class Location extends AsyncEventEmitter {
       name: message.name,
       message: message.message,
       expression: message.expression,
-      created: Math.floor(new Date(message.createdAt).getTime() / 1000),
+      created: message.createdAt,
     });
   }
 

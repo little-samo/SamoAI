@@ -6,7 +6,11 @@ import {
 import { LlmMessage } from '@little-samo/samo-ai/common';
 
 import { Agent } from '../agent';
-import { AgentContext } from '../agent.context';
+import {
+  AgentContext,
+  AgentEntityMemoryContext,
+  AgentMemoryContext,
+} from '../agent.context';
 import { UserContext } from '../../users';
 
 import { RegisterAgentInput } from './agent.input-decorator';
@@ -118,15 +122,29 @@ ${this.agent.context.build()}
         continue;
       }
       let otherAgentContext = `<OtherAgent>
-${agent.context.build()}`;
+${agent.context.build()}
+<YourMemoriesAboutOtherAgent>`;
       const otherAgentMemories = this.agent.getEntityMemories(agent.key);
       if (otherAgentMemories) {
         otherAgentContext += `
-<YourMemoriesAboutOtherAgent>
-${otherAgentMemories.map((m, i) => `${i}:${JSON.stringify(m)}`).join('\n')}
-</YourMemoriesAboutOtherAgent>`;
+${AgentEntityMemoryContext.FORMAT}
+${otherAgentMemories
+  .map(
+    (m, i) =>
+      new AgentEntityMemoryContext({
+        index: i,
+        memory: m.memory,
+        createdAt: m.createdAt,
+      })
+  )
+  .map((m) => m.build())
+  .join('\n')}`;
+      } else {
+        otherAgentContext += `
+[Omitted]`;
       }
       otherAgentContext += `
+</YourMemoriesAboutOtherAgent>
 </OtherAgent>`;
       otherAgentContexts.push(otherAgentContext);
     }
@@ -146,7 +164,18 @@ ${user.context.build()}
       const userMemories = this.agent.getEntityMemories(user.key);
       if (userMemories) {
         userContext += `
-${userMemories.map((m, i) => `${i}:${JSON.stringify(m)}`).join('\n')}`;
+${AgentEntityMemoryContext.FORMAT}
+${userMemories
+  .map(
+    (m, i) =>
+      new AgentEntityMemoryContext({
+        index: i,
+        memory: m.memory,
+        createdAt: m.createdAt,
+      })
+  )
+  .map((m) => m.build())
+  .join('\n')}`;
       } else {
         userContext += `
 [Omitted]`;
@@ -164,9 +193,21 @@ ${usersContexts.join('\n')}
 </OtherUsers>
 `);
 
+    const yourMemories = this.agent.memories
+      .map(
+        (m, i) =>
+          new AgentMemoryContext({
+            index: i,
+            memory: m.memory,
+            createdAt: m.createdAt,
+          })
+      )
+      .map((m) => m.build())
+      .join('\n');
     contexts.push(`
 <YourMemories>
-${this.agent.memories.map((m, i) => `${i}:${JSON.stringify(m)}`).join('\n')}
+${AgentMemoryContext.FORMAT}
+${yourMemories}
 </YourMemories>
 `);
 

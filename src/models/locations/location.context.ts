@@ -8,13 +8,10 @@ export interface LocationMessageContextOptions {
   message?: string;
   expression?: string;
   action?: string;
-  created: number;
+  created: string | Date;
 }
 
-export class LocationMessageContext
-  extends Context
-  implements LocationMessageContextOptions
-{
+export class LocationMessageContext extends Context {
   public static readonly FORMAT =
     'TIMESTAMP\tENTITY_KEY\tTARGET_KEY\tNAME\tMESSAGE';
 
@@ -35,7 +32,7 @@ export class LocationMessageContext
     this.message = options.message;
     this.expression = options.expression;
     this.action = options.action;
-    this.created = options.created;
+    this.created = Math.floor(new Date(options.created).getTime() / 1000);
   }
 
   public build(): string {
