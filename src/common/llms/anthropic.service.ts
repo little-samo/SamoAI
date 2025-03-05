@@ -74,10 +74,15 @@ export class AnthropicService extends LlmService {
     for (const message of messages) {
       switch (message.role) {
         case 'system':
-        case 'assistant':
           systemMessages.push({
             type: 'text',
             text: message.content,
+          });
+          break;
+        case 'assistant':
+          userAssistantMessages.push({
+            role: message.role,
+            content: message.content,
           });
           break;
         case 'user':
