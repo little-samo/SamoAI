@@ -4,6 +4,7 @@ export interface LocationMeta {
 
   messageLimit: number;
   messageLengthLimit: number;
+  agentMessageLengthLimit?: number;
   userContextLimit: number;
   agentUserContextLimit: number;
 

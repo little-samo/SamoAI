@@ -20,18 +20,21 @@ export class AgentSendMessageAction extends AgentAction {
   }
 
   public override get parameters(): z.ZodSchema {
+    const messageLengthLimit =
+      this.location.meta.agentMessageLengthLimit ??
+      this.location.meta.messageLengthLimit;
     switch (this.version) {
       case 1:
       default:
         return z.object({
           message: z
             .string()
-            .max(this.location.meta.messageLengthLimit)
+            .max(messageLengthLimit)
             .describe('The message you want to send. Visible to others.'),
           expression: z
             .string()
-            .max(this.location.meta.messageLengthLimit)
-            .optional()
+            .max(messageLengthLimit)
+            .nullable()
             .describe(
               'Your outward expressions, such as facial expressions and gestures. Visible to others. Can be null to indicate no expression.'
             ),

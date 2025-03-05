@@ -261,17 +261,21 @@ export class Location extends AsyncEventEmitter {
   }
 
   public async addMessage(message: LocationMessage): Promise<void> {
+    let messageLengthLimit: number;
+    switch (message.entityType) {
+      case EntityType.Agent:
+        messageLengthLimit =
+          this.meta.agentMessageLengthLimit ?? this.meta.messageLengthLimit;
+        break;
+      default:
+        messageLengthLimit = this.meta.messageLengthLimit;
+    }
+
     if (message.expression) {
-      message.expression = message.expression.substring(
-        0,
-        this.meta.messageLengthLimit
-      );
+      message.expression = message.expression.substring(0, messageLengthLimit);
     }
     if (message.message) {
-      message.message = message.message.substring(
-        0,
-        this.meta.messageLengthLimit
-      );
+      message.message = message.message.substring(0, messageLengthLimit);
     }
     if (!message.createdAt) {
       message.createdAt = new Date();
