@@ -17,8 +17,8 @@ export class AgentResponseEveryMessageCore extends AgentCore {
       ];
     if (
       lastMessage &&
-      lastMessage.targetEntityType === EntityType.Agent &&
-      lastMessage.targetEntityId === this.agent.id
+      lastMessage.entityType === EntityType.Agent &&
+      lastMessage.entityId === this.agent.id
     ) {
       return false;
     }
