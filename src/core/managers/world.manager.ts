@@ -930,7 +930,8 @@ export class WorldManager extends AsyncEventEmitter {
   public async updateAgentStateMemory(
     state: AgentState,
     index: number,
-    memory: string
+    memory: string,
+    createdAt?: Date
   ): Promise<void> {
     await this.withAgentLock(state.agentId, async () => {
       if (ENV.DEBUG) {
@@ -954,11 +955,16 @@ export class WorldManager extends AsyncEventEmitter {
         }
       }
 
-      agentState.memories[index] = memory;
+      createdAt ??= new Date();
+      agentState.memories[index] = {
+        memory,
+        createdAt,
+      };
       await this.agentRepository.saveAgentStateMemory(
         agentState,
         index,
-        memory
+        memory,
+        createdAt
       );
     });
   }
@@ -966,7 +972,8 @@ export class WorldManager extends AsyncEventEmitter {
   public async updateAgentEntityStateMemory(
     state: AgentEntityState,
     index: number,
-    memory: string
+    memory: string,
+    createdAt?: Date
   ): Promise<void> {
     await this.withAgentEntityLock(
       state.agentId,
@@ -996,11 +1003,16 @@ export class WorldManager extends AsyncEventEmitter {
           }
         }
 
-        agentEntityState.memories[index] = memory;
+        createdAt ??= new Date();
+        agentEntityState.memories[index] = {
+          memory,
+          createdAt,
+        };
         await this.agentRepository.saveAgentEntityStateMemory(
           agentEntityState,
           index,
-          memory
+          memory,
+          createdAt
         );
       }
     );

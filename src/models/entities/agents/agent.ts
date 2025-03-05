@@ -10,11 +10,14 @@ import { EntityType, EntityKey, EntityId } from '../entity.types';
 import { Location } from '../../locations';
 
 import { AgentCore } from './cores/agent.core';
-import { AgentState } from './states/agent.state';
+import { AgentMemory, AgentState } from './states/agent.state';
 import { AgentContext } from './agent.context';
 import { AgentMeta, DEFAULT_AGENT_META } from './agent.meta';
 import { AgentAction } from './actions/agent.action';
-import { AgentEntityState } from './states/agent.entity-state';
+import {
+  AgentEntityMemory,
+  AgentEntityState,
+} from './states/agent.entity-state';
 import { AgentCoreFactory } from './cores';
 import { AgentActionFactory } from './actions';
 import { AgentInputBuilder, AgentInputFactory } from './inputs';
@@ -46,7 +49,9 @@ export class Agent extends Entity {
 
     for (let i = 0; i < state.memories.length; i++) {
       if (!state.memories[i]) {
-        state.memories[i] = '';
+        state.memories[i] = {
+          memory: '',
+        };
       }
     }
   }
@@ -74,7 +79,9 @@ export class Agent extends Entity {
 
     for (let i = 0; i < state.memories.length; i++) {
       if (!state.memories[i]) {
-        state.memories[i] = '';
+        state.memories[i] = {
+          memory: '',
+        };
       }
     }
   }
@@ -159,11 +166,11 @@ export class Agent extends Entity {
     return context;
   }
 
-  public get memories(): string[] {
+  public get memories(): AgentMemory[] {
     return this.state.memories;
   }
 
-  public getEntityMemories(key: EntityKey): string[] | undefined {
+  public getEntityMemories(key: EntityKey): AgentEntityMemory[] | undefined {
     const entityState = this._entityStates[key];
     return entityState?.memories;
   }
@@ -220,7 +227,10 @@ export class Agent extends Entity {
       index,
       memory
     );
-    this.state.memories[index] = memory;
+    this.state.memories[index] = {
+      memory,
+      createdAt: new Date(),
+    };
   }
 
   public async setEntityMemory(
@@ -240,7 +250,10 @@ export class Agent extends Entity {
       index,
       memory
     );
-    entityState.memories[index] = memory;
+    entityState.memories[index] = {
+      memory,
+      createdAt: new Date(),
+    };
   }
 
   public async setExpression(expression: string): Promise<void> {

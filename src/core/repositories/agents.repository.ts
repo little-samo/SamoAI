@@ -29,12 +29,14 @@ export interface AgentsRepository {
   saveAgentStateMemory(
     state: AgentState,
     index: number,
-    memory: string
+    memory: string,
+    createdAt?: Date
   ): Promise<void>;
   saveAgentEntityState(state: AgentEntityState): Promise<void>;
   saveAgentEntityStateMemory(
     state: AgentEntityState,
     index: number,
-    memory: string
+    memory: string,
+    createdAt?: Date
   ): Promise<void>;
 }
