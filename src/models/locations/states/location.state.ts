@@ -10,7 +10,7 @@ export interface LocationState {
 
   pauseUpdateUntil: Date | null;
 
-  image?: string;
+  images: string[];
 
   updatedAt: Date;
   createdAt: Date;

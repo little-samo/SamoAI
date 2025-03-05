@@ -71,6 +71,7 @@ export class Location extends AsyncEventEmitter {
       agentIds: [],
       userIds: [],
       pauseUpdateUntil: null,
+      images: [],
       updatedAt: new Date(),
       createdAt: new Date(),
       dirty: true,

@@ -912,7 +912,8 @@ export class WorldManager extends AsyncEventEmitter {
 
   public async updateLocationImage(
     locationId: LocationId,
-    image: string
+    image: string,
+    index: number = 0
   ): Promise<void> {
     await this.withLocationLock(locationId, async () => {
       const locationState =
@@ -921,7 +922,11 @@ export class WorldManager extends AsyncEventEmitter {
         throw new Error(`Location ${locationId} not found`);
       }
 
-      locationState.image = image;
+      if (locationState.images.length <= index) {
+        locationState.images.push(image);
+      } else {
+        locationState.images[index] = image;
+      }
       locationState.dirty = true;
       await this.locationRepository.saveLocationState(locationState);
     });

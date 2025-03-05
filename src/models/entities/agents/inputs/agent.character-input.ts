@@ -3,7 +3,7 @@ import {
   LocationContext,
   LocationMessageContext,
 } from '@little-samo/samo-ai/models';
-import { LlmMessage } from '@little-samo/samo-ai/common';
+import { LlmMessage, LlmMessageContent } from '@little-samo/samo-ai/common';
 
 import { Agent } from '../agent';
 import {
@@ -256,18 +256,22 @@ As ${this.agent.name}, which tool will you use? Quote the source of each reasoni
       content: prompt,
     });
 
-    if (this.location.state.image) {
+    if (this.location.state.images.length > 0) {
+      const imageContents: LlmMessageContent[] = [];
+      for (const image of this.location.state.images) {
+        imageContents.push({
+          type: 'image',
+          image,
+        });
+      }
       messages.push({
         role: 'user',
         content: [
           {
             type: 'text',
-            text: `Location image:`,
+            text: `Location images:`,
           },
-          {
-            type: 'image',
-            image: this.location.state.image,
-          },
+          ...imageContents,
           {
             type: 'text',
             text: input,
