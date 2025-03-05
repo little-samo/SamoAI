@@ -20,9 +20,10 @@ export class AgentSendMessageAction extends AgentAction {
   }
 
   public override get parameters(): z.ZodSchema {
-    const messageLengthLimit =
+    let messageLengthLimit =
       this.location.meta.agentMessageLengthLimit ??
       this.location.meta.messageLengthLimit;
+    messageLengthLimit -= 15;
     switch (this.version) {
       case 1:
       default:
