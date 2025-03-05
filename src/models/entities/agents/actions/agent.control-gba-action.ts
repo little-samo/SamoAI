@@ -23,7 +23,7 @@ export class AgentControlGbaAction extends AgentAction {
     switch (this.version) {
       case 1:
       default:
-        return 'Control the GBA with the given inputs.';
+        return 'Control the GBA with the given inputs. Available inputs: Up (D-pad up), Down (D-pad down), Left (D-pad left), Right (D-pad right), A (A button - primary action/confirm), B (B button - secondary action/cancel).';
     }
   }
 
@@ -36,7 +36,9 @@ export class AgentControlGbaAction extends AgentAction {
             .array(z.nativeEnum(AgentControlGbaActionInput))
             .min(1)
             .max(8)
-            .describe('The inputs to control the GBA.'),
+            .describe(
+              'The inputs to control the GBA. Each input represents a single key press.'
+            ),
         });
     }
   }
