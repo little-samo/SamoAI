@@ -4,8 +4,6 @@ import {
   MessageParam,
   TextBlock,
   TextBlockParam,
-  Tool,
-  ToolUseBlock,
 } from '@anthropic-ai/sdk/resources/messages/messages';
 import zodToJsonSchema from 'zod-to-json-schema';
 
@@ -118,12 +116,6 @@ export class AnthropicService extends LlmService {
       }
     }
 
-    if (systemMessages.length > 0) {
-      systemMessages[systemMessages.length - 1].cache_control = {
-        type: 'ephemeral',
-      };
-    }
-
     return [systemMessages, userAssistantMessages];
   }
 
@@ -134,6 +126,12 @@ export class AnthropicService extends LlmService {
     try {
       const [systemMessages, userAssistantMessages] =
         this.llmMessagesToAnthropicMessages(messages);
+
+      if (systemMessages.length > 0) {
+        systemMessages[systemMessages.length - 1].cache_control = {
+          type: 'ephemeral',
+        };
+      }
 
       const request: MessageCreateParamsNonStreaming = {
         model: this.model,
@@ -170,22 +168,59 @@ export class AnthropicService extends LlmService {
     options?: LlmOptions
   ): Promise<LlmToolCall[]> {
     try {
+      const assistantMessage = messages.find(
+        (message) => message.role === 'assistant'
+      );
+      messages = messages.filter((message) => message.role !== 'assistant');
+
+      const prefill = `[
+  {
+    "name": "reasoning",
+    "arguments": {
+      "reasoning": "${assistantMessage?.content ?? ''}`;
+      messages.push({
+        role: 'assistant',
+        content: prefill,
+      });
+
       const [systemMessages, userAssistantMessages] =
         this.llmMessagesToAnthropicMessages(messages);
 
-      const toolMessages: Tool[] = tools.map((tool) => ({
-        name: tool.name,
-        description: tool.description,
-        input_schema: zodToJsonSchema(tool.parameters) as Tool.InputSchema,
-      }));
-      toolMessages[toolMessages.length - 1].cache_control = {
+      systemMessages.push({
+        type: 'text',
+        text: `The definition of the tools you have can be organized as a JSON Schema as follows. Clearly understand the definition and purpose of each tool.`,
+      });
+
+      for (const tool of tools) {
+        systemMessages.push({
+          type: 'text',
+          text: `name: ${tool.name}
+description: ${tool.description}
+parameters: ${JSON.stringify(zodToJsonSchema(tool.parameters))}`,
+        });
+      }
+
+      systemMessages.push({
+        type: 'text',
+        text: `Refer to the definitions of the available tools above, and output the tools you plan to use in JSON format. Begin by using the reasoning tool to perform a chain-of-thought analysis. Based on that analysis, select and use the necessary tools from the rest—following the guidance provided in the previous prompt.
+
+Response can only be in JSON format and must strictly follow the following format:
+[
+  {
+    "name": "tool_name",
+    "arguments": { ... }
+  },
+  ... // (Include additional tool calls as needed)
+]`,
+      });
+
+      systemMessages[systemMessages.length - 1].cache_control = {
         type: 'ephemeral',
       };
 
       const request: MessageCreateParamsNonStreaming = {
         model: this.model,
         system: systemMessages,
-        tools: toolMessages,
         messages: userAssistantMessages,
         max_tokens: options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS,
         temperature: options?.temperature ?? LlmService.DEFAULT_TEMPERATURE,
@@ -200,15 +235,9 @@ export class AnthropicService extends LlmService {
         throw new LlmInvalidContentError('Anthropic returned no content');
       }
 
-      return response.content
-        .filter((content) => content.type === 'tool_use')
-        .map((content) => {
-          const toolUse = content as ToolUseBlock;
-          return {
-            name: toolUse.name,
-            arguments: toolUse.input,
-          };
-        });
+      return JSON.parse(
+        (response.content[0] as TextBlock).text
+      ) as LlmToolCall[];
     } catch (error) {
       if (error instanceof AnthropicError) {
         if (error instanceof APIError) {

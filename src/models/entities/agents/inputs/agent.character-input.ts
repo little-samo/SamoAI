@@ -230,14 +230,13 @@ ${messages}
     ];
     let requiredActionsPrefill;
     if (requiredActions.length > 0) {
-      requiredActionsPrefill = ` I MUST use the following tools: ${requiredActions.join(', ')}, BEFORE using any other tools.`;
+      requiredActionsPrefill = ` In particular, I MUST use the following tools: ${requiredActions.join(', ')}.`;
     } else {
       requiredActionsPrefill = ``;
     }
 
-    return `As ${this.agent.name}, I will use CoT for the next tool use, employing all necessary tools—even multiple ones if needed. It is crucial to include all required tool calls in a single response while avoiding redundant ones. Remember, I only have one chance to respond.${requiredActionsPrefill}
-CoT:
-1.`;
+    return `As ${this.agent.name}, I will now analyze the given Rules, Location, Messages, Memories, and Contexts to determine which tools to use and how to use them.${requiredActionsPrefill}
+Step 1:`;
   }
 
   public override buildNextActions(): LlmMessage[] {
