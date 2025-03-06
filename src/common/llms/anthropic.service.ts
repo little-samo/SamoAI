@@ -177,7 +177,7 @@ export class AnthropicService extends LlmService {
   {
     "name": "reasoning",
     "arguments": {
-      "reasoning": "${assistantMessage?.content ?? ''}`;
+      "reasoning": "${assistantMessage?.content?.replace(/\n/g, '\\n') ?? ''}`;
       messages.push({
         role: 'assistant',
         content: prefill,
@@ -235,9 +235,8 @@ Response can only be in JSON format and must strictly follow the following forma
         throw new LlmInvalidContentError('Anthropic returned no content');
       }
 
-      return JSON.parse(
-        (response.content[0] as TextBlock).text
-      ) as LlmToolCall[];
+      const responseText = (response.content[0] as TextBlock).text;
+      return JSON.parse(prefill + responseText) as LlmToolCall[];
     } catch (error) {
       if (error instanceof AnthropicError) {
         if (error instanceof APIError) {
