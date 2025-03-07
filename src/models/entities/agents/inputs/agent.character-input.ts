@@ -263,6 +263,10 @@ As ${this.agent.name}, which tool will you use? Quote the source of each reasoni
       });
       for (let i = 0; i < this.location.state.images.length; ++i) {
         const image = this.location.state.images[i];
+        if (!image) {
+          continue;
+        }
+
         const imageDescription = this.location.meta.imageDescriptions[i];
         if (imageDescription) {
           contents.push({
