@@ -173,11 +173,7 @@ export class AnthropicService extends LlmService {
       );
       messages = messages.filter((message) => message.role !== 'assistant');
 
-      const prefill = `[
-  {
-    "name": "reasoning",
-    "arguments": {
-      "reasoning": "${assistantMessage?.content?.replace(/\n/g, '\\n') ?? ''}`;
+      const prefill = `[{"name":"reasoning","arguments":{"reasoning":"${assistantMessage?.content?.replace(/\n/g, '\\n') ?? ''}`;
       messages.push({
         role: 'assistant',
         content: prefill,
@@ -192,11 +188,15 @@ export class AnthropicService extends LlmService {
       });
 
       for (const tool of tools) {
+        const parameters = zodToJsonSchema(tool.parameters, {
+          target: 'openAi',
+        });
+        delete parameters['$schema'];
         systemMessages.push({
           type: 'text',
           text: `name: ${tool.name}
 description: ${tool.description}
-parameters: ${JSON.stringify(zodToJsonSchema(tool.parameters))}`,
+parameters: ${JSON.stringify(parameters)}`,
         });
       }
 
@@ -204,7 +204,7 @@ parameters: ${JSON.stringify(zodToJsonSchema(tool.parameters))}`,
         type: 'text',
         text: `Refer to the definitions of the available tools above, and output the tools you plan to use in JSON format. Begin by using the reasoning tool to perform a chain-of-thought analysis. Based on that analysis, select and use the necessary tools from the rest—following the guidance provided in the previous prompt.
 
-Response can only be in JSON format and must strictly follow the following format:
+Response can only be in minified JSON format and must strictly follow the following format:
 [
   {
     "name": "tool_name",
