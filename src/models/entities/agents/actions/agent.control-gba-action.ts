@@ -11,6 +11,8 @@ export enum AgentControlGbaActionInput {
   Right = 'Right',
   A = 'A',
   B = 'B',
+  START = 'START',
+  SELECT = 'SELECT',
 }
 
 export interface AgentControlGbaActionParameters {
@@ -23,7 +25,7 @@ export class AgentControlGbaAction extends AgentAction {
     switch (this.version) {
       case 1:
       default:
-        return 'Control the GBA with the given inputs. Available inputs: Up, Down, Left, Right, A (A button - primary action/confirm), B (B button - secondary action/cancel). You can input up to 8 keys sequentially at once, and for efficiency, try to input as many as possible at once.';
+        return 'Control the GBA with the given inputs. Available inputs: Up, Down, Left, Right, A, B, START, SELECT. You can input up to 8 keys sequentially at once, and for efficiency, try to input as many as possible at once.';
     }
   }
 
