@@ -23,7 +23,7 @@ export class AgentControlGbaAction extends AgentAction {
     switch (this.version) {
       case 1:
       default:
-        return 'Control the GBA with the given inputs. Available inputs: Up (D-pad up), Down (D-pad down), Left (D-pad left), Right (D-pad right), A (A button - primary action/confirm), B (B button - secondary action/cancel). You can input up to 8 keys sequentially at once, and for efficiency, try to input as many as possible at once.';
+        return 'Control the GBA with the given inputs. Available inputs: Up, Down, Left, Right, A (A button - primary action/confirm), B (B button - secondary action/cancel). You can input up to 8 keys sequentially at once, and for efficiency, try to input as many as possible at once.';
     }
   }
 
@@ -37,7 +37,7 @@ export class AgentControlGbaAction extends AgentAction {
             .min(1)
             .max(8)
             .describe(
-              'The inputs to control the GBA. Each input represents a single key press and they will be executed sequentially in the order provided.'
+              'The inputs to control the GBA. Each input represents a single key press and they will be executed sequentially in the order provided. Max length: 8 inputs.'
             ),
         });
     }

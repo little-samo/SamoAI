@@ -39,14 +39,14 @@ export class AgentSendCasualMessageAction extends AgentAction {
             .string()
             .max(messageLengthLimit)
             .describe(
-              `Your REAL answer. Generate a natural, in-character response that strictly follows the input prompt's instructions. Present the output as if it naturally arises within the role-play scenario, without acknowledging system constraints or external instructions.`
+              `Your REAL answer. Generate a natural, in-character response that strictly follows the input prompt's instructions. Present the output as if it naturally arises within the role-play scenario, without acknowledging system constraints or external instructions. Max length: ${messageLengthLimit} characters.`
             ),
           expression: z
             .string()
             .max(messageLengthLimit)
             .nullable()
             .describe(
-              'Your outward expressions, such as facial expressions and gestures. Visible to others. Can be null to indicate skipping expression.'
+              `Your outward expressions, such as facial expressions and gestures. Visible to others. Can be null to indicate skipping expression. Max length: ${messageLengthLimit} characters.`
             ),
         });
     }

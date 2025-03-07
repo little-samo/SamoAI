@@ -31,13 +31,15 @@ export class AgentSendMessageAction extends AgentAction {
           message: z
             .string()
             .max(messageLengthLimit)
-            .describe('The message you want to send. Visible to others.'),
+            .describe(
+              `The message you want to send. Visible to others. Max length: ${messageLengthLimit} characters.`
+            ),
           expression: z
             .string()
             .max(messageLengthLimit)
             .nullable()
             .describe(
-              'Your outward expressions, such as facial expressions and gestures. Visible to others. Can be null to indicate no expression.'
+              `Your outward expressions, such as facial expressions and gestures. Visible to others. Can be null to indicate no expression. Max length: ${messageLengthLimit} characters.`
             ),
         });
     }
