@@ -7,7 +7,9 @@ export class LocationUpdateForeverCore extends LocationCore {
 
   public async update(): Promise<number> {
     for (const entity of Object.values(this.location.entities)) {
-      await entity.update();
+      if (await entity.update()) {
+        return LocationUpdateForeverCore.UPDATE_INTERVAL;
+      }
     }
     return LocationUpdateForeverCore.UPDATE_INTERVAL;
   }
