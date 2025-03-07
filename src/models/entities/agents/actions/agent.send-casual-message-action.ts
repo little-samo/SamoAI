@@ -24,7 +24,7 @@ export class AgentSendCasualMessageAction extends AgentAction {
     let messageLengthLimit =
       this.location.meta.agentMessageLengthLimit ??
       this.location.meta.messageLengthLimit;
-    messageLengthLimit -= 15;
+    messageLengthLimit -= 50;
     switch (this.version) {
       case 1:
       default:
