@@ -183,15 +183,13 @@ parameters: ${JSON.stringify(parameters)}`,
         content: `Refer to the definitions of the available tools above, and output the tools you plan to use in JSON format. Begin by using the reasoning tool to perform a chain-of-thought analysis. Based on that analysis, select and use the necessary tools from the rest—following the guidance provided in the previous prompt.
 
 Response can only be in JSON format and must strictly follow the following format:
-{
-  "tool_calls": [
-    {
-      "name": "tool_name",
-      "arguments": { ... }
-    },
-    ... // (Include additional tool calls as needed)
-  ]
-}`,
+[
+  {
+    "name": "tool_name",
+    "arguments": { ... }
+  },
+  ... // (Include additional tool calls as needed)
+]`,
       });
 
       const request: ChatCompletionCreateParamsNonStreaming = {
@@ -199,7 +197,6 @@ Response can only be in JSON format and must strictly follow the following forma
         messages: [...systemMessages, ...userAssistantMessages],
         temperature: options?.temperature ?? LlmService.DEFAULT_TEMPERATURE,
         max_tokens: options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS,
-        response_format: { type: 'json_object' },
       };
       if (options?.verbose) {
         console.log(request);
@@ -217,9 +214,7 @@ Response can only be in JSON format and must strictly follow the following forma
       }
 
       try {
-        const toolCalls = JSON.parse(responseText)[
-          'tool_calls'
-        ] as LlmToolCall[];
+        const toolCalls = JSON.parse(responseText) as LlmToolCall[];
         return toolCalls;
       } catch (error) {
         console.error(error);
