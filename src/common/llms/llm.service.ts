@@ -38,6 +38,7 @@ export interface LlmOptions {
   maxTries?: number;
   retryDelay?: number;
   verbose?: boolean;
+  maxToolCalls?: number;
 }
 
 export abstract class LlmService {

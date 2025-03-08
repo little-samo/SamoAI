@@ -43,7 +43,7 @@ export class AnthropicService extends LlmService {
       try {
         const response = await this.client.messages.create(request);
         if (options.verbose) {
-          console.log(response);
+          console.log(JSON.stringify(response, null, 2));
           console.log(
             `Anthropic time taken: ${((Date.now() - startTime) / 1000).toFixed(2)}s`
           );
@@ -245,7 +245,7 @@ Response can only be in JSON format and must strictly follow the following forma
         return toolCalls;
       } catch (error) {
         console.error(error);
-        console.error(responseText);
+        console.error(prefill + responseText);
         return [];
       }
     } catch (error) {

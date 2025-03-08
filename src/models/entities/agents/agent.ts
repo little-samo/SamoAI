@@ -314,6 +314,7 @@ export class Agent extends Entity {
         maxTokens: this.meta.maxTokens,
         temperature: this.meta.temperature,
         verbose: ENV.DEBUG,
+        maxToolCalls: this.meta.actionLimit,
       }
     );
     for (const toolCall of toolCalls) {

@@ -1,9 +1,11 @@
 import { OpenAI } from 'openai';
-import { zodFunction } from 'openai/helpers/zod';
 import {
   ChatCompletionCreateParamsNonStreaming,
   ChatCompletionMessageParam,
 } from 'openai/resources/chat/completions';
+import zodToJsonSchema from 'zod-to-json-schema';
+import { zodResponseFormat } from 'openai/helpers/zod';
+import { z, ZodTypeAny } from 'zod';
 
 import { sleep } from '../utils';
 
@@ -37,7 +39,7 @@ export class OpenAIService extends LlmService {
       try {
         const response = await this.client.chat.completions.create(request);
         if (options.verbose) {
-          console.log(response);
+          console.log(JSON.stringify(response, null, 2));
           console.log(
             `OpenAI time taken: ${((Date.now() - startTime) / 1000).toFixed(2)}s`
           );
@@ -65,18 +67,21 @@ export class OpenAIService extends LlmService {
 
   private llmMessagesToOpenAiMessages(
     messages: LlmMessage[]
-  ): ChatCompletionMessageParam[] {
-    return messages.map((message) => {
+  ): [ChatCompletionMessageParam[], ChatCompletionMessageParam[]] {
+    const systemMessages: ChatCompletionMessageParam[] = [];
+    const userAssistantMessages: ChatCompletionMessageParam[] = [];
+
+    for (const message of messages) {
       switch (message.role) {
         case 'system':
+          systemMessages.push(message);
+          break;
         case 'assistant':
-          return {
-            role: message.role,
-            content: message.content,
-          };
+          userAssistantMessages.push(message);
+          break;
         case 'user':
           if (Array.isArray(message.content)) {
-            return {
+            userAssistantMessages.push({
               role: message.role,
               content: message.content.map((content) => {
                 switch (content.type) {
@@ -94,15 +99,19 @@ export class OpenAIService extends LlmService {
                     };
                 }
               }),
-            };
+            });
+            break;
           } else {
-            return {
+            userAssistantMessages.push({
               role: message.role,
               content: message.content,
-            };
+            });
+            break;
           }
       }
-    });
+    }
+
+    return [systemMessages, userAssistantMessages];
   }
 
   public async generate(
@@ -110,9 +119,12 @@ export class OpenAIService extends LlmService {
     options?: LlmOptions
   ): Promise<string> {
     try {
+      const [systemMessages, userAssistantMessages] =
+        this.llmMessagesToOpenAiMessages(messages);
+
       const request: ChatCompletionCreateParamsNonStreaming = {
         model: this.model,
-        messages: this.llmMessagesToOpenAiMessages(messages),
+        messages: [...systemMessages, ...userAssistantMessages],
         temperature: options?.temperature ?? LlmService.DEFAULT_TEMPERATURE,
         max_tokens: options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS,
       };
@@ -141,18 +153,79 @@ export class OpenAIService extends LlmService {
     options?: LlmOptions
   ): Promise<LlmToolCall[]> {
     try {
+      const assistantMessage = messages.find(
+        (message) => message.role === 'assistant'
+      );
+      messages = messages.filter((message) => message.role !== 'assistant');
+
+      const prefill = `[
+  {
+    "name": "reasoning",
+    "arguments": {
+      "reasoning": "${assistantMessage?.content?.replace(/\n/g, '\\n') ?? ''}`;
+      messages.push({
+        role: 'assistant',
+        content: prefill,
+      });
+
+      const [systemMessages, userAssistantMessages] =
+        this.llmMessagesToOpenAiMessages(messages);
+
+      systemMessages.push({
+        role: 'system',
+        content: `The definition of the tools you have can be organized as a JSON Schema as follows. Clearly understand the definition and purpose of each tool.`,
+      });
+
+      for (const tool of tools) {
+        const parameters = zodToJsonSchema(tool.parameters, {
+          target: 'openAi',
+        });
+        delete parameters['$schema'];
+        systemMessages.push({
+          role: 'system',
+          content: `name: ${tool.name}
+description: ${tool.description}
+parameters: ${JSON.stringify(parameters)}`,
+        });
+      }
+
+      systemMessages.push({
+        role: 'system',
+        content: `Refer to the definitions of the available tools above, and output the tools you plan to use in JSON format. Begin by using the reasoning tool to perform a chain-of-thought analysis. Based on that analysis, select and use the necessary tools from the rest—following the guidance provided in the previous prompt.
+
+Response can only be in JSON format and must strictly follow the following format:
+[
+  {
+    "name": "tool_name",
+    "arguments": { ... }
+  },
+  ... // (Include additional tool calls as needed)
+]`,
+      });
+
+      const toolCallSchemas: readonly [
+        ZodTypeAny,
+        ZodTypeAny,
+        ...ZodTypeAny[],
+      ] = tools.map(
+        (tool) =>
+          z.object({
+            name: z.literal(tool.name),
+            arguments: tool.parameters,
+          }) as ZodTypeAny
+      ) as [ZodTypeAny, ZodTypeAny, ...ZodTypeAny[]];
       const request: ChatCompletionCreateParamsNonStreaming = {
         model: this.model,
-        messages: this.llmMessagesToOpenAiMessages(messages),
-        tools: tools.map((tool) =>
-          zodFunction({
-            name: tool.name,
-            description: tool.description,
-            parameters: tool.parameters,
-          })
-        ),
+        messages: [...systemMessages, ...userAssistantMessages],
         temperature: options?.temperature ?? LlmService.DEFAULT_TEMPERATURE,
         max_tokens: options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS,
+        response_format: zodResponseFormat(
+          z
+            .array(z.union(toolCallSchemas))
+            .min(1)
+            .max(options?.maxToolCalls ?? 4),
+          'tool_calls'
+        ),
       };
       if (options?.verbose) {
         console.log(request);
@@ -163,16 +236,20 @@ export class OpenAIService extends LlmService {
       if (response.choices.length === 0) {
         throw new LlmInvalidContentError('OpenAI returned no choices');
       }
-      if (!response.choices[0].message.tool_calls) {
-        throw new LlmInvalidContentError('OpenAI returned no tool calls');
+
+      const responseText = response.choices[0].message.content;
+      if (responseText === null) {
+        throw new LlmInvalidContentError('OpenAI returned no content');
       }
 
-      return response.choices[0].message.tool_calls.map((toolCall) => {
-        return {
-          name: toolCall.function.name,
-          arguments: JSON.parse(toolCall.function.arguments),
-        };
-      });
+      try {
+        const toolCalls = JSON.parse(responseText) as LlmToolCall[];
+        return toolCalls;
+      } catch (error) {
+        console.error(error);
+        console.error(responseText);
+        return [];
+      }
     } catch (error) {
       if (error instanceof OpenAI.APIError) {
         throw new LlmApiError(error.status, error.message);
