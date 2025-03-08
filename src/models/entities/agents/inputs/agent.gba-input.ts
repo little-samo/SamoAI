@@ -1,5 +1,4 @@
-import { AgentCharacterInputBuilder } from '@little-samo/samo-ai/models';
-
+import { AgentCharacterInputBuilder } from './agent.character-input';
 import { RegisterAgentInput } from './agent.input-decorator';
 
 @RegisterAgentInput('gba')
