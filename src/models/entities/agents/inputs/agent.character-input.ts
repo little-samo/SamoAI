@@ -223,7 +223,7 @@ ${messages}
     return contexts.map((c) => c.trim()).join('\n\n');
   }
 
-  private buildPrefill(): string {
+  protected buildPrefill(): string {
     const requiredActions = [
       ...this.agent.meta.requiredActions,
       ...this.location.meta.requiredActions,
