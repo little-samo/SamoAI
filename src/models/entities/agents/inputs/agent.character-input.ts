@@ -241,10 +241,21 @@ Step 1:`;
 
   public override buildNextActions(): LlmMessage[] {
     const prompt = this.buildPrompt();
+
+    const requiredActions = [
+      ...this.agent.meta.requiredActions,
+      ...this.location.meta.requiredActions,
+    ];
+    let requiredActionsPrefill;
+    if (requiredActions.length > 0) {
+      requiredActionsPrefill = ` In particular, I MUST use the following tools: ${requiredActions.join(', ')}.`;
+    } else {
+      requiredActionsPrefill = ``;
+    }
     const input = `
 ${this.buildContext()}
 
-As ${this.agent.name}, which tool will you use? Quote the source of each reasoning step.
+As ${this.agent.name}, which tool will you use? Quote the source of each reasoning step.${requiredActionsPrefill} Use all necessary tools at once in this response.
 `.trim();
 
     const prefill = this.buildPrefill();
