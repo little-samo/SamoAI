@@ -785,6 +785,10 @@ export class WorldManager extends AsyncEventEmitter {
       await options.preAction(location);
     }
 
+    location.on('agentExecuteNextActions', async (agent: Agent) => {
+      await this.emitAsync('locationAgentExecution', locationId, agent);
+    });
+
     location.on('messageAdded', async (message: LocationMessage) => {
       await this.emitAsync('locationMessageAdded', locationId, message);
     });
