@@ -54,8 +54,21 @@ export class AgentControlGbaAction extends AgentAction {
       );
     }
 
+    const inputs = [];
+    for (const input of action.inputs.slice(0, 4)) {
+      inputs.push(input);
+      if (
+        input === AgentControlGbaActionInput.A ||
+        input === AgentControlGbaActionInput.B ||
+        input === AgentControlGbaActionInput.START ||
+        input === AgentControlGbaActionInput.SELECT
+      ) {
+        break;
+      }
+    }
+
     await this.location.addAgentMessage(this.agent, {
-      action: `CONTROL_GBA:${action.inputs.join(',')}`,
+      action: `CONTROL_GBA:${inputs.join(',')}`,
     });
   }
 }
