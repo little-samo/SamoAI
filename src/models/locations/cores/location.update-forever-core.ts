@@ -1,3 +1,5 @@
+import { shuffle } from '@little-samo/samo-ai';
+
 import { RegisterLocationCore } from './location.core-decorator';
 import { LocationCore } from './location.core';
 
@@ -6,7 +8,9 @@ export class LocationUpdateForeverCore extends LocationCore {
   public static readonly UPDATE_INTERVAL = 3000; // 3 seconds
 
   public async update(): Promise<number> {
-    for (const entity of Object.values(this.location.entities)) {
+    const entities = Object.values(this.location.entities);
+    shuffle(entities);
+    for (const entity of entities) {
       if (await entity.update()) {
         return LocationUpdateForeverCore.UPDATE_INTERVAL;
       }
