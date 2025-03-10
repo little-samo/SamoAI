@@ -2,6 +2,7 @@ export interface LocationMeta {
   core: string;
   description: string;
   imageDescriptions: string[];
+  renderingDescription?: string;
 
   messageLimit: number;
   messageLengthLimit: number;

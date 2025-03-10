@@ -312,7 +312,7 @@ As ${this.agent.name}, which tool will you use? Quote the source of each reasoni
     if (this.location.state.rendering) {
       userContents.push({
         type: 'text',
-        text: `Location rendering:
+        text: `Location rendering:${this.location.meta.renderingDescription ? ` ${this.location.meta.renderingDescription}` : ''}:
 ${this.location.state.rendering}`,
       });
     }
