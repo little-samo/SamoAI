@@ -288,7 +288,7 @@ export class WorldManager extends AsyncEventEmitter {
     options: {
       targetEntityType?: EntityType;
       targetEntityId?: EntityId;
-      slice?: number;
+      maxMessages?: number;
     } = {}
   ): Promise<void> {
     const locationMessage: LocationMessage = {
@@ -304,7 +304,7 @@ export class WorldManager extends AsyncEventEmitter {
     await this.locationRepository.addLocationMessage(
       locationId,
       locationMessage,
-      options.slice
+      options.maxMessages
     );
   }
 
@@ -315,7 +315,7 @@ export class WorldManager extends AsyncEventEmitter {
     greeting: string,
     createdAt?: Date,
     options: {
-      slice?: number;
+      maxMessages?: number;
     } = {}
   ): Promise<void> {
     const locationMessagesState =
@@ -336,7 +336,7 @@ export class WorldManager extends AsyncEventEmitter {
       await this.locationRepository.addLocationMessage(
         locationId,
         message,
-        options.slice
+        options.maxMessages
       );
     }
   }
@@ -348,7 +348,7 @@ export class WorldManager extends AsyncEventEmitter {
     action: string,
     createdAt?: Date,
     options: {
-      slice?: number;
+      maxMessages?: number;
     } = {}
   ): Promise<void> {
     const message: LocationMessage = {
@@ -363,7 +363,7 @@ export class WorldManager extends AsyncEventEmitter {
     await this.locationRepository.addLocationMessage(
       locationId,
       message,
-      options.slice
+      options.maxMessages
     );
   }
 
@@ -376,7 +376,7 @@ export class WorldManager extends AsyncEventEmitter {
     options: {
       targetEntityType?: EntityType;
       targetEntityId?: EntityId;
-      slice?: number;
+      maxMessages?: number;
     } = {}
   ): Promise<void> {
     const locationMessage: LocationMessage = {
@@ -392,7 +392,7 @@ export class WorldManager extends AsyncEventEmitter {
     await this.locationRepository.addLocationMessage(
       locationId,
       locationMessage,
-      options.slice
+      options.maxMessages
     );
   }
 
@@ -401,7 +401,7 @@ export class WorldManager extends AsyncEventEmitter {
     message: string,
     createdAt?: Date,
     options: {
-      slice?: number;
+      maxMessages?: number;
     } = {}
   ): Promise<void> {
     const locationMessage: LocationMessage = {
@@ -415,7 +415,7 @@ export class WorldManager extends AsyncEventEmitter {
     await this.locationRepository.addLocationMessage(
       locationId,
       locationMessage,
-      options.slice
+      options.maxMessages
     );
   }
 
