@@ -308,6 +308,15 @@ As ${this.agent.name}, which tool will you use? Quote the source of each reasoni
         image,
       });
     }
+
+    if (this.location.state.rendering) {
+      userContents.push({
+        type: 'text',
+        text: `Location rendering:
+${this.location.state.rendering}`,
+      });
+    }
+
     messages.push({
       role: 'user',
       content: userContents,
