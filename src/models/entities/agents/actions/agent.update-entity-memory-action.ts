@@ -32,7 +32,9 @@ export class AgentUpdateEntityMemoryAction extends AgentAction {
             .number()
             .min(0)
             .max(this.agent.meta.entityMemoryLimit - 1)
-            .describe('The index of the memory to update.'),
+            .describe(
+              'The index of the memory to update. If memory becomes full, overwrite the least important memory.'
+            ),
           memory: z
             .string()
             .max(this.agent.meta.entityMemoryLengthLimit)
