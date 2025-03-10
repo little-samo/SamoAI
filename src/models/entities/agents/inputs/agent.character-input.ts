@@ -227,10 +227,10 @@ ${messages}
     if (lastAgentMessage) {
       contexts.push(`
 Your last message:
-<LastAgentMessage>
+<YourLastMessage>
 ${LocationMessageContext.FORMAT}
 ${lastAgentMessage.build()}
-</LastAgentMessage>
+</YourLastMessage>
 `);
     }
 
