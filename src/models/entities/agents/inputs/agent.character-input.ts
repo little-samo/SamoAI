@@ -26,6 +26,7 @@ export class AgentCharacterInputBuilder extends AgentInputBuilder {
     const prompts: string[] = [];
     prompts.push(`
 You are an AI Agent named "${this.agent.name}" and you are role-playing as a specific character in a particular location. Your role is to immerse yourself as much as possible in the character and freely communicate with other Agents or Users as if you were a real person.
+As ${this.agent.name}, which tools will you use to fulfill your role while following all the rules below? Quote the source of each reasoning step.
 `);
 
     prompts.push(`
@@ -101,16 +102,16 @@ The current time is ${Math.floor(Date.now() / 1000)}.
 
     const locationContext = this.location.context;
     contexts.push(`
-<Location>
 You are currently in the following location:
+<Location>
 ${LocationContext.FORMAT}
 ${locationContext.build()}
 </Location>
 `);
 
     contexts.push(`
-<YourContext>
 You are currently in the following context:
+<YourContext>
 ${AgentContext.FORMAT}
 ${this.agent.context.build()}
 </YourContext>
@@ -149,8 +150,8 @@ ${otherAgentMemories
       otherAgentContexts.push(otherAgentContext);
     }
     contexts.push(`
-<OtherAgents>
 Other agents in the location:
+<OtherAgents>
 ${AgentContext.FORMAT}
 ${otherAgentContexts.join('\n')}
 </OtherAgents>
@@ -186,8 +187,8 @@ ${userMemories
       usersContexts.push(userContext);
     }
     contexts.push(`
-<OtherUsers>
 Other users in the location:
+<OtherUsers>
 ${UserContext.FORMAT}
 ${usersContexts.join('\n')}
 </OtherUsers>
@@ -213,12 +214,25 @@ ${yourMemories}
 
     const messages = locationContext.messages.map((m) => m.build()).join('\n');
     contexts.push(`
-<LocationMessages>
 Last ${this.location.meta.messageLimit} messages in the location:
+<LocationMessages>
 ${LocationMessageContext.FORMAT}
 ${messages}
 </LocationMessages>
 `);
+
+    const lastAgentMessage = locationContext.messages.find(
+      (m) => m.key === this.agent.key
+    );
+    if (lastAgentMessage) {
+      contexts.push(`
+Your last message:
+<LastAgentMessage>
+${LocationMessageContext.FORMAT}
+${lastAgentMessage.build()}
+</LastAgentMessage>
+`);
+    }
 
     return contexts.map((c) => c.trim()).join('\n\n');
   }

@@ -16,7 +16,7 @@ export class AgentGbaInputBuilder extends AgentCharacterInputBuilder {
     }
 
     return `As ${this.agent.name}, I will now analyze the given Rules, Location, Messages, Memories, and Contexts to determine which tools to use and how to use them.${requiredActionsPrefill}
-In particular, review the last play strategy and its outcome, then use that reflection to determine the next strategy.
+I will review the last play strategy and its outcome, then use that reflection to determine the next strategy.
 Step 1:`;
   }
 }
