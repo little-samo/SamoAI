@@ -280,45 +280,38 @@ As ${this.agent.name}, which tool will you use? Quote the source of each reasoni
       content: prompt,
     });
 
-    if (this.location.state.images.length > 0) {
-      const contents: LlmMessageContent[] = [];
-      contents.push({
-        type: 'text',
-        text: input,
-      });
-      for (let i = 0; i < this.location.state.images.length; ++i) {
-        const image = this.location.state.images[i];
-        if (!image) {
-          continue;
-        }
+    const userContents: LlmMessageContent[] = [];
+    userContents.push({
+      type: 'text',
+      text: input,
+    });
+    for (let i = 0; i < this.location.state.images.length; ++i) {
+      const image = this.location.state.images[i];
+      if (!image) {
+        continue;
+      }
 
-        const imageDescription = this.location.meta.imageDescriptions[i];
-        if (imageDescription) {
-          contents.push({
-            type: 'text',
-            text: imageDescription,
-          });
-        } else {
-          contents.push({
-            type: 'text',
-            text: `Location image ${i + 1}:`,
-          });
-        }
-        contents.push({
-          type: 'image',
-          image,
+      const imageDescription = this.location.meta.imageDescriptions[i];
+      if (imageDescription) {
+        userContents.push({
+          type: 'text',
+          text: `Location image ${i + 1}: ${imageDescription}`,
+        });
+      } else {
+        userContents.push({
+          type: 'text',
+          text: `Location image ${i + 1}:`,
         });
       }
-      messages.push({
-        role: 'user',
-        content: contents,
-      });
-    } else {
-      messages.push({
-        role: 'user',
-        content: input,
+      userContents.push({
+        type: 'image',
+        image,
       });
     }
+    messages.push({
+      role: 'user',
+      content: userContents,
+    });
 
     messages.push({
       role: 'assistant',
