@@ -288,6 +288,7 @@ export class WorldManager extends AsyncEventEmitter {
     options: {
       targetEntityType?: EntityType;
       targetEntityId?: EntityId;
+      slice?: number;
     } = {}
   ): Promise<void> {
     const locationMessage: LocationMessage = {
@@ -302,7 +303,8 @@ export class WorldManager extends AsyncEventEmitter {
     };
     await this.locationRepository.addLocationMessage(
       locationId,
-      locationMessage
+      locationMessage,
+      options.slice
     );
   }
 
@@ -311,7 +313,10 @@ export class WorldManager extends AsyncEventEmitter {
     agentId: AgentId,
     name: string,
     greeting: string,
-    createdAt?: Date
+    createdAt?: Date,
+    options: {
+      slice?: number;
+    } = {}
   ): Promise<void> {
     const locationMessagesState =
       await this.locationRepository.getOrCreateLocationMessagesState(
@@ -328,7 +333,11 @@ export class WorldManager extends AsyncEventEmitter {
         updatedAt: new Date(),
       };
 
-      await this.locationRepository.addLocationMessage(locationId, message);
+      await this.locationRepository.addLocationMessage(
+        locationId,
+        message,
+        options.slice
+      );
     }
   }
 
@@ -337,7 +346,10 @@ export class WorldManager extends AsyncEventEmitter {
     agentId: AgentId,
     name: string,
     action: string,
-    createdAt?: Date
+    createdAt?: Date,
+    options: {
+      slice?: number;
+    } = {}
   ): Promise<void> {
     const message: LocationMessage = {
       entityType: EntityType.Agent,
@@ -348,7 +360,11 @@ export class WorldManager extends AsyncEventEmitter {
       updatedAt: new Date(),
     };
 
-    await this.locationRepository.addLocationMessage(locationId, message);
+    await this.locationRepository.addLocationMessage(
+      locationId,
+      message,
+      options.slice
+    );
   }
 
   public async addLocationUserMessage(
@@ -360,6 +376,7 @@ export class WorldManager extends AsyncEventEmitter {
     options: {
       targetEntityType?: EntityType;
       targetEntityId?: EntityId;
+      slice?: number;
     } = {}
   ): Promise<void> {
     const locationMessage: LocationMessage = {
@@ -374,14 +391,18 @@ export class WorldManager extends AsyncEventEmitter {
     };
     await this.locationRepository.addLocationMessage(
       locationId,
-      locationMessage
+      locationMessage,
+      options.slice
     );
   }
 
   public async addLocationSystemMessage(
     locationId: LocationId,
     message: string,
-    createdAt?: Date
+    createdAt?: Date,
+    options: {
+      slice?: number;
+    } = {}
   ): Promise<void> {
     const locationMessage: LocationMessage = {
       entityType: EntityType.System,
@@ -393,7 +414,8 @@ export class WorldManager extends AsyncEventEmitter {
     };
     await this.locationRepository.addLocationMessage(
       locationId,
-      locationMessage
+      locationMessage,
+      options.slice
     );
   }
 
