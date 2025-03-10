@@ -279,6 +279,19 @@ export class WorldManager extends AsyncEventEmitter {
     return users;
   }
 
+  public async addLoationMessage(
+    locationId: LocationId,
+    message: LocationMessage,
+    maxMessages?: number
+  ): Promise<void> {
+    await this.locationRepository.addLocationMessage(
+      locationId,
+      message,
+      maxMessages
+    );
+    await this.emitAsync('locationMessageAdded', locationId, message);
+  }
+
   public async addLocationAgentMessage(
     locationId: LocationId,
     agentId: AgentId,
@@ -301,7 +314,7 @@ export class WorldManager extends AsyncEventEmitter {
       createdAt: createdAt ?? new Date(),
       updatedAt: new Date(),
     };
-    await this.locationRepository.addLocationMessage(
+    await this.addLoationMessage(
       locationId,
       locationMessage,
       options.maxMessages
@@ -333,11 +346,7 @@ export class WorldManager extends AsyncEventEmitter {
         updatedAt: new Date(),
       };
 
-      await this.locationRepository.addLocationMessage(
-        locationId,
-        message,
-        options.maxMessages
-      );
+      await this.addLoationMessage(locationId, message, options.maxMessages);
     }
   }
 
@@ -360,11 +369,7 @@ export class WorldManager extends AsyncEventEmitter {
       updatedAt: new Date(),
     };
 
-    await this.locationRepository.addLocationMessage(
-      locationId,
-      message,
-      options.maxMessages
-    );
+    await this.addLoationMessage(locationId, message, options.maxMessages);
   }
 
   public async addLocationUserMessage(
@@ -389,7 +394,7 @@ export class WorldManager extends AsyncEventEmitter {
       createdAt: createdAt ?? new Date(),
       updatedAt: new Date(),
     };
-    await this.locationRepository.addLocationMessage(
+    await this.addLoationMessage(
       locationId,
       locationMessage,
       options.maxMessages
@@ -412,7 +417,7 @@ export class WorldManager extends AsyncEventEmitter {
       createdAt: createdAt ?? new Date(),
       updatedAt: new Date(),
     };
-    await this.locationRepository.addLocationMessage(
+    await this.addLoationMessage(
       locationId,
       locationMessage,
       options.maxMessages
@@ -460,20 +465,19 @@ export class WorldManager extends AsyncEventEmitter {
       async (location: Location, message: LocationMessage) => {
         if (options.handleSave) {
           void options.handleSave(
-            this.locationRepository.addLocationMessage(
+            this.addLoationMessage(
               location.id,
               message,
               location.meta.messageLimit
             )
           );
         } else {
-          void this.locationRepository.addLocationMessage(
+          void this.addLoationMessage(
             location.id,
             message,
             location.meta.messageLimit
           );
         }
-        await this.emitAsync('locationMessageAdded', locationId, message);
       }
     );
 
