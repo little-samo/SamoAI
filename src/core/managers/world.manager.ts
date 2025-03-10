@@ -107,7 +107,7 @@ export class WorldManager extends AsyncEventEmitter {
     }
   }
 
-  private async getLocation(
+  public async getLocation(
     locationId: LocationId,
     options: {
       defaultMeta?: LocationMeta;
