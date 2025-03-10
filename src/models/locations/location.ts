@@ -62,38 +62,7 @@ export class Location extends AsyncEventEmitter {
 
   private readonly _entityStates: Record<EntityKey, LocationEntityState> = {};
 
-  public static createState(
-    model: LocationModel,
-    _meta: LocationMeta
-  ): LocationState {
-    const state: LocationState = {
-      locationId: model.id as LocationId,
-      agentIds: [],
-      userIds: [],
-      pauseUpdateUntil: null,
-      images: [],
-      updatedAt: new Date(),
-      createdAt: new Date(),
-      dirty: true,
-    };
-    return state;
-  }
-
   public static fixState(_state: LocationState, _meta: LocationMeta): void {}
-
-  public static createMessagesState(
-    model: LocationModel,
-    _meta: LocationMeta
-  ): LocationMessagesState {
-    const state: LocationMessagesState = {
-      locationId: model.id as LocationId,
-      messages: [],
-      updatedAt: new Date(),
-      createdAt: new Date(),
-      dirty: true,
-    };
-    return state;
-  }
 
   public static fixMessagesState(
     _state: LocationMessagesState,
@@ -110,11 +79,11 @@ export class Location extends AsyncEventEmitter {
   public constructor(
     public readonly model: LocationModel,
     options: {
-      state?: null | LocationState;
-      messagesState?: null | LocationMessagesState;
+      state: LocationState;
+      messagesState: LocationMessagesState;
       apiKeys?: LlmApiKeyModel[];
       defaultMeta?: LocationMeta;
-    } = {}
+    }
   ) {
     super();
     this.id = model.id as LocationId;
@@ -127,14 +96,11 @@ export class Location extends AsyncEventEmitter {
 
     const { state, messagesState, apiKeys } = options;
 
-    const initialState = state ?? Location.createState(model, this.meta);
-    Location.fixState(initialState, this.meta);
-    this.state = initialState;
+    Location.fixState(state, this.meta);
+    this.state = state;
 
-    const initialMessagesState =
-      messagesState ?? Location.createMessagesState(model, this.meta);
-    Location.fixMessagesState(initialMessagesState, this.meta);
-    this.messagesState = initialMessagesState;
+    Location.fixMessagesState(messagesState, this.meta);
+    this.messagesState = messagesState;
 
     this.core = LocationCoreFactory.createCore(this);
 

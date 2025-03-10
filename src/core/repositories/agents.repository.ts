@@ -11,30 +11,31 @@ import { AgentState } from '@little-samo/samo-ai/models/entities/agents/states/a
 export interface AgentsRepository {
   getAgentModel(agentId: AgentId): Promise<AgentModel>;
   getAgentModels(agentIds: AgentId[]): Promise<Record<AgentId, AgentModel>>;
-  getAgentState(agentId: AgentId): Promise<null | AgentState>;
-  getAgentStates(agentIds: AgentId[]): Promise<Record<AgentId, AgentState>>;
-  getAgentEntityState(
+  getOrCreateAgentState(agentId: AgentId): Promise<AgentState>;
+  getOrCreateAgentStates(
+    agentIds: AgentId[]
+  ): Promise<Record<AgentId, AgentState>>;
+  getOrCreateAgentEntityState(
     agentId: AgentId,
     type: EntityType,
     id: EntityId
-  ): Promise<null | AgentEntityState>;
-  getAgentEntityStates(
+  ): Promise<AgentEntityState>;
+  getOrCreateAgentEntityStates(
     agentIds: AgentId[],
     targetAgentIds: AgentId[],
     targetUserIds: UserId[]
   ): Promise<Record<AgentId, AgentEntityState[]>>;
 
-  saveAgentModel(model: AgentModel): Promise<AgentModel>;
-  saveAgentState(state: AgentState): Promise<void>;
-  saveAgentStateMemory(
-    state: AgentState,
+  updateAgentStateMemory(
+    agentId: AgentId,
     index: number,
     memory: string,
     createdAt?: Date
   ): Promise<void>;
-  saveAgentEntityState(state: AgentEntityState): Promise<void>;
-  saveAgentEntityStateMemory(
-    state: AgentEntityState,
+  updateAgentEntityStateMemory(
+    agentId: AgentId,
+    targetType: EntityType,
+    targetId: EntityId,
     index: number,
     memory: string,
     createdAt?: Date

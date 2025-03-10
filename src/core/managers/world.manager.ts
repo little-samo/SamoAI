@@ -4,17 +4,13 @@ import {
   AgentEntityState,
   AgentId,
   AgentState,
-  DEFAULT_LOCATION_META,
   EntityId,
-  EntityKey,
   EntityType,
   Location,
   LocationEntityState,
   LocationId,
   LocationMessage,
-  LocationMessagesState,
   LocationMeta,
-  LocationState,
   User,
   UserId,
 } from '@little-samo/samo-ai/models';
@@ -35,13 +31,8 @@ interface UpdateLocationOptions {
 }
 
 export class WorldManager extends AsyncEventEmitter {
-  private static readonly LOCK_TTL = 5000; // 5 seconds
-  private static readonly LOCATION_LOCK_TTL = 30000; // 30 seconds
-  private static readonly LOCATION_LOCK_PREFIX = 'lock:location:';
-  private static readonly LOCATION_ENTITY_LOCK_PREFIX = 'lock:location-entity:';
-  private static readonly AGENT_LOCK_PREFIX = 'lock:agent:';
-  private static readonly AGENT_ENTITY_LOCK_PREFIX = 'lock:agent-entity:';
-  private static readonly USER_LOCK_PREFIX = 'lock:user:';
+  private static readonly LOCATION_UPDATE_LOCK_TTL = 30000; // 30 seconds
+  private static readonly LOCATION_UPDATE_LOCK_PREFIX = 'lock:location-update:';
 
   private static _instance: WorldManager;
 
@@ -68,21 +59,21 @@ export class WorldManager extends AsyncEventEmitter {
 
   private constructor(
     private readonly redisLockService: RedisLockService,
-    private readonly locationRepository: LocationsRepository,
-    private readonly agentRepository: AgentsRepository,
-    private readonly userRepository: UsersRepository
+    public readonly locationRepository: LocationsRepository,
+    public readonly agentRepository: AgentsRepository,
+    public readonly userRepository: UsersRepository
   ) {
     super();
   }
 
-  private async withLocationLock<T>(
+  private async withLocationUpdateLock<T>(
     locationId: LocationId,
     operation: () => Promise<T>
   ): Promise<T> {
-    const lockKey = `${WorldManager.LOCATION_LOCK_PREFIX}${locationId}`;
+    const lockKey = `${WorldManager.LOCATION_UPDATE_LOCK_PREFIX}${locationId}`;
     const lock = await this.redisLockService.acquireLock(
       lockKey,
-      WorldManager.LOCATION_LOCK_TTL
+      WorldManager.LOCATION_UPDATE_LOCK_TTL
     );
     if (!lock) {
       throw new Error(`Failed to lock location ${locationId}`);
@@ -94,103 +85,20 @@ export class WorldManager extends AsyncEventEmitter {
     }
   }
 
-  private async withLocationLockNoRetry<T>(
+  private async withLocationUpdateLockNoRetry<T>(
     locationId: LocationId,
     operation: () => Promise<T>
   ): Promise<T | null> {
-    const lockKey = `${WorldManager.LOCATION_LOCK_PREFIX}${locationId}`;
+    const lockKey = `${WorldManager.LOCATION_UPDATE_LOCK_PREFIX}${locationId}`;
     const lock = await this.redisLockService.acquireLockNoRetry(
       lockKey,
-      WorldManager.LOCATION_LOCK_TTL
+      WorldManager.LOCATION_UPDATE_LOCK_TTL
     );
     if (!lock) {
       if (ENV.DEBUG) {
         console.log(`Failed to lock location ${locationId} (no retry)`);
       }
       return null;
-    }
-    try {
-      return await operation();
-    } finally {
-      await lock.release();
-    }
-  }
-
-  private async withLocationEntityLock<T>(
-    locationId: LocationId,
-    targetType: EntityType,
-    targetId: EntityId,
-    operation: () => Promise<T>
-  ): Promise<T> {
-    const lockKey = `${WorldManager.LOCATION_ENTITY_LOCK_PREFIX}${locationId}:${targetType}:${targetId}`;
-    const lock = await this.redisLockService.acquireLock(
-      lockKey,
-      WorldManager.LOCK_TTL
-    );
-    if (!lock) {
-      throw new Error(
-        `Failed to lock location entity ${locationId}:${targetType}:${targetId}`
-      );
-    }
-    try {
-      return await operation();
-    } finally {
-      await lock.release();
-    }
-  }
-
-  private async withAgentLock<T>(
-    agentId: AgentId,
-    operation: () => Promise<T>
-  ): Promise<T> {
-    const lockKey = `${WorldManager.AGENT_LOCK_PREFIX}${agentId}`;
-    const lock = await this.redisLockService.acquireLock(
-      lockKey,
-      WorldManager.LOCK_TTL
-    );
-    if (!lock) {
-      throw new Error(`Failed to lock agent ${agentId}`);
-    }
-    try {
-      return await operation();
-    } finally {
-      await lock.release();
-    }
-  }
-
-  private async withAgentEntityLock<T>(
-    agentId: AgentId,
-    type: EntityType,
-    id: EntityId,
-    operation: () => Promise<T>
-  ): Promise<T> {
-    const entityKey = `${type}:${id}` as EntityKey;
-    const lockKey = `${WorldManager.AGENT_ENTITY_LOCK_PREFIX}${agentId}:${entityKey}`;
-    const lock = await this.redisLockService.acquireLock(
-      lockKey,
-      WorldManager.LOCK_TTL
-    );
-    if (!lock) {
-      throw new Error(`Failed to lock agent entity ${agentId}:${entityKey}`);
-    }
-    try {
-      return await operation();
-    } finally {
-      await lock.release();
-    }
-  }
-
-  private async withUserLock<T>(
-    userId: UserId,
-    operation: () => Promise<T>
-  ): Promise<T> {
-    const lockKey = `${WorldManager.USER_LOCK_PREFIX}${userId}`;
-    const lock = await this.redisLockService.acquireLock(
-      lockKey,
-      WorldManager.LOCK_TTL
-    );
-    if (!lock) {
-      throw new Error(`Failed to lock user ${userId}`);
     }
     try {
       return await operation();
@@ -213,9 +121,11 @@ export class WorldManager extends AsyncEventEmitter {
     const locationModel =
       await this.locationRepository.getLocationModel(locationId);
     const locationState =
-      await this.locationRepository.getLocationState(locationId);
+      await this.locationRepository.getOrCreateLocationState(locationId);
     const locationMessagesState =
-      await this.locationRepository.getLocationMessagesState(locationId);
+      await this.locationRepository.getOrCreateLocationMessagesState(
+        locationId
+      );
 
     const location = new Location(locationModel, {
       state: locationState,
@@ -286,53 +196,17 @@ export class WorldManager extends AsyncEventEmitter {
       location.addEntity(user, false);
     }
 
-    const entityStates = await this.locationRepository.getLocationEntityStates(
-      locationId,
-      location.state.agentIds,
-      location.state.userIds
-    );
+    const entityStates =
+      await this.locationRepository.getOrCreateLocationEntityStates(
+        locationId,
+        location.state.agentIds,
+        location.state.userIds
+      );
     for (const entityState of entityStates) {
       location.addEntityState(entityState);
     }
 
     return location;
-  }
-
-  private async getOrCreateLocationState(
-    locationId: LocationId
-  ): Promise<LocationState> {
-    let locationState =
-      await this.locationRepository.getLocationState(locationId);
-    if (!locationState) {
-      const locationModel =
-        await this.locationRepository.getLocationModel(locationId);
-      const locationMeta = {
-        ...DEFAULT_LOCATION_META,
-        ...(locationModel.meta as object),
-      };
-      locationState = Location.createState(locationModel, locationMeta);
-    }
-    return locationState;
-  }
-
-  private async getOrCreateLocationMessagesState(
-    locationId: LocationId
-  ): Promise<LocationMessagesState> {
-    let locationMessagesState =
-      await this.locationRepository.getLocationMessagesState(locationId);
-    if (!locationMessagesState) {
-      const locationModel =
-        await this.locationRepository.getLocationModel(locationId);
-      const locationMeta = {
-        ...DEFAULT_LOCATION_META,
-        ...(locationModel.meta as object),
-      };
-      locationMessagesState = Location.createMessagesState(
-        locationModel,
-        locationMeta
-      );
-    }
-    return locationMessagesState;
   }
 
   private async getAgents(
@@ -343,12 +217,14 @@ export class WorldManager extends AsyncEventEmitter {
     const agentModels = await this.agentRepository.getAgentModels(agentIds);
     agentIds = agentIds.filter((agentId) => agentModels[agentId]?.isActive);
 
-    const agentStates = await this.agentRepository.getAgentStates(agentIds);
-    const agentEntityStates = await this.agentRepository.getAgentEntityStates(
-      agentIds,
-      agentIds,
-      userIds
-    );
+    const agentStates =
+      await this.agentRepository.getOrCreateAgentStates(agentIds);
+    const agentEntityStates =
+      await this.agentRepository.getOrCreateAgentEntityStates(
+        agentIds,
+        agentIds,
+        userIds
+      );
 
     const agents: Record<number, Agent> = {};
     for (const agentId of agentIds) {
@@ -386,7 +262,7 @@ export class WorldManager extends AsyncEventEmitter {
     userIds: UserId[]
   ): Promise<Record<UserId, User>> {
     const userModels = await this.userRepository.getUserModels(userIds);
-    const userStates = await this.userRepository.getUserStates(userIds);
+    const userStates = await this.userRepository.getOrCreateUserStates(userIds);
 
     const users: Record<UserId, User> = {};
     for (const userId of userIds) {
@@ -398,231 +274,6 @@ export class WorldManager extends AsyncEventEmitter {
     }
 
     return users;
-  }
-
-  private async saveLocation(location: Location): Promise<void> {
-    await this.locationRepository.saveLocationModel(location.model);
-    await this.locationRepository.saveLocationState(location.state);
-    await this.locationRepository.saveLocationMessagesState(
-      location.messagesState
-    );
-
-    if (ENV.DEBUG) {
-      console.log(`Location ${location.model.name} successfully saved`);
-    }
-  }
-
-  public async addLocationAgent(
-    locationId: LocationId,
-    agentId: AgentId,
-    callback?: (agentAdded: boolean, location: Location) => Promise<void>
-  ): Promise<boolean> {
-    let locationState =
-      await this.locationRepository.getLocationState(locationId);
-    if (locationState && locationState.agentIds.includes(agentId)) {
-      if (callback) {
-        await this.withLocationLock(locationId, async () => {
-          const location = await this.getLocation(locationId);
-          await callback(false, location);
-        });
-      }
-      return false;
-    }
-    return await this.withLocationLock(locationId, async () => {
-      locationState = await this.getOrCreateLocationState(locationId);
-      if (locationState.agentIds.includes(agentId)) {
-        if (callback) {
-          const location = await this.getLocation(locationId);
-          await callback(false, location);
-        }
-        return false;
-      }
-
-      locationState.userIds = locationState.userIds.filter(
-        (id) => (id as EntityId) !== (agentId as EntityId)
-      );
-      locationState.agentIds.push(agentId);
-      locationState.dirty = true;
-
-      await this.locationRepository.saveLocationState(locationState);
-      if (callback) {
-        const location = await this.getLocation(locationId);
-        await callback(true, location);
-      }
-      return true;
-    });
-  }
-
-  public async removeLocationAgent(
-    locationId: LocationId,
-    agentId: AgentId
-  ): Promise<boolean> {
-    let locationState =
-      await this.locationRepository.getLocationState(locationId);
-    if (locationState && !locationState.agentIds.includes(agentId)) {
-      return false;
-    }
-    return await this.withLocationLock(locationId, async () => {
-      locationState = await this.getOrCreateLocationState(locationId);
-      if (!locationState.agentIds.includes(agentId)) {
-        return false;
-      }
-
-      locationState.agentIds = locationState.agentIds.filter(
-        (id) => id !== agentId
-      );
-      locationState.dirty = true;
-
-      await this.locationRepository.saveLocationState(locationState);
-      return true;
-    });
-  }
-
-  public async addLocationUser(
-    locationId: LocationId,
-    userId: UserId,
-    callback?: (userAdded: boolean, location: Location) => Promise<void>
-  ): Promise<boolean> {
-    let locationState =
-      await this.locationRepository.getLocationState(locationId);
-    if (locationState && locationState.userIds.includes(userId)) {
-      if (callback) {
-        await this.withLocationLock(locationId, async () => {
-          const location = await this.getLocation(locationId);
-          await callback(false, location);
-        });
-      }
-      return false;
-    }
-    return await this.withLocationLock(locationId, async () => {
-      locationState = await this.getOrCreateLocationState(locationId);
-      if (locationState.userIds.includes(userId)) {
-        if (callback) {
-          const location = await this.getLocation(locationId);
-          await callback(false, location);
-        }
-        return false;
-      }
-
-      locationState.userIds.push(userId);
-      locationState.dirty = true;
-
-      await this.locationRepository.saveLocationState(locationState);
-      if (callback) {
-        const location = await this.getLocation(locationId);
-        await callback(true, location);
-      }
-      return true;
-    });
-  }
-
-  public async removeLocationUser(
-    locationId: LocationId,
-    userId: UserId
-  ): Promise<boolean> {
-    let locationState =
-      await this.locationRepository.getLocationState(locationId);
-    if (locationState && !locationState.userIds.includes(userId)) {
-      return false;
-    }
-    return await this.withLocationLock(locationId, async () => {
-      locationState = await this.getOrCreateLocationState(locationId);
-      if (!locationState.userIds.includes(userId)) {
-        return false;
-      }
-
-      locationState.userIds = locationState.userIds.filter(
-        (id) => id !== userId
-      );
-      locationState.dirty = true;
-
-      await this.locationRepository.saveLocationState(locationState);
-      return true;
-    });
-  }
-
-  private async setLocationPauseUpdateUntilInternal(
-    locationId: LocationId,
-    pauseUpdateUntil: Date | null
-  ): Promise<void> {
-    const locationState = await this.getOrCreateLocationState(locationId);
-    locationState.pauseUpdateUntil = pauseUpdateUntil;
-    locationState.dirty = true;
-
-    await this.locationRepository.saveLocationState(locationState);
-  }
-
-  public async setLocationPauseUpdateUntil(
-    locationId: LocationId,
-    pauseUpdateUntil: Date | null
-  ): Promise<void> {
-    const locationState = await this.getOrCreateLocationState(locationId);
-    if (locationState.pauseUpdateUntil === pauseUpdateUntil) {
-      return;
-    }
-
-    await this.withLocationLock(locationId, async () => {
-      await this.setLocationPauseUpdateUntilInternal(
-        locationId,
-        pauseUpdateUntil
-      );
-    });
-  }
-
-  private async addLocationMessage(
-    locationId: LocationId,
-    message: LocationMessage
-  ): Promise<void> {
-    const locationMessagesState =
-      await this.locationRepository.getLocationMessagesState(locationId);
-    if (
-      locationMessagesState &&
-      locationMessagesState.messages.find(
-        (m) =>
-          m.entityType === message.entityType &&
-          m.entityId === message.entityId &&
-          m.name === message.name &&
-          new Date(m.createdAt).getTime() ===
-            new Date(message.createdAt).getTime()
-      )
-    ) {
-      return;
-    }
-
-    await this.withLocationLock(locationId, async () => {
-      const locationMessagesState =
-        await this.getOrCreateLocationMessagesState(locationId);
-
-      if (
-        locationMessagesState.messages.find(
-          (m) =>
-            m.entityType === message.entityType &&
-            m.entityId === message.entityId &&
-            m.name === message.name &&
-            new Date(m.createdAt).getTime() ===
-              new Date(message.createdAt).getTime()
-        )
-      ) {
-        return;
-      }
-
-      if (!message.createdAt) {
-        message.createdAt = new Date();
-      }
-      message.updatedAt = new Date();
-      locationMessagesState.messages.push(message);
-      locationMessagesState.messages.sort(
-        (a, b) =>
-          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-      );
-      locationMessagesState.dirty = true;
-
-      await this.locationRepository.saveLocationMessagesState(
-        locationMessagesState
-      );
-
-      await this.emitAsync('locationMessageAdded', locationId, message);
-    });
   }
 
   public async addLocationAgentMessage(
@@ -646,7 +297,10 @@ export class WorldManager extends AsyncEventEmitter {
       createdAt: createdAt ?? new Date(),
       updatedAt: new Date(),
     };
-    await this.addLocationMessage(locationId, locationMessage);
+    await this.locationRepository.addLocationMessage(
+      locationId,
+      locationMessage
+    );
   }
 
   public async addLocationAgentGreetingMessage(
@@ -656,13 +310,12 @@ export class WorldManager extends AsyncEventEmitter {
     greeting: string,
     createdAt?: Date
   ): Promise<void> {
-    await this.withLocationLock(locationId, async () => {
-      const locationMessagesState =
-        await this.getOrCreateLocationMessagesState(locationId);
-      if (locationMessagesState.messages.length > 0) {
-        return;
-      }
+    const locationMessagesState =
+      await this.locationRepository.getOrCreateLocationMessagesState(
+        locationId
+      );
 
+    if (locationMessagesState.messages.length === 0) {
       const message: LocationMessage = {
         entityType: EntityType.Agent,
         entityId: agentId,
@@ -672,13 +325,8 @@ export class WorldManager extends AsyncEventEmitter {
         updatedAt: new Date(),
       };
 
-      locationMessagesState.messages.push(message);
-      locationMessagesState.dirty = true;
-
-      await this.locationRepository.saveLocationMessagesState(
-        locationMessagesState
-      );
-    });
+      await this.locationRepository.addLocationMessage(locationId, message);
+    }
   }
 
   public async addLocationAgentActionMessage(
@@ -688,29 +336,16 @@ export class WorldManager extends AsyncEventEmitter {
     action: string,
     createdAt?: Date
   ): Promise<void> {
-    await this.withLocationLock(locationId, async () => {
-      const locationMessagesState =
-        await this.getOrCreateLocationMessagesState(locationId);
-      if (locationMessagesState.messages.length > 0) {
-        return;
-      }
+    const message: LocationMessage = {
+      entityType: EntityType.Agent,
+      entityId: agentId,
+      name,
+      action,
+      createdAt: createdAt ?? new Date(),
+      updatedAt: new Date(),
+    };
 
-      const message: LocationMessage = {
-        entityType: EntityType.Agent,
-        entityId: agentId,
-        name,
-        action,
-        createdAt: createdAt ?? new Date(),
-        updatedAt: new Date(),
-      };
-
-      locationMessagesState.messages.push(message);
-      locationMessagesState.dirty = true;
-
-      await this.locationRepository.saveLocationMessagesState(
-        locationMessagesState
-      );
-    });
+    await this.locationRepository.addLocationMessage(locationId, message);
   }
 
   public async addLocationUserMessage(
@@ -734,7 +369,10 @@ export class WorldManager extends AsyncEventEmitter {
       createdAt: createdAt ?? new Date(),
       updatedAt: new Date(),
     };
-    await this.addLocationMessage(locationId, locationMessage);
+    await this.locationRepository.addLocationMessage(
+      locationId,
+      locationMessage
+    );
   }
 
   public async addLocationSystemMessage(
@@ -750,7 +388,10 @@ export class WorldManager extends AsyncEventEmitter {
       createdAt: createdAt ?? new Date(),
       updatedAt: new Date(),
     };
-    await this.addLocationMessage(locationId, locationMessage);
+    await this.locationRepository.addLocationMessage(
+      locationId,
+      locationMessage
+    );
   }
 
   private async updateLocationInternal(
@@ -766,8 +407,8 @@ export class WorldManager extends AsyncEventEmitter {
       llmApiKeyUserId,
     });
     if (Object.keys(location.agents).length === 0) {
-      await this.setLocationPauseUpdateUntilInternal(
-        location.model.id as LocationId,
+      await this.locationRepository.updateLocationStatePauseUpdateUntil(
+        locationId,
         null
       );
       return location;
@@ -803,10 +444,18 @@ export class WorldManager extends AsyncEventEmitter {
       ) => {
         if (options.handleSave) {
           void options.handleSave(
-            this.updateAgentStateMemory(state, index, memory)
+            this.agentRepository.updateAgentStateMemory(
+              agent.model.id as AgentId,
+              index,
+              memory
+            )
           );
         } else {
-          void this.updateAgentStateMemory(state, index, memory);
+          void this.agentRepository.updateAgentStateMemory(
+            agent.model.id as AgentId,
+            index,
+            memory
+          );
         }
       }
     );
@@ -821,10 +470,22 @@ export class WorldManager extends AsyncEventEmitter {
       ) => {
         if (options.handleSave) {
           void options.handleSave(
-            this.updateAgentEntityStateMemory(state, index, memory)
+            this.agentRepository.updateAgentEntityStateMemory(
+              agent.model.id as AgentId,
+              state.targetType,
+              state.targetId,
+              index,
+              memory
+            )
           );
         } else {
-          void this.updateAgentEntityStateMemory(state, index, memory);
+          void this.agentRepository.updateAgentEntityStateMemory(
+            agent.model.id as AgentId,
+            state.targetType,
+            state.targetId,
+            index,
+            memory
+          );
         }
       }
     );
@@ -834,10 +495,20 @@ export class WorldManager extends AsyncEventEmitter {
       async (agent: Agent, state: LocationEntityState, expression: string) => {
         if (options.handleSave) {
           void options.handleSave(
-            this.updateAgentExpression(state, expression)
+            this.locationRepository.updateLocationEntityStateExpression(
+              locationId,
+              state.targetType,
+              state.targetId,
+              expression
+            )
           );
         } else {
-          void this.updateAgentExpression(state, expression);
+          void this.locationRepository.updateLocationEntityStateExpression(
+            locationId,
+            state.targetType,
+            state.targetId,
+            expression
+          );
         }
       }
     );
@@ -846,9 +517,21 @@ export class WorldManager extends AsyncEventEmitter {
       'agentUpdateActive',
       async (agent: Agent, state: LocationEntityState, isActive: boolean) => {
         if (options.handleSave) {
-          void options.handleSave(this.updateAgentIsActive(state, isActive));
+          void options.handleSave(
+            this.locationRepository.updateLocationEntityStateIsActive(
+              locationId,
+              state.targetType,
+              state.targetId,
+              isActive
+            )
+          );
         } else {
-          void this.updateAgentIsActive(state, isActive);
+          void this.locationRepository.updateLocationEntityStateIsActive(
+            locationId,
+            state.targetType,
+            state.targetId,
+            isActive
+          );
         }
       }
     );
@@ -857,7 +540,10 @@ export class WorldManager extends AsyncEventEmitter {
     try {
       pauseUpdateDuration = await location.update();
     } catch (error) {
-      await this.setLocationPauseUpdateUntilInternal(locationId, null);
+      await this.locationRepository.updateLocationStatePauseUpdateUntil(
+        locationId,
+        null
+      );
       throw error;
     }
     if (pauseUpdateDuration) {
@@ -867,7 +553,7 @@ export class WorldManager extends AsyncEventEmitter {
           `Setting location ${location.model.name} pause update until ${pauseUpdateUntil}`
         );
       }
-      await this.setLocationPauseUpdateUntilInternal(
+      await this.locationRepository.updateLocationStatePauseUpdateUntil(
         locationId,
         pauseUpdateUntil
       );
@@ -875,14 +561,16 @@ export class WorldManager extends AsyncEventEmitter {
       if (ENV.DEBUG) {
         console.log(`Location ${location.model.name} paused update`);
       }
-      await this.setLocationPauseUpdateUntilInternal(locationId, null);
+      await this.locationRepository.updateLocationStatePauseUpdateUntil(
+        locationId,
+        null
+      );
     }
 
     if (options.postAction) {
       await options.postAction(location);
     }
 
-    await this.saveLocation(location);
     return location;
   }
 
@@ -891,7 +579,7 @@ export class WorldManager extends AsyncEventEmitter {
     locationId: LocationId,
     options: UpdateLocationOptions = {}
   ): Promise<Location> {
-    return await this.withLocationLock(locationId, async () => {
+    return await this.withLocationUpdateLock(locationId, async () => {
       return await this.updateLocationInternal(
         llmApiKeyUserId,
         locationId,
@@ -905,203 +593,12 @@ export class WorldManager extends AsyncEventEmitter {
     locationId: LocationId,
     options: UpdateLocationOptions = {}
   ): Promise<Location | null> {
-    return await this.withLocationLockNoRetry(locationId, async () => {
+    return await this.withLocationUpdateLockNoRetry(locationId, async () => {
       return await this.updateLocationInternal(
         llmApiKeyUserId,
         locationId,
         options
       );
     });
-  }
-
-  public async updateLocationImage(
-    locationId: LocationId,
-    image: string,
-    index: number = 0
-  ): Promise<void> {
-    await this.withLocationLock(locationId, async () => {
-      const locationState =
-        await this.locationRepository.getLocationState(locationId);
-      if (!locationState) {
-        throw new Error(`Location ${locationId} not found`);
-      }
-
-      if (locationState.images.length <= index) {
-        locationState.images.push(image);
-      } else {
-        locationState.images[index] = image;
-      }
-      locationState.dirty = true;
-      await this.locationRepository.saveLocationState(locationState);
-    });
-  }
-
-  public async updateAgentStateMemory(
-    state: AgentState,
-    index: number,
-    memory: string,
-    createdAt?: Date
-  ): Promise<void> {
-    await this.withAgentLock(state.agentId, async () => {
-      if (ENV.DEBUG) {
-        console.log(
-          `Updating agent ${state.agentId} memory at index ${index} to ${memory}`
-        );
-      }
-
-      const agentState = await this.agentRepository.getAgentState(
-        state.agentId
-      );
-      if (!agentState) {
-        await this.agentRepository.saveAgentState(state);
-        return;
-      }
-
-      if (!state.memories[index] && agentState.memories[index]) {
-        const emptyIndex = agentState.memories.findIndex((m) => !m);
-        if (emptyIndex !== -1) {
-          index = emptyIndex;
-        }
-      }
-
-      createdAt ??= new Date();
-      agentState.memories[index] = {
-        memory,
-        createdAt,
-      };
-      await this.agentRepository.saveAgentStateMemory(
-        agentState,
-        index,
-        memory,
-        createdAt
-      );
-    });
-  }
-
-  public async updateAgentEntityStateMemory(
-    state: AgentEntityState,
-    index: number,
-    memory: string,
-    createdAt?: Date
-  ): Promise<void> {
-    await this.withAgentEntityLock(
-      state.agentId,
-      state.targetType,
-      state.targetId,
-      async () => {
-        if (ENV.DEBUG) {
-          console.log(
-            `Updating agent entity ${state.agentId}:${state.targetType}:${state.targetId} memory at index ${index} to ${memory}`
-          );
-        }
-
-        const agentEntityState = await this.agentRepository.getAgentEntityState(
-          state.agentId,
-          state.targetType,
-          state.targetId
-        );
-        if (!agentEntityState) {
-          await this.agentRepository.saveAgentEntityState(state);
-          return;
-        }
-
-        if (
-          !state.memories[index].memory ||
-          agentEntityState.memories[index].memory
-        ) {
-          const emptyIndex = agentEntityState.memories.findIndex(
-            (m) => !m.memory
-          );
-          if (emptyIndex !== -1) {
-            index = emptyIndex;
-          }
-        }
-
-        createdAt ??= new Date();
-        agentEntityState.memories[index] = {
-          memory,
-          createdAt,
-        };
-        await this.agentRepository.saveAgentEntityStateMemory(
-          agentEntityState,
-          index,
-          memory,
-          createdAt
-        );
-      }
-    );
-  }
-
-  public async updateAgentIsActive(
-    state: LocationEntityState,
-    isActive: boolean
-  ): Promise<void> {
-    await this.withLocationEntityLock(
-      state.locationId,
-      state.targetType,
-      state.targetId,
-      async () => {
-        if (ENV.DEBUG) {
-          console.log(
-            `Updating location entity ${state.locationId}:${state.targetType}:${state.targetId} isActive to ${isActive}`
-          );
-        }
-
-        const locationEntityState =
-          await this.locationRepository.getLocationEntityState(
-            state.locationId,
-            state.targetType,
-            state.targetId
-          );
-        if (!locationEntityState) {
-          await this.locationRepository.saveLocationEntityState(state);
-          return;
-        }
-
-        if (locationEntityState.isActive === isActive) {
-          return;
-        }
-
-        locationEntityState.isActive = isActive;
-        await this.locationRepository.saveLocationEntityState(
-          locationEntityState
-        );
-      }
-    );
-  }
-
-  public async updateAgentExpression(
-    state: LocationEntityState,
-    expression: string
-  ): Promise<void> {
-    await this.withLocationEntityLock(
-      state.locationId,
-      state.targetType,
-      state.targetId,
-      async () => {
-        if (ENV.DEBUG) {
-          console.log(
-            `Updating agent ${state.targetId} expression to ${expression}`
-          );
-        }
-
-        const locationEntityState =
-          await this.locationRepository.getLocationEntityState(
-            state.locationId,
-            state.targetType,
-            state.targetId
-          );
-        if (!locationEntityState) {
-          await this.locationRepository.saveLocationEntityState(state);
-          return;
-        }
-
-        locationEntityState.expression = expression;
-        await this.locationRepository.saveLocationEntityStateExpression(
-          locationEntityState,
-          expression
-        );
-      }
-    );
   }
 }

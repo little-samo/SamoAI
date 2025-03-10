@@ -8,35 +8,65 @@ import {
   AgentId,
   UserId,
   LocationModel,
+  LocationMessage,
 } from '@little-samo/samo-ai';
 
 export interface LocationsRepository {
   getLocationModel(locationId: LocationId): Promise<LocationModel>;
-  getLocationState(locationId: LocationId): Promise<null | LocationState>;
-  getLocationMessagesState(
+  getOrCreateLocationState(locationId: LocationId): Promise<LocationState>;
+  getOrCreateLocationMessagesState(
     locationId: LocationId
-  ): Promise<null | LocationMessagesState>;
-  getLocationEntityState(
+  ): Promise<LocationMessagesState>;
+  getOrCreateLocationEntityState(
     locationId: LocationId,
     type: EntityType,
     entityId: EntityId
-  ): Promise<null | LocationEntityState>;
-  getLocationEntityStates(
+  ): Promise<LocationEntityState>;
+  getOrCreateLocationEntityStates(
     locationId: LocationId,
     agentIds: AgentId[],
     userIds: UserId[]
   ): Promise<LocationEntityState[]>;
 
-  saveLocationModel(model: LocationModel): Promise<LocationModel>;
-  saveLocationState(state: LocationState): Promise<void>;
-  saveLocationMessagesState(state: LocationMessagesState): Promise<void>;
-  saveLocationEntityState(state: LocationEntityState): Promise<void>;
-  saveLocationEntityStateIsActive(
-    state: LocationEntityState,
+  addLocationStateAgentId(
+    locationId: LocationId,
+    agentId: AgentId
+  ): Promise<boolean>;
+  removeLocationStateAgentId(
+    locationId: LocationId,
+    agentId: AgentId
+  ): Promise<boolean>;
+  addLocationStateUserId(
+    locationId: LocationId,
+    userId: UserId
+  ): Promise<boolean>;
+  removeLocationStateUserId(
+    locationId: LocationId,
+    userId: UserId
+  ): Promise<boolean>;
+  updateLocationStatePauseUpdateUntil(
+    locationId: LocationId,
+    pauseUpdateUntil: Date | null
+  ): Promise<void>;
+  updateLocationStateImage(
+    locationId: LocationId,
+    index: number,
+    image: string
+  ): Promise<void>;
+  addLocationMessage(
+    locationId: LocationId,
+    message: LocationMessage
+  ): Promise<boolean>;
+  updateLocationEntityStateIsActive(
+    locationId: LocationId,
+    targetType: EntityType,
+    targetId: EntityId,
     isActive: boolean
   ): Promise<void>;
-  saveLocationEntityStateExpression(
-    state: LocationEntityState,
+  updateLocationEntityStateExpression(
+    locationId: LocationId,
+    targetType: EntityType,
+    targetId: EntityId,
     expression: string
   ): Promise<void>;
 }
