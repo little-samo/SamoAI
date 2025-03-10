@@ -48,11 +48,6 @@ export interface LocationsRepository {
     locationId: LocationId,
     pauseUpdateUntil: Date | null
   ): Promise<void>;
-  updateLocationStateImage(
-    locationId: LocationId,
-    index: number,
-    image: string
-  ): Promise<void>;
   addLocationMessage(
     locationId: LocationId,
     message: LocationMessage,
