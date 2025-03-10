@@ -14,6 +14,4 @@ export interface LocationState {
 
   updatedAt: Date;
   createdAt: Date;
-
-  dirty?: boolean;
 }

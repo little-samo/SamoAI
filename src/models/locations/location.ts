@@ -123,7 +123,6 @@ export class Location extends AsyncEventEmitter {
       } else if (entity instanceof User) {
         this.state.userIds.push(entity.model.id as UserId);
       }
-      this.state.dirty = true;
     }
   }
 
@@ -144,7 +143,6 @@ export class Location extends AsyncEventEmitter {
           (id) => id !== entity.model.id
         );
       }
-      this.state.dirty = true;
     }
   }
 
