@@ -25,7 +25,7 @@ export class AgentControlGbaAction extends AgentAction {
     switch (this.version) {
       case 1:
       default:
-        return 'Control the GBA with the given inputs. Available inputs: Up, Down, Left, Right, A, B, START, SELECT. You can input up to 8 keys sequentially at once, and for efficiency, try to input as many as possible at once. Note that this tool can only be used once per response. Additionally, if you input any key other than the directional keys, the input will end.';
+        return 'Control the GBA with the given inputs. Available inputs: Up, Down, Left, Right, A, B, START, SELECT. You can input up to 4 keys sequentially at once, and for efficiency, try to input as many as possible at once. Note that this tool can only be used once per response.';
     }
   }
 
@@ -54,21 +54,8 @@ export class AgentControlGbaAction extends AgentAction {
       );
     }
 
-    const inputs = [];
-    for (const input of action.inputs.slice(0, 4)) {
-      inputs.push(input);
-      if (
-        input === AgentControlGbaActionInput.A ||
-        input === AgentControlGbaActionInput.B ||
-        input === AgentControlGbaActionInput.START ||
-        input === AgentControlGbaActionInput.SELECT
-      ) {
-        break;
-      }
-    }
-
     await this.location.addAgentMessage(this.agent, {
-      action: `CONTROL_GBA:${inputs.join(',')}`,
+      action: `CONTROL_GBA:${action.inputs.slice(0, 4).join(',')}`,
     });
   }
 }
