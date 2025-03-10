@@ -141,7 +141,7 @@ export class AnthropicService extends LlmService {
         temperature: options?.temperature ?? LlmService.DEFAULT_TEMPERATURE,
       };
       if (options?.verbose) {
-        console.log(JSON.stringify(request, null, 2));
+        console.log(request);
       }
 
       const response = await this.createMessageWithRetry(request, options);
@@ -230,7 +230,7 @@ Response can only be in JSON format and must strictly follow the following forma
         temperature: options?.temperature ?? LlmService.DEFAULT_TEMPERATURE,
       };
       if (options?.verbose) {
-        console.log(JSON.stringify(request, null, 2));
+        console.log(request);
       }
 
       const response = await this.createMessageWithRetry(request, options);

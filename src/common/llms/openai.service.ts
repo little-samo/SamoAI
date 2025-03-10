@@ -130,7 +130,7 @@ export class OpenAIService extends LlmService {
         max_tokens: options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS,
       };
       if (options?.verbose) {
-        console.log(JSON.stringify(request, null, 2));
+        console.log(request);
       }
 
       const response = await this.createCompletionWithRetry(request, options);
@@ -199,7 +199,7 @@ Response can only be in JSON format and must strictly follow the following forma
         max_tokens: options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS,
       };
       if (options?.verbose) {
-        console.log(JSON.stringify(request, null, 2));
+        console.log(request);
       }
 
       const response = await this.createCompletionWithRetry(request, options);
