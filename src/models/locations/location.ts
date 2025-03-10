@@ -228,7 +228,7 @@ export class Location extends AsyncEventEmitter {
     }
     this.messagesState.dirty = true;
 
-    await this.emitAsync('messageAdded', message);
+    await this.emitAsync('messageAdded', this, message);
   }
 
   public async addAgentMessage(

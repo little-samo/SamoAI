@@ -455,9 +455,27 @@ export class WorldManager extends AsyncEventEmitter {
       await this.emitAsync('locationAgentExecution', locationId, agent);
     });
 
-    location.on('messageAdded', async (message: LocationMessage) => {
-      await this.emitAsync('locationMessageAdded', locationId, message);
-    });
+    location.on(
+      'messageAdded',
+      async (location: Location, message: LocationMessage) => {
+        if (options.handleSave) {
+          void options.handleSave(
+            this.locationRepository.addLocationMessage(
+              location.id,
+              message,
+              location.meta.messageLimit
+            )
+          );
+        } else {
+          void this.locationRepository.addLocationMessage(
+            location.id,
+            message,
+            location.meta.messageLimit
+          );
+        }
+        await this.emitAsync('locationMessageAdded', locationId, message);
+      }
+    );
 
     location.on(
       'agentUpdateMemory',
