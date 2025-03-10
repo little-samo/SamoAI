@@ -31,7 +31,7 @@ interface UpdateLocationOptions {
 }
 
 export class WorldManager extends AsyncEventEmitter {
-  private static readonly LOCATION_UPDATE_LOCK_TTL = 30000; // 30 seconds
+  private static readonly LOCATION_UPDATE_LOCK_TTL = 15000; // 15 seconds
   private static readonly LOCATION_UPDATE_LOCK_PREFIX = 'lock:location-update:';
 
   private static _instance: WorldManager;
