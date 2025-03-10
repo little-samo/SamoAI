@@ -9,27 +9,19 @@ import { UserModel } from './user.model';
 import { UserId } from './user.types';
 
 export class User extends Entity {
-  public static createState(model: UserModel, _meta: UserMeta): UserState {
-    const state: UserState = {
-      userId: model.id as UserId,
-      updatedAt: new Date(),
-      createdAt: new Date(),
-    };
-    return state;
-  }
-
   public static fixState(_state: UserState, _meta: UserMeta): void {}
 
   public constructor(
     location: Location,
     public readonly model: UserModel,
-    state?: null | UserState
+    options: {
+      state: UserState;
+    }
   ) {
     const meta = { ...DEFAULT_USER_META, ...(model.meta as object) };
-    state ??= User.createState(model, meta);
-    User.fixState(state, meta);
+    User.fixState(options.state, meta);
 
-    super(location, model.nickname, meta, state);
+    super(location, model.nickname, meta, options.state);
   }
 
   public override get type(): 'user' {

@@ -4,7 +4,6 @@ import {
   Agent,
   AgentId,
   Entity,
-  EntityId,
   EntityType,
   EntityKey,
   User,
@@ -149,44 +148,15 @@ export class Location extends AsyncEventEmitter {
     }
   }
 
-  public createEntityState(
-    type: EntityType,
-    id: EntityId
-  ): LocationEntityState {
-    const state: LocationEntityState = {
-      locationId: this.id,
-      targetType: type,
-      targetId: id,
-      isActive: null,
-      expression: null,
-      updatedAt: new Date(),
-      createdAt: new Date(),
-    };
-    return state;
-  }
-
   public fixEntityState(_state: LocationEntityState): void {}
 
   public getEntityState(key: EntityKey): LocationEntityState | undefined {
     return this._entityStates[key];
   }
 
-  public getOrCreateEntityState(
-    type: EntityType,
-    id: EntityId
-  ): LocationEntityState {
-    const key = `${type}:${id}` as EntityKey;
-    const state = this._entityStates[key];
-    if (state) {
-      return state;
-    }
-    const newState = this.createEntityState(type, id);
-    this._entityStates[key] = newState;
-    return newState;
-  }
-
-  public getOrCreateEntityStateByTarget(target: Entity): LocationEntityState {
-    return this.getOrCreateEntityState(target.type, target.id);
+  public getEntityStateByTarget(target: Entity): LocationEntityState {
+    const key = `${target.type}:${target.id}` as EntityKey;
+    return this._entityStates[key];
   }
 
   public addEntityState(state: LocationEntityState): LocationEntityState {

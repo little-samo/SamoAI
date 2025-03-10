@@ -28,18 +28,6 @@ export class Agent extends Entity {
   public static readonly ACTION_LLM_INDEX = 0;
   public static readonly MINI_LLM_INDEX = 1;
 
-  public static createState(model: AgentModel, meta: AgentMeta): AgentState {
-    const state: AgentState = {
-      agentId: model.id as AgentId,
-      memories: Array(meta.memoryLimit).fill({
-        memory: '',
-      }),
-      updatedAt: new Date(),
-      createdAt: new Date(),
-    };
-    return state;
-  }
-
   public static fixState(state: AgentState, meta: AgentMeta): void {
     if (state.memories.length < meta.memoryLimit) {
       state.memories = state.memories.concat(
@@ -50,20 +38,6 @@ export class Agent extends Entity {
     } else if (state.memories.length > meta.memoryLimit) {
       state.memories = state.memories.slice(0, meta.memoryLimit);
     }
-  }
-
-  public createEntityState(type: EntityType, id: EntityId): AgentEntityState {
-    const state: AgentEntityState = {
-      agentId: this.model.id as AgentId,
-      targetType: type,
-      targetId: id,
-      memories: Array(this.meta.entityMemoryLimit).fill({
-        memory: '',
-      }),
-      updatedAt: new Date(),
-      createdAt: new Date(),
-    };
-    return state;
   }
 
   public fixEntityState(state: AgentEntityState): void {
@@ -89,13 +63,14 @@ export class Agent extends Entity {
   public constructor(
     public readonly location: Location,
     public readonly model: AgentModel,
-    state?: null | AgentState
+    options: {
+      state: AgentState;
+    }
   ) {
     const meta = { ...DEFAULT_AGENT_META, ...(model.meta as object) };
-    state ??= Agent.createState(model, meta);
-    Agent.fixState(state, meta);
+    Agent.fixState(options.state, meta);
 
-    super(location, model.name, meta, state);
+    super(location, model.name, meta, options.state);
 
     this.core = AgentCoreFactory.createCore(this);
 
@@ -187,20 +162,6 @@ export class Agent extends Entity {
     return this._entityStates[key];
   }
 
-  public getOrCreateEntityStateByTarget(
-    type: EntityType,
-    id: EntityId
-  ): AgentEntityState {
-    const key = `${type}:${id}` as EntityKey;
-    const state = this._entityStates[key];
-    if (state) {
-      return state;
-    }
-    const newState = this.createEntityState(type, id);
-    this._entityStates[key] = newState;
-    return newState;
-  }
-
   public addEntityState(state: AgentEntityState): AgentEntityState {
     const key = `${state.targetType}:${state.targetId}` as EntityKey;
 
@@ -256,7 +217,7 @@ export class Agent extends Entity {
     if (expression.startsWith('*') && expression.endsWith('*')) {
       expression = expression.slice(1, -1);
     }
-    const entityState = this.location.getOrCreateEntityStateByTarget(this);
+    const entityState = this.location.getEntityStateByTarget(this);
     await this.location.emitAsync(
       'agentUpdateExpression',
       this,
@@ -267,7 +228,7 @@ export class Agent extends Entity {
   }
 
   public async setActive(active: boolean): Promise<void> {
-    const entityState = this.location.getOrCreateEntityStateByTarget(this);
+    const entityState = this.location.getEntityStateByTarget(this);
     await this.location.emitAsync(
       'agentUpdateActive',
       this,

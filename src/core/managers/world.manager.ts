@@ -146,7 +146,16 @@ export class WorldManager extends AsyncEventEmitter {
         },
         {} as Record<UserId, Date>
       );
-      agentContextUserIds = [...agentContextUserIds];
+      if (
+        Object.keys(lastUserMessageAt).length >=
+        location.meta.agentUserContextLimit
+      ) {
+        agentContextUserIds = Object.keys(lastUserMessageAt).map(
+          (userId) => Number(userId) as UserId
+        );
+      } else {
+        agentContextUserIds = [...agentContextUserIds];
+      }
       agentContextUserIds.sort(
         (a, b) =>
           (lastUserMessageAt![b]?.getTime() ?? Math.random()) -
@@ -176,7 +185,15 @@ export class WorldManager extends AsyncEventEmitter {
           {} as Record<UserId, Date>
         );
       }
-      locationContextUserIds = [...locationContextUserIds];
+      if (
+        Object.keys(lastUserMessageAt).length >= location.meta.userContextLimit
+      ) {
+        locationContextUserIds = Object.keys(lastUserMessageAt).map(
+          (userId) => Number(userId) as UserId
+        );
+      } else {
+        locationContextUserIds = [...locationContextUserIds];
+      }
       locationContextUserIds.sort(
         (a, b) =>
           (lastUserMessageAt![b]?.getTime() ?? Math.random()) -
@@ -199,8 +216,8 @@ export class WorldManager extends AsyncEventEmitter {
     const entityStates =
       await this.locationRepository.getOrCreateLocationEntityStates(
         locationId,
-        location.state.agentIds,
-        location.state.userIds
+        Object.values(location.agents).map((agent) => agent.id),
+        Object.values(location.users).map((user) => user.id)
       );
     for (const entityState of entityStates) {
       location.addEntityState(entityState);
@@ -228,27 +245,15 @@ export class WorldManager extends AsyncEventEmitter {
 
     const agents: Record<number, Agent> = {};
     for (const agentId of agentIds) {
-      const agent = new Agent(
-        location,
-        agentModels[agentId],
-        agentStates[agentId]
-      );
+      const agent = new Agent(location, agentModels[agentId], {
+        state: agentStates[agentId],
+      });
 
       const entityStates = agentEntityStates[agentId];
       if (entityStates) {
         for (const entityState of entityStates) {
           agent.addEntityState(entityState);
         }
-      }
-
-      for (const otherAgentId of agentIds) {
-        if (otherAgentId === agentId) {
-          continue;
-        }
-        agent.getOrCreateEntityStateByTarget(EntityType.Agent, otherAgentId);
-      }
-      for (const otherUserId of userIds) {
-        agent.getOrCreateEntityStateByTarget(EntityType.User, otherUserId);
       }
 
       agents[agentId] = agent;
@@ -266,11 +271,9 @@ export class WorldManager extends AsyncEventEmitter {
 
     const users: Record<UserId, User> = {};
     for (const userId of userIds) {
-      users[userId] = new User(
-        location,
-        userModels[userId],
-        userStates[userId]
-      );
+      users[userId] = new User(location, userModels[userId], {
+        state: userStates[userId],
+      });
     }
 
     return users;
