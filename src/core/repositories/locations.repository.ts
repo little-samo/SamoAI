@@ -57,7 +57,7 @@ export interface LocationsRepository {
     locationId: LocationId,
     message: LocationMessage,
     maxMessages?: number
-  ): Promise<boolean>;
+  ): Promise<void>;
   updateLocationEntityStateIsActive(
     locationId: LocationId,
     targetType: EntityType,
