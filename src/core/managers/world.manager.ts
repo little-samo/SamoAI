@@ -437,6 +437,7 @@ export class WorldManager extends AsyncEventEmitter {
       llmApiKeyUserId,
     });
     if (Object.keys(location.agents).length === 0) {
+      console.log(`No agents in location ${locationId}, pausing update`);
       await this.locationRepository.updateLocationStatePauseUpdateUntil(
         locationId,
         null
@@ -447,8 +448,13 @@ export class WorldManager extends AsyncEventEmitter {
     if (
       !options.ignorePauseUpdateUntil &&
       location.state.pauseUpdateUntil &&
-      location.state.pauseUpdateUntil > new Date()
+      new Date(location.state.pauseUpdateUntil).getTime() > Date.now()
     ) {
+      if (ENV.DEBUG) {
+        console.log(
+          `Location ${locationId} paused update until ${location.state.pauseUpdateUntil}`
+        );
+      }
       return location;
     }
 
