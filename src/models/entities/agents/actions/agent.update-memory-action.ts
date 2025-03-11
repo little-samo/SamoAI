@@ -15,7 +15,7 @@ export class AgentUpdateMemoryAction extends AgentAction {
     switch (this.version) {
       case 1:
       default:
-        return 'Update one of your memory. If you select an index that already has a recorded memory, it will be overwritten. Choose the index carefully, considering the priority of the stored memory. If the memory pertains to a specific User or Agent, use a entity memory entry for that entity whenever possible. Otherwise, store the memory using the type:id(name) like "user:123(John Doe)" format to ensure accuracy.';
+        return 'Update one of your memory. If you select an index that already has a recorded memory, it will be overwritten. If a stored situation in memory has changed or the issue has been resolved, overwrite the relevant memory to prevent future confusion. Choose the index carefully, considering the priority of the stored memory. If the memory pertains to a specific User or Agent, use a entity memory entry for that entity whenever possible. Otherwise, store the memory using the type:id(name) like "user:123(John Doe)" format to ensure accuracy.';
     }
   }
 
