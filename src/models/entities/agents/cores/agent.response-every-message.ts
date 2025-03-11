@@ -1,3 +1,5 @@
+import { ENV } from '@little-samo/samo-ai/common';
+
 import { Agent } from '../agent';
 import { EntityType } from '../../entity.types';
 
@@ -20,6 +22,11 @@ export class AgentResponseEveryMessageCore extends AgentCore {
       lastMessage.entityType === EntityType.Agent &&
       lastMessage.entityId === this.agent.id
     ) {
+      if (ENV.DEBUG) {
+        console.log(
+          `Skip update for agent ${this.agent.model.name} (last message is from agent)`
+        );
+      }
       return false;
     }
     await this.agent.executeNextActions();
