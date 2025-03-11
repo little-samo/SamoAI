@@ -1,4 +1,4 @@
-import { shuffle } from '@little-samo/samo-ai';
+import { ENV, shuffle } from '@little-samo/samo-ai';
 
 import { RegisterLocationCore } from './location.core-decorator';
 import { LocationCore } from './location.core';
@@ -12,8 +12,14 @@ export class LocationUpdateForeverCore extends LocationCore {
     shuffle(entities);
     for (const entity of entities) {
       if (await entity.update()) {
+        if (ENV.DEBUG) {
+          console.log(`[${entity.key}] ${entity.name} executed`);
+        }
         return LocationUpdateForeverCore.UPDATE_INTERVAL;
       }
+    }
+    if (ENV.DEBUG) {
+      console.log('No entities executed');
     }
     return LocationUpdateForeverCore.UPDATE_INTERVAL;
   }

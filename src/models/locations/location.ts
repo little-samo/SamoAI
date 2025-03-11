@@ -271,7 +271,7 @@ export class Location extends AsyncEventEmitter {
     this.reloadCore();
     if (ENV.DEBUG) {
       console.log(
-        `Updating location ${this.model.name}, core: ${this.core.constructor.name}`
+        `Updating location ${this.model.name}, core: ${this.core.constructor.name}, ${Object.keys(this.agents).length} agents, ${Object.keys(this.users).length} users`
       );
     }
     return await this.core.update();
