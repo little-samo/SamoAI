@@ -16,7 +16,7 @@ export abstract class Entity {
   protected _meta: EntityMeta;
   protected _state: EntityState;
 
-  protected _itemsByItemKey: Record<ItemKey, ItemModel[]> = {};
+  protected _itemsByItemKey: Record<ItemKey, ItemModel> = {};
   protected _itemsByDataId: Record<ItemDataId, ItemModel[]> = {};
 
   protected constructor(
@@ -54,7 +54,7 @@ export abstract class Entity {
       name: this.name,
       appearance: this.meta.appearance,
       expression: entityState?.expression ?? undefined,
-      items: this._itemsByDataId,
+      items: this._itemsByItemKey,
     });
   }
 
@@ -64,20 +64,15 @@ export abstract class Entity {
 
     for (const item of items) {
       const itemKey = `item:${item.id}` as ItemKey;
-      this._itemsByItemKey[itemKey] ??= [];
-      this._itemsByItemKey[itemKey].push(item);
+      this._itemsByItemKey[itemKey] = item;
 
       this._itemsByDataId[item.itemDataId as ItemDataId] ??= [];
       this._itemsByDataId[item.itemDataId as ItemDataId].push(item);
     }
   }
 
-  public getItemsByItemKey(itemKey: ItemKey): ItemModel[] {
-    return this._itemsByItemKey[itemKey] ?? [];
-  }
-
   public getItemByItemKey(itemKey: ItemKey): ItemModel | null {
-    return this._itemsByItemKey[itemKey]?.at(0) ?? null;
+    return this._itemsByItemKey[itemKey] ?? null;
   }
 
   public getItemsByDataId(dataId: ItemDataId): ItemModel[] {
