@@ -88,7 +88,11 @@ export const DEFAULT_AGENT_META: AgentMeta = {
   timeZone: 'UTC',
 
   actionLimit: 6,
-  actions: ['update_memory:latest', 'update_entity_memory:latest'],
+  actions: [
+    'update_memory:latest',
+    'update_entity_memory:latest',
+    'transfer_item:latest',
+  ],
   requiredActions: [],
 
   memoryLimit: 24,
