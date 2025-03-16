@@ -1,11 +1,14 @@
 import { Context } from '../context';
 
+import { ItemModel } from './entity.item-model';
+
 export interface EntityContextOptions {
   key: string;
   handle?: string;
   name: string;
   appearance: string;
   expression?: string;
+  items: Record<number, ItemModel[]>;
 }
 
 export class EntityContext extends Context implements EntityContextOptions {
@@ -17,6 +20,8 @@ export class EntityContext extends Context implements EntityContextOptions {
   public readonly appearance: string;
   public readonly expression?: string;
 
+  public readonly items: Record<number, ItemModel[]>;
+
   public constructor(options: EntityContextOptions) {
     super();
     this.key = options.key;
@@ -24,6 +29,7 @@ export class EntityContext extends Context implements EntityContextOptions {
     this.name = options.name;
     this.appearance = options.appearance;
     this.expression = options.expression;
+    this.items = options.items;
   }
 
   public build(): string {

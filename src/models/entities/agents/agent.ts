@@ -8,6 +8,7 @@ import {
 import { Entity } from '../entity';
 import { EntityType, EntityKey, EntityId } from '../entity.types';
 import { Location } from '../../locations';
+import { ItemModel } from '../entity.item-model';
 
 import { AgentCore } from './cores/agent.core';
 import { AgentMemory, AgentState } from './states/agent.state';
@@ -27,6 +28,15 @@ import { AgentId } from './agent.types';
 export class Agent extends Entity {
   public static readonly ACTION_LLM_INDEX = 0;
   public static readonly MINI_LLM_INDEX = 1;
+
+  private static _createEmptyState(agentId: AgentId): AgentState {
+    return {
+      agentId,
+      memories: [],
+      updatedAt: new Date(),
+      createdAt: new Date(),
+    };
+  }
 
   public static fixState(state: AgentState, meta: AgentMeta): void {
     if (state.memories.length < meta.memoryLimit) {
@@ -64,13 +74,16 @@ export class Agent extends Entity {
     public readonly location: Location,
     public readonly model: AgentModel,
     options: {
-      state: AgentState;
-    }
+      state?: AgentState;
+      items?: ItemModel[];
+    } = {}
   ) {
     const meta = { ...DEFAULT_AGENT_META, ...(model.meta as object) };
-    Agent.fixState(options.state, meta);
+    const state = options.state ?? Agent._createEmptyState(model.id as AgentId);
+    const items = options.items ?? [];
+    Agent.fixState(state, meta);
 
-    super(location, model.name, meta, options.state);
+    super(location, model.name, meta, state, items);
 
     this.core = AgentCoreFactory.createCore(this);
 

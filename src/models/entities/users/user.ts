@@ -2,6 +2,7 @@ import { Location } from '@little-samo/samo-ai/models/locations/location';
 
 import { Entity } from '../entity';
 import { EntityType } from '../entity.types';
+import { ItemModel } from '../entity.item-model';
 
 import { UserState } from './states/user.state';
 import { DEFAULT_USER_META, UserMeta } from './user.meta';
@@ -9,19 +10,30 @@ import { UserModel } from './user.model';
 import { UserId } from './user.types';
 
 export class User extends Entity {
+  private static _createEmptyState(userId: UserId): UserState {
+    return {
+      userId,
+      updatedAt: new Date(),
+      createdAt: new Date(),
+    };
+  }
+
   public static fixState(_state: UserState, _meta: UserMeta): void {}
 
   public constructor(
     location: Location,
     public readonly model: UserModel,
     options: {
-      state: UserState;
-    }
+      state?: UserState;
+      items?: ItemModel[];
+    } = {}
   ) {
     const meta = { ...DEFAULT_USER_META, ...(model.meta as object) };
-    User.fixState(options.state, meta);
+    const state = options.state ?? User._createEmptyState(model.id as UserId);
+    const items = options.items ?? [];
+    User.fixState(state, meta);
 
-    super(location, model.nickname, meta, options.state);
+    super(location, model.nickname, meta, state, items);
   }
 
   public override get type(): 'user' {
