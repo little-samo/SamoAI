@@ -3,8 +3,8 @@ export interface ItemModel {
   createdAt: Date;
   updatedAt: Date;
 
-  ownerAgentId?: number;
-  ownerUserId?: number;
+  ownerAgentId: number | null;
+  ownerUserId: number | null;
 
   itemDataId: number;
   itemData?: ItemDataModel;

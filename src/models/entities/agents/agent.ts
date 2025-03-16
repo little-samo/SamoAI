@@ -257,6 +257,7 @@ export class Agent extends Entity {
       createdAt: new Date(),
       updatedAt: new Date(),
       ownerAgentId: this.id,
+      ownerUserId: null,
       itemDataId,
       count: 0,
     };

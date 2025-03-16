@@ -65,6 +65,7 @@ export class User extends Entity {
       id: 0,
       createdAt: new Date(),
       updatedAt: new Date(),
+      ownerAgentId: null,
       ownerUserId: this.id,
       itemDataId,
       count: 0,
