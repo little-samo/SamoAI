@@ -1,6 +1,7 @@
 import { Context } from '../context';
 
 import { ItemModel } from './entity.item-model';
+import { ItemKey } from './entity.types';
 
 export interface EntityContextOptions {
   key: string;
@@ -8,7 +9,7 @@ export interface EntityContextOptions {
   name: string;
   appearance: string;
   expression?: string;
-  items: Record<number, ItemModel[]>;
+  items: Record<ItemKey, ItemModel>;
 }
 
 export class EntityContext extends Context implements EntityContextOptions {
@@ -20,7 +21,7 @@ export class EntityContext extends Context implements EntityContextOptions {
   public readonly appearance: string;
   public readonly expression?: string;
 
-  public readonly items: Record<number, ItemModel[]>;
+  public readonly items: Record<ItemKey, ItemModel>;
 
   public constructor(options: EntityContextOptions) {
     super();

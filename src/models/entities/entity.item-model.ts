@@ -8,6 +8,7 @@ export interface ItemModel {
 
   itemDataId: number;
   itemData?: ItemDataModel;
+  count: number;
 }
 
 export interface ItemDataModel {
@@ -18,4 +19,6 @@ export interface ItemDataModel {
   name: string;
   description?: string;
   memo?: string;
+
+  stackable: boolean;
 }

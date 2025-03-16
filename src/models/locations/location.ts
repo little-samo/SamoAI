@@ -8,6 +8,7 @@ import {
   EntityKey,
   User,
   UserId,
+  EntityId,
 } from '../entities';
 import { LlmApiKeyModel } from '../llms';
 
@@ -261,6 +262,18 @@ export class Location extends AsyncEventEmitter {
       name: user.name,
       message: message,
       expression: expression,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    await this.addMessage(locationMessage);
+  }
+
+  public async addSystemMessage(message: string): Promise<void> {
+    const locationMessage: LocationMessage = {
+      entityType: EntityType.System,
+      entityId: 0 as EntityId,
+      name: '[SYSTEM]',
+      message: message,
       createdAt: new Date(),
       updatedAt: new Date(),
     };

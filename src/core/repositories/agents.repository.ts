@@ -3,7 +3,6 @@ import {
   AgentModel,
   AgentState,
   AgentEntityState,
-  ItemModel,
   EntityId,
   EntityType,
   UserId,
@@ -26,9 +25,6 @@ export interface AgentsRepository {
     targetAgentIds: AgentId[],
     targetUserIds: UserId[]
   ): Promise<Record<AgentId, AgentEntityState[]>>;
-  getAgentItemModels(
-    agentIds: AgentId[]
-  ): Promise<Record<AgentId, ItemModel[]>>;
 
   updateAgentStateMemory(
     agentId: AgentId,

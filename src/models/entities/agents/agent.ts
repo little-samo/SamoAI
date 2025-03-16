@@ -251,6 +251,17 @@ export class Agent extends Entity {
     entityState.isActive = active;
   }
 
+  public override createItem(itemDataId: number): ItemModel {
+    return {
+      id: 0,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      ownerAgentId: this.id,
+      itemDataId,
+      count: 0,
+    };
+  }
+
   public async update(): Promise<boolean> {
     if (this.location.getEntityState(this.key)?.isActive === false) {
       if (ENV.DEBUG) {

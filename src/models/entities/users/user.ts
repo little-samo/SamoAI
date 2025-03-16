@@ -60,6 +60,17 @@ export class User extends Entity {
     this._state = value;
   }
 
+  public override createItem(itemDataId: number): ItemModel {
+    return {
+      id: 0,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      ownerUserId: this.id,
+      itemDataId,
+      count: 0,
+    };
+  }
+
   public async update(): Promise<boolean> {
     return false;
   }

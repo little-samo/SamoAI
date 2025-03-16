@@ -4,8 +4,12 @@ import {
   AgentEntityState,
   AgentId,
   AgentState,
+  Entity,
   EntityId,
+  EntityKey,
   EntityType,
+  ItemDataId,
+  ItemModel,
   Location,
   LocationEntityState,
   LocationId,
@@ -18,6 +22,8 @@ import { AsyncEventEmitter } from '@little-samo/samo-ai/common';
 
 import {
   AgentsRepository,
+  ItemOwner,
+  ItemsRepository,
   LocationsRepository,
   UsersRepository,
 } from '../repositories';
@@ -40,13 +46,15 @@ export class WorldManager extends AsyncEventEmitter {
     redisLockService: RedisLockService,
     locationRepository: LocationsRepository,
     agentRepository: AgentsRepository,
-    userRepository: UsersRepository
+    userRepository: UsersRepository,
+    itemsRepository: ItemsRepository
   ) {
     WorldManager._instance = new WorldManager(
       redisLockService,
       locationRepository,
       agentRepository,
-      userRepository
+      userRepository,
+      itemsRepository
     );
   }
 
@@ -61,7 +69,8 @@ export class WorldManager extends AsyncEventEmitter {
     private readonly redisLockService: RedisLockService,
     public readonly locationRepository: LocationsRepository,
     public readonly agentRepository: AgentsRepository,
-    public readonly userRepository: UsersRepository
+    public readonly userRepository: UsersRepository,
+    public readonly itemsRepository: ItemsRepository
   ) {
     super();
   }
@@ -206,10 +215,17 @@ export class WorldManager extends AsyncEventEmitter {
     }
     const users = await this.getUsers(location, locationContextUserIds);
 
+    const items = await this.itemsRepository.getEntityItemModels(
+      Object.values(agents).map((agent) => agent.id),
+      Object.values(users).map((user) => user.id)
+    );
+
     for (const agent of Object.values(agents)) {
+      agent.setItems(items[agent.key] ?? []);
       location.addEntity(agent, false);
     }
     for (const user of Object.values(users)) {
+      user.setItems(items[user.key] ?? []);
       location.addEntity(user, false);
     }
 
@@ -242,14 +258,11 @@ export class WorldManager extends AsyncEventEmitter {
         agentIds,
         userIds
       );
-    const agentItemModels =
-      await this.agentRepository.getAgentItemModels(agentIds);
 
     const agents: Record<number, Agent> = {};
     for (const agentId of agentIds) {
       const agent = new Agent(location, agentModels[agentId], {
         state: agentStates[agentId],
-        items: agentItemModels[agentId],
       });
 
       const entityStates = agentEntityStates[agentId];
@@ -271,13 +284,11 @@ export class WorldManager extends AsyncEventEmitter {
   ): Promise<Record<UserId, User>> {
     const userModels = await this.userRepository.getUserModels(userIds);
     const userStates = await this.userRepository.getOrCreateUserStates(userIds);
-    const userItemModels = await this.userRepository.getUserItemModels(userIds);
 
     const users: Record<UserId, User> = {};
     for (const userId of userIds) {
       users[userId] = new User(location, userModels[userId], {
         state: userStates[userId],
-        items: userItemModels[userId],
       });
     }
 
@@ -438,6 +449,10 @@ export class WorldManager extends AsyncEventEmitter {
       console.log(`Updating location ${locationId}`);
     }
 
+    options.handleSave ??= async (save: Promise<void>) => {
+      await save;
+    };
+
     const location = await this.getLocation(locationId, {
       llmApiKeyUserId,
     });
@@ -473,124 +488,151 @@ export class WorldManager extends AsyncEventEmitter {
 
     location.on(
       'messageAdded',
-      async (location: Location, message: LocationMessage) => {
-        if (options.handleSave) {
-          void options.handleSave(
-            this.addLoationMessage(
-              location.id,
-              message,
-              location.meta.messageLimit
-            )
-          );
-        } else {
-          void this.addLoationMessage(
+      (location: Location, message: LocationMessage) => {
+        void options.handleSave!(
+          this.addLoationMessage(
             location.id,
             message,
             location.meta.messageLimit
-          );
-        }
+          )
+        );
       }
     );
 
     location.on(
       'agentUpdateMemory',
-      async (
-        agent: Agent,
-        state: AgentState,
-        index: number,
-        memory: string
-      ) => {
-        if (options.handleSave) {
-          void options.handleSave(
-            this.agentRepository.updateAgentStateMemory(
-              agent.model.id as AgentId,
-              index,
-              memory
-            )
-          );
-        } else {
-          void this.agentRepository.updateAgentStateMemory(
+      (agent: Agent, state: AgentState, index: number, memory: string) => {
+        void options.handleSave!(
+          this.agentRepository.updateAgentStateMemory(
             agent.model.id as AgentId,
             index,
             memory
-          );
-        }
+          )
+        );
       }
     );
 
     location.on(
       'agentUpdateEntityMemory',
-      async (
+      (
         agent: Agent,
         state: AgentEntityState,
         index: number,
         memory: string
       ) => {
-        if (options.handleSave) {
-          void options.handleSave(
-            this.agentRepository.updateAgentEntityStateMemory(
-              agent.model.id as AgentId,
-              state.targetType,
-              state.targetId,
-              index,
-              memory
-            )
-          );
-        } else {
-          void this.agentRepository.updateAgentEntityStateMemory(
+        void options.handleSave!(
+          this.agentRepository.updateAgentEntityStateMemory(
             agent.model.id as AgentId,
             state.targetType,
             state.targetId,
             index,
             memory
-          );
-        }
+          )
+        );
       }
     );
 
     location.on(
       'agentUpdateExpression',
-      async (agent: Agent, state: LocationEntityState, expression: string) => {
-        if (options.handleSave) {
-          void options.handleSave(
-            this.locationRepository.updateLocationEntityStateExpression(
-              locationId,
-              state.targetType,
-              state.targetId,
-              expression
-            )
-          );
-        } else {
-          void this.locationRepository.updateLocationEntityStateExpression(
+      (agent: Agent, state: LocationEntityState, expression: string) => {
+        void options.handleSave!(
+          this.locationRepository.updateLocationEntityStateExpression(
             locationId,
             state.targetType,
             state.targetId,
             expression
-          );
-        }
+          )
+        );
       }
     );
 
     location.on(
       'agentUpdateActive',
-      async (agent: Agent, state: LocationEntityState, isActive: boolean) => {
-        if (options.handleSave) {
-          void options.handleSave(
-            this.locationRepository.updateLocationEntityStateIsActive(
-              locationId,
-              state.targetType,
-              state.targetId,
-              isActive
-            )
-          );
-        } else {
-          void this.locationRepository.updateLocationEntityStateIsActive(
+      (agent: Agent, state: LocationEntityState, isActive: boolean) => {
+        void options.handleSave!(
+          this.locationRepository.updateLocationEntityStateIsActive(
             locationId,
             state.targetType,
             state.targetId,
             isActive
+          )
+        );
+      }
+    );
+
+    location.on(
+      'entityAddItem',
+      async (
+        entity: Entity,
+        dataId: ItemDataId,
+        count: number,
+        stackable: boolean
+      ) => {
+        const itemOwner: ItemOwner = {
+          ownerAgentId:
+            entity.type === EntityType.Agent ? entity.id : undefined,
+          ownerUserId: entity.type === EntityType.User ? entity.id : undefined,
+        };
+        if (stackable) {
+          await options.handleSave!(
+            this.itemsRepository.addOrCreateItemModel(itemOwner, dataId, count)
           );
+        } else {
+          for (let i = 0; i < count; i++) {
+            await options.handleSave!(
+              this.itemsRepository.addOrCreateItemModel(itemOwner, dataId, 1)
+            );
+          }
         }
+      }
+    );
+
+    location.on(
+      'entityRemoveItem',
+      (entity: Entity, item: ItemModel, count: number) => {
+        const itemOwner: ItemOwner = {
+          ownerAgentId:
+            entity.type === EntityType.Agent ? entity.id : undefined,
+          ownerUserId: entity.type === EntityType.User ? entity.id : undefined,
+        };
+        void options.handleSave!(
+          this.itemsRepository.removeItemModel(itemOwner, item, count)
+        );
+      }
+    );
+
+    location.on(
+      'entityTransferItem',
+      (
+        entity: Entity,
+        item: ItemModel,
+        count: number,
+        targetEntityKey: EntityKey
+      ) => {
+        const itemOwner: ItemOwner = {
+          ownerAgentId:
+            entity.type === EntityType.Agent ? entity.id : undefined,
+          ownerUserId: entity.type === EntityType.User ? entity.id : undefined,
+        };
+        const [targetEntityType, targetEntityId] = targetEntityKey.split(':');
+        const targetItemOwner: ItemOwner = {
+          ownerAgentId:
+            targetEntityType === EntityType.Agent
+              ? (Number(targetEntityId) as AgentId)
+              : undefined,
+          ownerUserId:
+            targetEntityType === EntityType.User
+              ? (Number(targetEntityId) as UserId)
+              : undefined,
+        };
+        void options.handleSave!(
+          this.itemsRepository.transferItemModel(
+            itemOwner,
+            item,
+            targetItemOwner,
+            count
+          )
+        );
       }
     );
 
