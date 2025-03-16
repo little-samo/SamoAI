@@ -242,11 +242,14 @@ export class WorldManager extends AsyncEventEmitter {
         agentIds,
         userIds
       );
+    const agentItemModels =
+      await this.agentRepository.getAgentItemModels(agentIds);
 
     const agents: Record<number, Agent> = {};
     for (const agentId of agentIds) {
       const agent = new Agent(location, agentModels[agentId], {
         state: agentStates[agentId],
+        items: agentItemModels[agentId],
       });
 
       const entityStates = agentEntityStates[agentId];
@@ -268,11 +271,13 @@ export class WorldManager extends AsyncEventEmitter {
   ): Promise<Record<UserId, User>> {
     const userModels = await this.userRepository.getUserModels(userIds);
     const userStates = await this.userRepository.getOrCreateUserStates(userIds);
+    const userItemModels = await this.userRepository.getUserItemModels(userIds);
 
     const users: Record<UserId, User> = {};
     for (const userId of userIds) {
       users[userId] = new User(location, userModels[userId], {
         state: userStates[userId],
+        items: userItemModels[userId],
       });
     }
 

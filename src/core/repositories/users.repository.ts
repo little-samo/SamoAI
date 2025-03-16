@@ -1,5 +1,10 @@
-import { LlmApiKeyModel, UserId, UserModel } from '@little-samo/samo-ai/models';
-import { UserState } from '@little-samo/samo-ai/models/entities/users/states/user.state';
+import {
+  LlmApiKeyModel,
+  UserId,
+  UserModel,
+  UserState,
+  ItemModel,
+} from '@little-samo/samo-ai/models';
 
 export interface UsersRepository {
   getUserModel(userId: UserId): Promise<UserModel>;
@@ -7,4 +12,5 @@ export interface UsersRepository {
   getUserLlmApiKeys(userId: UserId): Promise<LlmApiKeyModel[]>;
   getOrCreateUserState(userId: UserId): Promise<UserState>;
   getOrCreateUserStates(userIds: UserId[]): Promise<Record<UserId, UserState>>;
+  getUserItemModels(userIds: UserId[]): Promise<Record<UserId, ItemModel[]>>;
 }

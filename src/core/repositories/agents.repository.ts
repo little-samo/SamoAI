@@ -1,12 +1,13 @@
 import {
   AgentId,
   AgentModel,
+  AgentState,
+  AgentEntityState,
+  ItemModel,
   EntityId,
   EntityType,
   UserId,
 } from '@little-samo/samo-ai/models';
-import { AgentEntityState } from '@little-samo/samo-ai/models/entities/agents/states/agent.entity-state';
-import { AgentState } from '@little-samo/samo-ai/models/entities/agents/states/agent.state';
 
 export interface AgentsRepository {
   getAgentModel(agentId: AgentId): Promise<AgentModel>;
@@ -25,6 +26,9 @@ export interface AgentsRepository {
     targetAgentIds: AgentId[],
     targetUserIds: UserId[]
   ): Promise<Record<AgentId, AgentEntityState[]>>;
+  getAgentItemModels(
+    agentIds: AgentId[]
+  ): Promise<Record<AgentId, ItemModel[]>>;
 
   updateAgentStateMemory(
     agentId: AgentId,
