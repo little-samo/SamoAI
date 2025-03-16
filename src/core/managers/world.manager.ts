@@ -33,7 +33,7 @@ interface UpdateLocationOptions {
   ignorePauseUpdateUntil?: boolean;
   preAction?: (location: Location) => Promise<void>;
   postAction?: (location: Location) => Promise<void>;
-  handleSave?: (save: Promise<void>) => Promise<void>;
+  handleSave?: <T = void>(save: Promise<T>) => Promise<void>;
 }
 
 export class WorldManager extends AsyncEventEmitter {
@@ -449,7 +449,7 @@ export class WorldManager extends AsyncEventEmitter {
       console.log(`Updating location ${locationId}`);
     }
 
-    options.handleSave ??= async (save: Promise<void>) => {
+    options.handleSave ??= async <T>(save: Promise<T>) => {
       await save;
     };
 

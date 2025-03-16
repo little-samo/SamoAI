@@ -25,7 +25,7 @@ export interface ItemsRepository {
     owner: ItemOwner,
     dataId: ItemDataId,
     count: number
-  ): Promise<void>;
+  ): Promise<ItemModel>;
   removeItemModel(
     owner: ItemOwner,
     item: ItemModel,
