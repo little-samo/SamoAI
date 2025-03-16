@@ -569,9 +569,8 @@ export class WorldManager extends AsyncEventEmitter {
         stackable: boolean
       ) => {
         const itemOwner: ItemOwner = {
-          ownerAgentId:
-            entity.type === EntityType.Agent ? entity.id : undefined,
-          ownerUserId: entity.type === EntityType.User ? entity.id : undefined,
+          ownerAgentId: entity.type === EntityType.Agent ? entity.id : null,
+          ownerUserId: entity.type === EntityType.User ? entity.id : null,
         };
         if (stackable) {
           await options.handleSave!(
@@ -591,9 +590,8 @@ export class WorldManager extends AsyncEventEmitter {
       'entityRemoveItem',
       (entity: Entity, item: ItemModel, count: number) => {
         const itemOwner: ItemOwner = {
-          ownerAgentId:
-            entity.type === EntityType.Agent ? entity.id : undefined,
-          ownerUserId: entity.type === EntityType.User ? entity.id : undefined,
+          ownerAgentId: entity.type === EntityType.Agent ? entity.id : null,
+          ownerUserId: entity.type === EntityType.User ? entity.id : null,
         };
         void options.handleSave!(
           this.itemsRepository.removeItemModel(itemOwner, item, count)
@@ -610,20 +608,19 @@ export class WorldManager extends AsyncEventEmitter {
         targetEntityKey: EntityKey
       ) => {
         const itemOwner: ItemOwner = {
-          ownerAgentId:
-            entity.type === EntityType.Agent ? entity.id : undefined,
-          ownerUserId: entity.type === EntityType.User ? entity.id : undefined,
+          ownerAgentId: entity.type === EntityType.Agent ? entity.id : null,
+          ownerUserId: entity.type === EntityType.User ? entity.id : null,
         };
         const [targetEntityType, targetEntityId] = targetEntityKey.split(':');
         const targetItemOwner: ItemOwner = {
           ownerAgentId:
             targetEntityType === EntityType.Agent
               ? (Number(targetEntityId) as AgentId)
-              : undefined,
+              : null,
           ownerUserId:
             targetEntityType === EntityType.User
               ? (Number(targetEntityId) as UserId)
-              : undefined,
+              : null,
         };
         void options.handleSave!(
           this.itemsRepository.transferItemModel(

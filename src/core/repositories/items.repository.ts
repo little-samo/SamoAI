@@ -7,8 +7,8 @@ import {
 } from '@little-samo/samo-ai/models';
 
 export interface ItemOwner {
-  ownerAgentId?: number;
-  ownerUserId?: number;
+  ownerAgentId: number | null;
+  ownerUserId: number | null;
 }
 
 export interface ItemsRepository {
