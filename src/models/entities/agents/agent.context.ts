@@ -1,5 +1,6 @@
 import { Context } from '../../context';
 import { EntityContext, EntityContextOptions } from '../entity.context';
+import { ItemKey } from '../entity.types';
 
 export interface AgentMemoryContextOptions {
   index: number;
@@ -55,6 +56,33 @@ export class AgentEntityMemoryContext extends Context {
   }
 }
 
+export interface AgentItemContextOptions {
+  key: ItemKey;
+  name: string;
+  description: string;
+  count: number;
+}
+
+export class AgentItemContext extends Context {
+  public static readonly FORMAT = 'KEY\tNAME\tDESCRIPTION\tCOUNT';
+
+  public readonly key: ItemKey;
+  public readonly name: string;
+  public readonly description: string;
+  public readonly count: number;
+
+  public constructor(options: AgentItemContextOptions) {
+    super();
+    this.key = options.key;
+    this.name = options.name;
+    this.description = options.description;
+    this.count = options.count;
+  }
+
+  public build(): string {
+    return `${this.key}\t${this.name}\t${this.description}\t${this.count}`;
+  }
+}
 export interface AgentContextOptions extends EntityContextOptions {}
 export class AgentContext extends EntityContext implements AgentContextOptions {
   public static readonly FORMAT = EntityContext.FORMAT;

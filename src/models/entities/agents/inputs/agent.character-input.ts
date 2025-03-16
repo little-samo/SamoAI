@@ -1,4 +1,5 @@
 import {
+  ItemKey,
   Location,
   LocationContext,
   LocationMessageContext,
@@ -9,6 +10,7 @@ import { Agent } from '../agent';
 import {
   AgentContext,
   AgentEntityMemoryContext,
+  AgentItemContext,
   AgentMemoryContext,
 } from '../agent.context';
 import { UserContext } from '../../users';
@@ -109,12 +111,28 @@ ${locationContext.build()}
 </Location>
 `);
 
+    const agentContext = this.agent.context;
     contexts.push(`
 You are currently in the following context:
 <YourContext>
 ${AgentContext.FORMAT}
-${this.agent.context.build()}
+${agentContext.build()}
 </YourContext>
+
+You have the following items in your inventory:
+<YourInventory>
+${AgentItemContext.FORMAT}
+${Object.entries(agentContext.items)
+  .map(([key, item]) =>
+    new AgentItemContext({
+      key: key as ItemKey,
+      name: item.itemData?.name ?? `Item ${item.itemDataId}`,
+      description: item.itemData?.description ?? '',
+      count: item.count,
+    }).build()
+  )
+  .join('\n')}
+</YourInventory>
 `);
 
     const otherAgentContexts: string[] = [];
