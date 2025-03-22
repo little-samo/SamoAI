@@ -58,7 +58,7 @@ export class AgentTransferItemAction extends AgentAction {
       const targetEntity = this.location.entities[action.targetEntityKey];
       await this.location.addAgentMessage(this.agent, {
         message: action.reason,
-        action: `TRANSFER_ITEM:${item.itemDataId}:${action.count}:"${action.targetEntityKey}":"${targetEntity?.name}"`,
+        action: `TRANSFER_ITEM:"${action.itemKey}":"${item.itemData?.name ?? item.itemDataId}":COUNT ${action.count}:"${action.targetEntityKey}":"${targetEntity?.name}"`,
       });
     } else {
       await this.location.addSystemMessage(
