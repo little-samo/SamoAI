@@ -15,30 +15,39 @@ export interface AgentUpdateEntityMemoryActionParameters {
 @RegisterAgentAction('update_entity_memory')
 export class AgentUpdateEntityMemoryAction extends AgentAction {
   public override get description(): string {
+    const maxIndex = this.agent.meta.entityMemoryLimit - 1;
     switch (this.version) {
       case 1:
       default:
-        return 'Update one of your memory about an entity. If you select an index that already has a recorded memory, it will be overwritten. If a stored situation in memory has changed or the issue has been resolved, overwrite the relevant memory to prevent future confusion. Choose the index carefully, considering the priority of the stored memory.';
+        return `Updates or overwrites a memory slot specifically about the entity identified by 'key' (indexed 0 to ${maxIndex}). Use this to store significant facts, interactions, or observations related *only* to that entity. Choose the index carefully based on importance and timeliness. Refer to CRITICAL memory rules for detailed guidance.`;
     }
   }
 
   public override get parameters(): z.ZodSchema {
+    const maxIndex = this.agent.meta.entityMemoryLimit - 1;
+    const maxLength = this.agent.meta.entityMemoryLengthLimit;
     switch (this.version) {
       case 1:
       default:
         return z.object({
-          key: z.string().describe('The key of the entity to update.'),
+          key: z
+            .string()
+            .describe(
+              `The unique key (e.g., 'user:123', 'agent:123') of the specific entity (User or Agent) whose memory slot you want to update.`
+            ),
           index: z
             .number()
             .min(0)
-            .max(this.agent.meta.entityMemoryLimit - 1)
+            .max(maxIndex)
             .describe(
-              'The index of the memory to update. If memory becomes full, overwrite the least important memory.'
+              `The index (0 to ${maxIndex}) of the memory slot *for the specified entity* to update. If all slots for this entity are full, choose the index of the least important or most outdated memory *for this entity* to overwrite.`
             ),
           memory: z
             .string()
-            .max(this.agent.meta.entityMemoryLengthLimit)
-            .describe('The new memory value.'),
+            .max(maxLength)
+            .describe(
+              `The concise and factual new memory content specifically *about the entity identified by key*, to store at the specified index. Max length: ${maxLength} characters.`
+            ),
         });
     }
   }

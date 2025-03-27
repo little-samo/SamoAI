@@ -25,6 +25,6 @@ export const DEFAULT_LOCATION_META: LocationMeta = {
   userContextLimit: 8,
   agentUserContextLimit: 4,
   actions: ['send_casual_message:latest'],
-  requiredActions: ['send_casual_message'],
+  requiredActions: [],
   rules: [],
 };

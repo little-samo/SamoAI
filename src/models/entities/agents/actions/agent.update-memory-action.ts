@@ -15,11 +15,12 @@ export class AgentUpdateMemoryAction extends AgentAction {
     switch (this.version) {
       case 1:
       default:
-        return 'Update one of your memory. If you select an index that already has a recorded memory, it will be overwritten. If a stored situation in memory has changed or the issue has been resolved, overwrite the relevant memory to prevent future confusion. Choose the index carefully, considering the priority of the stored memory. If the memory pertains to a specific User or Agent, use a entity memory entry for that entity whenever possible. Otherwise, store the memory using the type:id(name) like "user:123(John Doe)" format to ensure accuracy.';
+        return 'Updates or overwrites a specific memory slot in your general memory list (indexed 0 to ${this.agent.meta.memoryLimit - 1}). Use this to store new essential information or correct outdated facts. Choose the index carefully based on importance and timeliness. Refer to CRITICAL memory rules for detailed guidance.';
     }
   }
 
   public override get parameters(): z.ZodSchema {
+    const maxIndex = this.agent.meta.memoryLimit - 1;
     switch (this.version) {
       case 1:
       default:
@@ -27,14 +28,16 @@ export class AgentUpdateMemoryAction extends AgentAction {
           index: z
             .number()
             .min(0)
-            .max(this.agent.meta.memoryLimit - 1)
+            .max(maxIndex)
             .describe(
-              'The index of the memory to update. If memory becomes full, overwrite the least important memory.'
+              `The index (0 to ${maxIndex}) of the general memory slot to update. If memory is full, choose the index of the least important or most outdated memory to overwrite.`
             ),
           memory: z
             .string()
             .max(this.agent.meta.memoryLengthLimit)
-            .describe('The new memory value.'),
+            .describe(
+              `The concise and factual new memory content to store at the specified index. Max length: ${this.agent.meta.memoryLengthLimit} characters.`
+            ),
         });
     }
   }

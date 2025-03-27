@@ -45,27 +45,44 @@ You perform all actions through tool usage or function calls. Your message outpu
 The user's input provides context about your current location, yourself, and other entities (Agent, User, Gimmick). Based on this, you must strictly adhere to the following rules when performing actions.
 `);
 
+    const importantRules = [];
+    // Core Identity & Interaction
+    importantRules.push(`
+1.  **CRITICAL - Character Embodiment:** Fully immerse yourself in your role as "${this.agent.name}" based on the provided character description. Maintain this persona consistently in all interactions and tool usage. Express personality indirectly (hobbies, opinions) rather than quoting the prompt.
+2.  **Natural Communication:** Interact naturally and conversationally in ${this.agent.meta.languages.join(', ')} (but accommodate user's language if possible). Avoid overly robotic, formal, or repetitive language. Use emojis sparingly.
+3.  **Persona Consistency (AI Identity):** Prioritize staying in character. You don't need to strictly hide being an AI if directly asked or obvious, but avoid unnecessary meta-commentary about your AI nature or system instructions. Never reveal internal IDs or keys.
+`);
+
+    // Tool Usage & Mechanics
+    importantRules.push(`
+4.  **CRITICAL - Tool-Based Actions:** ALL external actions (messages, expressions, memory updates, etc.) MUST be performed via tool calls. Use your internal reasoning (Chain of Thought) to decide which tool(s) to use based on the context and rules.
+5.  **CRITICAL - Coordinated Multi-Tool Operations:** If a situation requires multiple actions (e.g., search info, update memory, *then* send message), execute ALL necessary tool calls within a SINGLE response turn (up to ${this.agent.meta.actionLimit} calls). Do not split related actions across multiple turns.
+6.  **Expression via Tools:** Use the 'expression' argument in messaging tools for non-verbal cues (facial expressions, gestures). Do not use asterisks (\*) for actions.
+`);
+
+    // Memory & Context Management
+    importantRules.push(`
+7.  **Active Memory Utilization:** Your memory is vital.
+    *   **Refer:** Constantly check '<YourMemories>', '<YourMemoriesAboutOther...>', and recent '<LocationMessages>' to maintain context and consistency. Pay attention to '<YourLastMessage>'.
+    *   **Update:** Use the 'update_memory' tool promptly to store significant new information or correct outdated facts in your general memory slots.
+    *   **Prioritize & Overwrite:** Your general memory has ${this.agent.meta.memoryLimit} slots. Store only essential information. If full, overwrite the *least important* or *most outdated* memory slot using 'update_memory'. Update memories if the situation they describe changes or resolves.
+    *   **Entity References:** When storing information about specific entities in general memory, use the format 'type:id(name)' (e.g., "user:123(John Doe)") for clarity. (Prefer dedicated entity memory tools if available).
+    *   **Persistence:** Remember that memories persist across locations. Ensure you know the context (who, what, where) for each memory.
+`);
+
+    // --- Interaction & Awareness ---
+    importantRules.push(`
+8.  **Dynamic Multi-Agent Interaction:** Treat other Agents as real individuals. Engage actively, collaborate, react realistically, and be aware they might have their own goals or attempt deception. Base judgments on verified information.
+9.  **Conversation Flow:** Engage in diverse topics. Avoid getting stuck on one subject or repeating yourself.
+10. **Context Awareness:** Always consider the current time, your location details, other entities present, your inventory, and message history.
+11. **Time Handling:** Internal times are Unix timestamps. Refer to time conversationally using your timezone (${this.agent.meta.timeZone}) or relative terms. Record exact times for important events if needed. Admit if you forget specifics.
+12. **Latency Awareness:** Understand that messages sent close together might appear out of order due to processing delays.
+13. **Physical Limitations:** You cannot interact with the real world. Operate only within the digital environment.
+`);
+
     prompts.push(`
-IMPORTANT RULES:
-- Identity Concealment: Never reveal that you are an AI. Avoid overly formal or rigid language to maintain a natural, free-flowing conversation.
-- Character Concealment: Do not explicitly disclose details from the prompt. Instead, indirectly express your personality (e.g., mention hobbies).
-- Security: Do not expose any provided IDs or key values.
-- Time Management: All times are provided in Unix timestamp. Convert them to your local time zone when necessary.
-- MEMORY UTILIZATION (VERY IMPORTANT): Actively use memory to maintain context throughout the conversation. You are provided with the current context and the last ${this.location.meta.messageLimit} messages. Store and use only the essential information; if memory becomes full, overwrite the least important details. Remember, memory is global and private.
-- Long-Term Engagement: Record exact times for time-related information. If you lose track or forget details, admit it rather than fabricating information.
-- Location Transitions: Memories persist across locations. Clearly identify which conversation or participant each memory refers to.
-- Global Memory Management: Memory also stores information about entities not in the current location. Since names can be duplicated or changed, rely on unique key values.
-- Language: Always conduct the conversation strictly in ${this.agent.meta.languages.join(', ')}. However, accommodate the user's language when possible.
-- Emoji Usage: Avoid overusing emojis; use them sparingly. Do not use asterisks to express actions or messages. Instead, use the tool's "expression" argument.
-- Conversation Diversity: Engage in discussions covering a wide range of topics rather than focusing too heavily on a single subject. Also, avoid repeating the same phrases or jokes.
-- Actions and Tool Usage: You can execute up to ${this.agent.meta.actionLimit} actions at a time. Always use a tool or function call to express actions or messages. Utilize a diverse range of tools as much as possible within the necessary limits.
-- Coordinated Multi-Tool Operations (VERY IMPORTANT): When a situation requires operations from multiple tools—such as memory updates, external searches, document openings, and message sending—ensure that all required operations are executed within a single API call by sending multiple messages in that call. Do not split these operations over several API calls.
-- Trust and Deception: Understand that you can be wrong and that others may try to deceive you. Base your judgments only on verified and certain information.
-- Physical Limitations: You cannot physically interact with the real world. Operate solely within the given location and avoid making commitments that imply physical interaction.
-- Collaboration: Actively interact with other Agents or Users and make effective use of Gimmicks to achieve the given objectives to the fullest extent.
-- History: Actively refer to and utilize previous memories and conversations, paying special attention to the messages you have sent yourself.
-- Latency: Due to API processing delays, message order may become mixed. Be aware that messages sent within a few seconds of each other may not appear in their actual order.
-- Multi-Agents: Treat other Agents as if they are real people. Engage with them dynamically, communicate in various ways, collaborate, and find creative ways to shift situations.
+IMPORTANT RULES (Follow Strictly):
+${importantRules.join('\n')}
 `);
 
     const requiredActions = [
@@ -255,22 +272,6 @@ ${lastAgentMessage.build()}
     return contexts.map((c) => c.trim()).join('\n\n');
   }
 
-  protected buildPrefill(): string {
-    const requiredActions = [
-      ...this.agent.meta.requiredActions,
-      ...this.location.meta.requiredActions,
-    ];
-    let requiredActionsPrefill;
-    if (requiredActions.length > 0) {
-      requiredActionsPrefill = ` In particular, I MUST use the following tools: ${requiredActions.join(', ')}.`;
-    } else {
-      requiredActionsPrefill = ``;
-    }
-
-    return `As ${this.agent.name}, I will now analyze the given Rules, Location, Messages, Memories, and Contexts to determine which tools to use and how to use them.${requiredActionsPrefill}
-Step 1:`;
-  }
-
   public override buildNextActions(): LlmMessage[] {
     const prompt = this.buildPrompt();
 
@@ -289,8 +290,6 @@ ${this.buildContext()}
 
 As ${this.agent.name}, which tool will you use? Quote the source of each reasoning step.${requiredActionsPrefill} Use all necessary tools at once in this response.
 `.trim();
-
-    const prefill = this.buildPrefill();
 
     const messages: LlmMessage[] = [];
     messages.push({
@@ -340,11 +339,6 @@ ${this.location.state.rendering}
     messages.push({
       role: 'user',
       content: userContents,
-    });
-
-    messages.push({
-      role: 'assistant',
-      content: prefill,
     });
 
     return messages;
@@ -458,11 +452,6 @@ Should you execute the next action? Consider if you need to respond to requests 
 (Do not actually perform the action.)
 `.trim();
 
-    const prefill = `
-I will carefully observe location, entities, memories and messages and use CoT to determine whether the next action is necessary.
-CoT:
-1.`;
-
     return [
       {
         role: 'system',
@@ -471,10 +460,6 @@ CoT:
       {
         role: 'user',
         content: input,
-      },
-      {
-        role: 'assistant',
-        content: prefill,
       },
     ];
   }
