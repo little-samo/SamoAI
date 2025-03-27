@@ -50,6 +50,7 @@ export class AnthropicService extends LlmService {
         }
         return response;
       } catch (error) {
+        console.error(error);
         if (error instanceof APIError) {
           const status = error.status;
           if ([429, 500, 501].includes(status) && attempt < maxTries) {

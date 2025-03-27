@@ -44,6 +44,7 @@ export class OpenAIService extends LlmService {
         }
         return response;
       } catch (error) {
+        console.error(error);
         if (error instanceof OpenAI.APIError) {
           const status = error.status;
           if ([429, 500, 503].includes(status) && attempt < maxTries) {
