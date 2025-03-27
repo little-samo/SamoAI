@@ -18,9 +18,12 @@ export class GeminiService extends LlmService {
 
   public constructor(
     public readonly model: string,
-    protected readonly apiKey: string
+    protected readonly apiKey: string,
+    options?: {
+      reasoning?: boolean;
+    }
   ) {
-    super(model, apiKey);
+    super(model, apiKey, options);
     this.client = new GoogleGenAI({
       apiKey: apiKey,
     });
@@ -134,7 +137,8 @@ export class GeminiService extends LlmService {
         config: {
           temperature: options?.temperature ?? LlmService.DEFAULT_TEMPERATURE,
           maxOutputTokens:
-            1024 + (options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS), // pad for reasoning
+            (this.reasoning ? 1024 : 0) + // pad for reasoning
+            (options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS),
           responseMimeType: 'application/json',
           systemInstruction: systemMessages,
         },
@@ -202,7 +206,8 @@ Response can only be in JSON format and must strictly follow the following forma
         config: {
           temperature: options?.temperature ?? LlmService.DEFAULT_TEMPERATURE,
           maxOutputTokens:
-            1024 + (options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS), // pad for reasoning
+            (this.reasoning ? 1024 : 0) + // pad for reasoning
+            (options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS),
           responseMimeType: 'application/json',
           systemInstruction: systemMessages,
         },

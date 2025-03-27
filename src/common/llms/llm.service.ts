@@ -47,10 +47,17 @@ export abstract class LlmService {
   public static readonly DEFAULT_MAX_TRIES = 5;
   public static readonly DEFAULT_RETRY_DELAY = 1000;
 
+  public readonly reasoning: boolean;
+
   public constructor(
     public readonly model: string,
-    protected readonly apiKey: string
-  ) {}
+    protected readonly apiKey: string,
+    options?: {
+      reasoning?: boolean;
+    }
+  ) {
+    this.reasoning = options?.reasoning ?? false;
+  }
 
   public abstract generate(
     messages: LlmMessage[],

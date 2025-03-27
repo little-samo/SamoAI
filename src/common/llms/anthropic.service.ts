@@ -19,9 +19,12 @@ export class AnthropicService extends LlmService {
 
   public constructor(
     public readonly model: string,
-    protected readonly apiKey: string
+    protected readonly apiKey: string,
+    options?: {
+      reasoning?: boolean;
+    }
   ) {
-    super(model, apiKey);
+    super(model, apiKey, options);
     this.client = new Anthropic({
       apiKey: apiKey,
     });

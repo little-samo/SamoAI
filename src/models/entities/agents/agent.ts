@@ -93,7 +93,10 @@ export class Agent extends Entity {
         const llmService = LlmFactory.create(
           llm.platform,
           llm.model,
-          apiKey.key
+          apiKey.key,
+          {
+            reasoning: llm.reasoning,
+          }
         );
         this.llms.push(llmService);
       }
@@ -102,7 +105,7 @@ export class Agent extends Entity {
       this.inputs.push(AgentInputFactory.createInput(input, location, this));
     }
     const actions = [
-      ...(meta.llms.at(0)?.reasoning ? [] : ['reasoning:latest']),
+      ...(this.llms.at(0)?.reasoning ? [] : ['reasoning:latest']),
       ...meta.actions,
       ...location.meta.actions,
     ];
