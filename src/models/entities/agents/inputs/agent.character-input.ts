@@ -82,7 +82,7 @@ The user's input provides context about your current location, yourself, and oth
 
     prompts.push(`
 IMPORTANT RULES (Follow Strictly):
-${importantRules.join('\n')}
+${importantRules.map((r) => r.trim()).join('\n')}
 `);
 
     const requiredActions = [
