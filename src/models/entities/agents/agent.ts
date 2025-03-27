@@ -102,7 +102,7 @@ export class Agent extends Entity {
       this.inputs.push(AgentInputFactory.createInput(input, location, this));
     }
     const actions = [
-      'reasoning:latest',
+      ...(meta.llms.at(0)?.reasoning ? [] : ['reasoning:latest']),
       ...meta.actions,
       ...location.meta.actions,
     ];

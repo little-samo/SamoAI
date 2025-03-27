@@ -5,6 +5,7 @@ import { EntityMeta } from '../entity.meta';
 export interface AgentLlmMeta {
   platform: LlmPlatform;
   model: string;
+  reasoning?: boolean;
 }
 
 export interface AgentMeta extends EntityMeta {

@@ -44,7 +44,7 @@ export class GeminiService extends LlmService {
         if (options.verbose) {
           console.log(JSON.stringify(response, null, 2));
           console.log(
-            `Google time taken: ${((Date.now() - startTime) / 1000).toFixed(2)}s`
+            `Gemini time taken: ${((Date.now() - startTime) / 1000).toFixed(2)}s`
           );
         }
         return response;
@@ -53,7 +53,8 @@ export class GeminiService extends LlmService {
         if (
           attempt < maxTries &&
           error instanceof Error &&
-          (error.name === 'ServerError' || error.name === 'ClientError')
+          (error.name === 'ServerError' || error.name === 'ClientError') &&
+          !error.message.includes('400 Bad Request')
         ) {
           await sleep(attempt * retryDelay);
           continue;
@@ -95,8 +96,8 @@ export class GeminiService extends LlmService {
                     };
                   case 'image':
                     return {
-                      fileData: {
-                        fileUri: content.image,
+                      inlineData: {
+                        data: content.image,
                         mimeType: 'image/png',
                       },
                     };
@@ -132,7 +133,9 @@ export class GeminiService extends LlmService {
         contents: userAssistantMessages,
         config: {
           temperature: options?.temperature ?? LlmService.DEFAULT_TEMPERATURE,
-          maxOutputTokens: options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS,
+          maxOutputTokens:
+            1024 + (options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS), // pad for reasoning
+          responseMimeType: 'application/json',
           systemInstruction: systemMessages,
         },
       };
@@ -158,7 +161,7 @@ export class GeminiService extends LlmService {
     options?: LlmOptions
   ): Promise<LlmToolCall[]> {
     try {
-      // openai does not support assistant message prefilling
+      // gemini does not support assistant message prefilling
       messages = messages.filter((message) => message.role !== 'assistant');
 
       const [systemMessages, userAssistantMessages] =
@@ -198,7 +201,9 @@ Response can only be in JSON format and must strictly follow the following forma
         contents: userAssistantMessages,
         config: {
           temperature: options?.temperature ?? LlmService.DEFAULT_TEMPERATURE,
-          maxOutputTokens: options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS,
+          maxOutputTokens:
+            1024 + (options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS), // pad for reasoning
+          responseMimeType: 'application/json',
           systemInstruction: systemMessages,
         },
       };
