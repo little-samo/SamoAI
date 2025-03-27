@@ -134,6 +134,9 @@ export class GeminiService extends LlmService {
           temperature: options?.temperature ?? LlmService.DEFAULT_TEMPERATURE,
           maxOutputTokens: options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS,
           systemInstruction: systemMessages,
+          thinkingConfig: {
+            includeThoughts: true,
+          },
         },
       };
       if (options?.verbose) {
@@ -200,6 +203,9 @@ Response can only be in JSON format and must strictly follow the following forma
           temperature: options?.temperature ?? LlmService.DEFAULT_TEMPERATURE,
           maxOutputTokens: options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS,
           systemInstruction: systemMessages,
+          thinkingConfig: {
+            includeThoughts: true,
+          },
         },
       };
       if (options?.verbose) {
