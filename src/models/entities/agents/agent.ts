@@ -335,6 +335,7 @@ export class Agent extends Entity {
     const result = await llm.generate(messages, {
       maxTokens: this.meta.evaluateMaxTokens,
       temperature: this.meta.evaluateTemperature,
+      jsonOutput: true,
       verbose: false,
     });
     let resultJson;

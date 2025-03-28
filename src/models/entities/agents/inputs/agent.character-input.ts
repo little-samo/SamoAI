@@ -355,12 +355,10 @@ Available tools: ${Object.keys(this.agent.actions).join(', ')}.
 Based on the rules, your character, the current context, and recent messages (especially those from others), decide if you (${this.agent.name}) need to take any action *right now*. Consider if there's an immediate need to respond, react, or proactively do something based on the situation or conversation.
 
 Provide your reasoning step-by-step. Then, output your final decision ONLY as a valid JSON object in the following format, with no surrounding text or markdown:
-\`\`\`json
 {
   "reasoning": string,   // Step-by-step reasoning for the decision; must come before 'should_act'
   "should_act": boolean  // true if you should act now, false otherwise
 }
-\`\`\`
 `.trim();
 
     const messages: LlmMessage[] = [];

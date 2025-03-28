@@ -142,6 +142,9 @@ export class GeminiService extends LlmService {
           systemInstruction: systemMessages,
         },
       };
+      if (options?.jsonOutput) {
+        request.config!.responseMimeType = 'application/json';
+      }
       if (options?.verbose) {
         console.log(request);
       }
