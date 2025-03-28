@@ -279,16 +279,16 @@ ${lastAgentMessage.build()}
       ...this.agent.meta.requiredActions,
       ...this.location.meta.requiredActions,
     ];
-    let requiredActionsPrefill;
+    let requiredActionsPrompt;
     if (requiredActions.length > 0) {
-      requiredActionsPrefill = ` In particular, I MUST use the following tools: ${requiredActions.join(', ')}.`;
+      requiredActionsPrompt = ` In particular, I MUST use the following tools: ${requiredActions.join(', ')}.`;
     } else {
-      requiredActionsPrefill = ``;
+      requiredActionsPrompt = ``;
     }
     const input = `
 ${this.buildContext()}
 
-As ${this.agent.name}, which tool will you use? Quote the source of each reasoning step.${requiredActionsPrefill} Use all necessary tools at once in this response.
+As ${this.agent.name}, which tool will you use? Quote the source of each reasoning step.${requiredActionsPrompt} Use all necessary tools at once in this response.
 `.trim();
 
     const messages: LlmMessage[] = [];
