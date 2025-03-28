@@ -38,10 +38,12 @@ export class LocationMessageContext extends Context {
   }
 
   public build(): string {
-    const targetKey = this.targetKey ?? '';
-    const message = this.message ? JSON.stringify(this.message) : '';
-    const expression = this.expression ? JSON.stringify(this.expression) : '';
-    let action = this.action ? JSON.stringify(this.action) : '';
+    const targetKey = this.targetKey ?? 'null';
+    const message = this.message ? JSON.stringify(this.message) : 'null';
+    const expression = this.expression
+      ? JSON.stringify(this.expression)
+      : 'null';
+    let action = this.action ? JSON.stringify(this.action) : 'null';
     if (this.image) {
       action = `UPLOAD_IMAGE`;
     }
