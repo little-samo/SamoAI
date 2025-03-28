@@ -46,9 +46,7 @@ export class LocationRoundRobinCore extends LocationCore {
           continue;
         }
 
-        if (lastMessage !== this.lastMessage) {
-          return LocationRoundRobinCore.LOCATION_UPDATE_COOLDOWN_ON_MESSAGE;
-        }
+        return LocationRoundRobinCore.LOCATION_UPDATE_COOLDOWN_ON_MESSAGE;
       }
     }
 
@@ -69,9 +67,7 @@ export class LocationRoundRobinCore extends LocationCore {
         continue;
       }
 
-      if (lastMessage !== this.lastMessage) {
-        return LocationRoundRobinCore.LOCATION_UPDATE_COOLDOWN_ON_MESSAGE;
-      }
+      return LocationRoundRobinCore.LOCATION_UPDATE_COOLDOWN_ON_MESSAGE;
     }
 
     return LocationRoundRobinCore.LOCATION_UPDATE_LONG_COOLDOWN_ON_NO_MESSAGE;
