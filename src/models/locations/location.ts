@@ -52,8 +52,8 @@ export class Location extends AsyncEventEmitter {
   public core!: LocationCore;
 
   public readonly entities: Record<EntityKey, Entity> = {};
-  public readonly agents: Record<number, Agent> = {};
-  public readonly users: Record<number, User> = {};
+  public readonly agents: Record<AgentId, Agent> = {};
+  public readonly users: Record<UserId, User> = {};
 
   public readonly state: LocationState;
   public readonly messagesState: LocationMessagesState;
@@ -114,9 +114,9 @@ export class Location extends AsyncEventEmitter {
   public addEntity(entity: Entity, updateIds: boolean = true): void {
     this.entities[entity.key] = entity;
     if (entity instanceof Agent) {
-      this.agents[entity.model.id] = entity;
+      this.agents[entity.model.id as AgentId] = entity;
     } else if (entity instanceof User) {
-      this.users[entity.model.id] = entity;
+      this.users[entity.model.id as UserId] = entity;
     }
     if (updateIds) {
       if (entity instanceof Agent) {
@@ -130,9 +130,9 @@ export class Location extends AsyncEventEmitter {
   public removeEntity(entity: Entity, updateIds: boolean = true): void {
     delete this.entities[entity.key];
     if (entity instanceof Agent) {
-      delete this.agents[entity.model.id];
+      delete this.agents[entity.model.id as AgentId];
     } else if (entity instanceof User) {
-      delete this.users[entity.model.id];
+      delete this.users[entity.model.id as UserId];
     }
     if (updateIds) {
       if (entity instanceof Agent) {
