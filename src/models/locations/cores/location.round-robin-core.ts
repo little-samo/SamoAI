@@ -39,14 +39,10 @@ export class LocationRoundRobinCore extends LocationCore {
           LocationRoundRobinCore.AGENT_MESSAGE_COOLDOWN
       ) {
         evaluatedAgentIds.add(agent.model.id);
-        if (!(await agent.update())) {
+        if (!(await agent.update()) || this.lastMessage === lastMessage) {
           if (ENV.DEBUG) {
             console.log(`Agent ${agent.name} did not execute next actions`);
           }
-          continue;
-        }
-
-        if (this.lastMessage === lastMessage) {
           continue;
         }
 
@@ -64,14 +60,10 @@ export class LocationRoundRobinCore extends LocationCore {
       if (evaluatedAgentIds.has(agent.model.id)) {
         continue;
       }
-      if (!(await agent.update())) {
+      if (!(await agent.update()) || this.lastMessage === lastMessage) {
         if (ENV.DEBUG) {
           console.log(`Agent ${agent.name} did not execute next actions`);
         }
-        continue;
-      }
-
-      if (this.lastMessage === lastMessage) {
         continue;
       }
 
