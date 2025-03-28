@@ -6,6 +6,7 @@ import { LocationCore } from './location.core';
 @RegisterLocationCore('update_forever')
 export class LocationUpdateForeverCore extends LocationCore {
   public static readonly UPDATE_INTERVAL = 3000; // 3 seconds
+  public static readonly SLEEP_INTERVAL = 0; // pause
 
   public async update(): Promise<number> {
     const entities = Object.values(this.location.entities);
@@ -21,6 +22,6 @@ export class LocationUpdateForeverCore extends LocationCore {
     if (ENV.DEBUG) {
       console.log('No entities executed');
     }
-    return LocationUpdateForeverCore.UPDATE_INTERVAL;
+    return LocationUpdateForeverCore.SLEEP_INTERVAL;
   }
 }
