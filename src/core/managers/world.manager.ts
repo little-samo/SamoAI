@@ -312,7 +312,7 @@ export class WorldManager extends AsyncEventEmitter {
     locationId: LocationId,
     agentId: AgentId,
     name: string,
-    message: string,
+    message?: string,
     createdAt?: Date,
     options: {
       targetEntityType?: EntityType;
@@ -398,11 +398,14 @@ export class WorldManager extends AsyncEventEmitter {
     locationId: LocationId,
     userId: UserId,
     name: string,
-    message: string,
+    message?: string,
     createdAt?: Date,
     options: {
       targetEntityType?: EntityType;
       targetEntityId?: EntityId;
+      expression?: string;
+      emotion?: string;
+      image?: string;
       maxMessages?: number;
     } = {}
   ): Promise<void> {
@@ -413,6 +416,9 @@ export class WorldManager extends AsyncEventEmitter {
       targetEntityId: options?.targetEntityId,
       name,
       message,
+      expression: options.expression,
+      emotion: options.emotion,
+      image: options.image,
       createdAt: createdAt ?? new Date(),
       updatedAt: new Date(),
     };
