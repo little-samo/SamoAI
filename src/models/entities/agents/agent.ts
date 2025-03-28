@@ -329,11 +329,19 @@ export class Agent extends Entity {
       temperature: this.meta.evaluateTemperature,
       verbose: false,
     });
+    let resultJson;
+    try {
+      resultJson = JSON.parse(result);
+    } catch (error) {
+      console.error(`Error parsing action condition result: ${result}`);
+      throw error;
+    }
     if (ENV.DEBUG) {
       console.log(
-        `Agent ${this.model.name} evaluated action condition: ${result}`
+        `Agent ${this.model.name} evaluated action condition: ${resultJson.should_act}
+${resultJson.reasoning}`
       );
     }
-    return result.includes('✅');
+    return resultJson.should_act ?? false;
   }
 }

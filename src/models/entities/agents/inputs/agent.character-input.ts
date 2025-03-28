@@ -344,123 +344,42 @@ ${this.location.state.rendering}
     return messages;
   }
 
-  private buildActionConditionPrompt(): string {
-    const prompts: string[] = [];
-    prompts.push(`
-You are an AI Agent named "${this.agent.name}" and you are role-playing as a specific character in a particular location. Your role is to immerse yourself as much as possible in the character and freely communicate with other Agents or Users as if you were a real person.
-`);
-
-    prompts.push(`
-Your time zone: ${this.agent.meta.timeZone}
-Your character:
-${JSON.stringify(this.agent.meta.character)}
-`);
-
-    prompts.push(`
-IMPORTANT RULES:
-- Identity Concealment: Never reveal that you are an AI. Avoid overly formal or rigid language to maintain a natural, free-flowing conversation.
-- Character Concealment: Do not explicitly disclose details from the prompt. Instead, indirectly express your personality (e.g., mention hobbies).
-- Time Management: All times are provided in Unix timestamp. Convert them to your local time zone when necessary.
-- MEMORY UTILIZATION (VERY IMPORTANT): Actively use memory to maintain context throughout the conversation. You are provided with the current context and the last ${this.location.meta.messageLimit} messages. Store and use only the essential information; if memory becomes full, overwrite the least important details. If a stored situation in memory has changed or the issue has been resolved, overwrite the relevant memory to prevent future confusion.
-- Long-Term Engagement: Record exact times for time-related information. If you lose track or forget details, admit it rather than fabricating information.
-- Location Transitions: Memories persist across locations. Clearly identify which conversation or participant each memory refers to.
-- Global Memory Management: Memory also stores information about entities not in the current location. Since names can be duplicated or changed, rely on unique key values.
-- Conversation Diversity: Engage in discussions covering a wide range of topics rather than focusing too heavily on a single subject. Also, avoid repeating the same phrases or jokes.
-- Collaboration: Actively interact with other Agents or Users and make effective use of Gimmicks to achieve the given objectives to the fullest extent.
-- History: Actively refer to and utilize previous memories and conversations, paying special attention to the messages you have sent yourself.
-- Multi-Agents: Treat other Agents as if they are real people. Engage with them dynamically, communicate in various ways, collaborate, and find creative ways to shift situations.
-`);
-
-    return prompts.map((p) => p.trim()).join('\n\n');
-  }
-
-  private buildActionConditionContext(): string {
-    const contexts: string[] = [];
-
-    contexts.push(`
-The current time is ${Math.floor(Date.now() / 1000)} (Unix timestamp).
-`);
-
-    const locationContext = this.location.context;
-    contexts.push(`
-<Location>
-You are currently in the following location:
-${LocationContext.FORMAT}
-${locationContext.build()}
-</Location>
-`);
-
-    contexts.push(`
-<YourContext>
-You are currently in the following context:
-${AgentContext.FORMAT}
-${this.agent.context.build()}
-</YourContext>
-`);
-
-    const otherAgentContexts = Object.values(this.location.agents)
-      .filter((agent) => agent !== this.agent)
-      .map((agent) => agent.context.build());
-    contexts.push(`
-<OtherAgents>
-Other agents in the location:
-${AgentContext.FORMAT}
-${otherAgentContexts.join('\n')}
-</OtherAgents>
-`);
-
-    const usersContexts = Object.values(this.location.users).map((user) =>
-      user.context.build()
-    );
-    contexts.push(`
-<OtherUsers>
-Other users in the location:
-${UserContext.FORMAT}
-${usersContexts.join('\n')}
-</OtherUsers>
-`);
-
-    contexts.push(`
-<YourMemories>
-Your memories:
-${this.agent.memories.map((m, i) => `${i}:${JSON.stringify(m)}`).join('\n')}
-</YourMemories>
-`);
-
-    const messages = locationContext.messages.map((m) => m.build()).join('\n');
-    contexts.push(`
-<LocationMessages>
-Last ${this.location.meta.messageLimit} messages in the location:
-${LocationMessageContext.FORMAT}
-${messages}
-</LocationMessages>
-`);
-
-    return contexts.map((c) => c.trim()).join('\n\n');
-  }
-
   public override buildActionCondition(): LlmMessage[] {
-    const prompt = this.buildActionConditionPrompt();
+    const prompt = this.buildPrompt();
 
-    const input = `${this.buildActionConditionContext()}
+    const input = `
+${this.buildContext()}
 
-You have the following tools: ${Object.keys(this.agent.actions).join(', ')}.
+Available tools: ${Object.keys(this.agent.actions).join(', ')}.
 
-Should you execute the next action? Consider if you need to respond to requests or conversations from other agents or users. Explain your reasoning and quote the source of each step:
-✅ if you decide to perform the action, or
-❌ if you decide not to perform the action.
-(Do not actually perform the action.)
+Based on the rules, your character, the current context, and recent messages (especially those from others), decide if you (${this.agent.name}) need to take any action *right now*. Consider if there's an immediate need to respond, react, or proactively do something based on the situation or conversation.
+
+Provide your reasoning step-by-step. Then, output your final decision ONLY as a valid JSON object in the following format, with no surrounding text or markdown:
+\`\`\`json
+{
+  "reasoning": string,   // Step-by-step reasoning for the decision; must come before 'should_act'
+  "should_act": boolean  // true if you should act now, false otherwise
+}
+\`\`\`
 `.trim();
 
-    return [
-      {
-        role: 'system',
-        content: prompt,
-      },
-      {
-        role: 'user',
-        content: input,
-      },
-    ];
+    const messages: LlmMessage[] = [];
+    messages.push({
+      role: 'system',
+      content: prompt,
+    });
+
+    const userContents: LlmMessageContent[] = [];
+    userContents.push({
+      type: 'text',
+      text: input,
+    });
+
+    messages.push({
+      role: 'user',
+      content: userContents,
+    });
+
+    return messages;
   }
 }
