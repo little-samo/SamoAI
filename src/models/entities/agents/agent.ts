@@ -274,6 +274,7 @@ export class Agent extends Entity {
   }
 
   public async update(): Promise<boolean> {
+    this.reloadCore();
     if (this.location.getEntityState(this.key)?.isActive === false) {
       if (ENV.DEBUG) {
         console.log(`Skip update for inactive agent ${this.model.name}`);
