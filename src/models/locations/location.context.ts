@@ -34,6 +34,7 @@ export class LocationMessageContext extends Context {
     this.message = options.message;
     this.expression = options.expression;
     this.action = options.action;
+    this.image = options.image;
     this.created = Math.floor(new Date(options.created).getTime() / 1000);
   }
 
