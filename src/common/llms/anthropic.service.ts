@@ -99,12 +99,29 @@ export class AnthropicService extends LlmService {
                       text: content.text,
                     };
                   case 'image':
+                    let mediaType = 'image/png';
+                    let imageData = content.image;
+
+                    if (content.image.startsWith('data:image/')) {
+                      const matches = content.image.match(
+                        /^data:([^;]+);base64,(.+)$/
+                      );
+                      if (matches && matches.length === 3) {
+                        mediaType = matches[1];
+                        imageData = matches[2];
+                      }
+                    }
+
                     return {
                       type: 'image',
                       source: {
                         type: 'base64',
-                        data: content.image,
-                        media_type: 'image/png',
+                        data: imageData,
+                        media_type: mediaType as
+                          | 'image/png'
+                          | 'image/jpeg'
+                          | 'image/gif'
+                          | 'image/webp',
                       },
                     };
                 }

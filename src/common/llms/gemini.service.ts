@@ -98,10 +98,23 @@ export class GeminiService extends LlmService {
                       text: content.text,
                     };
                   case 'image':
+                    let mediaType = 'image/png';
+                    let imageData = content.image;
+
+                    if (content.image.startsWith('data:image/')) {
+                      const matches = content.image.match(
+                        /^data:([^;]+);base64,(.+)$/
+                      );
+                      if (matches && matches.length === 3) {
+                        mediaType = matches[1];
+                        imageData = matches[2];
+                      }
+                    }
+
                     return {
                       inlineData: {
-                        data: content.image,
-                        mimeType: 'image/png',
+                        data: imageData,
+                        mimeType: mediaType,
                       },
                     };
                 }

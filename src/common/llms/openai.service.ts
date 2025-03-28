@@ -93,10 +93,23 @@ export class OpenAIService extends LlmService {
                       text: content.text,
                     };
                   case 'image':
+                    let mediaType = 'image/png';
+                    let imageData = content.image;
+
+                    if (content.image.startsWith('data:image/')) {
+                      const matches = content.image.match(
+                        /^data:([^;]+);base64,(.+)$/
+                      );
+                      if (matches && matches.length === 3) {
+                        mediaType = matches[1];
+                        imageData = matches[2];
+                      }
+                    }
+
                     return {
                       type: 'image_url',
                       image_url: {
-                        url: `data:image/png;base64,${content.image}`,
+                        url: `data:${mediaType};base64,${imageData}`,
                       },
                     };
                 }
