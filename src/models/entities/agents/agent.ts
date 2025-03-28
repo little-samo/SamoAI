@@ -62,7 +62,7 @@ export class Agent extends Entity {
     }
   }
 
-  public readonly core: AgentCore;
+  public core!: AgentCore;
 
   public readonly inputs: AgentInputBuilder[] = [];
   public readonly llms: LlmService[] = [];
@@ -85,7 +85,7 @@ export class Agent extends Entity {
 
     super(location, model.name, meta, state, items);
 
-    this.core = AgentCoreFactory.createCore(this);
+    this.reloadCore();
 
     for (const llm of meta.llms) {
       const apiKey = location.apiKeys[llm.platform];
@@ -190,6 +190,13 @@ export class Agent extends Entity {
   public removeEntityState(type: EntityType, id: EntityId): void {
     const key = `${type}:${id}` as EntityKey;
     delete this._entityStates[key];
+  }
+
+  public reloadCore(): void {
+    if (this.core && this.core.name === this.meta.core) {
+      return;
+    }
+    this.core = AgentCoreFactory.createCore(this);
   }
 
   public async setMemory(index: number, memory: string): Promise<void> {

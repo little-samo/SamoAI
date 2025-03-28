@@ -49,7 +49,7 @@ export class Location extends AsyncEventEmitter {
 
   public meta: LocationMeta;
 
-  public core: LocationCore;
+  public core!: LocationCore;
 
   public readonly entities: Record<EntityKey, Entity> = {};
   public readonly agents: Record<number, Agent> = {};
@@ -102,7 +102,7 @@ export class Location extends AsyncEventEmitter {
     Location.fixMessagesState(messagesState, this.meta);
     this.messagesState = messagesState;
 
-    this.core = LocationCoreFactory.createCore(this);
+    this.reloadCore();
 
     if (apiKeys) {
       for (const apiKey of apiKeys) {
@@ -190,7 +190,7 @@ export class Location extends AsyncEventEmitter {
   }
 
   public reloadCore(): void {
-    if (this.core.name === this.meta.core) {
+    if (this.core && this.core.name === this.meta.core) {
       return;
     }
     this.core = LocationCoreFactory.createCore(this);
