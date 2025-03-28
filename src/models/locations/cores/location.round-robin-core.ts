@@ -46,6 +46,10 @@ export class LocationRoundRobinCore extends LocationCore {
           continue;
         }
 
+        if (this.lastMessage === lastMessage) {
+          continue;
+        }
+
         return LocationRoundRobinCore.LOCATION_UPDATE_COOLDOWN_ON_MESSAGE;
       }
     }
@@ -64,6 +68,10 @@ export class LocationRoundRobinCore extends LocationCore {
         if (ENV.DEBUG) {
           console.log(`Agent ${agent.name} did not execute next actions`);
         }
+        continue;
+      }
+
+      if (this.lastMessage === lastMessage) {
         continue;
       }
 
