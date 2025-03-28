@@ -34,11 +34,11 @@ export class EntityContext extends Context implements EntityContextOptions {
   }
 
   public build(): string {
-    let handle = '';
+    let handle = 'null';
     if (this.handle) {
       handle = `@${this.handle}`;
     }
-    const expression = this.expression ?? '';
+    const expression = this.expression ?? 'null';
     return `${this.key}\t${handle}\t${JSON.stringify(this.name)}\t${JSON.stringify(this.appearance)}\t${JSON.stringify(expression)}`;
   }
 }

@@ -25,7 +25,7 @@ export class AgentMemoryContext extends Context {
   }
 
   public build(): string {
-    return `${this.index}\t${this.createdAt ?? ''}\t${JSON.stringify(this.memory)}`;
+    return `${this.index}\t${this.createdAt ?? 'null'}\t${JSON.stringify(this.memory)}`;
   }
 }
 
@@ -52,7 +52,7 @@ export class AgentEntityMemoryContext extends Context {
   }
 
   public build(): string {
-    return `${this.index}\t${this.createdAt ?? ''}\t${JSON.stringify(this.memory)}`;
+    return `${this.index}\t${this.createdAt ?? 'null'}\t${JSON.stringify(this.memory)}`;
   }
 }
 
