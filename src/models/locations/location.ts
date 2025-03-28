@@ -40,6 +40,8 @@ export class Location extends AsyncEventEmitter {
       name: message.name,
       message: message.message,
       expression: message.expression,
+      action: message.action,
+      image: message.image,
       created: message.createdAt,
     });
   }
@@ -237,6 +239,7 @@ export class Location extends AsyncEventEmitter {
       expression?: string;
       action?: string;
       emotion?: string;
+      image?: string;
     } = {}
   ): Promise<void> {
     const locationMessage: LocationMessage = {
@@ -247,6 +250,7 @@ export class Location extends AsyncEventEmitter {
       expression: options.expression,
       action: options.action,
       emotion: options.emotion,
+      image: options.image,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -255,15 +259,19 @@ export class Location extends AsyncEventEmitter {
 
   public async addUserMessage(
     user: User,
-    message?: string,
-    expression?: string
+    options: {
+      message?: string;
+      expression?: string;
+      image?: string;
+    } = {}
   ): Promise<void> {
     const locationMessage: LocationMessage = {
       entityType: EntityType.User,
       entityId: user.model.id as UserId,
       name: user.name,
-      message: message,
-      expression: expression,
+      message: options.message,
+      expression: options.expression,
+      image: options.image,
       createdAt: new Date(),
       updatedAt: new Date(),
     };

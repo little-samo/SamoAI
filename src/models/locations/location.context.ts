@@ -8,12 +8,13 @@ export interface LocationMessageContextOptions {
   message?: string;
   expression?: string;
   action?: string;
+  image?: string;
   created: string | Date;
 }
 
 export class LocationMessageContext extends Context {
   public static readonly FORMAT =
-    'TIMESTAMP\tENTITY_KEY\tTARGET_KEY\tNAME\tMESSAGE';
+    'TIMESTAMP\tENTITY_KEY\tTARGET_KEY\tNAME\tMESSAGE\tEXPRESSION\tACTION';
 
   public readonly key: EntityKey;
   public readonly targetKey?: EntityKey;
@@ -21,6 +22,7 @@ export class LocationMessageContext extends Context {
   public readonly message?: string;
   public readonly expression?: string;
   public readonly action?: string;
+  public readonly image?: string;
   public readonly created: number;
 
   public constructor(options: LocationMessageContextOptions) {
@@ -37,17 +39,13 @@ export class LocationMessageContext extends Context {
 
   public build(): string {
     const targetKey = this.targetKey ?? '';
-    let message: string;
-    if (this.message) {
-      message = JSON.stringify(this.message);
-    } else if (this.expression) {
-      message = JSON.stringify(`*${this.expression}*`);
-    } else if (this.action) {
-      message = `[${this.action}]`;
-    } else {
-      message = '';
+    const message = this.message ? JSON.stringify(this.message) : '';
+    const expression = this.expression ? JSON.stringify(this.expression) : '';
+    let action = this.action ? JSON.stringify(this.action) : '';
+    if (this.image) {
+      action = `UPLOAD_IMAGE`;
     }
-    return `${this.created}\t${this.key}\t${targetKey}\t${JSON.stringify(this.name)}\t${message}`;
+    return `${this.created}\t${this.key}\t${targetKey}\t${JSON.stringify(this.name)}\t${message}\t${expression}\t${action}`;
   }
 }
 

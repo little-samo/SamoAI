@@ -4,7 +4,11 @@ import {
   LocationContext,
   LocationMessageContext,
 } from '@little-samo/samo-ai/models';
-import { LlmMessage, LlmMessageContent } from '@little-samo/samo-ai/common';
+import {
+  LlmMessage,
+  LlmMessageContent,
+  LlmMessageTextContent,
+} from '@little-samo/samo-ai/common';
 
 import { Agent } from '../agent';
 import {
@@ -20,6 +24,31 @@ import { AgentInputBuilder } from './agent.input';
 
 @RegisterAgentInput('character')
 export class AgentCharacterInputBuilder extends AgentInputBuilder {
+  private static mergeMessageContents(
+    userContents: LlmMessageContent[],
+    separator: string = '\n\n'
+  ): LlmMessageContent[] {
+    const mergedContents: LlmMessageContent[] = [];
+    for (const content of userContents) {
+      if (content.type === 'image') {
+        mergedContents.push(content);
+      } else {
+        const text = content.text.trim();
+        if (
+          mergedContents.length > 0 &&
+          mergedContents[mergedContents.length - 1].type === 'text'
+        ) {
+          (
+            mergedContents[mergedContents.length - 1] as LlmMessageTextContent
+          ).text += `${separator}${text}`;
+        } else {
+          mergedContents.push(content);
+        }
+      }
+    }
+    return mergedContents;
+  }
+
   public constructor(location: Location, agent: Agent) {
     super(location, agent);
   }
@@ -112,24 +141,30 @@ Additional Rules for ${this.agent.name}:
     return prompts.map((p) => p.trim()).join('\n\n');
   }
 
-  private buildContext(): string {
-    const contexts: string[] = [];
+  private buildContext(): LlmMessageContent[] {
+    const contexts: LlmMessageContent[] = [];
 
-    contexts.push(`
-The current time is ${Math.floor(Date.now() / 1000)}.
-`);
+    contexts.push({
+      type: 'text',
+      text: `The current time is ${Math.floor(Date.now() / 1000)}.`,
+    });
 
     const locationContext = this.location.context;
-    contexts.push(`
+    contexts.push({
+      type: 'text',
+      text: `
 You are currently in the following location:
 <Location>
 ${LocationContext.FORMAT}
 ${locationContext.build()}
 </Location>
-`);
+`,
+    });
 
     const agentContext = this.agent.context;
-    contexts.push(`
+    contexts.push({
+      type: 'text',
+      text: `
 You are currently in the following context:
 <YourContext>
 ${AgentContext.FORMAT}
@@ -150,7 +185,8 @@ ${Object.entries(agentContext.items)
   )
   .join('\n')}
 </YourInventory>
-`);
+`,
+    });
 
     const otherAgentContexts: string[] = [];
     for (const agent of Object.values(this.location.agents)) {
@@ -184,15 +220,18 @@ ${otherAgentMemories
 </OtherAgent>`;
       otherAgentContexts.push(otherAgentContext);
     }
-    contexts.push(`
+    contexts.push({
+      type: 'text',
+      text: `
 Other agents in the location:
 <OtherAgents>
 ${AgentContext.FORMAT}
 ${otherAgentContexts.join('\n')}
 </OtherAgents>
-`);
+`,
+    });
 
-    const usersContexts = [];
+    const usersContexts: string[] = [];
     for (const user of Object.values(this.location.users)) {
       let userContext = `<OtherUser>
 ${user.context.build()}
@@ -221,13 +260,16 @@ ${userMemories
 </OtherUser>`;
       usersContexts.push(userContext);
     }
-    contexts.push(`
+    contexts.push({
+      type: 'text',
+      text: `
 Other users in the location:
 <OtherUsers>
 ${UserContext.FORMAT}
 ${usersContexts.join('\n')}
 </OtherUsers>
-`);
+`,
+    });
 
     const yourMemories = this.agent.memories
       .map(
@@ -240,41 +282,80 @@ ${usersContexts.join('\n')}
       )
       .map((m) => m.build())
       .join('\n');
-    contexts.push(`
+    contexts.push({
+      type: 'text',
+      text: `
 <YourMemories>
 ${AgentMemoryContext.FORMAT}
 ${yourMemories}
 </YourMemories>
-`);
+`,
+    });
 
-    const messages = locationContext.messages.map((m) => m.build()).join('\n');
-    contexts.push(`
+    const messageContexts: LlmMessageContent[] = [
+      {
+        type: 'text',
+        text: `
 Last ${this.location.meta.messageLimit} messages in the location:
 <LocationMessages>
 ${LocationMessageContext.FORMAT}
-${messages}
+`,
+      },
+    ];
+
+    for (const message of locationContext.messages) {
+      messageContexts.push({
+        type: 'text',
+        text: message.build(),
+      });
+      if (message.image) {
+        messageContexts.push({
+          type: 'image',
+          image: message.image,
+        });
+      }
+    }
+
+    messageContexts.push({
+      type: 'text',
+      text: `
 </LocationMessages>
-`);
+`,
+    });
+
+    contexts.push(
+      ...AgentCharacterInputBuilder.mergeMessageContents(messageContexts)
+    );
 
     const lastAgentMessage = locationContext.messages.find(
       (m) => m.key === this.agent.key
     );
     if (lastAgentMessage) {
-      contexts.push(`
+      contexts.push({
+        type: 'text',
+        text: `
 Your last message:
 <YourLastMessage>
 ${LocationMessageContext.FORMAT}
 ${lastAgentMessage.build()}
 </YourLastMessage>
-`);
+`,
+      });
     }
 
-    return contexts.map((c) => c.trim()).join('\n\n');
+    return contexts;
   }
 
   public override buildNextActions(): LlmMessage[] {
-    const prompt = this.buildPrompt();
+    const messages: LlmMessage[] = [];
 
+    const prompt = this.buildPrompt();
+    messages.push({
+      role: 'system',
+      content: prompt,
+    });
+
+    const userContents = this.buildContext();
     const requiredActions = [
       ...this.agent.meta.requiredActions,
       ...this.location.meta.requiredActions,
@@ -285,23 +366,13 @@ ${lastAgentMessage.build()}
     } else {
       requiredActionsPrompt = ``;
     }
-    const input = `
-${this.buildContext()}
-
-As ${this.agent.name}, which tool will you use? Quote the source of each reasoning step.${requiredActionsPrompt} Use all necessary tools at once in this response.
-`.trim();
-
-    const messages: LlmMessage[] = [];
-    messages.push({
-      role: 'system',
-      content: prompt,
-    });
-
-    const userContents: LlmMessageContent[] = [];
     userContents.push({
       type: 'text',
-      text: input,
+      text: `
+As ${this.agent.name}, which tool will you use? Quote the source of each reasoning step.${requiredActionsPrompt} Use all necessary tools at once in this response.
+`,
     });
+
     for (let i = 0; i < this.location.state.images.length; ++i) {
       const image = this.location.state.images[i];
       if (!image) {
@@ -338,18 +409,25 @@ ${this.location.state.rendering}
 
     messages.push({
       role: 'user',
-      content: userContents,
+      content: AgentCharacterInputBuilder.mergeMessageContents(userContents),
     });
 
     return messages;
   }
 
   public override buildActionCondition(): LlmMessage[] {
+    const messages: LlmMessage[] = [];
+
     const prompt = this.buildPrompt();
+    messages.push({
+      role: 'system',
+      content: prompt,
+    });
 
-    const input = `
-${this.buildContext()}
-
+    const userContents = this.buildContext();
+    userContents.push({
+      type: 'text',
+      text: `
 Available tools: ${Object.keys(this.agent.actions).join(', ')}.
 
 Based on the rules, your character, the current context, and recent messages (especially those from others), decide if you (${this.agent.name}) need to take any action *right now*. Consider if there's an immediate need to respond, react, or proactively do something based on the situation or conversation.
@@ -359,23 +437,12 @@ Provide your reasoning step-by-step. Then, output your final decision ONLY as a 
   "reasoning": string,   // Step-by-step reasoning for the decision; must come before 'should_act'
   "should_act": boolean  // true if you should act now, false otherwise
 }
-`.trim();
-
-    const messages: LlmMessage[] = [];
-    messages.push({
-      role: 'system',
-      content: prompt,
-    });
-
-    const userContents: LlmMessageContent[] = [];
-    userContents.push({
-      type: 'text',
-      text: input,
+`,
     });
 
     messages.push({
       role: 'user',
-      content: userContents,
+      content: AgentCharacterInputBuilder.mergeMessageContents(userContents),
     });
 
     return messages;

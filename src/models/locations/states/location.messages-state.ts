@@ -18,6 +18,8 @@ export interface LocationMessage {
   action?: string;
   emotion?: string;
 
+  image?: string;
+
   updatedAt: Date;
   createdAt: Date;
 }
