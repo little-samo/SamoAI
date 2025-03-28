@@ -10,8 +10,6 @@ import { RegisterLocationCore } from './location.core-decorator';
 export class LocationRoundRobinCore extends LocationCore {
   public static readonly AGENT_MESSAGE_COOLDOWN = 1000 * 60; // 1 minute
   public static readonly LOCATION_UPDATE_COOLDOWN_ON_MESSAGE = 5 * 1000; // 5 seconds
-  public static readonly LOCATION_UPDATE_SHORT_COOLDOWN_ON_NO_MESSAGE =
-    1000 * 30; // 30 seconds
   public static readonly LOCATION_UPDATE_LONG_COOLDOWN_ON_NO_MESSAGE = 0; // pause
 
   private get lastMessage(): LocationMessage | undefined {
@@ -74,16 +72,6 @@ export class LocationRoundRobinCore extends LocationCore {
       if (lastMessage !== this.lastMessage) {
         return LocationRoundRobinCore.LOCATION_UPDATE_COOLDOWN_ON_MESSAGE;
       }
-    }
-
-    if (!lastMessage) {
-      return LocationRoundRobinCore.LOCATION_UPDATE_LONG_COOLDOWN_ON_NO_MESSAGE;
-    }
-    if (
-      Date.now() - new Date(lastMessage.createdAt).getTime() <
-      LocationRoundRobinCore.LOCATION_UPDATE_SHORT_COOLDOWN_ON_NO_MESSAGE
-    ) {
-      return LocationRoundRobinCore.LOCATION_UPDATE_SHORT_COOLDOWN_ON_NO_MESSAGE;
     }
 
     return LocationRoundRobinCore.LOCATION_UPDATE_LONG_COOLDOWN_ON_NO_MESSAGE;
