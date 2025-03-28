@@ -327,9 +327,10 @@ ${LocationMessageContext.FORMAT}
       ...AgentCharacterInputBuilder.mergeMessageContents(messageContexts)
     );
 
-    const lastAgentMessage = locationContext.messages.find(
-      (m) => m.key === this.agent.key
-    );
+    const lastAgentMessage = locationContext.messages
+      .slice()
+      .reverse()
+      .find((m) => m.key === this.agent.key);
     if (lastAgentMessage) {
       contexts.push({
         type: 'text',
