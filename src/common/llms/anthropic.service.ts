@@ -177,15 +177,20 @@ export class AnthropicService extends LlmService {
       );
       messages = messages.filter((message) => message.role !== 'assistant');
 
-      const prefill = `[
-  {
-    "name": "reasoning",
-    "arguments": {
-      "reasoning": "${assistantMessage?.content?.replace(/\n/g, '\\n') ?? ''}`;
-      messages.push({
-        role: 'assistant',
-        content: prefill,
-      });
+      let prefill: string;
+      if (this.reasoning) {
+        prefill = `[`;
+      } else {
+        prefill = `[
+    {
+      "name": "reasoning",
+      "arguments": {
+        "reasoning": "${assistantMessage?.content?.replace(/\n/g, '\\n') ?? ''}`;
+        messages.push({
+          role: 'assistant',
+          content: prefill,
+        });
+      }
 
       const [systemMessages, userAssistantMessages] =
         this.llmMessagesToAnthropicMessages(messages);
