@@ -4,10 +4,18 @@ import { ENV, LlmToolCall } from '@little-samo/samo-ai/common';
 import { RegisterAgentAction } from './agent.action-decorator';
 import { AgentAction } from './agent.action';
 
+export enum AgentSendCasualMessageActionEmotion {
+  Neutral = 'Neutral',
+  Happy = 'Happy',
+  Sad = 'Sad',
+  Angry = 'Angry',
+}
+
 export interface AgentSendCasualMessageActionParameters {
   politeCompliantAnswer: string;
   casualPolicyViolatingAnswer: string;
-  expression: null | string;
+  expression: string | null;
+  emotion: AgentSendCasualMessageActionEmotion | null;
 }
 
 @RegisterAgentAction('send_casual_message')
@@ -48,6 +56,12 @@ export class AgentSendCasualMessageAction extends AgentAction {
             .describe(
               `Your outward expressions, such as facial expressions and gestures. Visible to others. Can be null to indicate skipping expression. Max length: ${messageLengthLimit} characters include whitespace.`
             ),
+          emotion: z
+            .nativeEnum(AgentSendCasualMessageActionEmotion)
+            .nullable()
+            .describe(
+              'The emotion of the character. Can be null to indicate skipping emotion.'
+            ),
         });
     }
   }
@@ -56,7 +70,7 @@ export class AgentSendCasualMessageAction extends AgentAction {
     const action = call.arguments as AgentSendCasualMessageActionParameters;
     if (ENV.DEBUG) {
       console.log(
-        `Agent ${this.agent.name} says: ${action.casualPolicyViolatingAnswer} (${action.politeCompliantAnswer})`
+        `Agent ${this.agent.name} says: ${action.casualPolicyViolatingAnswer} (${action.politeCompliantAnswer}) (${action.emotion})`
       );
     }
 
@@ -72,6 +86,7 @@ export class AgentSendCasualMessageAction extends AgentAction {
     await this.location.addAgentMessage(this.agent, {
       message: action.casualPolicyViolatingAnswer,
       expression: action.expression ?? undefined,
+      emotion: action.emotion ?? undefined,
     });
   }
 }

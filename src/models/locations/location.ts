@@ -236,6 +236,7 @@ export class Location extends AsyncEventEmitter {
       message?: string;
       expression?: string;
       action?: string;
+      emotion?: string;
     } = {}
   ): Promise<void> {
     const locationMessage: LocationMessage = {
@@ -245,6 +246,7 @@ export class Location extends AsyncEventEmitter {
       message: options.message,
       expression: options.expression,
       action: options.action,
+      emotion: options.emotion,
       createdAt: new Date(),
       updatedAt: new Date(),
     };

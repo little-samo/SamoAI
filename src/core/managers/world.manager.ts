@@ -317,16 +317,18 @@ export class WorldManager extends AsyncEventEmitter {
     options: {
       targetEntityType?: EntityType;
       targetEntityId?: EntityId;
+      emotion?: string;
       maxMessages?: number;
     } = {}
   ): Promise<void> {
     const locationMessage: LocationMessage = {
       entityType: EntityType.Agent,
       entityId: agentId,
-      targetEntityType: options?.targetEntityType,
-      targetEntityId: options?.targetEntityId,
+      targetEntityType: options.targetEntityType,
+      targetEntityId: options.targetEntityId,
       name,
       message,
+      emotion: options.emotion,
       createdAt: createdAt ?? new Date(),
       updatedAt: new Date(),
     };
