@@ -14,7 +14,7 @@ export class AgentReasoningAction extends AgentAction {
     switch (this.version) {
       case 1:
       default:
-        return 'Uses CoT (Chain of Thought) to analyze the given input and rules, plan the next actions, and determine which tools to use in the current response. When necessary, it references and quotes relevant rules or inputs to ensure accurate decision-making.';
+        return 'Uses CoT (Chain of Thought) to analyze the given input and rules, plan the next actions, and determine which tools to use in the current response. When necessary, it references and quotes relevant rules or inputs to ensure accurate decision-making. The reasoning text MUST be written in English.';
     }
   }
 
@@ -28,7 +28,7 @@ export class AgentReasoningAction extends AgentAction {
             .min(1)
             .max(1000)
             .describe(
-              'The reasoning for the given objective. Provide reasoning for each step and cite sources.'
+              'The reasoning for the given objective. Provide reasoning for each step and cite sources. The reasoning text MUST be written in English.'
             ),
         });
     }

@@ -46,7 +46,7 @@ export class AgentUpdateEntityMemoryAction extends AgentAction {
             .string()
             .max(maxLength)
             .describe(
-              `The concise and factual new memory content specifically *about the entity identified by key*, to store at the specified index. Max length: ${maxLength} characters.`
+              `The concise and factual new memory content specifically *about the entity identified by key*, to store at the specified index. Max length: ${maxLength} characters. The memory content MUST be written in English, even if summarizing non-English information.`
             ),
         });
     }

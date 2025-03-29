@@ -36,7 +36,7 @@ export class AgentUpdateMemoryAction extends AgentAction {
             .string()
             .max(this.agent.meta.memoryLengthLimit)
             .describe(
-              `The concise and factual new memory content to store at the specified index. Max length: ${this.agent.meta.memoryLengthLimit} characters.`
+              `The concise and factual new memory content to store at the specified index. Max length: ${this.agent.meta.memoryLengthLimit} characters. The memory content MUST be written in English, even if summarizing non-English information.`
             ),
         });
     }
