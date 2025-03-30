@@ -19,7 +19,11 @@ import {
 import { LocationState } from './states/location.state';
 import { DEFAULT_LOCATION_META, LocationMeta } from './location.meta';
 import { LocationCore } from './cores/location.core';
-import { LocationContext, LocationMessageContext } from './location.context';
+import {
+  LocationCanvasContext,
+  LocationContext,
+  LocationMessageContext,
+} from './location.context';
 import { LocationCoreFactory } from './cores';
 import { LocationEntityState } from './states/location.entity-state';
 import { LocationId, LocationKey } from './location.type';
@@ -32,7 +36,7 @@ export class Location extends AsyncEventEmitter {
     return new LocationMessageContext({
       key:
         message.entityType === EntityType.System
-          ? ('system' as EntityKey)
+          ? (EntityType.System as EntityKey)
           : (`${message.entityType}:${message.entityId}` as EntityKey),
       targetKey: message.targetEntityType
         ? (`${message.targetEntityType}:${message.targetEntityId}` as EntityKey)
@@ -64,7 +68,25 @@ export class Location extends AsyncEventEmitter {
 
   private readonly _entityStates: Record<EntityKey, LocationEntityState> = {};
 
-  public static fixState(_state: LocationState, _meta: LocationMeta): void {}
+  public static fixState(state: LocationState, meta: LocationMeta): void {
+    for (const canvas of meta.canvases) {
+      if (!state.canvases.has(canvas.name)) {
+        state.canvases.set(canvas.name, {
+          lastModifierEntityType: EntityType.System,
+          lastModifierEntityId: 0 as EntityId,
+          text: '',
+          updatedAt: new Date(),
+          createdAt: new Date(),
+        });
+      }
+    }
+
+    for (const name of state.canvases.keys()) {
+      if (!meta.canvases.some((c) => c.name === name)) {
+        state.canvases.delete(name);
+      }
+    }
+  }
 
   public static fixMessagesState(
     _state: LocationMessagesState,
@@ -149,7 +171,23 @@ export class Location extends AsyncEventEmitter {
     }
   }
 
-  public fixEntityState(_state: LocationEntityState): void {}
+  public fixEntityState(state: LocationEntityState): void {
+    for (const canvas of this.meta.agentCanvases) {
+      if (!state.canvases.has(canvas.name)) {
+        state.canvases.set(canvas.name, {
+          text: '',
+          updatedAt: new Date(),
+          createdAt: new Date(),
+        });
+      }
+    }
+
+    for (const name of state.canvases.keys()) {
+      if (!this.meta.agentCanvases.some((c) => c.name === name)) {
+        state.canvases.delete(name);
+      }
+    }
+  }
 
   public getEntityState(key: EntityKey): LocationEntityState | undefined {
     return this._entityStates[key];
@@ -179,6 +217,19 @@ export class Location extends AsyncEventEmitter {
       key: this.key,
       description: this.meta.description,
       messages: this.messagesState.messages.map(Location.messageToContext),
+      canvases: this.meta.agentCanvases.map((c) => {
+        const canvas = this.state.canvases.get(c.name)!;
+        return new LocationCanvasContext({
+          name: c.name,
+          description: c.description,
+          maxLength: c.maxLength,
+          lastModeifierKey: canvas.lastModifierEntityType
+            ? (`${canvas.lastModifierEntityType}:${canvas.lastModifierEntityId}` as EntityKey)
+            : (EntityType.System as EntityKey),
+          lastModifiedAt: canvas.updatedAt,
+          text: canvas.text,
+        });
+      }),
     });
   }
 
@@ -288,6 +339,32 @@ export class Location extends AsyncEventEmitter {
       updatedAt: new Date(),
     };
     await this.addMessage(locationMessage);
+  }
+
+  public async updateCanvas(
+    modifierEntityType: EntityType,
+    modifierEntityId: EntityId,
+    canvasName: string,
+    text: string
+  ): Promise<void> {
+    const canvas = this.state.canvases.get(canvasName);
+    if (!canvas) {
+      throw new Error(`Canvas with name ${canvasName} not found`);
+    }
+
+    canvas.lastModifierEntityType = modifierEntityType;
+    canvas.lastModifierEntityId = modifierEntityId;
+    canvas.text = text;
+    canvas.updatedAt = new Date();
+
+    await this.emitAsync(
+      'canvasUpdated',
+      this,
+      modifierEntityType,
+      modifierEntityId,
+      canvasName,
+      text
+    );
   }
 
   public async update(): Promise<number> {

@@ -52,10 +52,49 @@ export class LocationMessageContext extends Context {
   }
 }
 
+export interface LocationCanvasContextOptions {
+  name: string;
+  description: string;
+  maxLength: number;
+  lastModeifierKey: EntityKey;
+  lastModifiedAt: string | Date;
+  text: string;
+}
+
+export class LocationCanvasContext extends Context {
+  public static readonly FORMAT =
+    'NAME\tDESCRIPTION\tMAX_LENGTH\tLAST_MODIFIED_BY\tLAST_MODIFIED_AT\tTEXT';
+
+  public readonly name: string;
+  public readonly description: string;
+  public readonly maxLength: number;
+  public readonly lastModeifierKey: EntityKey;
+  public readonly lastModifiedAt: number;
+  public readonly text: string;
+
+  public constructor(options: LocationCanvasContextOptions) {
+    super();
+
+    this.name = options.name;
+    this.description = options.description;
+    this.maxLength = options.maxLength;
+    this.lastModeifierKey = options.lastModeifierKey;
+    this.lastModifiedAt = Math.floor(
+      new Date(options.lastModifiedAt).getTime() / 1000
+    );
+    this.text = options.text;
+  }
+
+  public build(): string {
+    return `${this.name}\t${this.description}\t${this.maxLength}\t${this.lastModeifierKey}\t${this.lastModifiedAt}\t${this.text}`;
+  }
+}
+
 export interface LocationContextOptions {
   key: string;
   description: string;
   messages: LocationMessageContext[];
+  canvases: LocationCanvasContext[];
 }
 
 export class LocationContext extends Context {
@@ -65,6 +104,7 @@ export class LocationContext extends Context {
   public readonly description: string;
 
   public readonly messages: LocationMessageContext[];
+  public readonly canvases: LocationCanvasContext[];
 
   public constructor(options: LocationContextOptions) {
     super();
@@ -72,6 +112,7 @@ export class LocationContext extends Context {
     this.key = options.key;
     this.description = options.description;
     this.messages = options.messages;
+    this.canvases = options.canvases;
   }
 
   public build(): string {

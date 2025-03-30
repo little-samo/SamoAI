@@ -83,6 +83,7 @@ export class AgentItemContext extends Context {
     return `${this.key}\t${this.name}\t${this.description}\t${this.count}`;
   }
 }
+
 export interface AgentContextOptions extends EntityContextOptions {}
 export class AgentContext extends EntityContext implements AgentContextOptions {
   public static readonly FORMAT = EntityContext.FORMAT;

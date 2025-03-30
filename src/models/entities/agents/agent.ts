@@ -9,6 +9,7 @@ import { Entity } from '../entity';
 import { EntityType, EntityKey, EntityId } from '../entity.types';
 import { Location } from '../../locations';
 import { ItemModel } from '../entity.item-model';
+import { EntityCanvasContext } from '../entity.context';
 
 import { AgentCore } from './cores/agent.core';
 import { AgentMemory, AgentState } from './states/agent.state';
@@ -146,9 +147,22 @@ export class Agent extends Entity {
   }
 
   public override get context(): AgentContext {
+    const entityState = this.location.getEntityState(this.key);
     const context = new AgentContext({
       ...super.context,
       handle: this.model.username ?? undefined,
+      canvases: entityState
+        ? this.location.meta.agentCanvases.map((c) => {
+            const canvas = entityState.canvases.get(c.name)!;
+            return new EntityCanvasContext({
+              name: c.name,
+              description: c.description,
+              maxLength: c.maxLength,
+              lastModifiedAt: canvas.updatedAt,
+              text: canvas.text,
+            });
+          })
+        : [],
     });
     return context;
   }
@@ -261,6 +275,16 @@ export class Agent extends Entity {
     entityState.isActive = active;
   }
 
+  public async updateCanvas(canvasName: string, text: string): Promise<void> {
+    const canvas = this.location.state.canvases.get(canvasName);
+    if (!canvas) {
+      throw new Error(`Canvas with name ${canvasName} not found`);
+    }
+    canvas.text = text;
+    canvas.updatedAt = new Date();
+    await this.location.emitAsync('agentUpdateCanvas', this, canvasName, text);
+  }
+
   public override createItem(itemDataId: number): ItemModel {
     return {
       id: 0,
@@ -314,7 +338,6 @@ export class Agent extends Entity {
         maxTokens: this.meta.maxTokens,
         temperature: this.meta.temperature,
         verbose: ENV.DEBUG,
-        maxToolCalls: this.meta.actionLimit,
       }
     );
     for (const toolCall of toolCalls) {

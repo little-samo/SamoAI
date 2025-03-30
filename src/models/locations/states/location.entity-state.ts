@@ -5,6 +5,13 @@ import {
 
 import { LocationId } from '../location.type';
 
+export interface LocationEntityCanvas {
+  text: string;
+
+  updatedAt: Date;
+  createdAt: Date;
+}
+
 export interface LocationEntityState {
   locationId: LocationId;
   targetType: EntityType;
@@ -12,6 +19,8 @@ export interface LocationEntityState {
 
   isActive: boolean | null;
   expression: string | null;
+
+  canvases: Map<string, LocationEntityCanvas>;
 
   updatedAt: Date;
   createdAt: Date;

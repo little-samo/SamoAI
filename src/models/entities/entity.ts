@@ -55,6 +55,7 @@ export abstract class Entity {
       appearance: this.meta.appearance,
       expression: entityState?.expression ?? undefined,
       items: this._itemsByItemKey,
+      canvases: [],
     });
   }
 

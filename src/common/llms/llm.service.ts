@@ -37,7 +37,6 @@ export interface LlmOptions {
   maxTokens?: number;
   maxTries?: number;
   retryDelay?: number;
-  maxToolCalls?: number;
   jsonOutput?: boolean;
   verbose?: boolean;
 }

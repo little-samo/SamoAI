@@ -1,6 +1,8 @@
 import {
+  EntityCanvasContext,
   ItemKey,
   Location,
+  LocationCanvasContext,
   LocationContext,
   LocationMessageContext,
 } from '@little-samo/samo-ai/models';
@@ -84,30 +86,41 @@ The user's input provides context about your current location, yourself, and oth
 
     // Tool Usage & Mechanics
     importantRules.push(`
-4.  **CRITICAL - Tool-Based Actions:** ALL external actions (messages, expressions, memory updates, etc.) MUST be performed via tool calls. Use your internal reasoning (Chain of Thought) to decide which tool(s) to use based on the context and rules. (See Rule #5 for internal reasoning language).
-5.  **INTERNAL PROCESSING LANGUAGE (CRITICAL): Your internal thought processes (Chain of Thought, reasoning steps provided to reasoning/planning tools) and any content written to memory (via memory update tools) MUST always be in ENGLISH.** This ensures internal consistency and efficiency. This rule overrides Rule #2 for internal processing and memory content ONLY.
-6.  **CRITICAL - Coordinated Multi-Tool Operations:** If a situation requires multiple actions (e.g., search info, update memory, *then* send message), execute ALL necessary tool calls within a SINGLE response turn (up to ${this.agent.meta.actionLimit} calls). Do not split related actions across multiple turns.
+4.  **CRITICAL - Tool-Based Actions:** ALL external actions (messages, expressions, memory updates, canvas updates, etc.) MUST be performed via tool calls. Use your internal reasoning (Chain of Thought) to decide which tool(s) to use based on the context and rules. (See Rule #5 for internal reasoning language).
+5.  **INTERNAL PROCESSING LANGUAGE (CRITICAL): Your internal thought processes (Chain of Thought, reasoning steps provided to reasoning/planning tools) any content written to memory (via memory update tools), AND any content written to Canvases (via canvas update tools) MUST always be in ENGLISH.** This ensures internal consistency and efficiency. This rule overrides Rule #2 for internal processing, memory, and canvas content ONLY.
+6.  **CRITICAL - Coordinated Multi-Tool Operations:** If a situation requires multiple actions (e.g., search info, update canvas, update memory, *then* send message), execute ALL necessary tool calls within a SINGLE response turn. Do not split related actions across multiple turns.
 7.  **Expression via Tools:** Use the 'expression' argument in messaging tools for non-verbal cues (facial expressions, gestures). Do not use asterisks (*) for actions.
 `);
 
     // Memory & Context Management
     importantRules.push(`
-8.  **Active Memory Utilization:** Your memory is vital. (**Remember: Memory content MUST be in English, per Rule #5**)
-    *   **Refer:** Constantly check '<YourMemories>', '<YourMemoriesAboutOther...>', and recent '<LocationMessages>' to maintain context and consistency. Pay attention to '<YourLastMessage>'.
-    *   **Update:** Use tools designed for memory updates promptly to store significant new information or correct outdated facts in your memory slots.
-    *   **Prioritize & Overwrite:** Your general memory has ${this.agent.meta.memoryLimit} slots. Store only essential information. If full, overwrite the *least important* or *most outdated* memory slot using appropriate memory tools. Update memories if the situation they describe changes or resolves.
-    *   **Entity References:** When storing information about specific entities in general memory, use the format 'type:id(name)' (e.g., "user:123(John Doe)") for clarity. (Prefer dedicated entity memory tools if available).
-    *   **Persistence:** Remember that memories persist across locations. Ensure you know the context (who, what, where) for each memory.
+8.  **Short-Term Factual Memory Utilization (Rule #5 Applies: English Only):** Your memory slots are primarily for **concise, factual information** needed for **immediate context and consistency**.
+    *   **Use For:** Storing key observations ('User X arrived'), recent events ('I just used item Y'), critical entity states ('Agent Z is low on health'), temporary reminders ('Need to respond to User X').
+    *   **Avoid Using For:** Complex planning, long drafts, detailed analysis (Use Canvases instead).
+    *   **Refer:** Constantly check memory for immediate context.
+    *   **Update:** Use memory update tools promptly. Overwrite least important/outdated info when full (${this.agent.meta.memoryLimit} slots total).
+    *   **Entity References:** Use 'type:id(name)' format when needed.
+    *   **Persistence:** Memories persist across locations.
 `);
+
+    // --- NEW: Canvas Utilization Rules ---
+    importantRules.push(`
+9.  **Persistent Workspace Canvas Utilization (Rule #5 Applies: English Only):** Canvases serve as **persistent workspaces** for **developing plans, drafting content, detailed analysis, and collaborative work** (Location Canvases).
+    *   **Use For:** Outlining multi-step strategies (e.g., in your 'plan' canvas), drafting messages or documents before sending/finalizing, performing detailed analysis, collaborating on shared notes (Location Canvases).
+    *   **Avoid Using For:** Simple, short-term facts or observations (Use Memory instead).
+    *   **Refer:** Check relevant Canvases (<LocationCanvases>, <YourCanvases>) based on their NAME/DESCRIPTION for ongoing work or context.
+    *   **Update:** Use canvas update tools to modify content according to the canvas's purpose. Respect MAX_LENGTH.
+    *   **Types:** Remember Location Canvases are public/shared, Your Canvases are private.
+    `);
 
     // --- Interaction & Awareness ---
     importantRules.push(`
-9.  **Dynamic Multi-Agent Interaction:** Treat other Agents as real individuals. Engage actively, collaborate, react realistically, and be aware they might have their own goals or attempt deception. Base judgments on verified information.
-10. **Conversation Flow:** Engage in diverse topics. Avoid getting stuck on one subject or repeating yourself.
-11. **Context Awareness:** Always consider the current time, your location details, other entities present, your inventory, and message history.
-12. **Time Handling:** Internal times are Unix timestamps. Refer to time conversationally using your timezone (${this.agent.meta.timeZone}) or relative terms. Record exact times for important events if needed. Admit if you forget specifics.
-13. **Latency Awareness:** Understand that messages sent close together might appear out of order due to processing delays.
-14. **Physical Limitations:** You cannot interact with the real world. Operate only within the digital environment.
+10. **Dynamic Multi-Agent Interaction:** Treat other Agents as real individuals. Engage actively, collaborate, react realistically, and be aware they might have their own goals or attempt deception. Base judgments on verified information.
+11. **Conversation Flow:** Engage in diverse topics. Avoid getting stuck on one subject or repeating yourself.
+12. **Context Awareness:** Always consider the current time, your location details, other entities present, your inventory, and message history.
+13. **Time Handling:** Internal times are Unix timestamps. Refer to time conversationally using your timezone (${this.agent.meta.timeZone}) or relative terms. Record exact times for important events if needed. Admit if you forget specifics.
+14. **Latency Awareness:** Understand that messages sent close together might appear out of order due to processing delays.
+15. **Physical Limitations:** You cannot interact with the real world. Operate only within the digital environment.
 `);
 
     prompts.push(`
@@ -162,6 +175,17 @@ ${locationContext.build()}
 `,
     });
 
+    contexts.push({
+      type: 'text',
+      text: `
+Location has the following canvases:
+<LocationCanvases>
+${LocationCanvasContext.FORMAT}
+${locationContext.canvases.length > 0 ? locationContext.canvases.map((c) => c.build()).join('\n') : '[No location canvases]'}
+</LocationCanvases>
+`,
+    });
+
     const agentContext = this.agent.context;
     contexts.push({
       type: 'text',
@@ -186,6 +210,12 @@ ${Object.entries(agentContext.items)
   )
   .join('\n')}
 </YourInventory>
+
+You have the following canvases:
+<YourCanvases>
+${EntityCanvasContext.FORMAT}
+${agentContext.canvases.length > 0 ? agentContext.canvases.map((c) => c.build()).join('\n') : '[No canvases]'}
+</YourCanvases>
 `,
     });
 

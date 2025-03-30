@@ -21,7 +21,6 @@ export interface AgentMeta extends EntityMeta {
   timeZone: string;
   greeting?: string;
 
-  actionLimit: number;
   actions: string[];
   requiredActions: string[];
 
@@ -77,7 +76,7 @@ export const DEFAULT_AGENT_META: AgentMeta = {
   core: 'execute_actions',
 
   temperature: 0.5,
-  maxTokens: 1024,
+  maxTokens: 1536,
   evaluateTemperature: 0.3,
   evaluateMaxTokens: 1024,
   llms: [
@@ -88,7 +87,6 @@ export const DEFAULT_AGENT_META: AgentMeta = {
   languages: ['English'],
   timeZone: 'UTC',
 
-  actionLimit: 6,
   actions: [
     'update_memory:latest',
     'update_entity_memory:latest',

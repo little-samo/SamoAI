@@ -48,6 +48,13 @@ export interface LocationsRepository {
     locationId: LocationId,
     pauseUpdateUntil: Date | null
   ): Promise<void>;
+  updateLocationStateCanvas(
+    locationId: LocationId,
+    canvasName: string,
+    modifierEntityType: EntityType,
+    modifierEntityId: EntityId,
+    text: string
+  ): Promise<void>;
   addLocationMessage(
     locationId: LocationId,
     message: LocationMessage,
@@ -64,5 +71,12 @@ export interface LocationsRepository {
     targetType: EntityType,
     targetId: EntityId,
     expression: string
+  ): Promise<void>;
+  updateLocationEntityStateCanvas(
+    locationId: LocationId,
+    targetType: EntityType,
+    targetId: EntityId,
+    canvasName: string,
+    text: string
   ): Promise<void>;
 }
