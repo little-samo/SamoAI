@@ -4,8 +4,10 @@ import {
   LlmService,
   LlmToolCall,
 } from '@little-samo/samo-ai/common';
+import { type AgentInputBuilder } from '@little-samo/samo-ai/models';
 
 import { Location } from '../../locations';
+import { AgentInputFactory } from '../agents/inputs';
 import { Entity } from '../entity';
 import { EntityCanvasContext } from '../entity.context';
 import { ItemModel } from '../entity.item-model';
@@ -19,7 +21,6 @@ import { AgentModel } from './agent.model';
 import { AgentId } from './agent.types';
 import { AgentCoreFactory } from './cores';
 import { AgentCore } from './cores/agent.core';
-import { type AgentInputBuilder, AgentInputFactory } from './inputs';
 import {
   AgentEntityMemory,
   AgentEntityState,
