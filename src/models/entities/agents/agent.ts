@@ -153,7 +153,7 @@ export class Agent extends Entity {
       handle: this.model.username ?? undefined,
       canvases: entityState
         ? this.location.meta.agentCanvases.map((c) => {
-            const canvas = entityState.canvases.get(c.name)!;
+            const canvas = entityState.canvases[c.name];
             return new EntityCanvasContext({
               name: c.name,
               description: c.description,
@@ -276,7 +276,7 @@ export class Agent extends Entity {
   }
 
   public async updateCanvas(canvasName: string, text: string): Promise<void> {
-    const canvas = this.location.state.canvases.get(canvasName);
+    const canvas = this.location.state.canvases[canvasName];
     if (!canvas) {
       throw new Error(`Canvas with name ${canvasName} not found`);
     }

@@ -70,20 +70,20 @@ export class Location extends AsyncEventEmitter {
 
   public static fixState(state: LocationState, meta: LocationMeta): void {
     for (const canvas of meta.canvases) {
-      if (!state.canvases.has(canvas.name)) {
-        state.canvases.set(canvas.name, {
+      if (!state.canvases[canvas.name]) {
+        state.canvases[canvas.name] = {
           lastModifierEntityType: EntityType.System,
           lastModifierEntityId: 0 as EntityId,
           text: '',
           updatedAt: new Date(),
           createdAt: new Date(),
-        });
+        };
       }
     }
 
-    for (const name of state.canvases.keys()) {
+    for (const name of Object.keys(state.canvases)) {
       if (!meta.canvases.some((c) => c.name === name)) {
-        state.canvases.delete(name);
+        delete state.canvases[name];
       }
     }
   }
@@ -173,18 +173,18 @@ export class Location extends AsyncEventEmitter {
 
   public fixEntityState(state: LocationEntityState): void {
     for (const canvas of this.meta.agentCanvases) {
-      if (!state.canvases.has(canvas.name)) {
-        state.canvases.set(canvas.name, {
+      if (!state.canvases[canvas.name]) {
+        state.canvases[canvas.name] = {
           text: '',
           updatedAt: new Date(),
           createdAt: new Date(),
-        });
+        };
       }
     }
 
-    for (const name of state.canvases.keys()) {
+    for (const name of Object.keys(state.canvases)) {
       if (!this.meta.agentCanvases.some((c) => c.name === name)) {
-        state.canvases.delete(name);
+        delete state.canvases[name];
       }
     }
   }
@@ -218,7 +218,7 @@ export class Location extends AsyncEventEmitter {
       description: this.meta.description,
       messages: this.messagesState.messages.map(Location.messageToContext),
       canvases: this.meta.canvases.map((c) => {
-        const canvas = this.state.canvases.get(c.name)!;
+        const canvas = this.state.canvases[c.name];
         return new LocationCanvasContext({
           name: c.name,
           description: c.description,
@@ -347,7 +347,7 @@ export class Location extends AsyncEventEmitter {
     canvasName: string,
     text: string
   ): Promise<void> {
-    const canvas = this.state.canvases.get(canvasName);
+    const canvas = this.state.canvases[canvasName];
     if (!canvas) {
       throw new Error(`Canvas with name ${canvasName} not found`);
     }

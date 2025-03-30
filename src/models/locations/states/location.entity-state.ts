@@ -20,7 +20,7 @@ export interface LocationEntityState {
   isActive: boolean | null;
   expression: string | null;
 
-  canvases: Map<string, LocationEntityCanvas>;
+  canvases: Record<string, LocationEntityCanvas>;
 
   updatedAt: Date;
   createdAt: Date;

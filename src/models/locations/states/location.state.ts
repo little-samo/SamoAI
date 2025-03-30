@@ -20,7 +20,7 @@ export interface LocationState {
 
   pauseUpdateUntil: Date | null;
 
-  canvases: Map<string, LocationCanvas>;
+  canvases: Record<string, LocationCanvas>;
 
   images: string[];
   rendering: string | null;
