@@ -26,7 +26,7 @@ export abstract class Entity {
     state: EntityState,
     items: ItemModel[] = []
   ) {
-    this.meta = meta;
+    this._meta = meta;
     this._state = state;
     this.setItems(items);
   }
