@@ -96,7 +96,6 @@ export class Location extends AsyncEventEmitter {
       _state.messages = _state.messages.slice(
         _state.messages.length - _meta.messageLimit
       );
-      _state.dirty = true;
     }
   }
 
@@ -278,7 +277,6 @@ export class Location extends AsyncEventEmitter {
     if (this.messagesState.messages.length > this.meta.messageLimit) {
       this.messagesState.messages.shift();
     }
-    this.messagesState.dirty = true;
 
     await this.emitAsync('messageAdded', this, message);
   }

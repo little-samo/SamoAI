@@ -30,6 +30,4 @@ export interface LocationMessagesState {
 
   updatedAt: Date;
   createdAt: Date;
-
-  dirty?: boolean;
 }
