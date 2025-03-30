@@ -1,8 +1,7 @@
-import { Location } from '@little-samo/samo-ai/models/locations/location';
+import type { Location } from '@little-samo/samo-ai/models/locations/location';
 
-import { Agent } from '../agent';
-
-import { AgentInputBuilder } from './agent.input';
+import type { Agent } from '../agent';
+import type { AgentInputBuilder } from './agent.input';
 
 export class AgentInputFactory {
   public static readonly INPUT_MAP: Record<

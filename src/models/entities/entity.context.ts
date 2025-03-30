@@ -1,7 +1,7 @@
 import { Context } from '../context';
 
-import { ItemModel } from './entity.item-model';
-import { ItemKey } from './entity.types';
+import type { ItemModel } from './entity.item-model';
+import type { ItemKey } from './entity.types';
 
 export interface EntityCanvasContextOptions {
   name: string;

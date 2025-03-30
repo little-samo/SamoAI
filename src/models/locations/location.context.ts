@@ -1,5 +1,6 @@
 import { Context } from '../context';
-import { EntityKey } from '../entities';
+
+import type { EntityKey } from '../entities';
 
 export interface LocationMessageContextOptions {
   key: EntityKey;

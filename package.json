@@ -16,6 +16,7 @@
   "exports": {
     ".": "./dist/index.js",
     "./common": "./dist/common/index.js",
+    "./core": "./dist/core/index.js",
     "./models": "./dist/models/index.js"
   },
   "scripts": {

@@ -1,6 +1,7 @@
 import { Context } from '../../context';
-import { EntityContext, EntityContextOptions } from '../entity.context';
-import { ItemKey } from '../entity.types';
+import { EntityContext, type EntityContextOptions } from '../entity.context';
+
+import type { ItemKey } from '../entity.types';
 
 export interface AgentMemoryContextOptions {
   index: number;

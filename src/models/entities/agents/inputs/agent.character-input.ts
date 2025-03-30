@@ -1,20 +1,17 @@
-import {
-  EntityCanvasContext,
-  ItemKey,
-} from '@little-samo/samo-ai/models/entities';
-import {
-  type Location,
-  LocationCanvasContext,
-  LocationContext,
-  LocationMessageContext,
-} from '@little-samo/samo-ai/models/locations';
-
 import type {
   LlmMessage,
   LlmMessageContent,
   LlmMessageTextContent,
 } from '@little-samo/samo-ai/common';
 
+import { type ItemKey } from '../../../entities';
+import { EntityCanvasContext } from '../../../entities/entity.context';
+import { type Location } from '../../../locations';
+import {
+  LocationCanvasContext,
+  LocationContext,
+  LocationMessageContext,
+} from '../../../locations/location.context';
 import { UserContext } from '../../users';
 import {
   AgentContext,
