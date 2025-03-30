@@ -185,7 +185,7 @@ export abstract class Entity {
       if (emitEvent) {
         try {
           await this.location.emitAsync(
-            'entityTransferItem',
+            'entityItemTransferred',
             this,
             item,
             count,

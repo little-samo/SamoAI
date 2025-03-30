@@ -280,9 +280,9 @@ export class Agent extends Entity {
     if (!canvas) {
       throw new Error(`Canvas with name ${canvasName} not found`);
     }
+    await this.location.emitAsync('agentUpdateCanvas', this, canvasName, text);
     canvas.text = text;
     canvas.updatedAt = new Date();
-    await this.location.emitAsync('agentUpdateCanvas', this, canvasName, text);
   }
 
   public override createItem(itemDataId: number): ItemModel {

@@ -648,7 +648,7 @@ export class WorldManager extends AsyncEventEmitter {
     );
 
     location.on(
-      'entityTransferItem',
+      'entityItemTransferred',
       (
         entity: Entity,
         item: ItemModel,
