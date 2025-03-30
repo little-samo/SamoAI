@@ -276,7 +276,7 @@ export class Agent extends Entity {
   }
 
   public async updateCanvas(canvasName: string, text: string): Promise<void> {
-    const canvas = this.location.state.canvases[canvasName];
+    const canvas = this.location.getEntityState(this.key)?.canvases[canvasName];
     if (!canvas) {
       throw new Error(`Canvas with name ${canvasName} not found`);
     }
