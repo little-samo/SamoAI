@@ -1,5 +1,5 @@
-import { RegisterLocationCore } from './location.core-decorator';
 import { LocationCore } from './location.core';
+import { RegisterLocationCore } from './location.core-decorator';
 
 @RegisterLocationCore('update_once')
 export class LocationUpdateOnceCore extends LocationCore {

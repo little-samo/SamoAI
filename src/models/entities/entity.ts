@@ -1,8 +1,9 @@
 import type { Location } from '@little-samo/samo-ai/models/locations/location';
 
 import { EntityContext } from './entity.context';
-import { EntityState } from './entity.state';
+import { ItemModel } from './entity.item-model';
 import { EntityMeta } from './entity.meta';
+import { EntityState } from './entity.state';
 import {
   EntityId,
   EntityKey,
@@ -10,7 +11,6 @@ import {
   ItemDataId,
   ItemKey,
 } from './entity.types';
-import { ItemModel } from './entity.item-model';
 
 export abstract class Entity {
   protected _meta: EntityMeta;

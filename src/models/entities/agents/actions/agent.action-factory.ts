@@ -1,7 +1,6 @@
 import type { Location } from '@little-samo/samo-ai/models/locations';
 
 import type { Agent } from '../agent';
-
 import type { AgentAction } from './agent.action';
 
 export class AgentActionFactory {

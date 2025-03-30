@@ -1,10 +1,11 @@
 import { ENV } from '@little-samo/samo-ai/common';
 
-import type { Agent } from '../agent';
 import { EntityType } from '../../entity.types';
 
-import { RegisterAgentCore } from './agent.core-decorator';
 import { AgentCore } from './agent.core';
+import { RegisterAgentCore } from './agent.core-decorator';
+
+import type { Agent } from '../agent';
 
 @RegisterAgentCore('response_every_message')
 export class AgentResponseEveryMessageCore extends AgentCore {

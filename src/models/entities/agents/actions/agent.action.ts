@@ -1,13 +1,13 @@
-import { Location } from '@little-samo/samo-ai/models/locations/location';
 import {
   LlmTool,
   LlmToolCall,
 } from '@little-samo/samo-ai/common/llms/llm.tool';
+import { Location } from '@little-samo/samo-ai/models/locations/location';
 import { z } from 'zod';
 
-import type { Agent } from '../agent';
-
 import { AGENT_ACTION_METADATA_KEY } from './agent.action-decorator';
+
+import type { Agent } from '../agent';
 
 export abstract class AgentAction implements LlmTool {
   public constructor(

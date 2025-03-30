@@ -1,7 +1,7 @@
-import type { Agent } from '../agent';
-
-import { RegisterAgentCore } from './agent.core-decorator';
 import { AgentCore } from './agent.core';
+import { RegisterAgentCore } from './agent.core-decorator';
+
+import type { Agent } from '../agent';
 
 @RegisterAgentCore('execute_actions')
 export class AgentExecuteActionsCore extends AgentCore {

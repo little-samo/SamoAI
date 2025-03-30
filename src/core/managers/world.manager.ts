@@ -1,4 +1,5 @@
 import { ENV } from '@little-samo/samo-ai/common';
+import { AsyncEventEmitter } from '@little-samo/samo-ai/common';
 import {
   Agent,
   AgentEntityState,
@@ -18,7 +19,6 @@ import {
   User,
   UserId,
 } from '@little-samo/samo-ai/models';
-import { AsyncEventEmitter } from '@little-samo/samo-ai/common';
 
 import {
   AgentsRepository,

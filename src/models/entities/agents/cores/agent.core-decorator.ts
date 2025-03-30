@@ -1,8 +1,8 @@
-import type { Agent } from '../agent';
-
-import { AgentCoreFactory } from './agent.core-factory';
-import type { AgentCore } from './agent.core';
 import { AGENT_CORE_METADATA_KEY } from './agent.core-constants';
+import { AgentCoreFactory } from './agent.core-factory';
+
+import type { Agent } from '../agent';
+import type { AgentCore } from './agent.core';
 
 export function RegisterAgentCore(core: string): ClassDecorator {
   return function (target: object) {

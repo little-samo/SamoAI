@@ -1,8 +1,8 @@
-import type { Location } from '../location';
-
-import type { LocationCore } from './location.core';
 import { LOCATION_CORE_METADATA_KEY } from './location.core-constants';
 import { LocationCoreFactory } from './location.core-factory';
+
+import type { Location } from '../location';
+import type { LocationCore } from './location.core';
 
 export function RegisterLocationCore(core: string): ClassDecorator {
   return function (target: object) {

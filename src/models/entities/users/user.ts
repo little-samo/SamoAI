@@ -1,8 +1,8 @@
 import { Location } from '@little-samo/samo-ai/models/locations/location';
 
 import { Entity } from '../entity';
-import { EntityType } from '../entity.types';
 import { ItemModel } from '../entity.item-model';
+import { EntityType } from '../entity.types';
 
 import { UserState } from './states/user.state';
 import { DEFAULT_USER_META, UserMeta } from './user.meta';

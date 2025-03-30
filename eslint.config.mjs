@@ -1,13 +1,13 @@
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-import typescriptEslintEslintPlugin from '@typescript-eslint/eslint-plugin';
-import globals from 'globals';
-import tsParser from '@typescript-eslint/parser';
-import js from '@eslint/js';
 import { FlatCompat } from '@eslint/eslintrc';
-import unusedImports from 'eslint-plugin-unused-imports';
+import js from '@eslint/js';
+import typescriptEslintEslintPlugin from '@typescript-eslint/eslint-plugin';
+import tsParser from '@typescript-eslint/parser';
 import importPlugin from 'eslint-plugin-import';
+import unusedImports from 'eslint-plugin-unused-imports';
+import globals from 'globals';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -19,7 +19,12 @@ const compat = new FlatCompat({
 
 export default [
   {
-    ignores: ['**/node_modules/**', '**/dist/**'],
+    ignores: [
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/.yarn/**',
+      'jest.config.js',
+    ],
   },
   ...compat.extends(
     'plugin:@typescript-eslint/recommended',
@@ -52,8 +57,30 @@ export default [
         'error',
         {
           'newlines-between': 'always',
+          groups: [
+            'builtin',
+            'external',
+            'internal',
+            'parent',
+            'sibling',
+            'index',
+            'object',
+            'type',
+          ],
+          pathGroups: [
+            {
+              pattern: '@little-samo/**',
+              group: 'internal',
+              position: 'after',
+            },
+          ],
+          alphabetize: {
+            order: 'asc',
+            caseInsensitive: true,
+          },
         },
       ],
+      'import/no-cycle': ['error', { maxDepth: Infinity }],
       'import/newline-after-import': 'error',
       '@typescript-eslint/explicit-member-accessibility': [
         'error',

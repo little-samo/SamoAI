@@ -8,23 +8,25 @@ import {
   LocationContext,
   LocationMessageContext,
 } from '@little-samo/samo-ai/models/locations';
+
 import type {
   LlmMessage,
   LlmMessageContent,
   LlmMessageTextContent,
 } from '@little-samo/samo-ai/common';
 
-import type { Agent } from '../agent';
+import { UserContext } from '../../users';
 import {
   AgentContext,
   AgentEntityMemoryContext,
   AgentItemContext,
   AgentMemoryContext,
 } from '../agent.context';
-import { UserContext } from '../../users';
 
-import { RegisterAgentInput } from './agent.input-decorator';
 import { AgentInputBuilder } from './agent.input';
+import { RegisterAgentInput } from './agent.input-decorator';
+
+import type { Agent } from '../agent';
 
 @RegisterAgentInput('character')
 export class AgentCharacterInputBuilder extends AgentInputBuilder {

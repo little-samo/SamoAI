@@ -12,22 +12,22 @@ import {
 } from '../entities';
 import { LlmApiKeyModel } from '../llms';
 
-import {
-  LocationMessage,
-  LocationMessagesState,
-} from './states/location.messages-state';
-import { LocationState } from './states/location.state';
-import { DEFAULT_LOCATION_META, LocationMeta } from './location.meta';
+import { LocationCoreFactory } from './cores';
 import { LocationCore } from './cores/location.core';
 import {
   LocationCanvasContext,
   LocationContext,
   LocationMessageContext,
 } from './location.context';
-import { LocationCoreFactory } from './cores';
-import { LocationEntityState } from './states/location.entity-state';
-import { LocationId, LocationKey } from './location.type';
+import { DEFAULT_LOCATION_META, LocationMeta } from './location.meta';
 import { LocationModel } from './location.model';
+import { LocationId, LocationKey } from './location.type';
+import { LocationEntityState } from './states/location.entity-state';
+import {
+  LocationMessage,
+  LocationMessagesState,
+} from './states/location.messages-state';
+import { LocationState } from './states/location.state';
 
 export class Location extends AsyncEventEmitter {
   public static messageToContext(

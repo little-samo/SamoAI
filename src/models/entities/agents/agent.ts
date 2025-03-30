@@ -5,26 +5,26 @@ import {
   LlmToolCall,
 } from '@little-samo/samo-ai/common';
 
-import { Entity } from '../entity';
-import { EntityType, EntityKey, EntityId } from '../entity.types';
 import { Location } from '../../locations';
-import { ItemModel } from '../entity.item-model';
+import { Entity } from '../entity';
 import { EntityCanvasContext } from '../entity.context';
+import { ItemModel } from '../entity.item-model';
+import { EntityType, EntityKey, EntityId } from '../entity.types';
 
-import { AgentCore } from './cores/agent.core';
-import { AgentMemory, AgentState } from './states/agent.state';
+import { AgentActionFactory } from './actions';
+import { AgentAction } from './actions/agent.action';
 import { AgentContext } from './agent.context';
 import { AgentMeta, DEFAULT_AGENT_META } from './agent.meta';
-import { AgentAction } from './actions/agent.action';
+import { AgentModel } from './agent.model';
+import { AgentId } from './agent.types';
+import { AgentCoreFactory } from './cores';
+import { AgentCore } from './cores/agent.core';
+import { type AgentInputBuilder, AgentInputFactory } from './inputs';
 import {
   AgentEntityMemory,
   AgentEntityState,
 } from './states/agent.entity-state';
-import { AgentCoreFactory } from './cores';
-import { AgentActionFactory } from './actions';
-import { type AgentInputBuilder, AgentInputFactory } from './inputs';
-import { AgentModel } from './agent.model';
-import { AgentId } from './agent.types';
+import { AgentMemory, AgentState } from './states/agent.state';
 
 export class Agent extends Entity {
   public static readonly ACTION_LLM_INDEX = 0;

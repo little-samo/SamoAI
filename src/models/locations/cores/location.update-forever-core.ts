@@ -1,7 +1,7 @@
 import { ENV, shuffle } from '@little-samo/samo-ai/common';
 
-import { RegisterLocationCore } from './location.core-decorator';
 import { LocationCore } from './location.core';
+import { RegisterLocationCore } from './location.core-decorator';
 
 @RegisterLocationCore('update_forever')
 export class LocationUpdateForeverCore extends LocationCore {
