@@ -38,7 +38,7 @@ export class AgentSendMessageAction extends AgentAction {
             .max(messageLengthLimit)
             .nullable()
             .describe(
-              `Your outward expressions, such as facial expressions and gestures. Visible to others. Can be null to indicate no expression. Max length: ${messageLengthLimit} characters.`
+              `Your outward expressions, such as facial expressions and gestures. Visible to others. Can be null to indicate no expression. Text exceeding ${messageLengthLimit} characters **WILL BE TRUNCATED** upon execution.`
             ),
         });
     }
