@@ -217,7 +217,7 @@ export class Location extends AsyncEventEmitter {
       key: this.key,
       description: this.meta.description,
       messages: this.messagesState.messages.map(Location.messageToContext),
-      canvases: this.meta.agentCanvases.map((c) => {
+      canvases: this.meta.canvases.map((c) => {
         const canvas = this.state.canvases.get(c.name)!;
         return new LocationCanvasContext({
           name: c.name,
