@@ -1,4 +1,4 @@
-import { Agent } from '../agent';
+import type { Agent } from '../agent';
 
 import { RegisterAgentCore } from './agent.core-decorator';
 import { AgentCore } from './agent.core';
