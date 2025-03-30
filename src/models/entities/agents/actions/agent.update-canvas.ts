@@ -1,4 +1,4 @@
-import { AgentAction, LlmToolCall } from '@little-samo/samo-ai';
+import { AgentAction, ENV, LlmToolCall } from '@little-samo/samo-ai';
 import { z } from 'zod';
 
 import { RegisterAgentAction } from './agent.action-decorator';
@@ -9,7 +9,7 @@ export interface AgentUpdateCanvasParameters {
 }
 
 @RegisterAgentAction('update_canvas')
-export class AgentUpdateCanvas extends AgentAction {
+export class AgentUpdateCanvasAction extends AgentAction {
   public static readonly type: string = 'update_canvas';
 
   public override get description(): string {
@@ -39,11 +39,20 @@ export class AgentUpdateCanvas extends AgentAction {
     const action = call.arguments as AgentUpdateCanvasParameters;
     const { name, text } = action;
 
+    if (ENV.DEBUG) {
+      console.log(
+        `Agent ${this.agent.name} updates location canvas ${name} with text: ${text}`
+      );
+    }
+
     await this.location.updateCanvas(
       this.agent.type,
       this.agent.id,
       name,
       text
     );
+    await this.location.addAgentMessage(this.agent, {
+      action: `UPDATE_CANVAS:"${name}"`,
+    });
   }
 }

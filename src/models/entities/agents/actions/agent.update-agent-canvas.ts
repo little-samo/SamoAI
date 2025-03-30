@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { AgentAction, LlmToolCall } from '@little-samo/samo-ai';
+import { AgentAction, ENV, LlmToolCall } from '@little-samo/samo-ai';
 
 import { RegisterAgentAction } from './agent.action-decorator';
 
@@ -9,7 +9,7 @@ export interface AgentUpdateAgentCanvasParameters {
 }
 
 @RegisterAgentAction('update_agent_canvas')
-export class AgentUpdateAgentCanvas extends AgentAction {
+export class AgentUpdateAgentCanvasAction extends AgentAction {
   public override get description(): string {
     return `Updates the text content of one of **your private Agent Canvases** (found in '<YourCanvases>'). This **overwrites** the entire existing text. Use according to the canvas's NAME/DESCRIPTION (e.g., for personal notes, planning, drafting). Only you can view and modify these. Content MUST be in English.`;
   }
@@ -32,6 +32,12 @@ export class AgentUpdateAgentCanvas extends AgentAction {
   public override async execute(call: LlmToolCall): Promise<void> {
     const action = call.arguments as AgentUpdateAgentCanvasParameters;
     const { name, text } = action;
+
+    if (ENV.DEBUG) {
+      console.log(
+        `Agent ${this.agent.name} updates agent canvas ${name} with text: ${text}`
+      );
+    }
 
     await this.agent.updateCanvas(name, text);
   }
