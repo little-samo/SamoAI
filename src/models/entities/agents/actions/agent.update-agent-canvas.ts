@@ -1,7 +1,8 @@
 import { z } from 'zod';
-import { AgentAction, ENV, LlmToolCall } from '@little-samo/samo-ai';
+import { ENV, LlmToolCall } from '@little-samo/samo-ai';
 
 import { RegisterAgentAction } from './agent.action-decorator';
+import { AgentAction } from './agent.action';
 
 export interface AgentUpdateAgentCanvasParameters {
   name: string;
