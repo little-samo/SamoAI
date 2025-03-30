@@ -792,6 +792,10 @@ export class WorldManager extends AsyncEventEmitter {
     const summary =
       await agent.llms[Agent.SUMMARY_LLM_INDEX]?.generate(summaryMessages);
     await this.agentRepository.updateAgentStateSummary(agent.id, summary);
+
+    if (ENV.DEBUG) {
+      console.log(`Agent ${agent.name} summary updated to ${summary}`);
+    }
   }
 
   public async updateAgentSummary(
