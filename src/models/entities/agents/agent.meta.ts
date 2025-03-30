@@ -28,6 +28,9 @@ export interface AgentMeta extends EntityMeta {
   memoryLengthLimit: number;
   entityMemoryLimit: number;
   entityMemoryLengthLimit: number;
+
+  summaryLengthLimit: number;
+
   // Agent's characteristics and personality traits
   character: {
     // Background information
@@ -98,6 +101,8 @@ export const DEFAULT_AGENT_META: AgentMeta = {
   memoryLengthLimit: 250,
   entityMemoryLimit: 12,
   entityMemoryLengthLimit: 250,
+
+  summaryLengthLimit: 1000,
 
   appearance: 'Typical human (but AI Agent)',
   character: {},

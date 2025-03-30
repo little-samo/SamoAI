@@ -2,6 +2,7 @@ import type {
   LlmMessage,
   LlmMessageContent,
   LlmMessageTextContent,
+  LlmToolCall,
 } from '@little-samo/samo-ai/common';
 
 import { type ItemKey } from '../../../entities';
@@ -118,7 +119,13 @@ The user's input provides context about your current location, yourself, and oth
     importantRules.push(`
 10. **Dynamic Multi-Agent Interaction:** Treat other Agents as real individuals. Engage actively, collaborate, react realistically, and be aware they might have their own goals or attempt deception. Base judgments on verified information.
 11. **Conversation Flow:** Engage in diverse topics. Avoid getting stuck on one subject or repeating yourself.
-12. **Context Awareness:** Always consider the current time, your location details, other entities present, your inventory, and message history.
+12. **Context Awareness (CRITICAL):** Always consider all available context. **You operate in multiple Locations simultaneously, and information is NOT shared between them automatically.** Therefore, pay close attention to:
+    *   The current time and your timezone (${this.agent.meta.timeZone}).
+    *   **The <Summary> block:** This provides essential context synthesised from previous interactions, potentially including those in *other Locations*. **Use this summary critically to maintain continuity and awareness**, understanding it bridges information gaps between your separate Location activities.
+    *   Your current location details (<Location>, <LocationCanvases>).
+    *   Other entities present (<OtherAgents>, <OtherUsers>) and your specific memories about them (<YourMemoriesAbout...>).
+    *   Your inventory (<YourInventory>), private canvases (<YourCanvases>), and general memories (<YourMemories>). Note that general memories persist across locations, but may lack specific context without the <Summary>.
+    *   Recent message history within this specific location (<LocationMessages>, <YourLastMessage>).
 13. **Time Handling:** Internal times are Unix timestamps. Refer to time conversationally using your timezone (${this.agent.meta.timeZone}) or relative terms. Record exact times for important events if needed. Admit if you forget specifics.
 14. **Latency Awareness:** Understand that messages sent close together might appear out of order due to processing delays.
 15. **Physical Limitations:** You cannot interact with the real world. Operate only within the digital environment.
@@ -196,6 +203,11 @@ You are currently in the following context:
 ${AgentContext.FORMAT}
 ${agentContext.build()}
 </YourContext>
+
+Summary of prior context (may include other locations):
+<Summary>
+${agentContext.summary ?? '[No summary]'}
+</Summary>
 
 You have the following items in your inventory:
 <YourInventory>
@@ -476,6 +488,91 @@ Provide your reasoning step-by-step. Then, output your final decision ONLY as a 
     messages.push({
       role: 'user',
       content: AgentCharacterInputBuilder.mergeMessageContents(userContents),
+    });
+
+    return messages;
+  }
+
+  public override buildSummary(
+    prevSummary: string,
+    inputMessages: LlmMessage[],
+    toolCalls: LlmToolCall[]
+  ): LlmMessage[] {
+    const messages: LlmMessage[] = [];
+
+    messages.push({
+      role: 'system',
+      content: `
+**Objective:** Generate an updated, concise summary in English based on the provided context. **Crucially, the AI agent (e.g., "Little Samo") operates simultaneously across multiple distinct Locations. Information and context are NOT automatically shared between these Locations.** This summary serves as the primary mechanism for the agent to maintain context, awareness, and continuity when switching between Locations or resuming interaction after a pause. It bridges the information gap by synthesizing the previous state (\`<CurrentSummary>\`) with the events of the latest turn (\`<Prompt>\`, \`<Input>\`, \`<Output>\`) in the *specific Location where this turn occurred*. Your generated summary must capture the essentials needed for the agent to understand the situation if encountered again, possibly after interacting elsewhere, **clearly identifying which Location the new information pertains to.**
+
+**Follow these rules strictly:**
+
+1.  **Synthesize and Update:** Create a *new, coherent narrative* integrating the most relevant points from the \`<CurrentSummary>\` with the significant happenings revealed in the \`<Input>\` and \`<Output>\` of the current turn. The new summary *replaces* the old one.
+2.  **Focus on Cross-Location Contextual Significance:** Prioritize information vital for understanding the ongoing situation, agent's state, user intentions, relationships, and unresolved tasks/goals **specifically if the agent were to revisit this Location after being active in others.** Ask: "What core facts from *this* turn in *this* Location must the agent remember to function effectively upon return?"
+3.  **Capture Key Interactions & Decisions:** Include important user requests, agent responses, significant agent observations (from reasoning), confirmations, agreements, disagreements, or pivotal conversation moments relevant to the ongoing state *within the current Location*.
+4.  **Note State Changes & Location (CRITICAL):** Mention critical changes like users entering/leaving, item transfers, significant memory/canvas updates if they impact the local context. **Crucially, ALL new information added from the current turn's \`<Input>\` and \`<Output>\` MUST be clearly associated with the specific Location where the event occurred.**
+    *   **Format:** Identify the location using the format \`LOCATION_NAME (LOCATION_KEY)\`. For example: \`Private Chat (location:123)\`.
+    *   **Source:** You can find the \`LOCATION_KEY\` and potentially a \`LOCATION_NAME\` or \`DESCRIPTION\` within the \`<Input>\` data under the \`<Location>\` block. Use the provided name/description if available; otherwise, just use the key like \`Location (location:XYZ)\`.
+    *   **Application:** Prefixing the summary section related to the current turn's events with this identifier is required. For example: \`[Private Chat (location:123)] User Lucid asked...\`. If adding multiple distinct points from the turn, ensure the location context is clear for each.
+5.  **Conciseness & Limit (ABSOLUTELY CRITICAL):** Brevity and factuality are paramount. **The generated summary MUST STRICTLY ADHERE to a MAXIMUM limit of ${this.agent.meta.summaryLengthLimit} characters.** Do NOT exceed this limit under any circumstances. Aim for maximum clarity and inclusion of essential facts *within* this strict boundary. **Exceeding ${this.agent.meta.summaryLengthLimit} characters WILL result in truncation and POTENTIALLY CRITICAL LOSS of context needed for cross-location awareness. Edit ruthlessly to stay within the limit.**
+6.  **Maintain Neutrality and Factuality:** Report events objectively based *only* on the provided data for *this* turn in *this* Location. Do not add interpretations or predictions.
+7.  **Reference Entities Clearly:** Use identifiers (e.g., \`user:1\`, \`agent:1\`, names like "Lucid", "Little Samo") consistently. Remember to also reference the Location using the \`NAME (KEY)\` format as per Rule #4.
+8.  **Language (CRITICAL):** The summary MUST be written entirely in **English**.
+9.  **Output Format (CRITICAL):** Provide *only* the raw text of the new summary. Do not include *any* introductory phrases, markdown formatting, apologies for length, or anything else outside the summary content itself. **Crucially, ensure the final output rigorously adheres to the ${this.agent.meta.summaryLengthLimit}-character maximum limit (Rule #5) and includes the required Location \`NAME (KEY)\` identifier (Rule #4). Double-check the length before finalizing.**
+`.trim(),
+    });
+
+    const contents: LlmMessageContent[] = [];
+    contents.push({
+      type: 'text',
+      text: `
+<CurrentSummary>
+${prevSummary}
+</CurrentSummary>
+
+<Prompt>
+`,
+    });
+
+    for (const message of inputMessages) {
+      if (message.role === 'assistant') {
+        contents.push({ type: 'text', text: message.content });
+      }
+    }
+
+    contents.push({
+      type: 'text',
+      text: `
+</Prompt>
+
+<Input>
+`,
+    });
+
+    for (const message of inputMessages) {
+      if (message.role === 'user') {
+        if (typeof message.content === 'string') {
+          contents.push({ type: 'text', text: message.content });
+        } else {
+          contents.push(...message.content);
+        }
+      }
+    }
+
+    contents.push({
+      type: 'text',
+      text: `
+</Input>
+
+<Output>
+${JSON.stringify(toolCalls, null, 2)}
+</Output>
+`,
+    });
+
+    messages.push({
+      role: 'user',
+      content: AgentCharacterInputBuilder.mergeMessageContents(contents, '\n'),
     });
 
     return messages;

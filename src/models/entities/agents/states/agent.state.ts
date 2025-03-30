@@ -8,4 +8,5 @@ export interface AgentMemory {
 export interface AgentState extends EntityState {
   agentId: AgentId;
   memories: AgentMemory[];
+  summary: string;
 }

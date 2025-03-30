@@ -1,3 +1,4 @@
+import { LlmToolCall } from '@little-samo/samo-ai/common';
 import { LlmMessage } from '@little-samo/samo-ai/common/llms/llm.service';
 import { Location } from '@little-samo/samo-ai/models/locations/location';
 
@@ -12,4 +13,10 @@ export abstract class AgentInputBuilder {
   public abstract buildNextActions(): LlmMessage[];
 
   public abstract buildActionCondition(): LlmMessage[];
+
+  public abstract buildSummary(
+    prevSummary: string,
+    inputMessages: LlmMessage[],
+    toolCalls: LlmToolCall[]
+  ): LlmMessage[];
 }

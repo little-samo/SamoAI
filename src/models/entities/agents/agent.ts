@@ -30,11 +30,17 @@ import { AgentMemory, AgentState } from './states/agent.state';
 export class Agent extends Entity {
   public static readonly ACTION_LLM_INDEX = 0;
   public static readonly MINI_LLM_INDEX = 1;
+  public static readonly SUMMARY_LLM_INDEX = 1;
+
+  public static readonly ACTION_INPUT_INDEX = 0;
+  public static readonly EVALUATE_INPUT_INDEX = 0;
+  public static readonly SUMMARY_INPUT_INDEX = 0;
 
   private static _createEmptyState(agentId: AgentId): AgentState {
     return {
       agentId,
       memories: [],
+      summary: '',
       updatedAt: new Date(),
       createdAt: new Date(),
     };
@@ -164,6 +170,7 @@ export class Agent extends Entity {
             });
           })
         : [],
+      summary: this.state.summary,
     });
     return context;
   }
@@ -321,7 +328,7 @@ export class Agent extends Entity {
   }
 
   public async executeNextActions(
-    inputIndex: number = 0,
+    inputIndex: number = Agent.ACTION_INPUT_INDEX,
     llmIndex: number = Agent.ACTION_LLM_INDEX
   ): Promise<void> {
     await this.location.emitAsync('agentExecuteNextActions', this);
@@ -344,10 +351,17 @@ export class Agent extends Entity {
     for (const toolCall of toolCalls) {
       await this.executeToolCall(toolCall);
     }
+
+    await this.location.emitAsync(
+      'agentExecutedNextActions',
+      this,
+      messages,
+      toolCalls
+    );
   }
 
   public async evaluateActionCondition(
-    inputIndex: number = 0,
+    inputIndex: number = Agent.EVALUATE_INPUT_INDEX,
     llmIndex: number = Agent.MINI_LLM_INDEX
   ): Promise<boolean> {
     const input = this.inputs[inputIndex];

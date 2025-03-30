@@ -1,4 +1,4 @@
-import { ENV } from '@little-samo/samo-ai/common';
+import { ENV, LlmMessage, LlmToolCall } from '@little-samo/samo-ai/common';
 import { AsyncEventEmitter } from '@little-samo/samo-ai/common';
 import {
   Agent,
@@ -39,6 +39,9 @@ interface UpdateLocationOptions {
 export class WorldManager extends AsyncEventEmitter {
   private static readonly LOCATION_UPDATE_LOCK_TTL = 5000; // 5 seconds
   private static readonly LOCATION_UPDATE_LOCK_PREFIX = 'lock:location-update:';
+  private static readonly AGENT_SUMMARY_UPDATE_LOCK_TTL = 5000; // 5 seconds
+  private static readonly AGENT_SUMMARY_UPDATE_LOCK_PREFIX =
+    'lock:agent-summary-update:';
 
   private static _instance: WorldManager;
 
@@ -108,6 +111,25 @@ export class WorldManager extends AsyncEventEmitter {
         console.log(`Failed to lock location ${locationId} (no retry)`);
       }
       return null;
+    }
+    try {
+      return await operation();
+    } finally {
+      await lock.release();
+    }
+  }
+
+  private async withAgentSummaryUpdateLock<T>(
+    agentId: AgentId,
+    operation: () => Promise<T>
+  ): Promise<T> {
+    const lockKey = `${WorldManager.AGENT_SUMMARY_UPDATE_LOCK_PREFIX}${agentId}`;
+    const lock = await this.redisLockService.acquireLock(
+      lockKey,
+      WorldManager.AGENT_SUMMARY_UPDATE_LOCK_TTL
+    );
+    if (!lock) {
+      throw new Error(`Failed to lock agent summary update for ${agentId}`);
     }
     try {
       return await operation();
@@ -609,6 +631,15 @@ export class WorldManager extends AsyncEventEmitter {
     );
 
     location.on(
+      'agentExecutedNextActions',
+      (agent: Agent, messages: LlmMessage[], toolCalls: LlmToolCall[]) => {
+        void options.handleSave!(
+          this.updateAgentSummary(agent, messages, toolCalls)
+        );
+      }
+    );
+
+    location.on(
       'entityAddItem',
       async (
         entity: Entity,
@@ -744,6 +775,32 @@ export class WorldManager extends AsyncEventEmitter {
         locationId,
         options
       );
+    });
+  }
+
+  private async updateAgentSummaryInternal(
+    agent: Agent,
+    messages: LlmMessage[],
+    toolCalls: LlmToolCall[]
+  ): Promise<void> {
+    const agentState = await this.agentRepository.getOrCreateAgentState(
+      agent.id
+    );
+    const summaryMessages = agent.inputs[
+      Agent.SUMMARY_INPUT_INDEX
+    ].buildSummary(agentState.summary, messages, toolCalls);
+    const summary =
+      await agent.llms[Agent.SUMMARY_LLM_INDEX]?.generate(summaryMessages);
+    await this.agentRepository.updateAgentStateSummary(agent.id, summary);
+  }
+
+  public async updateAgentSummary(
+    agent: Agent,
+    messages: LlmMessage[],
+    toolCalls: LlmToolCall[]
+  ): Promise<void> {
+    return await this.withAgentSummaryUpdateLock(agent.id, async () => {
+      return await this.updateAgentSummaryInternal(agent, messages, toolCalls);
     });
   }
 }

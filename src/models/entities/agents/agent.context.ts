@@ -85,12 +85,17 @@ export class AgentItemContext extends Context {
   }
 }
 
-export interface AgentContextOptions extends EntityContextOptions {}
+export interface AgentContextOptions extends EntityContextOptions {
+  summary: string;
+}
 export class AgentContext extends EntityContext implements AgentContextOptions {
   public static readonly FORMAT = EntityContext.FORMAT;
 
+  public readonly summary: string;
+
   public constructor(options: AgentContextOptions) {
     super(options);
+    this.summary = options.summary;
   }
 
   public build(): string {

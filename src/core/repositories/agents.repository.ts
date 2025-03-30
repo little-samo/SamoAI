@@ -40,4 +40,5 @@ export interface AgentsRepository {
     memory: string,
     createdAt?: Date
   ): Promise<void>;
+  updateAgentStateSummary(agentId: AgentId, summary: string): Promise<void>;
 }
