@@ -1,7 +1,7 @@
 import { ENV, shuffle } from '@little-samo/samo-ai/common';
-import { EntityType } from '@little-samo/samo-ai';
 
 import { LocationMessage } from '../states/location.messages-state';
+import { EntityType } from '../../entities';
 
 import { LocationCore } from './location.core';
 import { RegisterLocationCore } from './location.core-decorator';
