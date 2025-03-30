@@ -22,7 +22,7 @@ import {
 } from './states/agent.entity-state';
 import { AgentCoreFactory } from './cores';
 import { AgentActionFactory } from './actions';
-import { AgentInputBuilder, AgentInputFactory } from './inputs';
+import { type AgentInputBuilder, AgentInputFactory } from './inputs';
 import { AgentModel } from './agent.model';
 import { AgentId } from './agent.types';
 

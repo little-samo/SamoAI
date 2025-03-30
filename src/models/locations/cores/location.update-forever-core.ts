@@ -1,4 +1,4 @@
-import { ENV, shuffle } from '@little-samo/samo-ai';
+import { ENV, shuffle } from '@little-samo/samo-ai/common';
 
 import { RegisterLocationCore } from './location.core-decorator';
 import { LocationCore } from './location.core';

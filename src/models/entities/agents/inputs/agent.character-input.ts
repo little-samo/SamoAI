@@ -1,12 +1,14 @@
 import {
   EntityCanvasContext,
   ItemKey,
-  Location,
+} from '@little-samo/samo-ai/models/entities';
+import {
+  type Location,
   LocationCanvasContext,
   LocationContext,
   LocationMessageContext,
-} from '@little-samo/samo-ai/models';
-import {
+} from '@little-samo/samo-ai/models/locations';
+import type {
   LlmMessage,
   LlmMessageContent,
   LlmMessageTextContent,

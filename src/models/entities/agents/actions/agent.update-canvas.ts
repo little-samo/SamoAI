@@ -1,4 +1,4 @@
-import { ENV, LlmToolCall } from '@little-samo/samo-ai';
+import { ENV, LlmToolCall } from '@little-samo/samo-ai/common';
 import { z } from 'zod';
 
 import { RegisterAgentAction } from './agent.action-decorator';
