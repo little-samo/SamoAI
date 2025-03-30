@@ -5,7 +5,7 @@ import {
 } from '@little-samo/samo-ai/common/llms/llm.tool';
 import { z } from 'zod';
 
-import { Agent } from '../agent';
+import type { Agent } from '../agent';
 
 import { AGENT_ACTION_METADATA_KEY } from './agent.action-decorator';
 

@@ -12,7 +12,7 @@ import {
   LlmMessageTextContent,
 } from '@little-samo/samo-ai/common';
 
-import { Agent } from '../agent';
+import type { Agent } from '../agent';
 import {
   AgentContext,
   AgentEntityMemoryContext,

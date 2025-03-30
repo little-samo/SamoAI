@@ -1,6 +1,6 @@
-import { Agent } from '../agent';
+import type { Agent } from '../agent';
 
-import { AGENT_CORE_METADATA_KEY } from './agent.core-decorator';
+import { AGENT_CORE_METADATA_KEY } from './agent.core-constants';
 
 export abstract class AgentCore {
   protected constructor(public readonly agent: Agent) {}

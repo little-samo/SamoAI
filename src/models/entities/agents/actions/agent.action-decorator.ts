@@ -1,8 +1,8 @@
-import { Location } from '@little-samo/samo-ai/models/locations/location';
+import type { Location } from '@little-samo/samo-ai/models/locations/location';
 
-import { Agent } from '../agent';
+import type { Agent } from '../agent';
 
-import { AgentAction } from './agent.action';
+import type { AgentAction } from './agent.action';
 import { AgentActionFactory } from './agent.action-factory';
 
 export const AGENT_ACTION_METADATA_KEY = 'agent:action';

@@ -1,5 +1,5 @@
+export * from './location.core-constants';
 export * from './location.core-decorator';
-
 export * from './location.core-factory';
 
 export * from './location.core';

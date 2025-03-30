@@ -41,7 +41,7 @@ export default [
       parser: tsParser,
 
       parserOptions: {
-        project: path.join(__dirname, 'tsconfig.json'),
+        project: path.join(__dirname, 'tsconfig.test.json'),
         tsconfigRootDir: __dirname,
       },
     },

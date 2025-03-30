@@ -1,5 +1,5 @@
+export * from './agent.core-constants';
 export * from './agent.core-decorator';
-
 export * from './agent.core-factory';
 
 export * from './agent.core';

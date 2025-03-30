@@ -1,6 +1,6 @@
-import { Location } from '../location';
+import type { Location } from '../location';
 
-import { LOCATION_CORE_METADATA_KEY } from './location.core-decorator';
+import { LOCATION_CORE_METADATA_KEY } from './location.core-constants';
 
 export abstract class LocationCore {
   protected constructor(public readonly location: Location) {}

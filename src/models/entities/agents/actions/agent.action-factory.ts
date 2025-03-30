@@ -1,8 +1,8 @@
-import { Location } from '@little-samo/samo-ai/models/locations';
+import type { Location } from '@little-samo/samo-ai/models/locations';
 
-import { Agent } from '../agent';
+import type { Agent } from '../agent';
 
-import { AgentAction } from './agent.action';
+import type { AgentAction } from './agent.action';
 
 export class AgentActionFactory {
   public static readonly ACTION_MAP: Record<
