@@ -1,3 +1,5 @@
+import { AgentId, AgentMeta } from '../entities';
+
 export interface LocationCanvasMeta {
   name: string;
   description: string;
@@ -28,6 +30,8 @@ export interface LocationMeta {
 
   canvases: LocationCanvasMeta[];
   agentCanvases: LocationEntityCanvasMeta[];
+
+  agentMetas: Record<AgentId, Partial<AgentMeta>>;
 }
 
 export const DEFAULT_LOCATION_META: LocationMeta = {
@@ -56,4 +60,6 @@ export const DEFAULT_LOCATION_META: LocationMeta = {
       maxLength: 1000,
     },
   ],
+
+  agentMetas: {},
 };

@@ -13,7 +13,7 @@ import {
 } from './entity.types';
 
 export abstract class Entity {
-  protected _meta: EntityMeta;
+  protected _meta!: EntityMeta;
   protected _state: EntityState;
 
   protected _itemsByItemKey: Record<ItemKey, ItemModel> = {};
@@ -26,7 +26,7 @@ export abstract class Entity {
     state: EntityState,
     items: ItemModel[] = []
   ) {
-    this._meta = meta;
+    this.meta = meta;
     this._state = state;
     this.setItems(items);
   }
@@ -41,6 +41,10 @@ export abstract class Entity {
 
   public get meta(): EntityMeta {
     return this._meta;
+  }
+
+  public set meta(value: EntityMeta) {
+    this._meta = value;
   }
 
   public get state(): EntityState {

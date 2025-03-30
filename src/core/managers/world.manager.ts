@@ -15,7 +15,6 @@ import {
   LocationEntityState,
   LocationId,
   LocationMessage,
-  LocationMeta,
   User,
   UserId,
 } from '@little-samo/samo-ai/models';
@@ -141,7 +140,6 @@ export class WorldManager extends AsyncEventEmitter {
   public async getLocation(
     locationId: LocationId,
     options: {
-      defaultMeta?: LocationMeta;
       llmApiKeyUserId?: UserId;
     } = {}
   ): Promise<Location> {
@@ -162,7 +160,6 @@ export class WorldManager extends AsyncEventEmitter {
       state: locationState,
       messagesState: locationMessagesState,
       apiKeys,
-      defaultMeta: options.defaultMeta,
     });
 
     let lastUserMessageAt: Record<UserId, Date> | undefined = undefined;

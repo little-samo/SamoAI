@@ -53,7 +53,7 @@ export class Location extends AsyncEventEmitter {
   public readonly id: LocationId;
   public readonly key: LocationKey;
 
-  public meta: LocationMeta;
+  private _meta!: LocationMeta;
 
   public core!: LocationCore;
 
@@ -105,17 +105,12 @@ export class Location extends AsyncEventEmitter {
       state: LocationState;
       messagesState: LocationMessagesState;
       apiKeys?: LlmApiKeyModel[];
-      defaultMeta?: LocationMeta;
     }
   ) {
     super();
     this.id = model.id as LocationId;
     this.key = `location:${model.id}` as LocationKey;
-    this.meta = {
-      ...DEFAULT_LOCATION_META,
-      ...(options.defaultMeta ?? {}),
-      ...(model.meta as object),
-    };
+    this.meta = DEFAULT_LOCATION_META;
 
     const { state, messagesState, apiKeys } = options;
 
@@ -132,6 +127,17 @@ export class Location extends AsyncEventEmitter {
         this.apiKeys[apiKey.platform] = apiKey;
       }
     }
+  }
+
+  public get meta(): LocationMeta {
+    return this._meta;
+  }
+
+  public set meta(value: LocationMeta) {
+    this._meta = {
+      ...value,
+      ...(this.model.meta as object),
+    };
   }
 
   public addEntity(entity: Entity, updateIds: boolean = true): void {

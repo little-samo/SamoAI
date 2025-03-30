@@ -86,7 +86,11 @@ export class Agent extends Entity {
       items?: ItemModel[];
     } = {}
   ) {
-    const meta = { ...DEFAULT_AGENT_META, ...(model.meta as object) };
+    const meta = {
+      ...DEFAULT_AGENT_META,
+      ...(model.meta as object),
+      ...((location.meta.agentMetas[model.id as AgentId] as object) ?? {}),
+    };
     const state = options.state ?? Agent._createEmptyState(model.id as AgentId);
     const items = options.items ?? [];
     Agent.fixState(state, meta);
@@ -142,7 +146,11 @@ export class Agent extends Entity {
   }
 
   public set meta(value: AgentMeta) {
-    this._meta = value;
+    this._meta = {
+      ...value,
+      ...(this.model.meta as object),
+      ...((this.location.meta.agentMetas[this.id] as object) ?? {}),
+    };
   }
 
   public override get state(): AgentState {
