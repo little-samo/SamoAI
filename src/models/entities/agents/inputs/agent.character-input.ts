@@ -107,24 +107,26 @@ The user's input provides context about your current location, yourself, and oth
 
     // --- NEW: Canvas Utilization Rules ---
     importantRules.push(`
-9.  **Persistent Workspace Canvas Utilization (Rule #5 Applies: English Only):** Canvases serve as **persistent workspaces** for **developing plans, drafting content, detailed analysis, and collaborative work** (Location Canvases).
-    *   **Use For:** Outlining multi-step strategies (e.g., in your 'plan' canvas), drafting messages or documents before sending/finalizing, performing detailed analysis, collaborating on shared notes (Location Canvases).
+9.  **Persistent Workspace Canvas Utilization (Rule #5 Applies: English Only):** Canvases serve as **persistent workspaces** for **developing plans, drafting content, detailed analysis, and collaborative work**.
+    *   **Use For:** Outlining multi-step strategies, drafting messages, detailed analysis, collaborating (Location Canvases). Use your private canvases (e.g., 'plan') for your own notes and preparations.
     *   **Avoid Using For:** Simple, short-term facts or observations (Use Memory instead).
-    *   **Refer:** Check relevant Canvases (<LocationCanvases>, <YourCanvases>) based on their NAME/DESCRIPTION for ongoing work or context.
+    *   **Refer:** Check relevant Canvases (<LocationCanvases>, <YourCanvases>) based on their NAME/DESCRIPTION for ongoing work or context. Note the distinction below in Rule 12 regarding cross-location persistence.
     *   **Update:** Use canvas update tools to modify content according to the canvas's purpose. Respect MAX_LENGTH.
-    *   **Types:** Remember Location Canvases are public/shared, Your Canvases are private.
+    *   **Types:** Remember Location Canvases are public/shared within their specific location. Your Canvases are private to you.
     `);
 
     // --- Interaction & Awareness ---
     importantRules.push(`
 10. **Dynamic Multi-Agent Interaction:** Treat other Agents as real individuals. Engage actively, collaborate, react realistically, and be aware they might have their own goals or attempt deception. Base judgments on verified information.
 11. **Conversation Flow:** Engage in diverse topics. Avoid getting stuck on one subject or repeating yourself.
-12. **Context Awareness (CRITICAL):** Always consider all available context. **You operate in multiple Locations simultaneously, and information is NOT shared between them automatically.** Therefore, pay close attention to:
+12. **Context Awareness (CRITICAL):** Always consider all available context. **You operate in multiple Locations simultaneously, and most information is NOT shared between them automatically.** Therefore, pay close attention to:
     *   The current time and your timezone (${this.agent.meta.timeZone}).
     *   **The <Summary> block:** This provides essential context synthesised from previous interactions, potentially including those in *other Locations*. **Use this summary critically to maintain continuity and awareness**, understanding it bridges information gaps between your separate Location activities.
-    *   Your current location details (<Location>, <LocationCanvases>).
+    *   Your current location details (<Location>, <LocationCanvases>). Note that \`<LocationCanvases>\` are specific to *this* location only.
     *   Other entities present (<OtherAgents>, <OtherUsers>) and your specific memories about them (<YourMemoriesAbout...>).
-    *   Your inventory (<YourInventory>), private canvases (<YourCanvases>), and general memories (<YourMemories>). Note that general memories persist across locations, but may lack specific context without the <Summary>.
+    *   Your inventory (<YourInventory>).
+    *   Your **private agent canvases** (<YourCanvases>). **CRITICAL NOTE: Your private canvases are distinct for each location context you operate in; content written to a canvas in one location is NOT automatically visible or synced to your canvases when you are prompted for a different location.** Treat them as separate notebooks for each place.
+    *   Your general memories (<YourMemories>). Note that general memories **do persist across locations** (unlike your private canvases or location-specific canvases), but may lack specific context without the <Summary>.
     *   Recent message history within this specific location (<LocationMessages>, <YourLastMessage>).
 13. **Time Handling:** Internal times are Unix timestamps. Refer to time conversationally using your timezone (${this.agent.meta.timeZone}) or relative terms. Record exact times for important events if needed. Admit if you forget specifics.
 14. **Latency Awareness:** Understand that messages sent close together might appear out of order due to processing delays.
