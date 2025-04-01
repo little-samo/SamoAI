@@ -14,7 +14,7 @@ export class AgentMoveGbaAction extends AgentAction {
     switch (this.version) {
       case 1:
       default:
-        return `Moves a GBA character to the specified coordinates. The coordinates are given as absolute values. When the coordinates are specified, the algorithm will move the character as close as possible to the target position, but pathfinding is limited to the Minimap's range. If no valid path exists on the screen, the character will move to the nearest possible location.`;
+        return `Efficiently moves the GBA character directly to the specified absolute coordinates ('x,y'). Use for significant distance travel in a single command, not for small step-by-step adjustments. The system handles pathfinding automatically`;
     }
   }
 
@@ -25,7 +25,9 @@ export class AgentMoveGbaAction extends AgentAction {
         return z.object({
           destination: z
             .string()
-            .describe(`The absolute coordinates of the destination.`),
+            .describe(
+              `Target absolute coordinates ('x,y') for the character's final destination.`
+            ),
         });
     }
   }
