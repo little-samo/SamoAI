@@ -35,6 +35,7 @@
     "@anthropic-ai/sdk": "^0.37.0",
     "@google/genai": "^0.6.1",
     "dotenv": "^16.4.7",
+    "lodash": "^4.17.21",
     "openai": "^4.83.0",
     "reflect-metadata": "^0.2.2"
   },
@@ -43,6 +44,7 @@
     "@eslint/js": "^9.13.0",
     "@types/express": "^5.0.0",
     "@types/jest": "^29.5.2",
+    "@types/lodash": "^4",
     "@types/node": "^20.3.1",
     "@types/supertest": "^6.0.0",
     "@typescript-eslint/eslint-plugin": "^8.0.0",

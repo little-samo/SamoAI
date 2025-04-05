@@ -1,4 +1,5 @@
 import { AsyncEventEmitter, ENV } from '@little-samo/samo-ai/common';
+import { isEqual } from 'lodash';
 
 import {
   Agent,
@@ -248,8 +249,14 @@ export class Location extends AsyncEventEmitter {
   }
 
   public reloadCore(): void {
-    if (this.core && this.core.name === this.meta.core) {
-      return;
+    if (this.core) {
+      const coreMeta =
+        typeof this.meta.core === 'string'
+          ? { name: this.meta.core }
+          : this.meta.core;
+      if (isEqual(this.core.meta, coreMeta)) {
+        return;
+      }
     }
     this.core = LocationCoreFactory.createCore(this);
   }

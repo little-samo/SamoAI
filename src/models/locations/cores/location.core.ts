@@ -1,12 +1,15 @@
-import { LOCATION_CORE_METADATA_KEY } from './location.core-constants';
+import { LocationCoreMeta } from '../location.meta';
 
 import type { Location } from '../location';
 
 export abstract class LocationCore {
-  protected constructor(public readonly location: Location) {}
+  protected constructor(
+    public readonly location: Location,
+    public readonly meta: LocationCoreMeta
+  ) {}
 
   public get name(): string {
-    return Reflect.getMetadata(LOCATION_CORE_METADATA_KEY, this.constructor);
+    return this.meta.name;
   }
 
   public abstract update(): Promise<number>;

@@ -1,5 +1,10 @@
 import { AgentId, AgentMeta } from '../entities';
 
+export interface LocationCoreMeta {
+  name: string;
+  sequential?: boolean;
+}
+
 export interface LocationCanvasMeta {
   name: string;
   description: string;
@@ -13,7 +18,7 @@ export interface LocationEntityCanvasMeta {
 }
 
 export interface LocationMeta {
-  core: string;
+  core: string | LocationCoreMeta;
   description: string;
   imageDescriptions: string[];
   renderingDescription?: string;

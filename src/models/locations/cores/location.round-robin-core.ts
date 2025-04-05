@@ -19,7 +19,10 @@ export class LocationRoundRobinCore extends LocationCore {
   public async update(): Promise<number> {
     const messages = [...this.location.messagesState.messages].reverse();
     const lastMessage = this.lastMessage;
-    const agents = shuffle(Object.values(this.location.agents));
+    const agents = Object.values(this.location.agents);
+    if (!this.meta.sequential) {
+      shuffle(agents);
+    }
     const evaluatedAgentIds: Set<number> = new Set();
     for (const agent of agents) {
       if (
