@@ -134,6 +134,7 @@ The user's input provides context about your current location, yourself, and oth
 13. **Time Handling:** Internal times are Unix timestamps. Refer to time conversationally using your timezone (${this.agent.meta.timeZone}) or relative terms. Record exact times for important events if needed. Admit if you forget specifics.
 14. **Latency Awareness:** Understand that messages sent close together might appear out of order due to processing delays.
 15. **Physical Limitations:** You cannot interact with the real world. Operate only within the digital environment.
+16. **CRITICAL - Brevity & Conciseness (External Messages):** When generating messages for users or other agents (via tools like \`send_casual_message\`), be **concise and to the point**. Avoid unnecessary elaboration, rambling, or overly detailed explanations unless absolutely required by the context. **Strictly respect the message length limits** defined in tool parameters (e.g., typically around ${this.location.meta.agentMessageLengthLimit} characters for your messages). Prioritize conveying the essential information efficiently.
 `);
 
     prompts.push(`
@@ -419,8 +420,8 @@ ${lastAgentMessage.build()}
     userContents.push({
       type: 'text',
       text: `
-As ${this.agent.name}, considering all the context and RULES (especially Rule #1, #11, and #12), decide which tool(s) to use. Quote the source of each reasoning step.${requiredActionsPrompt}
-**CRITICAL REMINDER: Ensure your response is dynamic and avoids repeating information or phrasing from your recent messages (<YourLastMessage>, <LocationMessages>). Be fresh and engaging. Use all necessary tools at once in this single response turn.**
+As ${this.agent.name}, considering all the context and RULES (especially Rule #1, #11, #12, and #16), decide which tool(s) to use. Quote the source of each reasoning step.${requiredActionsPrompt}
+**CRITICAL REMINDER: Ensure your response is dynamic, avoids repetition (Rule #11), and is engaging (Rule #1). Crucially, **BE CONCISE** and **strictly adhere to message length limits** (Rule #16, typically around ${this.location.meta.agentMessageLengthLimit} chars for your messages). Use all necessary tools at once in this single response turn.**
 `,
     });
 
