@@ -37,7 +37,7 @@ export class AgentExecuteCliAction extends AgentAction {
     }
 
     await this.location.addAgentMessage(this.agent, {
-      action: `EXECUTE_CLI:${action.command}`,
+      action: `EXECUTE_CLI:${JSON.stringify(action.command)}`,
     });
   }
 }
