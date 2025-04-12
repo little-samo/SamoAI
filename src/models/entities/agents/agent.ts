@@ -327,9 +327,12 @@ export class Agent extends Entity {
     return await this.core.update();
   }
 
-  private async executeToolCall(toolCall: LlmToolCall): Promise<void> {
+  private async executeToolCall(
+    toolCall: LlmToolCall,
+    action?: AgentAction
+  ): Promise<void> {
     try {
-      const action = this.actions[toolCall.name];
+      action ??= this.actions[toolCall.name];
       await action.execute(toolCall);
     } catch (error) {
       console.error(
@@ -416,17 +419,28 @@ ${resultJson.reasoning}`
       throw new Error('No LlmService found');
     }
 
-    const memoryActions = this.meta.memoryActions.map((actionWithVersion) =>
-      AgentActionFactory.createAction(actionWithVersion, this.location, this)
+    const memoryActions = Object.fromEntries(
+      this.meta.memoryActions.map((actionWithVersion) => {
+        const action = AgentActionFactory.createAction(
+          actionWithVersion,
+          this.location,
+          this
+        );
+        return [action.name, action];
+      })
     );
 
-    const toolCalls = await llm.useTools(messages, memoryActions, {
-      maxTokens: this.meta.maxTokens,
-      temperature: this.meta.temperature,
-      verbose: ENV.DEBUG,
-    });
+    const toolCalls = await llm.useTools(
+      messages,
+      Object.values(memoryActions),
+      {
+        maxTokens: this.meta.maxTokens,
+        temperature: this.meta.temperature,
+        verbose: ENV.DEBUG,
+      }
+    );
     for (const toolCall of toolCalls) {
-      await this.executeToolCall(toolCall);
+      await this.executeToolCall(toolCall, memoryActions[toolCall.name]);
     }
   }
 }
