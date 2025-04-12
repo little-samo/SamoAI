@@ -46,14 +46,6 @@ export interface LocationRepository {
     locationId: LocationId,
     userId: UserId
   ): Promise<boolean>;
-  addLocationStateGimmickId(
-    locationId: LocationId,
-    gimmickId: GimmickId
-  ): Promise<boolean>;
-  removeLocationStateGimmickId(
-    locationId: LocationId,
-    gimmickId: GimmickId
-  ): Promise<boolean>;
   updateLocationStatePauseUpdateUntil(
     locationId: LocationId,
     pauseUpdateUntil: Date | null
