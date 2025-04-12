@@ -10,23 +10,23 @@ export interface AgentMemoryContextOptions {
 }
 
 export class AgentMemoryContext extends Context {
-  public static readonly FORMAT = 'INDEX\tTIMESTAMP\tMEMORY';
+  public static readonly FORMAT = 'INDEX\tCREATED\tMEMORY';
 
   public readonly index: number;
   public readonly memory: string;
-  public readonly createdAt?: number;
+  public readonly createdAt?: Date;
 
   public constructor(options: AgentMemoryContextOptions) {
     super();
     this.index = options.index;
     this.memory = options.memory;
     this.createdAt = options.createdAt
-      ? Math.floor(new Date(options.createdAt).getTime() / 1000)
+      ? new Date(options.createdAt)
       : undefined;
   }
 
   public build(): string {
-    return `${this.index}\t${this.createdAt ?? 'null'}\t${JSON.stringify(this.memory)}`;
+    return `${this.index}\t${this.createdAt?.toISOString() ?? 'null'}\t${JSON.stringify(this.memory)}`;
   }
 }
 
@@ -37,23 +37,23 @@ export interface AgentEntityMemoryContextOptions {
 }
 
 export class AgentEntityMemoryContext extends Context {
-  public static readonly FORMAT = 'INDEX\tTIMESTAMP\tMEMORY';
+  public static readonly FORMAT = 'INDEX\tCREATED\tMEMORY';
 
   public readonly index: number;
   public readonly memory: string;
-  public readonly createdAt?: number;
+  public readonly createdAt?: Date;
 
   public constructor(options: AgentEntityMemoryContextOptions) {
     super();
     this.index = options.index;
     this.memory = options.memory;
     this.createdAt = options.createdAt
-      ? Math.floor(new Date(options.createdAt).getTime() / 1000)
+      ? new Date(options.createdAt)
       : undefined;
   }
 
   public build(): string {
-    return `${this.index}\t${this.createdAt ?? 'null'}\t${JSON.stringify(this.memory)}`;
+    return `${this.index}\t${this.createdAt?.toISOString() ?? 'null'}\t${JSON.stringify(this.memory)}`;
   }
 }
 

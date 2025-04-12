@@ -15,7 +15,7 @@ export interface LocationMessageContextOptions {
 
 export class LocationMessageContext extends Context {
   public static readonly FORMAT =
-    'TIMESTAMP\tENTITY_KEY\tTARGET_KEY\tNAME\tMESSAGE\tEXPRESSION\tACTION';
+    'CREATED\tENTITY_KEY\tTARGET_KEY\tNAME\tMESSAGE\tEXPRESSION\tACTION';
 
   public readonly key: EntityKey;
   public readonly targetKey?: EntityKey;
@@ -24,7 +24,7 @@ export class LocationMessageContext extends Context {
   public readonly expression?: string;
   public readonly action?: string;
   public readonly image?: string;
-  public readonly created: number;
+  public readonly created: Date;
 
   public constructor(options: LocationMessageContextOptions) {
     super();
@@ -36,7 +36,7 @@ export class LocationMessageContext extends Context {
     this.expression = options.expression;
     this.action = options.action;
     this.image = options.image;
-    this.created = Math.floor(new Date(options.created).getTime() / 1000);
+    this.created = new Date(options.created);
   }
 
   public build(): string {
@@ -49,7 +49,7 @@ export class LocationMessageContext extends Context {
     if (this.image) {
       action = `UPLOAD_IMAGE`;
     }
-    return `${this.created}\t${this.key}\t${targetKey}\t${JSON.stringify(this.name)}\t${message}\t${expression}\t${action}`;
+    return `${this.created.toISOString()}\t${this.key}\t${targetKey}\t${JSON.stringify(this.name)}\t${message}\t${expression}\t${action}`;
   }
 }
 
@@ -64,13 +64,13 @@ export interface LocationCanvasContextOptions {
 
 export class LocationCanvasContext extends Context {
   public static readonly FORMAT =
-    'NAME\tDESCRIPTION\tMAX_LENGTH\tLAST_MODIFIED_BY\tLAST_MODIFIED_AT\tTEXT';
+    'NAME\tDESCRIPTION\tMAX_LENGTH\tLAST_MODIFIED_BY\tLAST_MODIFIED\tTEXT';
 
   public readonly name: string;
   public readonly description: string;
   public readonly maxLength: number;
   public readonly lastModeifierKey: EntityKey;
-  public readonly lastModifiedAt: number;
+  public readonly lastModifiedAt: Date;
   public readonly text: string;
 
   public constructor(options: LocationCanvasContextOptions) {
@@ -80,14 +80,12 @@ export class LocationCanvasContext extends Context {
     this.description = options.description;
     this.maxLength = options.maxLength;
     this.lastModeifierKey = options.lastModeifierKey;
-    this.lastModifiedAt = Math.floor(
-      new Date(options.lastModifiedAt).getTime() / 1000
-    );
+    this.lastModifiedAt = new Date(options.lastModifiedAt);
     this.text = options.text;
   }
 
   public build(): string {
-    return `${this.name}\t${this.description}\t${this.maxLength}\t${this.lastModeifierKey}\t${this.lastModifiedAt}\t${this.text}`;
+    return `${this.name}\t${this.description}\t${this.maxLength}\t${this.lastModeifierKey}\t${this.lastModifiedAt.toISOString()}\t${this.text}`;
   }
 }
 

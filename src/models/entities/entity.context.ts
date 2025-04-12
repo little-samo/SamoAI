@@ -13,12 +13,12 @@ export interface EntityCanvasContextOptions {
 
 export class EntityCanvasContext extends Context {
   public static readonly FORMAT =
-    'NAME\tDESCRIPTION\tMAX_LENGTH\tLAST_MODIFIED_AT\tTEXT';
+    'NAME\tDESCRIPTION\tMAX_LENGTH\tLAST_MODIFIED\tTEXT';
 
   public readonly name: string;
   public readonly description: string;
   public readonly maxLength: number;
-  public readonly lastModifiedAt: number;
+  public readonly lastModifiedAt: Date;
   public readonly text: string;
 
   public constructor(options: EntityCanvasContextOptions) {
@@ -26,14 +26,12 @@ export class EntityCanvasContext extends Context {
     this.name = options.name;
     this.description = options.description;
     this.maxLength = options.maxLength;
-    this.lastModifiedAt = Math.floor(
-      new Date(options.lastModifiedAt).getTime() / 1000
-    );
+    this.lastModifiedAt = new Date(options.lastModifiedAt);
     this.text = options.text;
   }
 
   public build(): string {
-    return `${this.name}\t${this.description}\t${this.maxLength}\t${this.lastModifiedAt}\t${this.text}`;
+    return `${this.name}\t${this.description}\t${this.maxLength}\t${this.lastModifiedAt.toISOString()}\t${this.text}`;
   }
 }
 
