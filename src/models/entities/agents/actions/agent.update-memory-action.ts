@@ -15,7 +15,7 @@ export class AgentUpdateMemoryAction extends AgentAction {
     switch (this.version) {
       case 1:
       default:
-        return `Updates or overwrites a specific memory slot in your general memory list (indexed 0 to ${this.agent.meta.memoryLimit - 1}). Use this to store new essential information or correct outdated facts. Choose the index carefully based on importance and timeliness. Refer to CRITICAL memory rules for detailed guidance.`;
+        return `Updates or overwrites a specific memory slot in the general memory list (indexed 0 to ${this.agent.meta.memoryLimit - 1}). This incorporates new/corrected information (potentially based on \'add_memory\` suggestions) or clears outdated facts. **To clear outdated/invalid information from a slot, provide an empty string ('') as the 'memory' value.** Choose the index carefully based on importance and timeliness (overwriting the least relevant if full). Refer to CRITICAL memory rules (Rule #8) for guidance.`;
     }
   }
 
@@ -36,7 +36,7 @@ export class AgentUpdateMemoryAction extends AgentAction {
             .string()
             .max(this.agent.meta.memoryLengthLimit)
             .describe(
-              `The concise and factual new memory content to store at the specified index. Max length: ${this.agent.meta.memoryLengthLimit} characters. The memory content MUST be written in English, even if summarizing non-English information.`
+              `The concise and factual new memory content to store at the specified index. Max length: ${this.agent.meta.memoryLengthLimit} characters. The memory content MUST be written in English. **Provide an empty string ('') to effectively delete/clear the memory slot if the previous content is no longer valid.**`
             ),
         });
     }

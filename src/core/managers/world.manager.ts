@@ -41,6 +41,9 @@ export class WorldManager extends AsyncEventEmitter {
   private static readonly AGENT_SUMMARY_UPDATE_LOCK_TTL = 5000; // 5 seconds
   private static readonly AGENT_SUMMARY_UPDATE_LOCK_PREFIX =
     'lock:agent-summary-update:';
+  private static readonly AGENT_MEMORY_UPDATE_LOCK_TTL = 5000; // 5 seconds
+  private static readonly AGENT_MEMORY_UPDATE_LOCK_PREFIX =
+    'lock:agent-memory-update:';
 
   private static _instance: WorldManager;
 
@@ -129,6 +132,25 @@ export class WorldManager extends AsyncEventEmitter {
     );
     if (!lock) {
       throw new Error(`Failed to lock agent summary update for ${agentId}`);
+    }
+    try {
+      return await operation();
+    } finally {
+      await lock.release();
+    }
+  }
+
+  private async withAgentMemoryUpdateLock<T>(
+    agentId: AgentId,
+    operation: () => Promise<T>
+  ): Promise<T> {
+    const lockKey = `${WorldManager.AGENT_MEMORY_UPDATE_LOCK_PREFIX}${agentId}`;
+    const lock = await this.redisLockService.acquireLock(
+      lockKey,
+      WorldManager.AGENT_MEMORY_UPDATE_LOCK_TTL
+    );
+    if (!lock) {
+      throw new Error(`Failed to lock agent memory update for ${agentId}`);
     }
     try {
       return await operation();
@@ -631,7 +653,10 @@ export class WorldManager extends AsyncEventEmitter {
       'agentExecutedNextActions',
       (agent: Agent, messages: LlmMessage[], toolCalls: LlmToolCall[]) => {
         void options.handleSave!(
-          this.updateAgentSummary(agent, messages, toolCalls)
+          Promise.all([
+            this.updateAgentSummary(agent, messages, toolCalls),
+            this.updateAgentMemory(agent, messages, toolCalls),
+          ])
         );
       }
     );
@@ -805,6 +830,16 @@ export class WorldManager extends AsyncEventEmitter {
   ): Promise<void> {
     return await this.withAgentSummaryUpdateLock(agent.id, async () => {
       return await this.updateAgentSummaryInternal(agent, messages, toolCalls);
+    });
+  }
+
+  public async updateAgentMemory(
+    agent: Agent,
+    messages: LlmMessage[],
+    toolCalls: LlmToolCall[]
+  ): Promise<void> {
+    return await this.withAgentMemoryUpdateLock(agent.id, async () => {
+      return await agent.executeMemoryActions(messages, toolCalls);
     });
   }
 }

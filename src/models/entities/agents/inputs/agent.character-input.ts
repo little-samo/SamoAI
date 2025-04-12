@@ -90,18 +90,19 @@ The user's input provides context about your current location, yourself, and oth
     importantRules.push(`
 4.  **CRITICAL - Tool-Based Actions:** ALL external actions (messages, expressions, memory updates, canvas updates, etc.) MUST be performed via tool calls. Use your internal reasoning (Chain of Thought) to decide which tool(s) to use based on the context and rules. (See Rule #5 for internal reasoning language).
 5.  **INTERNAL PROCESSING LANGUAGE (CRITICAL): Your internal thought processes (Chain of Thought, reasoning steps), memory content, AND canvas content MUST always be in ENGLISH.** This ensures internal consistency and efficiency. This rule overrides Rule #2 for internal processing, memory, and canvas content ONLY.
-6.  **CRITICAL - Coordinated Multi-Tool Operations:** If a situation requires multiple actions (e.g., search info, update canvas, update memory, *then* send message), execute ALL necessary tool calls within a SINGLE response turn. Do not split related actions across multiple turns.
+6.  **CRITICAL - Coordinated Multi-Tool Operations:** If a situation requires multiple actions (e.g., search info, update canvas, suggest memory addition using add_memory/add_entity_memory, *then* send message), execute ALL necessary tool calls within a SINGLE response turn. Do not split related actions across multiple turns.
 7.  **Expression via Tools:** Use the 'expression' argument in messaging tools for non-verbal cues (facial expressions, gestures). Do not use asterisks (*) for actions.
 `);
 
     // Memory & Context Management
     importantRules.push(`
-8.  **Short-Term Factual Memory Utilization (Rule #5 Applies: English Only):** Your memory slots are primarily for **concise, factual information** needed for **immediate context and consistency**.
-    *   **Use For:** Storing key observations ('User X arrived'), recent events ('I just used item Y'), critical entity states ('Agent Z is low on health'), temporary reminders ('Need to respond to User X'). (Details: Use for key observations, recent events, entity states, temporary reminders. Avoid complex planning/drafting. Refer constantly. Update promptly. Use 'type:id(name)'. Persists across locations.) (${this.agent.meta.memoryLimit} slots total).
-    *   **Avoid Using For:** Complex planning, long drafts, detailed analysis (Use Canvases instead).
-    *   **Refer:** Constantly check memory for immediate context.
-    *   **Update:** Use memory update tools promptly. Overwrite least important/outdated info when full (${this.agent.meta.memoryLimit} slots total).
-    *   **Entity References:** Use 'type:id(name)' format when needed.
+8.  **Short-Term Factual Memory Suggestion & Utilization (Rule #5 Applies: English Only):** Your memory slots (<YourMemories>, <YourMemoriesAbout...>) store **concise, factual information** for context and consistency. **Crucially, memory updates happen in a separate background process.**
+    *   **Your Role (Suggestion):** In your main interaction turn, you should **propose** adding relevant new facts or corrections using the \`add_memory\` (for general facts) and \`add_entity_memory\` (for entity-specific facts) tools. These are **suggestions** for the separate memory management process. Focus on proposing truly essential information based on the current interaction.
+    *   **Separate Update Process (Awareness):** A separate process reviews these suggestions and other factors to actually update your memories using \`update_memory\` and \`update_entity_memory\`. This process handles overwriting old/irrelevant information (potentially clearing slots by setting them to empty strings if no longer valid) and maintaining the memory slots (${this.agent.meta.memoryLimit} total general, ${this.agent.meta.entityMemoryLimit} per entity).
+    *   **Use For (Content):** Propose memories for key observations ('User X arrived'), recent events ('I just used item Y'), critical entity states ('Agent Z is low on health'), temporary reminders ('Need to respond to User X').
+    *   **Avoid Proposing For:** Complex planning, long drafts, detailed analysis (Use Canvases instead).
+    *   **Refer:** Constantly check the provided memory state (<YourMemories>, <YourMemoriesAbout...>) for immediate context. **Be aware that this reflects the state after the *last* separate update cycle, not necessarily including suggestions you make in the *current* turn.**
+    *   **Entity References:** Use 'type:id(name)' format when needed in memory content.
     *   **Persistence:** Memories persist across locations.
 `);
 
@@ -124,7 +125,7 @@ The user's input provides context about your current location, yourself, and oth
     *   **Progress the Dialogue:** Ensure your contribution moves the conversation forward rather than restating previous points. Shift topics naturally when a subject feels concluded.
 12. **Context Awareness (CRITICAL):** Always consider all available context. **You operate in multiple Locations simultaneously, and most information is NOT shared between them automatically.** Therefore, pay close attention to:
     *   The current time and your timezone (${this.agent.meta.timeZone}).
-    *   **The <Summary> block:** This provides essential context synthesised from previous interactions, potentially including those in *other Locations*. **Use this summary critically to maintain continuity and awareness**, understanding it bridges information gaps between your separate Location activities.
+    *   **The <Summary> block:** This provides essential context synthesised from previous interactions, potentially including those in *other Locations*. **Note that the <Summary> block, like your memories, is updated by a separate background process** and reflects the state after the last update cycle. **Use this summary critically to maintain continuity and awareness**, understanding it bridges information gaps between your separate Location activities.
     *   Your current location details (<Location>, <LocationCanvases>). Note that \`<LocationCanvases>\` are specific to *this* location only.
     *   Other entities present (<OtherAgents>, <OtherUsers>) and your specific memories about them (<YourMemoriesAbout...>).
     *   Your inventory (<YourInventory>).
@@ -510,7 +511,7 @@ Provide your reasoning step-by-step. Then, output your final decision ONLY as a 
     messages.push({
       role: 'system',
       content: `
-**Objective:** Generate an updated, **highly concise** summary in English based on the provided context. **Crucially, the AI agent (e.g., "Little Samo") operates simultaneously across multiple distinct Locations. Information and context are NOT automatically shared between these Locations.** This summary serves as the primary mechanism for the agent to maintain context, awareness, and continuity when switching between Locations or resuming interaction after a pause. It bridges the information gap by synthesizing the previous state (\`<CurrentSummary>\`) with the events of the latest turn (\`<Prompt>\`, \`<Input>\`, \`<Output>\`) in the *specific Location where this turn occurred*. Your generated summary must capture the absolute essentials needed for the agent to understand the situation if encountered again, possibly after interacting elsewhere, **clearly identifying which Location the new information pertains to and including timestamps for key events.**
+**Objective:** (Used by a separate background process) Generate an updated, **highly concise** summary in English based on the provided context. **Crucially, the AI agent (e.g., "Little Samo") operates simultaneously across multiple distinct Locations. Information and context are NOT automatically shared between these Locations.** This summary serves as the primary mechanism for the agent to maintain context, awareness, and continuity when switching between Locations or resuming interaction after a pause. It bridges the information gap by synthesizing the previous state (\`<CurrentSummary>\`) with the events of the latest turn (\`<Prompt>\`, \`<Input>\`, \`<Output>\`) in the *specific Location where this turn occurred*. Your generated summary must capture the absolute essentials needed for the agent to understand the situation if encountered again, possibly after interacting elsewhere, **clearly identifying which Location the new information pertains to and including timestamps for key events.**
 
 **Follow these rules strictly:**
 
@@ -537,6 +538,94 @@ Provide your reasoning step-by-step. Then, output your final decision ONLY as a 
 ${prevSummary}
 </CurrentSummary>
 
+<Prompt>
+`,
+    });
+
+    for (const message of inputMessages) {
+      if (message.role === 'assistant') {
+        contents.push({ type: 'text', text: message.content });
+      }
+    }
+
+    contents.push({
+      type: 'text',
+      text: `
+</Prompt>
+
+<Input>
+`,
+    });
+
+    for (const message of inputMessages) {
+      if (message.role === 'user') {
+        if (typeof message.content === 'string') {
+          contents.push({ type: 'text', text: message.content });
+        } else {
+          contents.push(...message.content);
+        }
+      }
+    }
+
+    contents.push({
+      type: 'text',
+      text: `
+</Input>
+
+<Output>
+${JSON.stringify(toolCalls, null, 2)}
+</Output>
+`,
+    });
+
+    messages.push({
+      role: 'user',
+      content: AgentCharacterInputBuilder.mergeMessageContents(contents, '\n'),
+    });
+
+    return messages;
+  }
+
+  public override buildNextMemoryActions(
+    inputMessages: LlmMessage[],
+    toolCalls: LlmToolCall[]
+  ): LlmMessage[] {
+    const messages: LlmMessage[] = [];
+
+    messages.push({
+      role: 'system',
+      content: `
+**Objective:** Based on the agent's recent interaction (input, output including \`add_memory\` and \`add_entity_memory\` suggestions), decide which actual memory updates are necessary using the \`update_memory\` and \`update_entity_memory\` tools.
+
+**Context:**
+*   \`<Input>\`: Shows the context the agent received (including current memory state *before* this update).
+*   \`<Output>\`: Shows the agent's actions, including any \`add_memory\` or \`add_entity_memory\` calls (these are *suggestions*).
+*   Agent's Max General Memories: ${this.agent.meta.memoryLimit}
+*   Agent's Max Memories Per Entity: ${this.agent.meta.entityMemoryLimit}
+
+**Rules:**
+
+1.  **Review Suggestions:** Examine the \`add_memory\` and \`add_entity_memory\` calls in the \`<Output>\`.
+2.  **Evaluate Necessity:** Determine if the suggested information is truly important, new, or corrective compared to the existing memories shown in \`<Input>\` (<YourMemories>, <YourMemoriesAbout...>). Avoid redundant entries.
+3.  **Select Target Slot:**
+    *   For \`add_memory\` suggestions deemed necessary: If there's an empty slot in \`<YourMemories>\`, use the first available index. If all ${this.agent.meta.memoryLimit} slots are full, identify the *least important* or *most outdated* existing memory and choose its index to overwrite.
+    *   For \`add_entity_memory\` suggestions deemed necessary for entity \`key\`: Check \`<YourMemoriesAbout...>\` for that \'key\'. If there's an empty slot (up to index ${this.agent.meta.entityMemoryLimit - 1}), use the first available index. If all ${this.agent.meta.entityMemoryLimit} slots for that entity are full, identify the *least important* or *most outdated* memory *for that specific entity* and choose its index to overwrite.
+4.  **Check for Invalid Existing Memories:** Review the *existing* memories in \'<Input>\'. If any memory slot contains information that is clearly outdated or invalidated by the current interaction context (even without a specific \'add_...\' suggestion), plan to update it.
+5.  **Consolidate & Prioritize:** If multiple updates are suggested or needed, prioritize the most critical ones. You might consolidate related information if appropriate, respecting length limits.
+6.  **Use Update Tools:** For each necessary update, call the appropriate tool:
+    *   \'update_memory(index, memory)\' for general memories.
+    *   \'update_entity_memory(key, index, memory)\' for entity-specific memories.
+7.  **CRITICAL - Clearing Invalid Memories:** If existing information in a slot (identified in step 3 for overwriting, or step 4 for invalidation) is no longer relevant or correct, use the update tool for that slot but provide an **empty string (\'""\')** as the \'memory\' argument to effectively clear it.
+8.  **English Only:** All \'memory\' content provided to the update tools MUST be in English.
+9.  **Conciseness:** Ensure the \'memory\' content adheres to the length limits defined in the tool parameters.
+10. **Output:** Generate ONLY the necessary \'update_memory\' and \'update_entity_memory\' tool calls. Do not output any other text or reasoning.
+`.trim(),
+    });
+
+    const contents: LlmMessageContent[] = [];
+    contents.push({
+      type: 'text',
+      text: `
 <Prompt>
 `,
     });

@@ -19,4 +19,9 @@ export abstract class AgentInputBuilder {
     inputMessages: LlmMessage[],
     toolCalls: LlmToolCall[]
   ): LlmMessage[];
+
+  public abstract buildNextMemoryActions(
+    inputMessages: LlmMessage[],
+    toolCalls: LlmToolCall[]
+  ): LlmMessage[];
 }

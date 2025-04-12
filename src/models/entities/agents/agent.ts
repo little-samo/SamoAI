@@ -1,6 +1,7 @@
 import {
   ENV,
   LlmFactory,
+  LlmMessage,
   LlmService,
   LlmToolCall,
 } from '@little-samo/samo-ai/common';
@@ -31,10 +32,12 @@ export class Agent extends Entity {
   public static readonly ACTION_LLM_INDEX = 0;
   public static readonly MINI_LLM_INDEX = 1;
   public static readonly SUMMARY_LLM_INDEX = 1;
+  public static readonly MEMORY_LLM_INDEX = 1;
 
   public static readonly ACTION_INPUT_INDEX = 0;
   public static readonly EVALUATE_INPUT_INDEX = 0;
   public static readonly SUMMARY_INPUT_INDEX = 0;
+  public static readonly MEMORY_INPUT_INDEX = 0;
 
   private static _createEmptyState(agentId: AgentId): AgentState {
     return {
@@ -398,5 +401,32 @@ ${resultJson.reasoning}`
       );
     }
     return resultJson.should_act ?? false;
+  }
+
+  public async executeMemoryActions(
+    inputMessages: LlmMessage[],
+    prevToolCalls: LlmToolCall[],
+    inputIndex: number = Agent.MEMORY_INPUT_INDEX,
+    llmIndex: number = Agent.MEMORY_LLM_INDEX
+  ): Promise<void> {
+    const input = this.inputs[inputIndex];
+    const messages = input.buildNextMemoryActions(inputMessages, prevToolCalls);
+    const llm = this.llms.at(llmIndex) ?? this.llms.at(0);
+    if (!llm) {
+      throw new Error('No LlmService found');
+    }
+
+    const memoryActions = this.meta.memoryActions.map((actionWithVersion) =>
+      AgentActionFactory.createAction(actionWithVersion, this.location, this)
+    );
+
+    const toolCalls = await llm.useTools(messages, memoryActions, {
+      maxTokens: this.meta.maxTokens,
+      temperature: this.meta.temperature,
+      verbose: ENV.DEBUG,
+    });
+    for (const toolCall of toolCalls) {
+      await this.executeToolCall(toolCall);
+    }
   }
 }

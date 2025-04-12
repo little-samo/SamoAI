@@ -3,6 +3,8 @@ export * from './agent.action-decorator';
 export * from './agent.action-factory';
 
 export * from './agent.action';
+export * from './agent.add-entity-memory-action';
+export * from './agent.add-memory-action';
 export * from './agent.control-gba-action';
 export * from './agent.execute-cli-action';
 export * from './agent.move-gba-action';

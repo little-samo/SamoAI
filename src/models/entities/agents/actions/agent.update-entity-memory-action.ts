@@ -19,7 +19,7 @@ export class AgentUpdateEntityMemoryAction extends AgentAction {
     switch (this.version) {
       case 1:
       default:
-        return `Updates or overwrites a memory slot specifically about the entity identified by 'key' (indexed 0 to ${maxIndex}). Use this to store significant facts, interactions, or observations related *only* to that entity. Choose the index carefully based on importance and timeliness. Refer to CRITICAL memory rules for detailed guidance.`;
+        return `Updates or overwrites a memory slot specifically about the entity identified by 'key' (indexed 0 to ${maxIndex}). Use this to store significant facts, interactions, or observations related *only* to that entity. Choose the index carefully based on importance and timeliness. Refer to CRITICAL memory rules for detailed guidance. Updates or overwrites a memory slot specifically about the entity identified by 'key' (indexed 0 to ${maxIndex}). This incorporates new/corrected information (potentially based on \'add_entity_memory\` suggestions) or clears outdated facts related only to that entity. To clear outdated/invalid information from a slot, provide an empty string ('') as the 'memory' value. Choose the index carefully based on importance and timeliness (overwriting the least relevant for this entity if full). Refer to CRITICAL memory rules (Rule #8) for guidance.`;
     }
   }
 
@@ -46,7 +46,7 @@ export class AgentUpdateEntityMemoryAction extends AgentAction {
             .string()
             .max(maxLength)
             .describe(
-              `The concise and factual new memory content specifically *about the entity identified by key*, to store at the specified index. Max length: ${maxLength} characters. The memory content MUST be written in English, even if summarizing non-English information.`
+              `The concise and factual new memory content specifically *about the entity identified by key*, to store at the specified index. Max length: ${maxLength} characters. The memory content MUST be written in English. **Provide an empty string ('') to effectively delete/clear the memory slot if the previous content is no longer valid.**`
             ),
         });
     }

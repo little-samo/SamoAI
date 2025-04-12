@@ -23,6 +23,7 @@ export interface AgentMeta extends EntityMeta {
 
   actions: string[];
   requiredActions: string[];
+  memoryActions: string[];
 
   memoryLimit: number;
   memoryLengthLimit: number;
@@ -91,11 +92,12 @@ export const DEFAULT_AGENT_META: AgentMeta = {
   timeZone: 'UTC',
 
   actions: [
-    'update_memory:latest',
-    'update_entity_memory:latest',
+    'add_memory:latest',
+    'add_entity_memory:latest',
     'transfer_item:latest',
   ],
   requiredActions: [],
+  memoryActions: ['update_memory:latest', 'update_entity_memory:latest'],
 
   memoryLimit: 24,
   memoryLengthLimit: 250,
