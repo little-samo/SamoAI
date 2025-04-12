@@ -158,8 +158,6 @@ export class Location extends AsyncEventEmitter {
         this.state.agentIds.push(entity.model.id as AgentId);
       } else if (entity instanceof User) {
         this.state.userIds.push(entity.model.id as UserId);
-      } else if (entity instanceof Gimmick) {
-        this.state.gimmickIds.push(entity.id as GimmickId);
       }
     }
   }
@@ -181,10 +179,6 @@ export class Location extends AsyncEventEmitter {
       } else if (entity instanceof User) {
         this.state.userIds = this.state.userIds.filter(
           (id) => id !== entity.model.id
-        );
-      } else if (entity instanceof Gimmick) {
-        this.state.gimmickIds = this.state.gimmickIds.filter(
-          (id: GimmickId) => id !== entity.id
         );
       }
     }
