@@ -5,7 +5,7 @@ import {
   UserState,
 } from '@little-samo/samo-ai/models';
 
-export interface UsersRepository {
+export interface UserRepository {
   getUserModel(userId: UserId): Promise<UserModel>;
   getUserModels(userIds: UserId[]): Promise<Record<UserId, UserModel>>;
   getUserLlmApiKeys(userId: UserId): Promise<LlmApiKeyModel[]>;

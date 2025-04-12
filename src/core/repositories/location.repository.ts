@@ -7,11 +7,12 @@ import {
   EntityType,
   AgentId,
   UserId,
+  GimmickId,
   LocationModel,
   LocationMessage,
 } from '@little-samo/samo-ai';
 
-export interface LocationsRepository {
+export interface LocationRepository {
   getLocationModel(locationId: LocationId): Promise<LocationModel>;
   getOrCreateLocationState(locationId: LocationId): Promise<LocationState>;
   getOrCreateLocationMessagesState(
@@ -25,7 +26,8 @@ export interface LocationsRepository {
   getOrCreateLocationEntityStates(
     locationId: LocationId,
     agentIds: AgentId[],
-    userIds: UserId[]
+    userIds: UserId[],
+    gimmickIds: GimmickId[]
   ): Promise<LocationEntityState[]>;
 
   addLocationStateAgentId(
@@ -43,6 +45,14 @@ export interface LocationsRepository {
   removeLocationStateUserId(
     locationId: LocationId,
     userId: UserId
+  ): Promise<boolean>;
+  addLocationStateGimmickId(
+    locationId: LocationId,
+    gimmickId: GimmickId
+  ): Promise<boolean>;
+  removeLocationStateGimmickId(
+    locationId: LocationId,
+    gimmickId: GimmickId
   ): Promise<boolean>;
   updateLocationStatePauseUpdateUntil(
     locationId: LocationId,

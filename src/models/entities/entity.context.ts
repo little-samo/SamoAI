@@ -46,7 +46,8 @@ export interface EntityContextOptions {
 }
 
 export class EntityContext extends Context implements EntityContextOptions {
-  public static readonly FORMAT = 'KEY\tHANDLE\tNAME\tAPPEARANCE\tEXPRESSION';
+  public static readonly FORMAT: string =
+    'KEY\tHANDLE\tNAME\tAPPEARANCE\tEXPRESSION';
 
   public readonly key: string;
   public readonly handle?: string;

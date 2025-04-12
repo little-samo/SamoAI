@@ -9,6 +9,8 @@ import {
   EntityId,
   EntityKey,
   EntityType,
+  Gimmick,
+  GimmickId,
   ItemDataId,
   ItemModel,
   Location,
@@ -20,11 +22,12 @@ import {
 } from '@little-samo/samo-ai/models';
 
 import {
-  AgentsRepository,
+  AgentRepository,
+  GimmickRepository,
   ItemOwner,
-  ItemsRepository,
-  LocationsRepository,
-  UsersRepository,
+  ItemRepository,
+  LocationRepository,
+  UserRepository,
 } from '../repositories';
 import { RedisLockService } from '../services';
 
@@ -49,16 +52,18 @@ export class WorldManager extends AsyncEventEmitter {
 
   public static initialize(
     redisLockService: RedisLockService,
-    locationRepository: LocationsRepository,
-    agentRepository: AgentsRepository,
-    userRepository: UsersRepository,
-    itemsRepository: ItemsRepository
+    locationRepository: LocationRepository,
+    agentRepository: AgentRepository,
+    userRepository: UserRepository,
+    gimmickRepository: GimmickRepository,
+    itemsRepository: ItemRepository
   ) {
     WorldManager._instance = new WorldManager(
       redisLockService,
       locationRepository,
       agentRepository,
       userRepository,
+      gimmickRepository,
       itemsRepository
     );
   }
@@ -72,10 +77,11 @@ export class WorldManager extends AsyncEventEmitter {
 
   private constructor(
     private readonly redisLockService: RedisLockService,
-    public readonly locationRepository: LocationsRepository,
-    public readonly agentRepository: AgentsRepository,
-    public readonly userRepository: UsersRepository,
-    public readonly itemsRepository: ItemsRepository
+    public readonly locationRepository: LocationRepository,
+    public readonly agentRepository: AgentRepository,
+    public readonly userRepository: UserRepository,
+    public readonly gimmickRepository: GimmickRepository,
+    public readonly itemsRepository: ItemRepository
   ) {
     super();
   }
@@ -256,6 +262,8 @@ export class WorldManager extends AsyncEventEmitter {
     }
     const users = await this.getUsers(location, locationContextUserIds);
 
+    const gimmicks = await this.getGimmicks(location);
+
     const items = await this.itemsRepository.getEntityItemModels(
       Object.values(agents).map((agent) => agent.id),
       Object.values(users).map((user) => user.id)
@@ -270,11 +278,16 @@ export class WorldManager extends AsyncEventEmitter {
       location.addEntity(user, false);
     }
 
+    for (const gimmick of Object.values(gimmicks)) {
+      location.addEntity(gimmick, false);
+    }
+
     const entityStates =
       await this.locationRepository.getOrCreateLocationEntityStates(
         locationId,
         Object.values(location.agents).map((agent) => agent.id),
-        Object.values(location.users).map((user) => user.id)
+        Object.values(location.users).map((user) => user.id),
+        Object.values(location.gimmicks).map((gimmick) => gimmick.id)
       );
     for (const entityState of entityStates) {
       location.addEntityState(entityState);
@@ -334,6 +347,31 @@ export class WorldManager extends AsyncEventEmitter {
     }
 
     return users;
+  }
+
+  private async getGimmicks(
+    location: Location
+  ): Promise<Record<GimmickId, Gimmick>> {
+    const gimmickMetas = location.meta.gimmicks;
+    const gimmickIds = Object.keys(gimmickMetas).map(
+      (key) => Number(key) as GimmickId
+    );
+    const gimmickStates =
+      await this.gimmickRepository.getOrCreateGimmickStates(gimmickIds);
+
+    const gimmicks: Record<GimmickId, Gimmick> = {};
+    for (const gimmickId of gimmickIds) {
+      gimmicks[gimmickId] = new Gimmick(
+        location,
+        gimmickId,
+        gimmickMetas[gimmickId],
+        {
+          state: gimmickStates[gimmickId],
+        }
+      );
+    }
+
+    return gimmicks;
   }
 
   public async addLoationMessage(

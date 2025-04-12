@@ -1,4 +1,4 @@
-import { AgentId, AgentMeta } from '../entities';
+import { AgentId, AgentMeta, GimmickId, GimmickMeta } from '../entities';
 
 export interface LocationCoreMeta {
   name: string;
@@ -37,6 +37,8 @@ export interface LocationMeta {
   agentCanvases: LocationEntityCanvasMeta[];
 
   agentMetas: Record<AgentId, Partial<AgentMeta>>;
+
+  gimmicks: Record<GimmickId, GimmickMeta>;
 }
 
 export const DEFAULT_LOCATION_META: LocationMeta = {
@@ -67,4 +69,6 @@ export const DEFAULT_LOCATION_META: LocationMeta = {
   ],
 
   agentMetas: {},
+
+  gimmicks: {},
 };

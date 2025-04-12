@@ -11,7 +11,7 @@ export interface ItemOwner {
   ownerUserId: number | null;
 }
 
-export interface ItemsRepository {
+export interface ItemRepository {
   getEntityItemModels(
     agentIds: AgentId[],
     userIds: UserId[]

@@ -1,4 +1,10 @@
-import { AgentId, EntityId, EntityType, UserId } from '@little-samo/samo-ai';
+import {
+  AgentId,
+  EntityId,
+  EntityType,
+  UserId,
+  GimmickId,
+} from '@little-samo/samo-ai';
 
 import { LocationId } from '../location.type';
 
@@ -17,6 +23,7 @@ export interface LocationState {
 
   agentIds: AgentId[];
   userIds: UserId[];
+  gimmickIds: GimmickId[];
 
   pauseUpdateUntil: Date | null;
 

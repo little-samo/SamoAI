@@ -8,7 +8,7 @@ import {
   UserId,
 } from '@little-samo/samo-ai/models';
 
-export interface AgentsRepository {
+export interface AgentRepository {
   getAgentModel(agentId: AgentId): Promise<AgentModel>;
   getAgentModels(agentIds: AgentId[]): Promise<Record<AgentId, AgentModel>>;
   getOrCreateAgentState(agentId: AgentId): Promise<AgentState>;

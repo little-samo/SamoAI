@@ -10,6 +10,8 @@ import {
   User,
   UserId,
   EntityId,
+  Gimmick,
+  GimmickId,
 } from '../entities';
 import { LlmApiKeyModel } from '../llms';
 
@@ -61,6 +63,7 @@ export class Location extends AsyncEventEmitter {
   public readonly entities: Record<EntityKey, Entity> = {};
   public readonly agents: Record<AgentId, Agent> = {};
   public readonly users: Record<UserId, User> = {};
+  public readonly gimmicks: Record<GimmickId, Gimmick> = {};
 
   public readonly state: LocationState;
   public readonly messagesState: LocationMessagesState;
@@ -147,12 +150,16 @@ export class Location extends AsyncEventEmitter {
       this.agents[entity.model.id as AgentId] = entity;
     } else if (entity instanceof User) {
       this.users[entity.model.id as UserId] = entity;
+    } else if (entity instanceof Gimmick) {
+      this.gimmicks[entity.id as GimmickId] = entity;
     }
     if (updateIds) {
       if (entity instanceof Agent) {
         this.state.agentIds.push(entity.model.id as AgentId);
       } else if (entity instanceof User) {
         this.state.userIds.push(entity.model.id as UserId);
+      } else if (entity instanceof Gimmick) {
+        this.state.gimmickIds.push(entity.id as GimmickId);
       }
     }
   }
@@ -163,6 +170,8 @@ export class Location extends AsyncEventEmitter {
       delete this.agents[entity.model.id as AgentId];
     } else if (entity instanceof User) {
       delete this.users[entity.model.id as UserId];
+    } else if (entity instanceof Gimmick) {
+      delete this.gimmicks[entity.id as GimmickId];
     }
     if (updateIds) {
       if (entity instanceof Agent) {
@@ -172,6 +181,10 @@ export class Location extends AsyncEventEmitter {
       } else if (entity instanceof User) {
         this.state.userIds = this.state.userIds.filter(
           (id) => id !== entity.model.id
+        );
+      } else if (entity instanceof Gimmick) {
+        this.state.gimmickIds = this.state.gimmickIds.filter(
+          (id: GimmickId) => id !== entity.id
         );
       }
     }

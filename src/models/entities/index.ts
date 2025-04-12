@@ -1,5 +1,6 @@
 export * from './users';
 export * from './agents';
+export * from './gimmicks';
 
 export * from './entity';
 export * from './entity.meta';
