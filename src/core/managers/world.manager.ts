@@ -685,21 +685,6 @@ export class WorldManager extends AsyncEventEmitter {
     );
 
     location.on(
-      'agentUpdateCanvas',
-      (agent: Agent, canvasName: string, text: string) => {
-        void options.handleSave!(
-          this.locationRepository.updateLocationEntityStateCanvas(
-            locationId,
-            agent.type,
-            agent.id,
-            canvasName,
-            text
-          )
-        );
-      }
-    );
-
-    location.on(
       'agentExecutedNextActions',
       (agent: Agent, messages: LlmMessage[], toolCalls: LlmToolCall[]) => {
         void options.handleSave!(
@@ -813,6 +798,21 @@ export class WorldManager extends AsyncEventEmitter {
             item,
             targetItemOwner,
             count
+          )
+        );
+      }
+    );
+
+    location.on(
+      'entityUpdateCanvas',
+      (entity: Entity, canvasName: string, text: string) => {
+        void options.handleSave!(
+          this.locationRepository.updateLocationEntityStateCanvas(
+            locationId,
+            entity.type,
+            entity.id,
+            canvasName,
+            text
           )
         );
       }

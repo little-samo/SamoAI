@@ -98,12 +98,7 @@ The response MUST be a single JSON object string, without any markdown formattin
       console.log(`Summary: ${summary}`);
     }
 
-    await entity.location.updateCanvas(
-      entity.type,
-      entity.id,
-      this.canvas.name,
-      result
-    );
+    await entity.updateCanvas(this.canvas.name, result);
     await entity.location.addSystemMessage(
       `Gimmick ${this.gimmick.name} executed. Web Search Result: ${summary}`
     );

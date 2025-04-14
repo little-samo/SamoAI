@@ -333,16 +333,6 @@ export class Agent extends Entity {
     entityState.isActive = active;
   }
 
-  public async updateCanvas(canvasName: string, text: string): Promise<void> {
-    const canvas = this.location.getEntityState(this.key)?.canvases[canvasName];
-    if (!canvas) {
-      throw new Error(`Canvas with name ${canvasName} not found`);
-    }
-    await this.location.emitAsync('agentUpdateCanvas', this, canvasName, text);
-    canvas.text = text;
-    canvas.updatedAt = new Date();
-  }
-
   public override createItem(itemDataId: number): ItemModel {
     return {
       id: 0,

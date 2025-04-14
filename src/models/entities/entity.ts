@@ -169,6 +169,16 @@ export abstract class Entity {
     return true;
   }
 
+  public async updateCanvas(canvasName: string, text: string): Promise<void> {
+    const canvas = this.location.getEntityState(this.key)?.canvases[canvasName];
+    if (!canvas) {
+      throw new Error(`Canvas with name ${canvasName} not found`);
+    }
+    await this.location.emitAsync('entityUpdateCanvas', this, canvasName, text);
+    canvas.text = text;
+    canvas.updatedAt = new Date();
+  }
+
   public abstract update(): Promise<boolean>;
 
   public async transferItem(
