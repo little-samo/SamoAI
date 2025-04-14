@@ -149,9 +149,10 @@ export class Gimmick extends Entity {
 
   public async execute(
     entity: Entity,
-    parameters: GimmickParameters
+    parameters: GimmickParameters,
+    force: boolean = false
   ): Promise<boolean> {
-    if (!this.isExecutable) {
+    if (!this.isExecutable && !force) {
       return false;
     }
 
