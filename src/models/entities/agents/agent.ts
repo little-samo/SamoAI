@@ -104,7 +104,9 @@ export class Agent extends Entity {
       this.inputs.push(AgentInputFactory.createInput(input, location, this));
     }
     const actions = [
-      ...(this.llms.at(0)?.reasoning ? [] : ['reasoning:latest']),
+      ...(this.llms.at(Agent.ACTION_LLM_INDEX)?.reasoning
+        ? []
+        : ['reasoning:latest']),
       ...meta.actions,
       ...location.meta.actions,
     ];
@@ -449,8 +451,12 @@ ${resultJson.reasoning}`
       throw new Error('No LlmService found');
     }
 
-    const memoryActions = Object.fromEntries(
-      this.meta.memoryActions.map((actionWithVersion) => {
+    const memoryActions = [
+      ...(llm.reasoning ? [] : ['reasoning:latest']),
+      ...this.meta.memoryActions,
+    ];
+    const actions = Object.fromEntries(
+      memoryActions.map((actionWithVersion) => {
         const action = AgentActionFactory.createAction(
           actionWithVersion,
           this.location,
@@ -460,17 +466,13 @@ ${resultJson.reasoning}`
       })
     );
 
-    const toolCalls = await llm.useTools(
-      messages,
-      Object.values(memoryActions),
-      {
-        maxTokens: this.meta.maxTokens,
-        temperature: this.meta.temperature,
-        verbose: ENV.DEBUG,
-      }
-    );
+    const toolCalls = await llm.useTools(messages, Object.values(actions), {
+      maxTokens: this.meta.maxTokens,
+      temperature: this.meta.temperature,
+      verbose: ENV.DEBUG,
+    });
     for (const toolCall of toolCalls) {
-      await this.executeToolCall(toolCall, memoryActions[toolCall.name]);
+      await this.executeToolCall(toolCall, actions[toolCall.name]);
     }
   }
 }

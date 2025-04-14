@@ -631,7 +631,6 @@ ${JSON.stringify(toolCalls, null, 2)}
 7.  **CRITICAL - Clearing Invalid Memories:** If existing information in a slot (identified in step 3 for overwriting, or step 4 for invalidation) is no longer relevant or correct, use the update tool for that slot but provide an **empty string (\'""\')** as the \'memory\' argument to effectively clear it.
 8.  **English Only:** All \'memory\' content provided to the update tools MUST be in English.
 9.  **Conciseness:** Ensure the \'memory\' content adheres to the length limits defined in the tool parameters.
-10. **Output:** Generate ONLY the necessary \'update_memory\' and \'update_entity_memory\' tool calls. Do not output any other text or reasoning.
 `.trim(),
     });
 
