@@ -612,21 +612,21 @@ ${JSON.stringify(toolCalls, null, 2)}
 **Context:**
 *   \`<Input>\`: Shows the context the agent received (including current memory state *before* this update).
 *   \`<Output>\`: Shows the agent's actions, including any \`add_memory\` or \`add_entity_memory\` calls (these are *suggestions*).
-*   Agent's Max General Memories: ${this.agent.meta.memoryLimit}
-*   Agent's Max Memories Per Entity: ${this.agent.meta.entityMemoryLimit}
+*   Agent's Max General Memories: ${this.agent.meta.memoryLimit} (indices 0 to ${this.agent.meta.memoryLimit - 1})
+*   Agent's Max Memories Per Entity: ${this.agent.meta.entityMemoryLimit} (indices 0 to ${this.agent.meta.entityMemoryLimit - 1} per entity)
 
 **Rules:**
 
 1.  **Review Suggestions:** Examine the \`add_memory\` and \`add_entity_memory\` calls in the \`<Output>\`.
 2.  **Evaluate Necessity:** Determine if the suggested information is truly important, new, or corrective compared to the existing memories shown in \`<Input>\` (<YourMemories>, <YourMemoriesAbout...>). Avoid redundant entries.
-3.  **Select Target Slot:**
-    *   For \`add_memory\` suggestions deemed necessary: If there's an empty slot in \`<YourMemories>\`, use the first available index. If all ${this.agent.meta.memoryLimit} slots are full, identify the *least important* or *most outdated* existing memory and choose its index to overwrite.
-    *   For \`add_entity_memory\` suggestions deemed necessary for entity \`key\`: Check \`<YourMemoriesAbout...>\` for that \'key\'. If there's an empty slot (up to index ${this.agent.meta.entityMemoryLimit - 1}), use the first available index. If all ${this.agent.meta.entityMemoryLimit} slots for that entity are full, identify the *least important* or *most outdated* memory *for that specific entity* and choose its index to overwrite.
+3.  **Select Target Slot (Index Range: 0 to limit-1):**
+    *   For \`add_memory\` suggestions deemed necessary: If there's an empty slot in \`<YourMemories>\` (indices 0 to ${this.agent.meta.memoryLimit - 1}), use the first available index. If all ${this.agent.meta.memoryLimit} slots are full, identify the *least important* or *most outdated* existing memory and choose its index (between 0 and ${this.agent.meta.memoryLimit - 1}) to overwrite.
+    *   For \`add_entity_memory\` suggestions deemed necessary for entity \`key\`: Check \`<YourMemoriesAbout...>\` for that \'key\'. If there's an empty slot (indices 0 to ${this.agent.meta.entityMemoryLimit - 1}), use the first available index within that range. If all ${this.agent.meta.entityMemoryLimit} slots (indices 0 to ${this.agent.meta.entityMemoryLimit - 1}) for that entity are full, identify the *least important* or *most outdated* memory *for that specific entity* and choose its index (between 0 and ${this.agent.meta.entityMemoryLimit - 1}) to overwrite.
 4.  **Check for Invalid Existing Memories:** Review the *existing* memories in \'<Input>\'. If any memory slot contains information that is clearly outdated or invalidated by the current interaction context (even without a specific \'add_...\' suggestion), plan to update it.
 5.  **Consolidate & Prioritize:** If multiple updates are suggested or needed, prioritize the most critical ones. You might consolidate related information if appropriate, respecting length limits.
-6.  **Use Update Tools:** For each necessary update, call the appropriate tool:
-    *   \'update_memory(index, memory)\' for general memories.
-    *   \'update_entity_memory(key, index, memory)\' for entity-specific memories.
+6.  **Use Update Tools:** For each necessary update, call the appropriate tool (ensuring the specified index is within the valid range):
+    *   \'update_memory(index, memory)\' for general memories (index 0 to ${this.agent.meta.memoryLimit - 1}).
+    *   \'update_entity_memory(key, index, memory)\' for entity-specific memories (index 0 to ${this.agent.meta.entityMemoryLimit - 1}).
 7.  **CRITICAL - Clearing Invalid Memories:** If existing information in a slot (identified in step 3 for overwriting, or step 4 for invalidation) is no longer relevant or correct, use the update tool for that slot but provide an **empty string (\'""\')** as the \'memory\' argument to effectively clear it.
 8.  **English Only:** All \'memory\' content provided to the update tools MUST be in English.
 9.  **Conciseness:** Ensure the \'memory\' content adheres to the length limits defined in the tool parameters.
