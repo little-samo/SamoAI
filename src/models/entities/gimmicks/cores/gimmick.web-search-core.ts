@@ -54,31 +54,37 @@ export class GimmickWebSearchCore extends GimmickCore {
       role: 'system',
       content: `
 You are an AI assistant specialized in web searching. Your task is to find the most recent, reliable, and accurate information available on the web to answer the user's query.
-Provide the response in JSON format with two fields: "result" and "summary".
+Provide the response **ONLY** in plain JSON format with two fields: "result" and "summary". Do not include any other text or formatting outside the JSON structure.
 - The "result" field should contain the detailed findings from your search. Limit its length to ${maxResultLength} characters.
 - The "summary" field should provide a concise overview of the findings. Limit its length to ${maxSummaryLength} characters.
 Ensure the information is up-to-date and factually correct. Focus on providing the best possible answer based on your search results.
+The response MUST be a single JSON object string, without any markdown formatting like \`\`\`json.
 `.trim(),
     });
     messages.push({
       role: 'user',
       content: query,
     });
-    const responseJson = await llm.generate(messages, {
+    const responseString = await llm.generate(messages, {
       maxTokens: GimmickWebSearchCore.LLM_MAX_TOKENS,
-      jsonOutput: true,
       webSearch: true,
       verbose: ENV.DEBUG,
     });
 
-    const summary = (responseJson.summary as string).substring(
-      0,
-      maxSummaryLength
-    );
-    const result = (responseJson.result as string).substring(
-      0,
-      maxResultLength
-    );
+    let responseJson: { result: string; summary: string };
+    try {
+      responseJson = JSON.parse(responseString);
+    } catch (error) {
+      console.error(
+        'Failed to parse LLM response as JSON:',
+        responseString,
+        error
+      );
+      throw new Error('Failed to parse LLM response as JSON');
+    }
+
+    const summary = (responseJson.summary ?? '').substring(0, maxSummaryLength);
+    const result = (responseJson.result ?? '').substring(0, maxResultLength);
 
     if (ENV.DEBUG) {
       console.log(`Gimmick ${this.gimmick.name} executed: ${query}`);
