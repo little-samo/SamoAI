@@ -5,8 +5,9 @@ import type {
   LlmToolCall,
 } from '@little-samo/samo-ai/common';
 
-import { GimmickContext, type ItemKey } from '../../../entities';
+import { type ItemKey } from '../../../entities';
 import { EntityCanvasContext } from '../../../entities/entity.context';
+import { GimmickContext } from '../../../entities/gimmicks/gimmick.context';
 import { type Location } from '../../../locations';
 import {
   LocationCanvasContext,
