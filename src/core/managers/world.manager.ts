@@ -33,6 +33,7 @@ import { RedisLockService } from '../services';
 
 interface UpdateLocationOptions {
   ignorePauseUpdateUntil?: boolean;
+  executeSpecificAgentId?: AgentId;
   preAction?: (location: Location) => Promise<void>;
   postAction?: (location: Location) => Promise<void>;
   handleSave?: <T = void>(save: Promise<T>) => Promise<void>;
@@ -269,17 +270,18 @@ export class WorldManager extends AsyncEventEmitter {
       Object.values(users).map((user) => user.id)
     );
 
+    for (const gimmick of Object.values(gimmicks)) {
+      location.addEntity(gimmick, false);
+    }
+
     for (const agent of Object.values(agents)) {
       agent.setItems(items[agent.key] ?? []);
       location.addEntity(agent, false);
     }
+
     for (const user of Object.values(users)) {
       user.setItems(items[user.key] ?? []);
       location.addEntity(user, false);
-    }
-
-    for (const gimmick of Object.values(gimmicks)) {
-      location.addEntity(gimmick, false);
     }
 
     const entityStates =
@@ -356,8 +358,10 @@ export class WorldManager extends AsyncEventEmitter {
     const gimmickIds = Object.keys(gimmickMetas).map(
       (key) => Number(key) as GimmickId
     );
-    const gimmickStates =
-      await this.gimmickRepository.getOrCreateGimmickStates(gimmickIds);
+    const gimmickStates = await this.gimmickRepository.getOrCreateGimmickStates(
+      location.id,
+      gimmickIds
+    );
 
     const gimmicks: Record<GimmickId, Gimmick> = {};
     for (const gimmickId of gimmickIds) {
@@ -700,6 +704,40 @@ export class WorldManager extends AsyncEventEmitter {
     );
 
     location.on(
+      'gimmickOccupied',
+      (gimmick: Gimmick, entity: Entity, occupationUntil?: Date) => {
+        void options.handleSave!(
+          this.gimmickRepository.updateGimmickStateOccupier(
+            locationId,
+            gimmick.id,
+            entity.type,
+            entity.id,
+            occupationUntil
+          )
+        );
+      }
+    );
+
+    location.on('gimmickReleased', (gimmick: Gimmick) => {
+      void options.handleSave!(
+        this.gimmickRepository.updateGimmickStateOccupier(
+          locationId,
+          gimmick.id
+        )
+      );
+    });
+
+    location.on('gimmickExecuted', async (gimmick: Gimmick, entity: Entity) => {
+      await gimmick.release();
+      if (entity.type === EntityType.Agent) {
+        void this.updateLocation(llmApiKeyUserId, locationId, {
+          ...options,
+          executeSpecificAgentId: entity.id as AgentId,
+        });
+      }
+    });
+
+    location.on(
       'entityAddItem',
       async (
         entity: Entity,
@@ -772,35 +810,42 @@ export class WorldManager extends AsyncEventEmitter {
       }
     );
 
-    let pauseUpdateDuration;
-    try {
-      pauseUpdateDuration = await location.update();
-    } catch (error) {
-      await this.locationRepository.updateLocationStatePauseUpdateUntil(
-        locationId,
-        null
-      );
-      throw error;
-    }
-    if (pauseUpdateDuration) {
-      const pauseUpdateUntil = new Date(Date.now() + pauseUpdateDuration);
-      if (ENV.DEBUG) {
-        console.log(
-          `Setting location ${location.model.name} pause update until ${pauseUpdateUntil}`
+    if (options.executeSpecificAgentId) {
+      location.reloadCore();
+      await location.agents[
+        options.executeSpecificAgentId
+      ].executeNextActions();
+    } else {
+      let pauseUpdateDuration;
+      try {
+        pauseUpdateDuration = await location.update();
+      } catch (error) {
+        await this.locationRepository.updateLocationStatePauseUpdateUntil(
+          locationId,
+          null
+        );
+        throw error;
+      }
+      if (pauseUpdateDuration) {
+        const pauseUpdateUntil = new Date(Date.now() + pauseUpdateDuration);
+        if (ENV.DEBUG) {
+          console.log(
+            `Setting location ${location.model.name} pause update until ${pauseUpdateUntil}`
+          );
+        }
+        await this.locationRepository.updateLocationStatePauseUpdateUntil(
+          locationId,
+          pauseUpdateUntil
+        );
+      } else {
+        if (ENV.DEBUG) {
+          console.log(`Location ${location.model.name} paused update`);
+        }
+        await this.locationRepository.updateLocationStatePauseUpdateUntil(
+          locationId,
+          null
         );
       }
-      await this.locationRepository.updateLocationStatePauseUpdateUntil(
-        locationId,
-        pauseUpdateUntil
-      );
-    } else {
-      if (ENV.DEBUG) {
-        console.log(`Location ${location.model.name} paused update`);
-      }
-      await this.locationRepository.updateLocationStatePauseUpdateUntil(
-        locationId,
-        null
-      );
     }
 
     if (options.postAction) {

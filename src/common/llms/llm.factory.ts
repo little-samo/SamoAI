@@ -1,27 +1,20 @@
 import { AnthropicService } from './anthropic.service';
 import { GeminiService } from './gemini.service';
 import { LlmService } from './llm.service';
-import { LlmPlatform } from './llm.types';
+import { LlmServiceOptions, LlmPlatform } from './llm.types';
 import { OpenAIService } from './openai.service';
 
 export class LlmFactory {
-  public static create(
-    llmPlatform: LlmPlatform,
-    model: string,
-    apiKey: string,
-    options?: {
-      reasoning?: boolean;
-    }
-  ): LlmService {
-    switch (llmPlatform) {
+  public static create(options: LlmServiceOptions): LlmService {
+    switch (options.platform) {
       case LlmPlatform.OPENAI:
-        return new OpenAIService(model, apiKey, options);
+        return new OpenAIService(options);
       case LlmPlatform.ANTHROPIC:
-        return new AnthropicService(model, apiKey, options);
+        return new AnthropicService(options);
       case LlmPlatform.GEMINI:
-        return new GeminiService(model, apiKey, options);
+        return new GeminiService(options);
       default:
-        throw new Error(`Unsupported LLM platform: ${llmPlatform}`);
+        throw new Error(`Unsupported LLM platform: ${options.platform}`);
     }
   }
 }

@@ -9,23 +9,18 @@ import zodToJsonSchema from 'zod-to-json-schema';
 import { sleep } from '../utils';
 
 import { LlmApiError, LlmInvalidContentError } from './llm.errors';
-import { LlmMessage, LlmOptions, LlmService } from './llm.service';
+import { LlmService } from './llm.service';
 import { LlmToolCall } from './llm.tool';
 import { LlmTool } from './llm.tool';
+import { LlmServiceOptions, LlmMessage, LlmOptions } from './llm.types';
 
 export class GeminiService extends LlmService {
   private client: GoogleGenAI;
 
-  public constructor(
-    public readonly model: string,
-    protected readonly apiKey: string,
-    options?: {
-      reasoning?: boolean;
-    }
-  ) {
-    super(model, apiKey, options);
+  public constructor(options: LlmServiceOptions) {
+    super(options);
     this.client = new GoogleGenAI({
-      apiKey: apiKey,
+      apiKey: this.apiKey,
     });
   }
 
@@ -133,10 +128,10 @@ export class GeminiService extends LlmService {
     return [systemMessages, userAssistantMessages];
   }
 
-  public async generate(
+  public async generate<T extends boolean = false>(
     messages: LlmMessage[],
-    options?: LlmOptions
-  ): Promise<string> {
+    options?: LlmOptions & { jsonOutput?: T }
+  ): Promise<T extends true ? Record<string, unknown> : string> {
     try {
       // gemini does not support assistant message prefilling
       messages = messages.filter((message) => message.role !== 'assistant');
@@ -168,7 +163,19 @@ export class GeminiService extends LlmService {
         throw new LlmInvalidContentError('Gemini returned no content');
       }
 
-      return response.text;
+      const responseText = response.text;
+      if (options?.jsonOutput) {
+        try {
+          return JSON.parse(responseText) as T extends true
+            ? Record<string, unknown>
+            : string;
+        } catch (error) {
+          console.error(error);
+          console.error(responseText);
+          throw new LlmInvalidContentError('Gemini returned invalid JSON');
+        }
+      }
+      return responseText as T extends true ? Record<string, unknown> : string;
     } catch (error) {
       throw error;
     }

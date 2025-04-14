@@ -9,22 +9,17 @@ import { sleep } from '../utils';
 
 import { LlmApiError } from './llm.errors';
 import { LlmInvalidContentError } from './llm.errors';
-import { LlmMessage, LlmOptions, LlmService } from './llm.service';
+import { LlmService } from './llm.service';
 import { LlmTool, LlmToolCall } from './llm.tool';
+import { LlmMessage, LlmOptions, LlmServiceOptions } from './llm.types';
 
 export class OpenAIService extends LlmService {
   private client: OpenAI;
 
-  public constructor(
-    public readonly model: string,
-    protected readonly apiKey: string,
-    options?: {
-      reasoning?: boolean;
-    }
-  ) {
-    super(model, apiKey, options);
+  public constructor(options: LlmServiceOptions) {
+    super(options);
     this.client = new OpenAI({
-      apiKey: apiKey,
+      apiKey: this.apiKey,
     });
   }
 
@@ -129,10 +124,10 @@ export class OpenAIService extends LlmService {
     return [systemMessages, userAssistantMessages];
   }
 
-  public async generate(
+  public async generate<T extends boolean = false>(
     messages: LlmMessage[],
-    options?: LlmOptions
-  ): Promise<string> {
+    options?: LlmOptions & { jsonOutput?: T }
+  ): Promise<T extends true ? Record<string, unknown> : string> {
     try {
       // openai does not support assistant message prefilling
       messages = messages.filter((message) => message.role !== 'assistant');
@@ -145,6 +140,7 @@ export class OpenAIService extends LlmService {
         messages: [...systemMessages, ...userAssistantMessages],
         temperature: options?.temperature ?? LlmService.DEFAULT_TEMPERATURE,
         max_tokens: options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS,
+        response_format: { type: options?.jsonOutput ? 'json_object' : 'text' },
       };
       if (options?.verbose) {
         console.log(request);
@@ -156,7 +152,19 @@ export class OpenAIService extends LlmService {
         throw new LlmInvalidContentError('OpenAI returned no content');
       }
 
-      return response.choices[0].message.content;
+      const responseText = response.choices[0].message.content;
+      if (options?.jsonOutput) {
+        try {
+          return JSON.parse(responseText) as T extends true
+            ? Record<string, unknown>
+            : string;
+        } catch (error) {
+          console.error(error);
+          console.error(responseText);
+          throw new LlmInvalidContentError('OpenAI returned invalid JSON');
+        }
+      }
+      return responseText as T extends true ? Record<string, unknown> : string;
     } catch (error) {
       if (error instanceof OpenAI.APIError) {
         throw new LlmApiError(error.status, error.message);
@@ -214,6 +222,7 @@ Response can only be in JSON format and must strictly follow the following forma
         messages: [...systemMessages, ...userAssistantMessages],
         temperature: options?.temperature ?? LlmService.DEFAULT_TEMPERATURE,
         max_tokens: options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS,
+        response_format: { type: 'json_object' },
       };
       if (options?.verbose) {
         console.log(request);

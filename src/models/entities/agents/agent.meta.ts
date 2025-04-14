@@ -1,12 +1,11 @@
-import { LlmPlatform } from '@little-samo/samo-ai/common';
+import { LlmPlatform, LlmServiceOptions } from '@little-samo/samo-ai/common';
 
 import { EntityMeta } from '../entity.meta';
 
-export interface AgentLlmMeta {
+export type AgentLlmMeta = {
   platform: LlmPlatform;
   model: string;
-  reasoning?: boolean;
-}
+} & Partial<LlmServiceOptions>;
 
 export interface AgentMeta extends EntityMeta {
   core: string;

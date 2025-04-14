@@ -1,5 +1,7 @@
 import type { Location } from '@little-samo/samo-ai/models/locations/location';
 
+import { type LocationEntityState } from '../locations';
+
 import { EntityContext } from './entity.context';
 import { ItemModel } from './entity.item-model';
 import { EntityMeta } from './entity.meta';
@@ -61,6 +63,12 @@ export abstract class Entity {
       items: this._itemsByItemKey,
       canvases: [],
     });
+  }
+
+  public fixLocationEntityState(
+    state: LocationEntityState
+  ): LocationEntityState {
+    return state;
   }
 
   public setItems(items: ItemModel[]): void {

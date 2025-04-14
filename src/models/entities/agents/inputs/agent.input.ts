@@ -1,5 +1,4 @@
-import { LlmToolCall } from '@little-samo/samo-ai/common';
-import { LlmMessage } from '@little-samo/samo-ai/common/llms/llm.service';
+import { LlmMessage, LlmToolCall } from '@little-samo/samo-ai/common';
 import { Location } from '@little-samo/samo-ai/models/locations/location';
 
 import { Agent } from '../agent';

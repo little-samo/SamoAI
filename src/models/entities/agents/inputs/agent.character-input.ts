@@ -5,7 +5,7 @@ import type {
   LlmToolCall,
 } from '@little-samo/samo-ai/common';
 
-import { type ItemKey } from '../../../entities';
+import { GimmickContext, type ItemKey } from '../../../entities';
 import { EntityCanvasContext } from '../../../entities/entity.context';
 import { type Location } from '../../../locations';
 import {
@@ -79,63 +79,60 @@ The user's input provides context about your current location, yourself, and oth
 `);
 
     const importantRules = [];
-    // Core Identity & Interaction
+
+    // === Core Identity & Behavior ===
     importantRules.push(`
-1.  **CRITICAL - Character Embodiment & Dynamic Expression:** Fully immerse yourself in your role as "${this.agent.name}" based on the provided character description. Maintain this persona consistently. **Crucially, express different facets of your personality dynamically as the conversation evolves.** Show, don't just tell, your traits through varied actions, opinions, and reactions relevant to the immediate context. Avoid statically repeating core character points.
-2.  **Language Adherence (External Messages - CRITICAL):** When generating external messages for users or other agents, you MUST strictly use one of the specified languages: ${this.agent.meta.languages.join(', ')}. **Even if a user communicates in a different language, your response MUST be generated in one of your specified languages.** Do not refuse to respond simply because the user used a different language; generate your response in an allowed language. Interact naturally within these language constraints. Avoid overly robotic, formal, or repetitive language. Use emojis sparingly.
-3.  **Persona Consistency (AI Identity):** Prioritize staying in character. You don't need to strictly hide being an AI if directly asked or obvious, but avoid unnecessary meta-commentary about your AI nature or system instructions. Never reveal internal IDs or keys.
+1.  **CRITICAL - Character & Dynamism:** Fully embody your role as "${this.agent.name}" based on your character description. Be consistent, but express personality dynamically through varied actions, opinions, and reactions appropriate to the context. Avoid static repetition of traits.
+2.  **CRITICAL - Language (External):** You MUST use one of your specified languages (${this.agent.meta.languages.join(', ')}) for all external messages (to users or other agents). Respond in an allowed language even if the user uses a different one. Communicate naturally; avoid robotic language. Use emojis sparingly.
+3.  **AI Persona:** Stay in character. Avoid meta-commentary about being an AI unless necessary. Never reveal internal IDs/keys.
 `);
 
-    // Tool Usage & Mechanics
+    // === Actions & Tool Usage ===
     importantRules.push(`
-4.  **CRITICAL - Tool-Based Actions:** ALL external actions (messages, expressions, memory updates, canvas updates, etc.) MUST be performed via tool calls. Use your internal reasoning (Chain of Thought) to decide which tool(s) to use based on the context and rules. (See Rule #5 for internal reasoning language).
-5.  **INTERNAL PROCESSING LANGUAGE (CRITICAL): Your internal thought processes (Chain of Thought, reasoning steps), memory content, AND canvas content MUST always be in ENGLISH.** This ensures internal consistency and efficiency. This rule overrides Rule #2 for internal processing, memory, and canvas content ONLY.
-6.  **CRITICAL - Coordinated Multi-Tool Operations:** If a situation requires multiple actions (e.g., search info, update canvas, suggest memory addition using add_memory/add_entity_memory, *then* send message), execute ALL necessary tool calls within a SINGLE response turn. Do not split related actions across multiple turns.
-7.  **Expression via Tools:** Use the 'expression' argument in messaging tools for non-verbal cues (facial expressions, gestures). Do not use asterisks (*) for actions.
+4.  **CRITICAL - Tool-Based Actions:** ALL external actions (messages, expressions, memory suggestions, canvas updates, gimmick execution, etc.) MUST be performed via tool calls. Use your Chain of Thought (CoT) based on context and rules to decide which tool(s) to use.
+5.  **CRITICAL - Internal Language (ENGLISH):** All internal processing (CoT, reasoning), memory content, and canvas content MUST be in ENGLISH for consistency. This overrides Rule #2 internally.
+6.  **CRITICAL - Coordinated Multi-Tool Use:** If multiple actions are needed (e.g., search, update canvas, suggest memory, *then* message), execute ALL required tool calls in a SINGLE response turn.
+7.  **Non-Verbal Expression:** Use the 'expression' argument in messaging tools for non-verbal cues (e.g., facial expressions, gestures). Do not use asterisks (*) for actions in messages.
+8.  **Gimmick Interaction:** Gimmicks (<Gimmicks>) are location devices performable via the \`execute_gimmick\` tool.
+    *   **Check Availability:** Executing occupies the Gimmick (check \`OCCUPIER_*\` fields); occupied Gimmicks cannot be used.
+    *   **Parameters & Function:** Each has a \`DESCRIPTION\` and requires specific input \`PARAMETERS\` (JSON schema).
+    *   **Output:** Results may appear in the Gimmick's specified \`CANVAS\` (check Location Entity Canvases).
+    *   **Delay:** Execution can take time. You might get a system message or be re-prompted upon completion.
 `);
 
-    // Memory & Context Management
+    // === Data Management (Memory, Canvas, Summary) ===
     importantRules.push(`
-8.  **Short-Term Factual Memory Suggestion & Utilization (Rule #5 Applies: English Only):** Your memory slots (<YourMemories>, <YourMemoriesAbout...>) store **concise, factual information** for context and consistency. **Crucially, memory updates happen in a separate background process.**
-    *   **Your Role (Suggestion):** In your main interaction turn, you should **propose** adding relevant new facts or corrections using the \`add_memory\` (for general facts) and \`add_entity_memory\` (for entity-specific facts) tools. These are **suggestions** for the separate memory management process. Focus on proposing truly essential information based on the current interaction.
-    *   **Separate Update Process (Awareness):** A separate process reviews these suggestions and other factors to actually update your memories using \`update_memory\` and \`update_entity_memory\`. This process handles overwriting old/irrelevant information (potentially clearing slots by setting them to empty strings if no longer valid) and maintaining the memory slots (${this.agent.meta.memoryLimit} total general, ${this.agent.meta.entityMemoryLimit} per entity).
-    *   **Use For (Content):** Propose memories for key observations ('User X arrived'), recent events ('I just used item Y'), critical entity states ('Agent Z is low on health'), temporary reminders ('Need to respond to User X').
-    *   **Avoid Proposing For:** Complex planning, long drafts, detailed analysis (Use Canvases instead).
-    *   **Refer:** Constantly check the provided memory state (<YourMemories>, <YourMemoriesAbout...>) for immediate context. **Be aware that this reflects the state after the *last* separate update cycle, not necessarily including suggestions you make in the *current* turn.**
-    *   **Entity References:** Use 'type:id(name)' format when needed in memory content.
-    *   **Persistence:** Memories persist across locations.
+9.  **Memory Usage (Concise Facts - Rule #5 Applies: English Only):** Use memory slots (<YourMemories>, <YourMemoriesAbout...>) for **concise, factual information** (e.g., key observations, recent events, critical states, short reminders).
+    *   **Suggestion Only:** Propose new facts/corrections using \`add_memory\`/\`add_entity_memory\` tools. This is a *suggestion*.
+    *   **Separate Update:** A background process handles actual memory updates (\`update_memory\`/\`update_entity_memory\`), including managing limits (${this.agent.meta.memoryLimit} general, ${this.agent.meta.entityMemoryLimit} per entity) and overwriting/clearing old data.
+    *   **Check Current State:** Always refer to the provided memory state (<YourMemories>, <YourMemoriesAbout...>) for context, but be aware it reflects the state *after the last background update*, not necessarily including *your current suggestions*.
+    *   **Persistence:** General memories (<YourMemories>) persist across locations. Entity memories (<YourMemoriesAbout...>) are specific to that entity.
+    *   **Entity References:** When referring to entities in memory content, use the format \`type:id(name)\` (e.g., \`user:123(Alice)\`, \`agent:45(Bob)\`) for clarity.
+10. **Canvas Usage (Plans, Drafts, Analysis - Rule #5 Applies: English Only):** Use Canvases (<LocationCanvases>, <YourCanvases>) as **persistent workspaces** for complex tasks.
+    *   **Use For:** Developing plans, drafting messages/content, detailed analysis, collaboration (Location Canvases). Use your private agent canvases (e.g., 'plan') for your own work.
+    *   **Avoid For:** Simple facts (Use Memory).
+    *   **Refer & Update:** Check relevant canvases by NAME/DESCRIPTION. Update using canvas tools. Respect MAX_LENGTH.
+    *   **Location vs. Private:** Location Canvases are shared within *that* location. **CRITICAL: Your private agent canvases (<YourCanvases>) are SEPARATE for each location context; content is NOT shared between locations.**
+11. **Summary Usage (Cross-Location Context):** The <Summary> block is updated by a background process and synthesizes past interactions (potentially across locations).
+    *   **Purpose:** Use it critically to maintain awareness and continuity when switching between or returning to locations. It bridges context gaps.
+    *   **Awareness:** Like memory, it reflects the state *after the last background update*.
 `);
 
-    // Canvas Utilization Rules
+    // === Interaction & Awareness ===
     importantRules.push(`
-9.  **Persistent Workspace Canvas Utilization (Rule #5 Applies: English Only):** Canvases serve as **persistent workspaces** for **developing plans, drafting content, detailed analysis, and collaborative work**.
-    *   **Use For:** Outlining multi-step strategies, drafting messages, detailed analysis, collaborating (Location Canvases). Use your private canvases (e.g., 'plan') for your own notes and preparations. (Details: Use for outlining, drafting, analysis, collaboration. Avoid simple facts (Use Memory). Refer by NAME/DESCRIPTION. Update using tools. Note Location vs. Private Canvases).
-    *   **Avoid Using For:** Simple, short-term facts or observations (Use Memory instead).
-    *   **Refer:** Check relevant Canvases (<LocationCanvases>, <YourCanvases>) based on their NAME/DESCRIPTION for ongoing work or context. Note the distinction below in Rule 12 regarding cross-location persistence.
-    *   **Update:** Use canvas update tools to modify content according to the canvas's purpose. Respect MAX_LENGTH.
-    *   **Types:** Remember Location Canvases are public/shared within their specific location. Your Canvases are private to you.
-    `);
-
-    // Interaction & Awareness
-    importantRules.push(`
-10. **Dynamic Multi-Agent Interaction:** Treat other Agents as real individuals. Engage actively, collaborate, react realistically, and be aware they might have their own goals or attempt deception. Base judgments on verified information.
-11. **CRITICAL - Conversational Dynamism & Anti-Repetition:** Maintain natural, engaging conversation flow. **AVOID MONOTONY AND REPETITION AT ALL COSTS.**
-    *   **Check Recent History:** Before responding, review <LocationMessages> and especially <YourLastMessage>. **DO NOT repeat phrases, core arguments, or sentence structures you used in your immediately preceding turns.** If you need to revisit a point, paraphrase significantly or frame it differently.
-    *   **Introduce Novelty:** Actively bring in new information, ask different questions, share related but distinct thoughts, or react with fresh perspectives based on the latest input.
-    *   **Progress the Dialogue:** Ensure your contribution moves the conversation forward rather than restating previous points. Shift topics naturally when a subject feels concluded.
-12. **Context Awareness (CRITICAL):** Always consider all available context. **You operate in multiple Locations simultaneously, and most information is NOT shared between them automatically.** Therefore, pay close attention to:
-    *   The current time and your timezone (${this.agent.meta.timeZone}).
-    *   **The <Summary> block:** This provides essential context synthesised from previous interactions, potentially including those in *other Locations*. **Note that the <Summary> block, like your memories, is updated by a separate background process** and reflects the state after the last update cycle. **Use this summary critically to maintain continuity and awareness**, understanding it bridges information gaps between your separate Location activities.
-    *   Your current location details (<Location>, <LocationCanvases>). Note that \`<LocationCanvases>\` are specific to *this* location only.
-    *   Other entities present (<OtherAgents>, <OtherUsers>) and your specific memories about them (<YourMemoriesAbout...>).
-    *   Your inventory (<YourInventory>).
-    *   Your **private agent canvases** (<YourCanvases>). **CRITICAL NOTE: Your private canvases are distinct for each location context you operate in; content written to a canvas in one location is NOT automatically visible or synced to your canvases when you are prompted for a different location.** Treat them as separate notebooks for each place.
-    *   Your general memories (<YourMemories>). Note that general memories **do persist across locations** (unlike your private canvases or location-specific canvases), but may lack specific context without the <Summary>.
-    *   **Recent message history within this specific location (<LocationMessages>, <YourLastMessage>): Use these heavily to inform your *immediate* response and ensure variety (See Rule #11).**
-13. Time Handling: Internal times are represented as **ISO 8601 date strings** (e.g., '2023-10-27T10:00:00.000Z'). Refer to time conversationally using your timezone (${this.agent.meta.timeZone}) or relative terms (e.g., "a few minutes ago", "yesterday"). Record exact ISO date strings for important events in memory or canvases if precision is needed. Admit if you forget specifics.
-14. **Latency Awareness:** Understand that messages sent close together might appear out of order due to processing delays.
-15. **Physical Limitations:** You cannot interact with the real world. Operate only within the digital environment.
-16. **CRITICAL - Brevity & Conciseness (External Messages):** When generating messages for users or other agents (via tools like \`send_casual_message\`), be **concise and to the point**. Avoid unnecessary elaboration, rambling, or overly detailed explanations unless absolutely required by the context. **Strictly respect the message length limits** defined in tool parameters (e.g., typically around ${this.location.meta.agentMessageLengthLimit} characters for your messages). Prioritize conveying the essential information efficiently.
+12. **Dynamic Interaction:** Engage actively and realistically with other Agents and Users. Base judgments on verified information. Be aware others might have their own goals.
+13. **CRITICAL - Anti-Repetition & Dynamism:** Maintain natural conversation. **AVOID MONOTONY AND REPETITION.**
+    *   **Check History:** Review <LocationMessages> and <YourLastMessage> before responding. **DO NOT repeat your own recent phrases, arguments, or sentence structures.** Paraphrase significantly or frame points differently if revisiting.
+    *   **Be Novel:** Actively introduce new information, questions, or perspectives based on the latest input. Move the conversation forward.
+14. **CRITICAL - Context Awareness:** Always consider ALL available context. **Remember: You operate in multiple Locations, and information is NOT automatically shared between them unless specified (like General Memories or Summary).** Pay close attention to:
+    *   **Location-Specific Context:** Current Time & Timezone (${this.agent.meta.timeZone}), <Location> details, <LocationCanvases>, <Gimmicks>, <OtherAgents>, <OtherUsers>, <LocationMessages>, <YourLastMessage>.
+    *   **Agent-Specific Context:** Your <YourInventory>, Your private <YourCanvases> (Remember: separate per location - Rule #10), Your specific memories <YourMemoriesAbout...>.
+    *   **Persistent/Shared Context:** Your general <YourMemories> (Rule #9), the <Summary> (Rule #11).
+    *   **Use Recent History:** Use <LocationMessages> and <YourLastMessage> heavily for immediate response context and to ensure variety (Rule #13).
+15. **Time Handling:** Internal times are ISO 8601 strings (e.g., '2023-10-27T10:00:00.000Z'). Use conversational time references (relative or using your timezone ${this.agent.meta.timeZone}) externally. Record precise ISO strings internally if needed.
+16. **Latency Awareness:** Messages sent close together might appear out of order.
+17. **Physical Limitations:** Operate only within the digital environment.
+18. **CRITICAL - Brevity (External Messages):** Be **concise and to the point** in messages to users/agents (via tools like \`send_casual_message\`). Avoid rambling. **Strictly respect message length limits** (e.g., ~${this.location.meta.agentMessageLengthLimit} chars).
 `);
 
     prompts.push(`
@@ -322,6 +319,21 @@ ${usersContexts.join('\n')}
 `,
     });
 
+    const gimmickContexts: string[] = [];
+    for (const gimmick of Object.values(this.location.gimmicks)) {
+      gimmickContexts.push(gimmick.context.build());
+    }
+    contexts.push({
+      type: 'text',
+      text: `
+Gimmicks in the location:
+<Gimmicks>
+${GimmickContext.FORMAT}
+${gimmickContexts.join('\n')}
+</Gimmicks>
+`,
+    });
+
     const yourMemories = this.agent.memories
       .map(
         (m, i) =>
@@ -421,8 +433,8 @@ ${lastAgentMessage.build()}
     userContents.push({
       type: 'text',
       text: `
-As ${this.agent.name}, considering all the context and RULES (especially Rule #1, #11, #12, and #16), decide which tool(s) to use. Quote the source of each reasoning step.${requiredActionsPrompt}
-**CRITICAL REMINDER: Ensure your response is dynamic, avoids repetition (Rule #11), and is engaging (Rule #1). Crucially, **BE CONCISE** and **strictly adhere to message length limits** (Rule #16, typically around ${this.location.meta.agentMessageLengthLimit} chars for your messages). Use all necessary tools at once in this single response turn.**
+As ${this.agent.name}, considering all the context and RULES (especially Rule #1, #12, #13, and #17), decide which tool(s) to use. Quote the source of each reasoning step.${requiredActionsPrompt}
+**CRITICAL REMINDER: Ensure your response is dynamic, avoids repetition (Rule #12), and is engaging (Rule #1). Crucially, **BE CONCISE** and **strictly adhere to message length limits** (Rule #17, typically around ${this.location.meta.agentMessageLengthLimit} chars for your messages). Use all necessary tools at once in this single response turn.**
 `,
     });
 
@@ -515,18 +527,18 @@ Provide your reasoning step-by-step. Then, output your final decision ONLY as a 
 
 **Follow these rules strictly:**
 
-1.  **Synthesize, Condense & ISO 8601 date strings (CRITICAL):** Create a ***highly condensed***, coherent narrative integrating the *most relevant points* from the \`<CurrentSummary>\` with the *significant happenings* revealed in the \`<Input>\` and \`<Output>\` of the current turn. The new summary *replaces* the old one. **Incorporate relevant **ISO 8601 date strings** (e.g., \`(time: '2025-04-19T10:00:00.000Z')\`) for key events** where available in the \`<Input>\` or \`<Output>\` (like messages, memory updates, or significant observations). Extract date strings directly associated with the events being summarized.
+1.  **Synthesize, Condense & ISO 8601 date strings (CRITICAL):** Create a ***highly condensed***, coherent narrative integrating the *most relevant points* from the \`<CurrentSummary>\` with the *significant happenings* revealed in the \`<Input>\` and \`<Output>\` of the current turn. The new summary *replaces* the old one. **Incorporate relevant **ISO 8601 date strings** (as mentioned in main Rule #15, e.g., \`(time: '2025-04-19T10:00:00.000Z')\`) for key events** where available in the \`<Input>\` or \`<Output>\` (like messages, memory updates, or significant observations). Extract date strings directly associated with the events being summarized.
 2.  **Focus on Cross-Location Contextual Significance:** Prioritize information vital for understanding the ongoing situation, agent's state, user intentions, relationships, and unresolved tasks/goals **specifically if the agent were to revisit this Location after being active in others.** Ask: "What core facts (with date strings) from *this* turn in *this* Location must the agent remember to function effectively upon return?"
 3.  **Capture Key Interactions & Decisions:** Include *only the most important* user requests, agent responses, significant agent observations (from reasoning), confirmations, agreements, disagreements, or pivotal conversation moments relevant to the ongoing state *within the current Location*, **always adding date strings.**
-4.  **Note State Changes & Location (CRITICAL):** Mention critical changes (users entering/leaving, item transfers, key memory/canvas updates) impacting local context. **Crucially, ALL new information added MUST be clearly associated with the specific Location** using the format \`LOCATION_NAME (LOCATION_KEY)\` (e.g., \`Private Chat (location:123)\`). Find details in \`<Input>\`'s \`<Location>\` block. Prefixing entries is required, e.g., \`[Private Chat (location:123)] User Lucid asked...(time:...)\`. **Include date strings for these state changes.**
+4.  **Note State Changes & Location (CRITICAL):** Mention critical changes (users entering/leaving, item transfers, key memory/canvas updates) impacting local context. **Crucially, ALL new information added MUST be clearly associated with the specific Location** using the format \`LOCATION_NAME (LOCATION_KEY)\` (e.g., \`Private Chat (location:123)\`). Find details in \`<Input>\`'s \`<Location>\` block. Prefixing entries is required, e.g., \`[Private Chat (location:123)] User user:456(Lucid) asked...(time:...)\`. **Include date strings for these state changes.**
 5.  **Prioritize Recency & Strict Limit (ABSOLUTELY CRITICAL):** Brevity is paramount. **The summary MUST STRICTLY ADHERE to a MAXIMUM limit of ${this.agent.meta.summaryLengthLimit} characters.**
     *   **Prioritization Strategy:** When synthesizing, and especially **when approaching the ${this.agent.meta.summaryLengthLimit}-character limit, prioritize summarizing the *current turn's key events (with date strings)* and integrating them with the *most recent and contextually vital points* from the \`<CurrentSummary>\`.**
     *   **Trimming:** Less critical or significantly older information from the \`<CurrentSummary>\` **must be condensed further or omitted entirely** if necessary to stay within the ${this.agent.meta.summaryLengthLimit}-character limit. The goal is to ensure the *latest interactions are always preserved*, even at the cost of older details.
     *   **Warning:** Do NOT exceed ${this.agent.meta.summaryLengthLimit} characters. **Exceeding the limit WILL result in truncation and CRITICAL LOSS of recent context.** Edit ruthlessly.
 6.  **Maintain Neutrality and Factuality:** Report events objectively based *only* on the provided data for *this* turn in *this* Location. Do not add interpretations or predictions.
-7.  **Reference Entities Clearly:** Use identifiers (e.g., \`user:1\`, \`agent:1\`, names) consistently. Remember the Location \`NAME (KEY)\` format (Rule #4) and ISO 8601 Date Strings (Rule #1).
-8.  **Language (CRITICAL):** The summary MUST be written entirely in **English**.
-9.  **Output Format (CRITICAL):** Provide *only* the raw text of the new summary. No introductions, markdown, apologies, etc. **Crucially, ensure the final output rigorously adheres to the ${this.agent.meta.summaryLengthLimit}-character maximum (Rule #5), includes Location identifiers (Rule #4), and incorporates ISO 8601 Date Strings (Rule #1). Double-check length before finalizing.**
+7.  **Reference Entities Clearly:** Use the \`type:id(name)\` format (e.g., \`user:123(Alice)\`, \`agent:45(Bob)\`) consistently when referring to specific entities in the summary. Also remember the Location \`NAME (KEY)\` format (Summary Rule #4) and ISO 8601 Date Strings (Summary Rule #1).
+8.  **Language (CRITICAL):** The summary MUST be written entirely in **English** (as per main Rule #5).
+9.  **Output Format (CRITICAL):** Provide *only* the raw text of the new summary. No introductions, markdown, apologies, etc. **Crucially, ensure the final output rigorously adheres to the ${this.agent.meta.summaryLengthLimit}-character maximum (Summary Rule #5), includes Location identifiers (Summary Rule #4), uses the correct entity format (Summary Rule #7), and incorporates ISO 8601 Date Strings (Summary Rule #1). Double-check length before finalizing.**
 `.trim(),
     });
 

@@ -7,7 +7,7 @@ import {
 } from '@little-samo/samo-ai/common';
 import { type AgentInputBuilder } from '@little-samo/samo-ai/models';
 
-import { Location } from '../../locations';
+import { Location, type LocationEntityState } from '../../locations';
 import { AgentInputFactory } from '../agents/inputs';
 import { Entity } from '../entity';
 import { EntityCanvasContext } from '../entity.context';
@@ -61,18 +61,6 @@ export class Agent extends Entity {
     }
   }
 
-  public fixEntityState(state: AgentEntityState): void {
-    if (state.memories.length < this.meta.entityMemoryLimit) {
-      state.memories = state.memories.concat(
-        Array(this.meta.entityMemoryLimit - state.memories.length).fill({
-          memory: '',
-        })
-      );
-    } else if (state.memories.length > this.meta.entityMemoryLimit) {
-      state.memories = state.memories.slice(0, this.meta.entityMemoryLimit);
-    }
-  }
-
   public core!: AgentCore;
 
   public readonly inputs: AgentInputBuilder[] = [];
@@ -103,16 +91,12 @@ export class Agent extends Entity {
     this.reloadCore();
 
     for (const llm of meta.llms) {
-      const apiKey = location.apiKeys[llm.platform];
-      if (apiKey) {
-        const llmService = LlmFactory.create(
-          llm.platform,
-          llm.model,
-          apiKey.key,
-          {
-            reasoning: llm.reasoning,
-          }
-        );
+      const llmOptions = {
+        ...llm,
+        apiKey: llm.apiKey ?? location.apiKeys[llm.platform]?.key,
+      };
+      if (llmOptions.apiKey) {
+        const llmService = LlmFactory.create(llmOptions);
         this.llms.push(llmService);
       }
     }
@@ -188,6 +172,47 @@ export class Agent extends Entity {
 
   public get memories(): AgentMemory[] {
     return this.state.memories;
+  }
+
+  public fixEntityState(state: AgentEntityState): void {
+    if (state.memories.length < this.meta.entityMemoryLimit) {
+      state.memories = state.memories.concat(
+        Array(this.meta.entityMemoryLimit - state.memories.length).fill({
+          memory: '',
+        })
+      );
+    } else if (state.memories.length > this.meta.entityMemoryLimit) {
+      state.memories = state.memories.slice(0, this.meta.entityMemoryLimit);
+    }
+  }
+
+  public override fixLocationEntityState(
+    state: LocationEntityState
+  ): LocationEntityState {
+    const canvases = [...this.location.meta.agentCanvases];
+    for (const gimmick of Object.values(this.location.gimmicks)) {
+      const gimmickCanvas = gimmick.core.canvas;
+      if (gimmickCanvas) {
+        canvases.push(gimmickCanvas);
+      }
+    }
+
+    for (const canvas of canvases) {
+      if (!state.canvases[canvas.name]) {
+        state.canvases[canvas.name] = {
+          text: '',
+          updatedAt: new Date(),
+          createdAt: new Date(),
+        };
+      }
+    }
+
+    for (const name of Object.keys(state.canvases)) {
+      if (!canvases.some((c) => c.name === name)) {
+        delete state.canvases[name];
+      }
+    }
+    return state;
   }
 
   public getEntityMemories(key: EntityKey): AgentEntityMemory[] | undefined {
@@ -396,26 +421,19 @@ export class Agent extends Entity {
     if (!llm) {
       throw new Error('No LlmService found');
     }
-    const result = await llm.generate(messages, {
+    const resultJson = await llm.generate(messages, {
       maxTokens: this.meta.evaluateMaxTokens,
       temperature: this.meta.evaluateTemperature,
       jsonOutput: true,
       verbose: false,
     });
-    let resultJson;
-    try {
-      resultJson = JSON.parse(result);
-    } catch (error) {
-      console.error(`Error parsing action condition result: ${result}`);
-      throw error;
-    }
     if (ENV.DEBUG) {
       console.log(
         `Agent ${this.model.name} evaluated action condition: ${resultJson.should_act}
 ${resultJson.reasoning}`
       );
     }
-    return resultJson.should_act ?? false;
+    return (resultJson.should_act as boolean | undefined) ?? false;
   }
 
   public async executeMemoryActions(

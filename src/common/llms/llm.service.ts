@@ -1,45 +1,10 @@
 import { LlmTool, LlmToolCall } from './llm.tool';
-
-export interface LlmMessageImageContent {
-  type: 'image';
-  image: string;
-}
-
-export interface LlmMessageTextContent {
-  type: 'text';
-  text: string;
-}
-
-export type LlmMessageContent = LlmMessageImageContent | LlmMessageTextContent;
-
-export interface LlmUserMessage {
-  role: 'user';
-  content: string | LlmMessageContent[];
-}
-
-export interface LlmAssistantMessage {
-  role: 'assistant';
-  content: string;
-}
-
-export interface LlmSystemMessage {
-  role: 'system';
-  content: string;
-}
-
-export type LlmMessage =
-  | LlmUserMessage
-  | LlmAssistantMessage
-  | LlmSystemMessage;
-
-export interface LlmOptions {
-  temperature?: number;
-  maxTokens?: number;
-  maxTries?: number;
-  retryDelay?: number;
-  jsonOutput?: boolean;
-  verbose?: boolean;
-}
+import {
+  LlmMessage,
+  LlmOptions,
+  LlmPlatform,
+  LlmServiceOptions,
+} from './llm.types';
 
 export abstract class LlmService {
   public static readonly DEFAULT_TEMPERATURE = 0;
@@ -47,22 +12,22 @@ export abstract class LlmService {
   public static readonly DEFAULT_MAX_TRIES = 5;
   public static readonly DEFAULT_RETRY_DELAY = 1000;
 
+  public readonly platform: LlmPlatform;
+  public readonly model: string;
+  public readonly apiKey: string;
   public readonly reasoning: boolean;
 
-  public constructor(
-    public readonly model: string,
-    protected readonly apiKey: string,
-    options?: {
-      reasoning?: boolean;
-    }
-  ) {
-    this.reasoning = options?.reasoning ?? false;
+  public constructor(options: LlmServiceOptions) {
+    this.model = options.model;
+    this.platform = options.platform;
+    this.apiKey = options.apiKey;
+    this.reasoning = options.reasoning ?? false;
   }
 
-  public abstract generate(
+  public abstract generate<T extends boolean = false>(
     messages: LlmMessage[],
-    options?: LlmOptions
-  ): Promise<string>;
+    options?: LlmOptions & { jsonOutput?: T }
+  ): Promise<T extends true ? Record<string, unknown> : string>;
 
   public abstract useTools(
     messages: LlmMessage[],

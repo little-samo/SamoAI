@@ -184,24 +184,6 @@ export class Location extends AsyncEventEmitter {
     }
   }
 
-  public fixEntityState(state: LocationEntityState): void {
-    for (const canvas of this.meta.agentCanvases) {
-      if (!state.canvases[canvas.name]) {
-        state.canvases[canvas.name] = {
-          text: '',
-          updatedAt: new Date(),
-          createdAt: new Date(),
-        };
-      }
-    }
-
-    for (const name of Object.keys(state.canvases)) {
-      if (!this.meta.agentCanvases.some((c) => c.name === name)) {
-        delete state.canvases[name];
-      }
-    }
-  }
-
   public getEntityState(key: EntityKey): LocationEntityState | undefined {
     return this._entityStates[key];
   }
@@ -213,9 +195,13 @@ export class Location extends AsyncEventEmitter {
 
   public addEntityState(state: LocationEntityState): LocationEntityState {
     const key: EntityKey = `${state.targetType}:${state.targetId}` as EntityKey;
+    const entity = this.entities[key];
 
-    this.fixEntityState(state);
-    this._entityStates[key] = state;
+    if (!entity) {
+      throw new Error(`Entity with key ${key} not found`);
+    }
+
+    this._entityStates[key] = entity.fixLocationEntityState(state);
 
     return state;
   }

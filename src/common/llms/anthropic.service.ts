@@ -10,23 +10,18 @@ import zodToJsonSchema from 'zod-to-json-schema';
 import { sleep } from '../utils';
 
 import { LlmApiError, LlmInvalidContentError } from './llm.errors';
-import { LlmMessage, LlmOptions, LlmService } from './llm.service';
+import { LlmService } from './llm.service';
 import { LlmToolCall } from './llm.tool';
 import { LlmTool } from './llm.tool';
+import { LlmServiceOptions, LlmMessage, LlmOptions } from './llm.types';
 
 export class AnthropicService extends LlmService {
   private client: Anthropic;
 
-  public constructor(
-    public readonly model: string,
-    protected readonly apiKey: string,
-    options?: {
-      reasoning?: boolean;
-    }
-  ) {
-    super(model, apiKey, options);
+  public constructor(options: LlmServiceOptions) {
+    super(options);
     this.client = new Anthropic({
-      apiKey: apiKey,
+      apiKey: this.apiKey,
     });
   }
 
@@ -140,10 +135,10 @@ export class AnthropicService extends LlmService {
     return [systemMessages, userAssistantMessages];
   }
 
-  public async generate(
+  public async generate<T extends boolean = false>(
     messages: LlmMessage[],
-    options?: LlmOptions
-  ): Promise<string> {
+    options?: LlmOptions & { jsonOutput?: T }
+  ): Promise<T extends true ? Record<string, unknown> : string> {
     try {
       const [systemMessages, userAssistantMessages] =
         this.llmMessagesToAnthropicMessages(messages);
@@ -171,7 +166,19 @@ export class AnthropicService extends LlmService {
         throw new LlmInvalidContentError('Anthropic returned no content');
       }
 
-      return (response.content[0] as TextBlock).text;
+      const responseText = (response.content[0] as TextBlock).text;
+      if (options?.jsonOutput) {
+        try {
+          return JSON.parse(responseText) as T extends true
+            ? Record<string, unknown>
+            : string;
+        } catch (error) {
+          console.error(error);
+          console.error(responseText);
+          throw new LlmInvalidContentError('Anthropic returned invalid JSON');
+        }
+      }
+      return responseText as T extends true ? Record<string, unknown> : string;
     } catch (error) {
       if (error instanceof AnthropicError) {
         if (error instanceof APIError) {
