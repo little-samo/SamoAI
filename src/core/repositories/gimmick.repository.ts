@@ -18,7 +18,7 @@ export interface GimmickRepository {
 
   updateGimmickStateOccupier(
     locationId: LocationId,
-    gimmickId?: GimmickId,
+    gimmickId: GimmickId,
     occupierType?: EntityType,
     occupierId?: EntityId,
     occupationUntil?: Date
