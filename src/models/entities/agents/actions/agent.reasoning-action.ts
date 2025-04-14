@@ -14,7 +14,7 @@ export class AgentReasoningAction extends AgentAction {
     switch (this.version) {
       case 1:
       default:
-        return 'Uses CoT (Chain of Thought) to analyze the given input and rules, plan the next actions, and determine which tools to use in the current response. When necessary, it references and quotes relevant rules or inputs to ensure accurate decision-making. The reasoning text MUST be written in English.';
+        return 'CRITICAL: This tool MUST be called FIRST before any other tools in the current response turn. Uses CoT (Chain of Thought) to analyze the given input and rules, plan the next actions, and determine which tools to use in the current response. When necessary, it references and quotes relevant rules or inputs to ensure accurate decision-making. The reasoning text MUST be written in English.';
     }
   }
 
