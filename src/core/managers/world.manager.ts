@@ -17,6 +17,7 @@ import {
   LocationEntityState,
   LocationId,
   LocationMessage,
+  LocationModel,
   User,
   UserId,
 } from '@little-samo/samo-ai/models';
@@ -34,6 +35,7 @@ import { RedisLockService } from '../services';
 interface UpdateLocationOptions {
   ignorePauseUpdateUntil?: boolean;
   executeSpecificAgentId?: AgentId;
+  preLoadLocation?: (locationModel: LocationModel) => Promise<void>;
   preAction?: (location: Location) => Promise<void>;
   postAction?: (location: Location) => Promise<void>;
   handleSave?: <T = void>(save: Promise<T>) => Promise<void>;
@@ -170,6 +172,7 @@ export class WorldManager extends AsyncEventEmitter {
     locationId: LocationId,
     options: {
       llmApiKeyUserId?: UserId;
+      preLoadLocation?: (locationModel: LocationModel) => Promise<void>;
     } = {}
   ): Promise<Location> {
     const apiKeys =
@@ -184,6 +187,10 @@ export class WorldManager extends AsyncEventEmitter {
       await this.locationRepository.getOrCreateLocationMessagesState(
         locationId
       );
+
+    if (options.preLoadLocation) {
+      await options.preLoadLocation(locationModel);
+    }
 
     const location = new Location(locationModel, {
       state: locationState,
@@ -550,6 +557,7 @@ export class WorldManager extends AsyncEventEmitter {
 
     const location = await this.getLocation(locationId, {
       llmApiKeyUserId,
+      preLoadLocation: options.preLoadLocation,
     });
     if (Object.keys(location.agents).length === 0) {
       console.log(`No agents in location ${locationId}, pausing update`);
