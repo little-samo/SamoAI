@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 export const LlmPlatform = {
   OPENAI: 'OPENAI',
   ANTHROPIC: 'ANTHROPIC',
@@ -19,6 +21,7 @@ export interface LlmOptions {
   maxTries?: number;
   retryDelay?: number;
   jsonOutput?: boolean;
+  jsonSchema?: z.ZodSchema;
   webSearch?: boolean;
   verbose?: boolean;
 }

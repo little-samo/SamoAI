@@ -65,26 +65,33 @@ The response MUST be a single JSON object string, without any markdown formattin
       role: 'user',
       content: query,
     });
-    const responseString = await llm.generate(messages, {
+    const responseJson = await llm.generate(messages, {
       maxTokens: GimmickWebSearchCore.LLM_MAX_TOKENS,
       webSearch: true,
+      jsonOutput: true,
+      jsonSchema: z.object({
+        result: z
+          .string()
+          .describe(
+            `The detailed findings from your search. Limit its length to ${maxResultLength} characters.`
+          ),
+        summary: z
+          .string()
+          .describe(
+            `A concise overview of the findings. Limit its length to ${maxSummaryLength} characters.`
+          ),
+      }),
       verbose: ENV.DEBUG,
     });
 
-    let responseJson: { result: string; summary: string };
-    try {
-      responseJson = JSON.parse(responseString);
-    } catch (error) {
-      console.error(
-        'Failed to parse LLM response as JSON:',
-        responseString,
-        error
-      );
-      throw new Error('Failed to parse LLM response as JSON');
-    }
-
-    const summary = (responseJson.summary ?? '').substring(0, maxSummaryLength);
-    const result = (responseJson.result ?? '').substring(0, maxResultLength);
+    const summary = (responseJson.summary as string).substring(
+      0,
+      maxSummaryLength
+    );
+    const result = (responseJson.result as string).substring(
+      0,
+      maxResultLength
+    );
 
     if (ENV.DEBUG) {
       console.log(`Gimmick ${this.gimmick.name} executed: ${query}`);

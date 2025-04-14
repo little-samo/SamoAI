@@ -1,5 +1,10 @@
 import { OpenAI } from 'openai';
 import {
+  ResponseFormatJSONObject,
+  ResponseFormatJSONSchema,
+  ResponseFormatText,
+} from 'openai/resources';
+import {
   ChatCompletionCreateParamsNonStreaming,
   ChatCompletionMessageParam,
 } from 'openai/resources/chat/completions';
@@ -135,6 +140,26 @@ export class OpenAIService extends LlmService {
       const [systemMessages, userAssistantMessages] =
         this.llmMessagesToOpenAiMessages(messages);
 
+      let responseFormat:
+        | ResponseFormatText
+        | ResponseFormatJSONObject
+        | ResponseFormatJSONSchema;
+      if (options?.jsonSchema) {
+        responseFormat = {
+          type: 'json_schema',
+          json_schema: {
+            name: 'response',
+            strict: true,
+            schema: zodToJsonSchema(options.jsonSchema, {
+              target: 'openAi',
+            }),
+          },
+        };
+      } else if (options?.jsonOutput) {
+        responseFormat = { type: 'json_object' };
+      } else {
+        responseFormat = { type: 'text' };
+      }
       const request: ChatCompletionCreateParamsNonStreaming = {
         model: this.model,
         messages: [...systemMessages, ...userAssistantMessages],
@@ -142,7 +167,7 @@ export class OpenAIService extends LlmService {
           ? undefined
           : (options?.temperature ?? LlmService.DEFAULT_TEMPERATURE),
         max_tokens: options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS,
-        response_format: { type: options?.jsonOutput ? 'json_object' : 'text' },
+        response_format: responseFormat,
       };
       if (options?.verbose) {
         console.log(request);
@@ -219,6 +244,26 @@ Response can only be in JSON format and must strictly follow the following forma
 ]`,
       });
 
+      let responseFormat:
+        | ResponseFormatText
+        | ResponseFormatJSONObject
+        | ResponseFormatJSONSchema;
+      if (options?.jsonSchema) {
+        responseFormat = {
+          type: 'json_schema',
+          json_schema: {
+            name: 'response',
+            strict: true,
+            schema: zodToJsonSchema(options.jsonSchema, {
+              target: 'openAi',
+            }),
+          },
+        };
+      } else if (options?.jsonOutput) {
+        responseFormat = { type: 'json_object' };
+      } else {
+        responseFormat = { type: 'text' };
+      }
       const request: ChatCompletionCreateParamsNonStreaming = {
         model: this.model,
         messages: [...systemMessages, ...userAssistantMessages],
@@ -226,7 +271,7 @@ Response can only be in JSON format and must strictly follow the following forma
           ? undefined
           : (options?.temperature ?? LlmService.DEFAULT_TEMPERATURE),
         max_tokens: options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS,
-        response_format: { type: 'json_object' },
+        response_format: responseFormat,
       };
       if (options?.verbose) {
         console.log(request);
