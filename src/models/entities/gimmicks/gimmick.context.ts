@@ -18,7 +18,7 @@ export class GimmickContext
   implements GimmickContextOptions
 {
   public static readonly FORMAT: string =
-    'KEY\tNAME\tDESCRIPTION\tEXPRESSION\tOCCUPIER_ID\tOCCUPIER_TYPE\tOCCUPATION_UNTIL\tPARAMETERS\tCANVAS';
+    'KEY\tNAME\tDESCRIPTION\tAPPEARANCE\tEXPRESSION\tOCCUPIER_ID\tOCCUPIER_TYPE\tOCCUPATION_UNTIL\tPARAMETERS\tCANVAS';
 
   public readonly description: string;
   public readonly occupierId?: EntityId;
@@ -45,6 +45,6 @@ export class GimmickContext
     });
     delete parameters['$schema'];
 
-    return `${this.key}\t${this.name}\t${this.description}\t${this.expression}\t${this.occupierId ?? 'null'}\t${this.occupierType ?? 'null'}\t${this.occupationUntil?.toISOString() ?? 'null'}\t${JSON.stringify(parameters)}\t${this.canvas ?? 'null'}`;
+    return `${this.key}\t${this.name}\t${this.description}\t${this.appearance}\t${this.expression}\t${this.occupierId ?? 'null'}\t${this.occupierType ?? 'null'}\t${this.occupationUntil?.toISOString() ?? 'null'}\t${JSON.stringify(parameters)}\t${this.canvas ?? 'null'}`;
   }
 }
