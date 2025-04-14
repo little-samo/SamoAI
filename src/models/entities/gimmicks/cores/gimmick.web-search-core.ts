@@ -102,7 +102,12 @@ The response MUST be a single JSON object string, without any markdown formattin
     await entity.location.addSystemMessage(
       `Gimmick ${this.gimmick.name} executed. Web Search Result: ${summary}`
     );
-    await entity.location.emitAsync('gimmickExecuted', this, entity, summary);
+    await entity.location.emitAsync(
+      'gimmickExecuted',
+      this.gimmick,
+      entity,
+      summary
+    );
   }
 
   public override async update(): Promise<boolean> {
