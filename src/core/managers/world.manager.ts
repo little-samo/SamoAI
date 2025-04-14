@@ -11,6 +11,7 @@ import {
   EntityType,
   Gimmick,
   GimmickId,
+  GimmickParameters,
   ItemDataId,
   ItemModel,
   Location,
@@ -719,6 +720,18 @@ export class WorldManager extends AsyncEventEmitter {
         )
       );
     });
+
+    location.on(
+      'gimmickExecuting',
+      async (
+        gimmick: Gimmick,
+        entity: Entity,
+        parameters: GimmickParameters,
+        promise: Promise<boolean>
+      ) => {
+        void options.handleSave!(promise);
+      }
+    );
 
     location.on('gimmickExecuted', async (gimmick: Gimmick, entity: Entity) => {
       await gimmick.release();

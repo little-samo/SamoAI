@@ -127,7 +127,14 @@ The response MUST be a single JSON object string, without any markdown formattin
     }
 
     const llm = LlmFactory.create(llmOptions as LlmServiceOptions);
-    void this.searchWeb(entity, llm, parameters as string);
+    const promise = this.searchWeb(entity, llm, parameters as string);
+    await this.gimmick.location.emitAsync(
+      'gimmickExecuting',
+      this.gimmick,
+      entity,
+      parameters,
+      promise
+    );
 
     return true;
   }
