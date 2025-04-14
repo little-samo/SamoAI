@@ -94,6 +94,7 @@ export const DEFAULT_AGENT_META: AgentMeta = {
     'add_memory:latest',
     'add_entity_memory:latest',
     'transfer_item:latest',
+    'execute_gimmick:latest',
   ],
   requiredActions: [],
   memoryActions: ['update_memory:latest', 'update_entity_memory:latest'],
