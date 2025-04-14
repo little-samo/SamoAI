@@ -19,6 +19,7 @@ export interface LlmOptions {
   maxTries?: number;
   retryDelay?: number;
   jsonOutput?: boolean;
+  webSearch?: boolean;
   verbose?: boolean;
 }
 

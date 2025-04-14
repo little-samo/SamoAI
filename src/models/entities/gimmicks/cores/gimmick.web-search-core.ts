@@ -19,7 +19,6 @@ import { RegisterGimmickCore } from './gimmick.core-decorator';
 export class GimmickWebSearchCore extends GimmickCore {
   public static readonly DEFAULT_LLM_PLATFORM = LlmPlatform.OPENAI;
   public static readonly DEFAULT_LLM_MODEL = 'gpt-4o-search-preview-2025-03-11';
-  public static readonly LLM_TEMPERATURE = 0;
   public static readonly LLM_MAX_TOKENS = 2048;
   public static readonly DEFAULT_MAX_SEARCH_RESULT_LENGTH = 2000;
 
@@ -66,9 +65,10 @@ Ensure the information is up-to-date and factually correct. Focus on providing t
       content: query,
     });
     const responseJson = await llm.generate(messages, {
-      temperature: GimmickWebSearchCore.LLM_TEMPERATURE,
       maxTokens: GimmickWebSearchCore.LLM_MAX_TOKENS,
       jsonOutput: true,
+      webSearch: true,
+      verbose: ENV.DEBUG,
     });
 
     const summary = (responseJson.summary as string).substring(

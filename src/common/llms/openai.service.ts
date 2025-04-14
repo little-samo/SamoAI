@@ -220,7 +220,9 @@ Response can only be in JSON format and must strictly follow the following forma
       const request: ChatCompletionCreateParamsNonStreaming = {
         model: this.model,
         messages: [...systemMessages, ...userAssistantMessages],
-        temperature: options?.temperature ?? LlmService.DEFAULT_TEMPERATURE,
+        temperature: options?.webSearch
+          ? undefined
+          : (options?.temperature ?? LlmService.DEFAULT_TEMPERATURE),
         max_tokens: options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS,
         response_format: { type: 'json_object' },
       };
