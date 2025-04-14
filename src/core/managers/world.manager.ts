@@ -723,10 +723,17 @@ export class WorldManager extends AsyncEventEmitter {
     location.on('gimmickExecuted', async (gimmick: Gimmick, entity: Entity) => {
       await gimmick.release();
       if (entity.type === EntityType.Agent) {
-        void this.updateLocation(llmApiKeyUserId, locationId, {
-          ...options,
-          executeSpecificAgentId: entity.id as AgentId,
-        });
+        if (ENV.DEBUG) {
+          console.log(
+            `Force updating location ${locationId} with agent ${entity.id} for gimmick ${gimmick.id}`
+          );
+        }
+        void options.handleSave!(
+          this.updateLocation(llmApiKeyUserId, locationId, {
+            ...options,
+            executeSpecificAgentId: entity.id as AgentId,
+          })
+        );
       }
     });
 
