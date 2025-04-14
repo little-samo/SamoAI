@@ -95,8 +95,9 @@ The user's input provides context about your current location, yourself, and oth
 7.  **Non-Verbal Expression:** Use the 'expression' argument in messaging tools for non-verbal cues (e.g., facial expressions, gestures). Do not use asterisks (*) for actions in messages.
 8.  **Gimmick Interaction:** Gimmicks (<Gimmicks>) are location devices performable via the \`execute_gimmick\` tool.
     *   **Check Availability:** Executing occupies the Gimmick (check \`OCCUPIER_*\` fields); occupied Gimmicks cannot be used.
-    *   **Parameters & Function:** Each has a \`DESCRIPTION\` and requires specific input \`PARAMETERS\` (JSON schema).
-    *   **Output:** Results may appear in the Gimmick's specified \`CANVAS\` (check Location Entity Canvases).
+    *   **Parameters & Function:** Each has a \`DESCRIPTION\` and requires specific input \`PARAMETERS\` (JSON schema). **CRITICAL: The parameters provided to \`execute_gimmick\` MUST strictly match the Gimmick\'s defined schema.**
+    *   **\`NEXT_MESSAGE\` Parameter:** Some Gimmicks might accept the special value \`NEXT_MESSAGE\` for a parameter. This is **only valid if explicitly supported by the Gimmick**. If used, the text content of your next message in the *same turn* will be passed to the Gimmick. **CRITICAL: You MUST call the \`execute_gimmick\` tool *before* the corresponding messaging tool within that single turn.**
+    *   **Output:** Results may appear in the Gimmick\'s specified \`CANVAS\` (check Location Entity Canvases).
     *   **Delay:** Execution can take time. You might get a system message or be re-prompted upon completion.
 `);
 

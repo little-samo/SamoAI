@@ -19,7 +19,7 @@ export class AgentExecuteGimmickAction extends AgentAction {
     switch (this.version) {
       case 1:
       default:
-        return `Execute a gimmick with optional parameters.`;
+        return `Executes a specified Gimmick entity within the current location. Checks Gimmick availability and occupies it upon successful execution initiation. See 'parameters' for details on input requirements.`;
     }
   }
 
@@ -36,7 +36,7 @@ export class AgentExecuteGimmickAction extends AgentAction {
               z.record(z.string(), z.unknown()),
             ])
             .describe(
-              `Optional parameters for the gimmick execution. These parameters will be validated against the gimmick's parameter schema.`
+              `Optional parameters for the gimmick execution. These parameters MUST strictly conform to the schema defined by the target gimmick's 'PARAMETERS' field. If 'NEXT_MESSAGE' is used, it is only valid if the gimmick explicitly supports it; in this case, the text content of your *next* message in this turn will be passed as the argument, and you MUST call this 'execute_gimmick' tool *before* the messaging tool in the same turn.`
             ),
         });
     }
