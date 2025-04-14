@@ -233,6 +233,12 @@ export class Agent extends Entity {
   }
 
   public async setMemory(index: number, memory: string): Promise<void> {
+    if (index < 0 || index >= this.meta.memoryLimit) {
+      throw new Error(
+        `Invalid memory index: ${index}. Must be between 0 and ${this.meta.memoryLimit - 1}`
+      );
+    }
+
     await this.location.emitAsync(
       'agentUpdateMemory',
       this,
@@ -254,6 +260,12 @@ export class Agent extends Entity {
     const entityState = this.getEntityState(key);
     if (!entityState) {
       throw new Error(`Entity with key ${key} not found`);
+    }
+
+    if (index < 0 || index >= this.meta.entityMemoryLimit) {
+      throw new Error(
+        `Invalid entity memory index: ${index}. Must be between 0 and ${this.meta.entityMemoryLimit - 1}`
+      );
     }
 
     await this.location.emitAsync(
