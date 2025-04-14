@@ -29,7 +29,7 @@ export class Gimmick extends Entity {
   }
 
   public static fixState(state: GimmickState, _meta: GimmickMeta): void {
-    if (state.occupationUntil && state.occupationUntil < new Date()) {
+    if (state.occupationUntil && new Date(state.occupationUntil) < new Date()) {
       state.occupierType = undefined;
       state.occupierId = undefined;
       state.occupationUntil = undefined;
