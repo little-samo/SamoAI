@@ -19,7 +19,7 @@ import { RegisterGimmickCore } from './gimmick.core-decorator';
 export class GimmickWebSearchCore extends GimmickCore {
   public static readonly DEFAULT_LLM_PLATFORM = LlmPlatform.OPENAI;
   public static readonly DEFAULT_LLM_MODEL = 'gpt-4o-search-preview-2025-03-11';
-  public static readonly LLM_MAX_TOKENS = 2048;
+  public static readonly LLM_MAX_TOKENS = 4096;
   public static readonly DEFAULT_MAX_SEARCH_RESULT_LENGTH = 2000;
 
   public override get description(): string {
@@ -62,7 +62,6 @@ Provide the response **ONLY** in plain JSON format with two fields: "result" and
 - The "result" field should contain the detailed findings from your search. Limit its length to ${maxResultLength} characters.
 - The "summary" field should provide a concise overview of the findings. Limit its length to ${maxSummaryLength} characters.
 Ensure the information is up-to-date and factually correct. Focus on providing the best possible answer based on your search results.
-The response MUST be a single JSON object string, without any markdown formatting like \`\`\`json.
 `.trim(),
     });
     messages.push({
