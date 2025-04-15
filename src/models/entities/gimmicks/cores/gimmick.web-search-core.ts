@@ -43,10 +43,11 @@ export class GimmickWebSearchCore extends GimmickCore {
     llm: LlmService,
     query: string
   ): Promise<void> {
-    const maxResultLength = Number(
-      this.meta.options?.maxResultLength ??
-        GimmickWebSearchCore.DEFAULT_MAX_SEARCH_RESULT_LENGTH
-    );
+    const maxResultLength =
+      Number(
+        this.meta.options?.maxResultLength ??
+          GimmickWebSearchCore.DEFAULT_MAX_SEARCH_RESULT_LENGTH
+      ) - 200;
     const maxSummaryLength = Math.min(
       200,
       this.gimmick.location.meta.messageLengthLimit - 50
