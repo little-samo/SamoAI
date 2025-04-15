@@ -152,11 +152,18 @@ export class Agent extends Entity {
 
   public override get context(): AgentContext {
     const entityState = this.location.getEntityState(this.key);
+    const canvases = [...this.location.meta.agentCanvases];
+    for (const gimmick of Object.values(this.location.gimmicks)) {
+      const gimmickCanvas = gimmick.core.canvas;
+      if (gimmickCanvas) {
+        canvases.push(gimmickCanvas);
+      }
+    }
     const context = new AgentContext({
       ...super.context,
       handle: this.model.username ?? undefined,
       canvases: entityState
-        ? this.location.meta.agentCanvases.map((c) => {
+        ? canvases.map((c) => {
             const canvas = entityState.canvases[c.name];
             return new EntityCanvasContext({
               name: c.name,
