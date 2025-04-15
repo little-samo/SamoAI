@@ -19,7 +19,7 @@ import { RegisterGimmickCore } from './gimmick.core-decorator';
 export class GimmickWebSearchCore extends GimmickCore {
   public static readonly DEFAULT_LLM_PLATFORM = LlmPlatform.OPENAI;
   public static readonly DEFAULT_LLM_MODEL = 'gpt-4o-search-preview-2025-03-11';
-  public static readonly LLM_MAX_TOKENS = 4096;
+  public static readonly LLM_MAX_TOKENS = 2048;
   public static readonly DEFAULT_MAX_SEARCH_RESULT_LENGTH = 2000;
 
   public override get description(): string {
@@ -59,8 +59,8 @@ export class GimmickWebSearchCore extends GimmickCore {
       content: `
 You are an AI assistant specialized in web searching. Your task is to find the most recent, reliable, and accurate information available on the web to answer the user's query.
 Provide the response **ONLY** in plain JSON format with two fields: "result" and "summary". Do not include any other text or formatting outside the JSON structure.
-- The "result" field should contain the detailed findings from your search. Limit its length to ${maxResultLength} characters.
 - The "summary" field should provide a concise overview of the findings. Limit its length to ${maxSummaryLength} characters.
+- The "result" field should be a longer, more detailed version of the summary. It should expand on the key points from the summary while maintaining the same information. Limit its length to ${maxResultLength} characters.
 Ensure the information is up-to-date and factually correct. Focus on providing the best possible answer based on your search results.
 `.trim(),
     });
@@ -76,7 +76,7 @@ Ensure the information is up-to-date and factually correct. Focus on providing t
         result: z
           .string()
           .describe(
-            `The detailed findings from your search. Limit its length to ${maxResultLength} characters.`
+            `A longer, more detailed version of the summary. It should expand on the key points while maintaining the same information. Limit its length to ${maxResultLength} characters.`
           ),
         summary: z
           .string()
