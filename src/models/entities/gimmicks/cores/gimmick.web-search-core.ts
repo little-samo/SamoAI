@@ -47,7 +47,10 @@ export class GimmickWebSearchCore extends GimmickCore {
       this.meta.options?.maxResultLength ??
         GimmickWebSearchCore.DEFAULT_MAX_SEARCH_RESULT_LENGTH
     );
-    const maxSummaryLength = this.gimmick.location.meta.messageLengthLimit - 50;
+    const maxSummaryLength = Math.min(
+      200,
+      this.gimmick.location.meta.messageLengthLimit - 50
+    );
 
     const messages: LlmMessage[] = [];
     messages.push({
