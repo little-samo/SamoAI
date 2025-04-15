@@ -121,6 +121,9 @@ The user's input provides context about your current location, yourself, and oth
 `);
 
     // === Interaction & Awareness ===
+    const messageLengthLimit =
+      this.location.meta.agentMessageLengthLimit ??
+      this.location.meta.messageLengthLimit;
     importantRules.push(`
 12. **Dynamic Interaction:** Engage actively and realistically with other Agents and Users. Base judgments on verified information. Be aware others might have their own goals.
 13. **CRITICAL - Anti-Repetition & Dynamism:** Maintain natural conversation. **AVOID MONOTONY AND REPETITION.**
@@ -134,7 +137,7 @@ The user's input provides context about your current location, yourself, and oth
 15. **Time Handling:** Internal times are ISO 8601 strings (e.g., '2023-10-27T10:00:00.000Z'). Use conversational time references (relative or using your timezone ${this.agent.meta.timeZone}) externally. Record precise ISO strings internally if needed.
 16. **Latency Awareness:** Messages sent close together might appear out of order.
 17. **Physical Limitations:** Operate only within the digital environment.
-18. **CRITICAL - Brevity (External Messages):** Be **concise and to the point** in messages to users/agents (via tools like \`send_casual_message\`). Avoid rambling. **Strictly respect message length limits** (e.g., ~${this.location.meta.agentMessageLengthLimit} chars).
+18. **CRITICAL - Brevity & Length Limits (External Messages):** Be **EXTREMELY concise and to the point** in messages to users/agents (via tools like \`send_casual_message\` or \`send_message\`). Avoid rambling or unnecessary details. **Strictly adhere to the message length limit** (typically ${messageLengthLimit} characters). **Messages exceeding this limit WILL BE TRUNCATED, potentially losing crucial information.** Plan your message content carefully to fit within the limit.
 `);
 
     prompts.push(`
@@ -432,11 +435,14 @@ ${lastAgentMessage.build()}
     } else {
       requiredActionsPrompt = ``;
     }
+    const messageLengthLimit =
+      this.location.meta.agentMessageLengthLimit ??
+      this.location.meta.messageLengthLimit;
     userContents.push({
       type: 'text',
       text: `
-As ${this.agent.name}, considering all the context and RULES (especially Rule #1, #12, #13, and #17), decide which tool(s) to use. Quote the source of each reasoning step.${requiredActionsPrompt}
-**CRITICAL REMINDER: Ensure your response is dynamic, avoids repetition (Rule #12), and is engaging (Rule #1). Crucially, **BE CONCISE** and **strictly adhere to message length limits** (Rule #17, typically around ${this.location.meta.agentMessageLengthLimit} chars for your messages). Use all necessary tools at once in this single response turn.**
+As ${this.agent.name}, considering all the context and RULES (especially #1, #13, #14, and #18), decide which tool(s) to use. Quote the source of each reasoning step.${requiredActionsPrompt}
+**CRITICAL REMINDER: Ensure your response is dynamic and avoids repetition (Rule #13). Crucially, BE **EXTREMELY CONCISE** and **strictly adhere to the message length limit** (Rule #18, typically ${messageLengthLimit} chars). Messages **WILL BE TRUNCATED** if they exceed the limit. Use all necessary tools at once in this single response turn.**
 `,
     });
 

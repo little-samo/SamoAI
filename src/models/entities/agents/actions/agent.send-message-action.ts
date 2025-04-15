@@ -15,7 +15,7 @@ export class AgentSendMessageAction extends AgentAction {
     switch (this.version) {
       case 1:
       default:
-        return 'Send a message.';
+        return 'Sends a message. Be concise & strictly adhere to length limits. If too long, summarize or send multiple shorter messages in one turn.';
     }
   }
 
@@ -31,7 +31,7 @@ export class AgentSendMessageAction extends AgentAction {
             .string()
             .max(messageLengthLimit)
             .describe(
-              `The message you want to send. Visible to others. Max length: ${messageLengthLimit} characters.`
+              `The message to send. Strictly adhere to the ${messageLengthLimit} char limit (text WILL BE TRUNCATED if exceeded). Summarize/rephrase if too long, or send multiple messages if essential for clarity.`
             ),
           expression: z
             .string()
