@@ -5,6 +5,7 @@ import { ItemModel } from '../entity.item-model';
 import { EntityType } from '../entity.types';
 
 import { UserState } from './states/user.state';
+import { UserContext } from './user.context';
 import { DEFAULT_USER_META, UserMeta } from './user.meta';
 import { UserModel } from './user.model';
 import { UserId } from './user.types';
@@ -58,6 +59,13 @@ export class User extends Entity {
 
   public set state(value: UserState) {
     this._state = value;
+  }
+
+  public override get context(): UserContext {
+    return new UserContext({
+      ...super.context,
+      handle: this.model.username ?? undefined,
+    });
   }
 
   public override createItem(itemDataId: number): ItemModel {
