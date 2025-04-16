@@ -51,7 +51,7 @@ export class AgentExecuteGimmickAction extends AgentAction {
     }
 
     await this.location.addAgentMessage(this.agent, {
-      action: `EXECUTE_GIMICK:${action.gimmickKey}:${JSON.stringify(
+      action: `EXECUTE_GIMMICK:${action.gimmickKey}:${JSON.stringify(
         action.parameters
       )}`,
     });
