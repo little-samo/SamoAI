@@ -47,16 +47,6 @@ export class GimmickWebSearchCore extends GimmickCore {
     summaryLlm: LlmService,
     query: string
   ): Promise<void> {
-    const maxResultLength =
-      Number(
-        this.meta.options?.maxResultLength ??
-          GimmickWebSearchCore.DEFAULT_MAX_SEARCH_RESULT_LENGTH
-      ) - 200;
-    const maxSummaryLength = Math.min(
-      200,
-      this.gimmick.location.meta.messageLengthLimit - 50
-    );
-
     const searchMessages: LlmMessage[] = [];
     searchMessages.push({
       role: 'system',
@@ -90,14 +80,22 @@ Return the raw, unfiltered search results and findings. The next step will proce
       verbose: ENV.DEBUG,
     });
 
+    const maxResultLength = Number(
+      this.meta.options?.maxResultLength ??
+        GimmickWebSearchCore.DEFAULT_MAX_SEARCH_RESULT_LENGTH
+    );
+    const maxLlmResultLength = maxResultLength - 200;
+    const maxSummaryLength = this.gimmick.location.meta.messageLengthLimit;
+    const maxLlmSummaryLength = maxSummaryLength - 50;
+
     const summaryMessages: LlmMessage[] = [];
     summaryMessages.push({
       role: 'system',
       content: `
 You are tasked with processing web search results. Based on the provided results, generate three outputs in JSON format:
 1.  'reasoning': Explain your thought process for analyzing the search results and determining the key information to include in the summary and detailed result. Briefly outline the main points and how you will structure the detailed result.
-2.  'result': A detailed compilation of the most important information found in the search results. Aim to be comprehensive and informative within the character limit of ${maxResultLength}. Include key facts, data points, or direct quotes where relevant. Structure the information clearly based on your reasoning.
-3.  'summary': A concise paragraph summarizing the key findings identified in your reasoning. This summary must not exceed ${maxSummaryLength} characters and should reflect the essence of the detailed result.
+2.  'result': A detailed compilation of the most important information found in the search results. Aim to be comprehensive and informative within the character limit of ${maxLlmResultLength}. Include key facts, data points, or direct quotes where relevant. Structure the information clearly based on your reasoning.
+3.  'summary': A concise paragraph summarizing the key findings identified in your reasoning. This summary must not exceed ${maxLlmSummaryLength} characters and should reflect the essence of the detailed result.
 
 # Web Search Results
 
@@ -111,6 +109,10 @@ Return ONLY a valid JSON object with the following structure, ensuring 'result' 
   "result": "Detailed information compilation...",
   "summary": "Concise summary paragraph..."
 }
+
+# Important Note
+
+If the 'result' or 'summary' exceeds the specified character limits (${maxLlmResultLength} and ${maxLlmSummaryLength} respectively), the output will be truncated. Ensure your outputs are within these limits to avoid losing information.
 `.trim(),
     });
 
@@ -120,7 +122,6 @@ Return ONLY a valid JSON object with the following structure, ensuring 'result' 
       verbose: ENV.DEBUG,
     });
 
-    // Ensure summary and result are strings before substring
     const rawSummary =
       typeof summaryResult?.summary === 'string' ? summaryResult.summary : '';
     const rawResult =
