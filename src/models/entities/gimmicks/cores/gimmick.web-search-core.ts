@@ -115,6 +115,10 @@ Return ONLY a valid JSON object with the following structure, ensuring 'result' 
 If the 'result' or 'summary' exceeds the specified character limits (${maxLlmResultLength} and ${maxLlmSummaryLength} respectively), the output will be truncated. Ensure your outputs are within these limits to avoid losing information.
 `.trim(),
     });
+    summaryMessages.push({
+      role: 'user',
+      content: searchResult,
+    });
 
     const summaryResult = await summaryLlm.generate(summaryMessages, {
       maxTokens: GimmickWebSearchCore.LLM_MAX_TOKENS,
