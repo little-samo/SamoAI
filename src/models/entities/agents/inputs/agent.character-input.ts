@@ -533,6 +533,11 @@ Provide your reasoning step-by-step. Then, output your final decision ONLY as a 
       content: `
 **Objective:** (Used by a separate background process) Generate an updated, **highly concise** summary in English based on the provided context. **Crucially, the AI agent (e.g., "Little Samo") operates simultaneously across multiple distinct Locations. Information and context are NOT automatically shared between these Locations.** This summary serves as the primary mechanism for the agent to maintain context, awareness, and continuity when switching between Locations or resuming interaction after a pause. It bridges the information gap by synthesizing the previous state (\`<CurrentSummary>\`) with the events of the latest turn (\`<Prompt>\`, \`<Input>\`, \`<Output>\`) in the *specific Location where this turn occurred*. Your generated summary must capture the absolute essentials needed for the agent to understand the situation if encountered again, possibly after interacting elsewhere, **clearly identifying which Location the new information pertains to and including date strings for key events.**
 
+**Context:**
+*   \`<Prompt>\` (in user message): Contains the system prompt used in the previous call, which defines the agent's role, rules, and behavior.
+*   \`<Input>\`: Shows the context the agent received (including summary state *before* this update).
+*   \`<Output>\`: Shows the agent's tool calls performed by the agent assistant.
+
 **Follow these rules strictly:**
 
 1.  **Synthesize, Condense & ISO 8601 date strings (CRITICAL):** Create a ***highly condensed***, coherent narrative integrating the *most relevant points* from the \`<CurrentSummary>\` with the *significant happenings* revealed in the \`<Input>\` and \`<Output>\` of the current turn. The new summary *replaces* the old one. **Incorporate relevant **ISO 8601 date strings** (as mentioned in main Rule #15, e.g., \`(time: '2025-04-19T10:00:00.000Z')\`) for key events** where available in the \`<Input>\` or \`<Output>\` (like messages, memory updates, or significant observations). Extract date strings directly associated with the events being summarized.
@@ -558,6 +563,7 @@ Provide your reasoning step-by-step. Then, output your final decision ONLY as a 
 ${prevSummary}
 </CurrentSummary>
 
+The system prompt used in the previous call, which defines the agent's role, rules, and behavior:
 <Prompt>
 `,
     });
@@ -573,6 +579,7 @@ ${prevSummary}
       text: `
 </Prompt>
 
+The context the agent received:
 <Input>
 `,
     });
@@ -592,6 +599,7 @@ ${prevSummary}
       text: `
 </Input>
 
+The agent's tool calls performed by the agent assistant:
 <Output>
 ${JSON.stringify(toolCalls, null, 2)}
 </Output>
@@ -618,11 +626,9 @@ ${JSON.stringify(toolCalls, null, 2)}
 **Objective:** Based on the agent's recent interaction (input, output including \`add_memory\` and \`add_entity_memory\` suggestions), decide which actual memory updates are necessary using the \`update_memory\` and \`update_entity_memory\` tools.
 
 **Context:**
+*   \`<Prompt>\` (in user message): Contains the system prompt used in the previous call, which defines the agent's role, rules, and behavior.
 *   \`<Input>\`: Shows the context the agent received (including current memory state *before* this update).
 *   \`<Output>\`: Shows the agent's actions, including any \`reasoning\` provided and \`add_memory\` or \`add_entity_memory\` calls (these are *suggestions*).
-*   Agent's Max General Memories: ${this.agent.meta.memoryLimit} (indices 0 to ${this.agent.meta.memoryLimit - 1})
-*   Agent's Max Memories Per Entity: ${this.agent.meta.entityMemoryLimit} (indices 0 to ${this.agent.meta.entityMemoryLimit - 1} per entity)
-*   **CRITICAL INDEXING NOTE:** Memory slots use **zero-based indexing**. This means for a limit of \`N\`, the valid indices are **0, 1, ..., N-1**. The index \`N\` itself is **OUT OF BOUNDS**. For example, if the limit is 5, the valid indices are 0, 1, 2, 3, and 4. **Always use an index within the valid range.**
 
 **Rules:**
 
@@ -640,6 +646,7 @@ ${JSON.stringify(toolCalls, null, 2)}
 8.  **CRITICAL - Clearing Invalid Memories:** If existing information in a slot (identified in step 4 for overwriting, or step 5 for invalidation) is no longer relevant or correct based on the agent's reasoning or current context, use the update tool for that slot but provide an **empty string (\'\"\"\')** as the 'memory' argument to effectively clear it.
 9.  **English Only:** All 'memory' content provided to the update tools MUST be in English.
 10. **Conciseness:** Ensure the 'memory' content adheres to the length limits defined in the tool parameters.
+11. **CRITICAL INDEXING NOTE:** Memory slots use **zero-based indexing**. This means for a limit of \`N\`, the valid indices are **0, 1, ..., N-1**. The index \`N\` itself is **OUT OF BOUNDS**. For example, if the limit is 5, the valid indices are 0, 1, 2, 3, and 4. **Always use an index within the valid range.**
 `.trim(),
     });
 
@@ -647,6 +654,7 @@ ${JSON.stringify(toolCalls, null, 2)}
     contents.push({
       type: 'text',
       text: `
+The system prompt used in the previous call, which defines the agent's role, rules, and behavior:
 <Prompt>
 `,
     });
@@ -662,6 +670,7 @@ ${JSON.stringify(toolCalls, null, 2)}
       text: `
 </Prompt>
 
+The context the agent received (including current memory state *before* this update):
 <Input>
 `,
     });
@@ -681,6 +690,7 @@ ${JSON.stringify(toolCalls, null, 2)}
       text: `
 </Input>
 
+Agent's actions, including any \`reasoning\` provided and \`add_memory\` or \`add_entity_memory\` calls (these are *suggestions*):
 <Output>
 ${JSON.stringify(toolCalls, null, 2)}
 </Output>

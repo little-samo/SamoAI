@@ -469,7 +469,14 @@ ${resultJson.reasoning}`
       verbose: ENV.DEBUG,
     });
     for (const toolCall of toolCalls) {
-      await this.executeToolCall(toolCall, actions[toolCall.name]);
+      const action = actions[toolCall.name];
+      if (!action) {
+        console.error(
+          `Agent ${this.model.name} executed memory action with unknown tool call: ${toolCall.name}`
+        );
+        continue;
+      }
+      await this.executeToolCall(toolCall, action);
     }
   }
 }
