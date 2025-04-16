@@ -17,13 +17,16 @@ import { RegisterGimmickCore } from './gimmick.core-decorator';
 
 @RegisterGimmickCore('web_search')
 export class GimmickWebSearchCore extends GimmickCore {
-  public static readonly DEFAULT_LLM_PLATFORM = LlmPlatform.OPENAI;
-  public static readonly DEFAULT_LLM_MODEL = 'gpt-4o-search-preview-2025-03-11';
+  public static readonly DEFAULT_SEARCH_LLM_PLATFORM = LlmPlatform.OPENAI;
+  public static readonly DEFAULT_SEARCH_LLM_MODEL =
+    'gpt-4o-search-preview-2025-03-11';
+  public static readonly DEFAULT_SUMMARY_LLM_PLATFORM = LlmPlatform.GEMINI;
+  public static readonly DEFAULT_SUMMARY_LLM_MODEL = 'gemini-2.0-flash-001';
   public static readonly LLM_MAX_TOKENS = 2048;
   public static readonly DEFAULT_MAX_SEARCH_RESULT_LENGTH = 2000;
 
   public override get description(): string {
-    return 'Performs a web search using an LLM and displays the results.';
+    return 'Searches the web for up-to-date or missing information using an LLM, providing both a summary and detailed results.';
   }
 
   public override get parameters(): z.ZodSchema {
@@ -40,7 +43,8 @@ export class GimmickWebSearchCore extends GimmickCore {
 
   private async searchWeb(
     entity: Entity,
-    llm: LlmService,
+    searchLlm: LlmService,
+    summaryLlm: LlmService,
     query: string
   ): Promise<void> {
     const maxResultLength =
@@ -53,48 +57,77 @@ export class GimmickWebSearchCore extends GimmickCore {
       this.gimmick.location.meta.messageLengthLimit - 50
     );
 
-    const messages: LlmMessage[] = [];
-    messages.push({
+    const searchMessages: LlmMessage[] = [];
+    searchMessages.push({
       role: 'system',
       content: `
-You are an AI assistant specialized in web searching. Your task is to find the most recent, reliable, and accurate information available on the web to answer the user's query.
-Provide the response **ONLY** in plain JSON format with two fields: "result" and "summary". Do not include any other text or formatting outside the JSON structure.
-- The "summary" field should provide a concise overview of the findings. Limit its length to ${maxSummaryLength} characters.
-- The "result" field should be a longer, more detailed version of the summary. It should expand on the key points from the summary while maintaining the same information. Limit its length to ${maxResultLength} characters.
-Ensure the information is up-to-date and factually correct. Focus on providing the best possible answer based on your search results.
+Your primary goal is to perform a comprehensive web search to gather the most recent, reliable, and relevant information based on the user's query. Focus on finding detailed facts, data, and source materials.
+
+- Verify the credibility of sources by cross-referencing information with multiple trusted websites.
+- Prioritize official sources, expert opinions, and well-established publications.
+- Pay attention to the publication date to ensure the information is up-to-date.
+- Extract key details and supporting evidence.
+
+# Steps
+
+1. **Identify Keywords**: Break down the user query into essential keywords to optimize the search.
+2. **Execute Search**: Use effective keywords derived from the query to search the web.
+3. **Evaluate Sources**: Assess the credibility and relevance of potential sources.
+4. **Extract Information**: Gather detailed information, including specific facts, figures, and context from the best sources found. Do not summarize at this stage; focus on collecting comprehensive data.
+
+# Output
+
+Return the raw, unfiltered search results and findings. The next step will process and summarize this information.
 `.trim(),
     });
-    messages.push({
+    searchMessages.push({
       role: 'user',
       content: query,
     });
-    const responseJson = await llm.generate(messages, {
+    const searchResult = await searchLlm.generate(searchMessages, {
       maxTokens: GimmickWebSearchCore.LLM_MAX_TOKENS,
       webSearch: true,
-      jsonOutput: true,
-      jsonSchema: z.object({
-        result: z
-          .string()
-          .describe(
-            `A longer, more detailed version of the summary. It should expand on the key points while maintaining the same information. Limit its length to ${maxResultLength} characters.`
-          ),
-        summary: z
-          .string()
-          .describe(
-            `A concise overview of the findings. Limit its length to ${maxSummaryLength} characters.`
-          ),
-      }),
       verbose: ENV.DEBUG,
     });
 
-    const summary = (responseJson.summary as string).substring(
-      0,
-      maxSummaryLength
-    );
-    const result = (responseJson.result as string).substring(
-      0,
-      maxResultLength
-    );
+    const summaryMessages: LlmMessage[] = [];
+    summaryMessages.push({
+      role: 'system',
+      content: `
+You are tasked with processing web search results. Based on the provided results, generate three outputs in JSON format:
+1.  'reasoning': Explain your thought process for analyzing the search results and determining the key information to include in the summary and detailed result. Briefly outline the main points and how you will structure the detailed result.
+2.  'result': A detailed compilation of the most important information found in the search results. Aim to be comprehensive and informative within the character limit of ${maxResultLength}. Include key facts, data points, or direct quotes where relevant. Structure the information clearly based on your reasoning.
+3.  'summary': A concise paragraph summarizing the key findings identified in your reasoning. This summary must not exceed ${maxSummaryLength} characters and should reflect the essence of the detailed result.
+
+# Web Search Results
+
+${searchResult}
+
+# Output Format
+
+Return ONLY a valid JSON object with the following structure, ensuring 'result' comes before 'summary':
+{
+  "reasoning": "Explanation of analysis and summarization plan...",
+  "result": "Detailed information compilation...",
+  "summary": "Concise summary paragraph..."
+}
+`.trim(),
+    });
+
+    const summaryResult = await summaryLlm.generate(summaryMessages, {
+      maxTokens: GimmickWebSearchCore.LLM_MAX_TOKENS,
+      jsonOutput: true,
+      verbose: ENV.DEBUG,
+    });
+
+    // Ensure summary and result are strings before substring
+    const rawSummary =
+      typeof summaryResult?.summary === 'string' ? summaryResult.summary : '';
+    const rawResult =
+      typeof summaryResult?.result === 'string' ? summaryResult.result : '';
+
+    const summary = rawSummary.substring(0, maxSummaryLength);
+    const result = rawResult.substring(0, maxResultLength);
 
     if (ENV.DEBUG) {
       console.log(`Gimmick ${this.gimmick.name} executed: ${query}`);
@@ -121,16 +154,38 @@ Ensure the information is up-to-date and factually correct. Focus on providing t
     entity: Entity,
     parameters: GimmickParameters
   ): Promise<boolean> {
-    const llmOptions: Partial<LlmServiceOptions> = this.meta.options ?? {};
-    llmOptions.platform ??= GimmickWebSearchCore.DEFAULT_LLM_PLATFORM;
-    llmOptions.model ??= GimmickWebSearchCore.DEFAULT_LLM_MODEL;
-    llmOptions.apiKey ??= entity.location.apiKeys[llmOptions.platform]?.key;
-    if (!llmOptions.apiKey) {
+    const llmSearchOptions: Partial<LlmServiceOptions> =
+      this.meta.options?.search ?? {};
+    llmSearchOptions.platform ??=
+      GimmickWebSearchCore.DEFAULT_SEARCH_LLM_PLATFORM;
+    llmSearchOptions.model ??= GimmickWebSearchCore.DEFAULT_SEARCH_LLM_MODEL;
+    llmSearchOptions.apiKey ??=
+      entity.location.apiKeys[llmSearchOptions.platform]?.key;
+    if (!llmSearchOptions.apiKey) {
       throw new Error('No API key found');
     }
 
-    const llm = LlmFactory.create(llmOptions as LlmServiceOptions);
-    const promise = this.searchWeb(entity, llm, parameters as string);
+    const llmSummaryOptions: Partial<LlmServiceOptions> =
+      this.meta.options?.summary ?? {};
+    llmSummaryOptions.platform ??=
+      GimmickWebSearchCore.DEFAULT_SUMMARY_LLM_PLATFORM;
+    llmSummaryOptions.model ??= GimmickWebSearchCore.DEFAULT_SUMMARY_LLM_MODEL;
+    llmSummaryOptions.apiKey ??=
+      entity.location.apiKeys[llmSummaryOptions.platform]?.key;
+    if (!llmSummaryOptions.apiKey) {
+      throw new Error('No API key found');
+    }
+
+    const searchLlm = LlmFactory.create(llmSearchOptions as LlmServiceOptions);
+    const summaryLlm = LlmFactory.create(
+      llmSummaryOptions as LlmServiceOptions
+    );
+    const promise = this.searchWeb(
+      entity,
+      searchLlm,
+      summaryLlm,
+      parameters as string
+    );
     await this.gimmick.location.emitAsync(
       'gimmickExecuting',
       this.gimmick,
