@@ -43,7 +43,7 @@ export class LocationRoundRobinCore extends LocationCore {
       );
       if (
         !agentLastMessage ||
-        now.getTime() - agentLastMessage.createdAt.getTime() >
+        now.getTime() - new Date(agentLastMessage.createdAt).getTime() >
           LocationRoundRobinCore.AGENT_MESSAGE_COOLDOWN
       ) {
         updatedAgentIds.add(agent.model.id);
