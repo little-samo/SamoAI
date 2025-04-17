@@ -756,6 +756,7 @@ export class WorldManager extends AsyncEventEmitter {
         void options.handleSave!(
           this.updateLocation(llmApiKeyUserId, locationId, {
             ...options,
+            ignorePauseUpdateUntil: true,
             executeSpecificAgentId: entity.id as AgentId,
           })
         );
