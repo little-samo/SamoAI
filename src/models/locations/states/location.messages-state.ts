@@ -22,6 +22,7 @@ export interface LocationMessage {
 
   updatedAt: Date;
   createdAt: Date;
+  executedAt?: Date;
 }
 
 export interface LocationMessagesState {

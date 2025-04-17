@@ -13,17 +13,27 @@ export class LocationRoundRobinCore extends LocationCore {
   public static readonly LOCATION_UPDATE_LONG_COOLDOWN_ON_NO_MESSAGE = 0; // pause
 
   private get lastMessage(): LocationMessage | undefined {
-    return this.location.messagesState.messages.at(-1);
+    return this.location.messagesState.messages.reduce((max, message) => {
+      return new Date(message.executedAt ?? message.createdAt) >
+        new Date(max.executedAt ?? max.createdAt)
+        ? message
+        : max;
+    }, this.location.messagesState.messages[0]);
   }
 
   public async update(): Promise<number> {
-    const messages = [...this.location.messagesState.messages].reverse();
+    const now = new Date();
+    const messages = [...this.location.messagesState.messages].sort(
+      (a, b) =>
+        (b.executedAt ?? b.createdAt).getTime() -
+        (a.executedAt ?? a.createdAt).getTime()
+    );
     const lastMessage = this.lastMessage;
     const agents = Object.values(this.location.agents);
     if (!this.meta.sequential) {
       shuffle(agents);
     }
-    const evaluatedAgentIds: Set<number> = new Set();
+    const updatedAgentIds: Set<number> = new Set();
     for (const agent of agents) {
       if (
         lastMessage?.entityType == EntityType.Agent &&
@@ -38,10 +48,10 @@ export class LocationRoundRobinCore extends LocationCore {
       );
       if (
         !agentLastMessage ||
-        Date.now() - new Date(agentLastMessage.createdAt).getTime() >
+        now.getTime() - agentLastMessage.createdAt.getTime() >
           LocationRoundRobinCore.AGENT_MESSAGE_COOLDOWN
       ) {
-        evaluatedAgentIds.add(agent.model.id);
+        updatedAgentIds.add(agent.model.id);
         if (!(await agent.update()) || this.lastMessage === lastMessage) {
           if (ENV.DEBUG) {
             console.log(`Agent ${agent.name} did not execute next actions`);
@@ -60,7 +70,7 @@ export class LocationRoundRobinCore extends LocationCore {
       ) {
         continue;
       }
-      if (evaluatedAgentIds.has(agent.model.id)) {
+      if (updatedAgentIds.has(agent.model.id)) {
         continue;
       }
       if (!(await agent.update()) || this.lastMessage === lastMessage) {
