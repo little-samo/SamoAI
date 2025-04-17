@@ -178,6 +178,10 @@ If the 'result' or 'summary' exceeds the specified character limits (${maxLlmRes
     entity: Entity,
     parameters: GimmickParameters
   ): Promise<string | undefined> {
+    if (!parameters || typeof parameters !== 'string') {
+      return 'Invalid query provided';
+    }
+
     const llmSearchOptions: Partial<LlmServiceOptions> =
       this.meta.options?.search ?? {};
     llmSearchOptions.platform ??=
@@ -186,7 +190,7 @@ If the 'result' or 'summary' exceeds the specified character limits (${maxLlmRes
     llmSearchOptions.apiKey ??=
       entity.location.apiKeys[llmSearchOptions.platform]?.key;
     if (!llmSearchOptions.apiKey) {
-      throw new Error('No API key found');
+      return 'No API key found';
     }
 
     const llmSummaryOptions: Partial<LlmServiceOptions> =
@@ -197,7 +201,7 @@ If the 'result' or 'summary' exceeds the specified character limits (${maxLlmRes
     llmSummaryOptions.apiKey ??=
       entity.location.apiKeys[llmSummaryOptions.platform]?.key;
     if (!llmSummaryOptions.apiKey) {
-      throw new Error('No API key found');
+      return 'No API key found';
     }
 
     const searchLlm = LlmFactory.create(llmSearchOptions as LlmServiceOptions);
