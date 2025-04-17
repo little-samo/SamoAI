@@ -63,12 +63,6 @@ export class LocationRoundRobinCore extends LocationCore {
     }
 
     for (const agent of agents) {
-      if (
-        lastMessage?.entityType == EntityType.Agent &&
-        lastMessage.entityId === agent.model.id
-      ) {
-        continue;
-      }
       if (updatedAgentIds.has(agent.model.id)) {
         continue;
       }
