@@ -41,7 +41,7 @@ export class GimmickWebSearchCore extends GimmickCore {
     };
   }
 
-  private async searchWeb(
+  private async searchWebInternal(
     entity: Entity,
     searchLlm: LlmService,
     summaryLlm: LlmService,
@@ -92,18 +92,15 @@ Return the raw, unfiltered search results and findings. The next step will proce
     summaryMessages.push({
       role: 'system',
       content: `
-You are tasked with processing web search results. Based on the provided results, generate three outputs in JSON format:
+You are tasked with processing web search results. Based on the provided results, generate three outputs in a STRICTLY VALID JSON format:
 1.  'reasoning': Explain your thought process for analyzing the search results and determining the key information to include in the summary and detailed result. Briefly outline the main points and how you will structure the detailed result.
 2.  'result': A detailed compilation of the most important information found in the search results. Aim to be comprehensive and informative within the character limit of ${maxLlmResultLength}. Include key facts, data points, or direct quotes where relevant. Structure the information clearly based on your reasoning.
 3.  'summary': A concise paragraph summarizing the key findings identified in your reasoning. This summary must not exceed ${maxLlmSummaryLength} characters and should reflect the essence of the detailed result.
 
-# Web Search Results
-
-${searchResult}
-
 # Output Format
 
-Return ONLY a valid JSON object with the following structure, ensuring 'result' comes before 'summary':
+IMPORTANT: You MUST return ONLY a valid JSON object with no extra text, markdown, or formatting outside the JSON structure.
+Follow this exact format:
 {
   "reasoning": "Explanation of analysis and summarization plan...",
   "result": "Detailed information compilation...",
@@ -140,15 +137,37 @@ If the 'result' or 'summary' exceeds the specified character limits (${maxLlmRes
     }
 
     await entity.updateCanvas(this.canvas.name, result);
-    await entity.location.addSystemMessage(
-      `Gimmick ${this.gimmick.name} executed. Web Search Result: ${summary}`
-    );
+    await entity.location.addGimmickMessage(this.gimmick, {
+      message: `Web Search Result: ${summary}`,
+    });
     await entity.location.emitAsync(
       'gimmickExecuted',
       this.gimmick,
       entity,
       summary
     );
+  }
+
+  private async searchWeb(
+    entity: Entity,
+    searchLlm: LlmService,
+    summaryLlm: LlmService,
+    query: string
+  ): Promise<void> {
+    try {
+      await this.searchWebInternal(entity, searchLlm, summaryLlm, query);
+    } catch (error) {
+      console.error(error);
+      await this.gimmick.location.emitAsync(
+        'gimmickExecutionFailed',
+        this.gimmick,
+        entity,
+        query
+      );
+      await this.gimmick.location.addSystemMessage(
+        `Gimmick ${this.gimmick.name} failed to execute.`
+      );
+    }
   }
 
   public override async update(): Promise<boolean> {

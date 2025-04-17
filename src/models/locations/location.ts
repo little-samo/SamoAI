@@ -324,6 +324,31 @@ export class Location extends AsyncEventEmitter {
     await this.addMessage(locationMessage);
   }
 
+  public async addGimmickMessage(
+    gimmick: Gimmick,
+    options: {
+      message?: string;
+      expression?: string;
+      image?: string;
+      action?: string;
+      emotion?: string;
+    } = {}
+  ): Promise<void> {
+    const locationMessage: LocationMessage = {
+      entityType: EntityType.Gimmick,
+      entityId: gimmick.id as GimmickId,
+      name: gimmick.name,
+      message: options.message,
+      expression: options.expression,
+      image: options.image,
+      action: options.action,
+      emotion: options.emotion,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    await this.addMessage(locationMessage);
+  }
+
   public async addSystemMessage(message: string): Promise<void> {
     const locationMessage: LocationMessage = {
       entityType: EntityType.System,

@@ -733,6 +733,18 @@ export class WorldManager extends AsyncEventEmitter {
       }
     );
 
+    location.on(
+      'gimmickExecutionFailed',
+      (gimmick: Gimmick, _entity: Entity, _parameters: GimmickParameters) => {
+        void options.handleSave!(
+          this.gimmickRepository.updateGimmickStateOccupier(
+            locationId,
+            gimmick.id
+          )
+        );
+      }
+    );
+
     location.on('gimmickExecuted', async (gimmick: Gimmick, entity: Entity) => {
       await gimmick.release();
       if (entity.type === EntityType.Agent) {
