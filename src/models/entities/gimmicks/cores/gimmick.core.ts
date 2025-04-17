@@ -28,5 +28,5 @@ export abstract class GimmickCore {
   public abstract execute(
     entity: Entity,
     parameters: GimmickParameters
-  ): Promise<boolean>;
+  ): Promise<string | undefined>;
 }

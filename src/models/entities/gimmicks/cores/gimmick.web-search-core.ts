@@ -177,7 +177,7 @@ If the 'result' or 'summary' exceeds the specified character limits (${maxLlmRes
   public override async execute(
     entity: Entity,
     parameters: GimmickParameters
-  ): Promise<boolean> {
+  ): Promise<string | undefined> {
     const llmSearchOptions: Partial<LlmServiceOptions> =
       this.meta.options?.search ?? {};
     llmSearchOptions.platform ??=
@@ -218,6 +218,6 @@ If the 'result' or 'summary' exceeds the specified character limits (${maxLlmRes
       promise
     );
 
-    return true;
+    return undefined;
   }
 }
