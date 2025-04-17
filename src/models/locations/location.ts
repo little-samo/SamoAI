@@ -268,7 +268,7 @@ export class Location extends AsyncEventEmitter {
       message.createdAt = new Date();
     }
     message.updatedAt = new Date();
-    message.executedAt = message.executedAt ?? new Date();
+    message.executedAt = this.executedAt;
     this.messagesState.messages.push(message);
     this.messagesState.messages.sort(
       (a, b) =>
