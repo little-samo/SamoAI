@@ -12,5 +12,9 @@ export abstract class LocationCore {
     return this.meta.name;
   }
 
+  public get defaultPauseUpdateDuration(): number {
+    return 0;
+  }
+
   public abstract update(): Promise<number>;
 }

@@ -8,6 +8,10 @@ export class LocationUpdateForeverCore extends LocationCore {
   public static readonly UPDATE_INTERVAL = 3000; // 3 seconds
   public static readonly SLEEP_INTERVAL = 0; // pause
 
+  public override get defaultPauseUpdateDuration(): number {
+    return LocationUpdateForeverCore.UPDATE_INTERVAL;
+  }
+
   public async update(): Promise<number> {
     const entities = Object.values(this.location.entities);
     if (!this.meta.sequential) {
