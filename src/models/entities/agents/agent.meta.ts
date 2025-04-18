@@ -84,7 +84,7 @@ export const DEFAULT_AGENT_META: AgentMeta = {
   evaluateMaxTokens: 1024,
   llms: [
     { platform: LlmPlatform.ANTHROPIC, model: 'claude-3-7-sonnet-20250219' },
-    { platform: LlmPlatform.GEMINI, model: 'gemini-2.0-flash-001' },
+    { platform: LlmPlatform.GEMINI, model: 'gemini-2.5-flash-preview-04-17' },
   ],
   inputs: ['character'],
   languages: ['English'],
