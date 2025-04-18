@@ -230,16 +230,24 @@ Response can only be in JSON format and must strictly follow the following forma
 ]`,
       });
 
+      const reasoningMaxTokens = this.reasoning
+        ? (options?.reasoningMaxTokens ??
+          LlmService.DEFAULT_REASONING_MAX_TOKENS)
+        : 0;
       const request: GenerateContentParameters = {
         model: this.model,
         contents: userAssistantMessages,
         config: {
           temperature: options?.temperature ?? LlmService.DEFAULT_TEMPERATURE,
           maxOutputTokens:
-            (this.reasoning ? 1024 : 0) + // pad for reasoning
+            reasoningMaxTokens +
             (options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS),
           responseMimeType: 'application/json',
           systemInstruction: systemMessages,
+          thinkingConfig: {
+            includeThoughts: this.reasoning ?? false,
+            thinkingBudget: reasoningMaxTokens,
+          },
         },
       };
       if (options?.verbose) {
