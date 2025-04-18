@@ -511,7 +511,7 @@ Consider these factors:
 *   **Implicit Expectations:** Is it reasonably your turn to contribute to the conversation or activity?
 
 Based on the above factors, output your final decision ONLY as the literal string 'true' or 'false', with no surrounding text, markdown, or JSON formatting.
-`,
+`.trim(),
     });
 
     messages.push({
