@@ -72,8 +72,6 @@ export class Location extends AsyncEventEmitter {
 
   private readonly _entityStates: Record<EntityKey, LocationEntityState> = {};
 
-  public readonly executedAt: Date = new Date();
-
   public static fixState(state: LocationState, meta: LocationMeta): void {
     for (const canvas of meta.canvases) {
       if (!state.canvases[canvas.name]) {
@@ -268,9 +266,6 @@ export class Location extends AsyncEventEmitter {
       message.createdAt = new Date();
     }
     message.updatedAt = new Date();
-    if (message.entityType === EntityType.Agent) {
-      message.executedAt = this.executedAt;
-    }
     this.messagesState.messages.push(message);
     this.messagesState.messages.sort(
       (a, b) =>

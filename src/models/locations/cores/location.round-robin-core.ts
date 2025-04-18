@@ -24,8 +24,7 @@ export class LocationRoundRobinCore extends LocationCore {
     const now = new Date();
     const messages = [...this.location.messagesState.messages].sort(
       (a, b) =>
-        new Date(b.executedAt ?? b.createdAt).getTime() -
-        new Date(a.executedAt ?? a.createdAt).getTime()
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
     const lastMessage = this.lastMessage;
     const agents = Object.values(this.location.agents);
