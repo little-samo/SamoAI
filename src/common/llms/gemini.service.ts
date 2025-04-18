@@ -140,8 +140,8 @@ export class GeminiService extends LlmService {
         this.llmMessagesToGeminiMessages(messages);
 
       const reasoningMaxTokens = this.reasoning
-        ? (options?.reasoningMaxTokens ??
-          LlmService.DEFAULT_REASONING_MAX_TOKENS)
+        ? (options?.maxReasoningTokens ??
+          LlmService.DEFAULT_MAX_REASONING_TOKENS)
         : 0;
       const request: GenerateContentParameters = {
         model: this.model,
@@ -231,8 +231,8 @@ Response can only be in JSON format and must strictly follow the following forma
       });
 
       const reasoningMaxTokens = this.reasoning
-        ? (options?.reasoningMaxTokens ??
-          LlmService.DEFAULT_REASONING_MAX_TOKENS)
+        ? (options?.maxReasoningTokens ??
+          LlmService.DEFAULT_MAX_REASONING_TOKENS)
         : 0;
       const request: GenerateContentParameters = {
         model: this.model,

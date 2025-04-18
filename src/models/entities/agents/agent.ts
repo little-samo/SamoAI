@@ -395,6 +395,7 @@ export class Agent extends Entity {
       {
         maxTokens: this.meta.maxTokens,
         temperature: this.meta.temperature,
+        maxReasoningTokens: this.meta.maxReasoningTokens,
         verbose: ENV.DEBUG,
       }
     );
@@ -420,19 +421,18 @@ export class Agent extends Entity {
     if (!llm) {
       throw new Error('No LlmService found');
     }
-    const resultJson = await llm.generate(messages, {
-      maxTokens: this.meta.evaluateMaxTokens,
-      temperature: this.meta.evaluateTemperature,
-      jsonOutput: true,
+    const result = await llm.generate(messages, {
+      maxTokens: this.meta.maxTokens,
+      temperature: this.meta.temperature,
+      maxReasoningTokens: this.meta.maxReasoningTokens,
       verbose: false,
     });
     if (ENV.DEBUG) {
       console.log(
-        `Agent ${this.model.name} evaluated action condition: ${resultJson.should_act}
-${resultJson.reasoning}`
+        `Agent ${this.model.name} evaluated action condition: ${result}`
       );
     }
-    return (resultJson.should_act as boolean | undefined) ?? false;
+    return result.toString().toLowerCase().includes('true');
   }
 
   public async executeMemoryActions(

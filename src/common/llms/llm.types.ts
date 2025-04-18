@@ -18,7 +18,7 @@ export interface LlmServiceOptions {
 export interface LlmOptions {
   temperature?: number;
   maxTokens?: number;
-  reasoningMaxTokens?: number;
+  maxReasoningTokens?: number;
   maxTries?: number;
   retryDelay?: number;
   jsonOutput?: boolean;

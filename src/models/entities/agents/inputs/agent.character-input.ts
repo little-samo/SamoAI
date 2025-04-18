@@ -510,11 +510,7 @@ Consider these factors:
 *   **Proactive Opportunities:** Based on the conversation flow, your character's personality/goals, or changes in the environment (new entities, gimmick status), is there a relevant observation you should share, a question you should ask, or an action you should initiate?
 *   **Implicit Expectations:** Is it reasonably your turn to contribute to the conversation or activity?
 
-Provide your reasoning step-by-step, considering the above points. Then, output your final decision ONLY as a valid JSON object in the following format, with no surrounding text or markdown:
-{
-  "reasoning": string,   // Step-by-step reasoning for the decision, considering triggers and opportunities; must come before 'should_act'
-  "should_act": boolean  // true if you should take action in this turn, false otherwise
-}
+Based on the above factors, output your final decision ONLY as the literal string 'true' or 'false', with no surrounding text, markdown, or JSON formatting.
 `,
     });
 
