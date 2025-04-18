@@ -424,7 +424,7 @@ export class Agent extends Entity {
     const result = await llm.generate(messages, {
       maxTokens: this.meta.maxTokens,
       temperature: this.meta.temperature,
-      maxReasoningTokens: this.meta.maxReasoningTokens,
+      maxReasoningTokens: this.meta.maxEvaluatationReasoningTokens,
       verbose: ENV.DEBUG,
     });
     if (ENV.DEBUG) {
