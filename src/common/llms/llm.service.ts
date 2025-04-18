@@ -9,6 +9,7 @@ import {
 export abstract class LlmService {
   public static readonly DEFAULT_TEMPERATURE = 0;
   public static readonly DEFAULT_MAX_TOKENS = 1024;
+  public static readonly DEFAULT_REASONING_MAX_TOKENS = 1024;
   public static readonly DEFAULT_MAX_TRIES = 5;
   public static readonly DEFAULT_RETRY_DELAY = 1000;
 

@@ -139,15 +139,23 @@ export class GeminiService extends LlmService {
       const [systemMessages, userAssistantMessages] =
         this.llmMessagesToGeminiMessages(messages);
 
+      const reasoningMaxTokens = this.reasoning
+        ? (options?.reasoningMaxTokens ??
+          LlmService.DEFAULT_REASONING_MAX_TOKENS)
+        : 0;
       const request: GenerateContentParameters = {
         model: this.model,
         contents: userAssistantMessages,
         config: {
           temperature: options?.temperature ?? LlmService.DEFAULT_TEMPERATURE,
           maxOutputTokens:
-            (this.reasoning ? 1024 : 0) + // pad for reasoning
+            (this.reasoning ? reasoningMaxTokens : 0) +
             (options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS),
           systemInstruction: systemMessages,
+          thinkingConfig: {
+            includeThoughts: this.reasoning ?? false,
+            thinkingBudget: reasoningMaxTokens,
+          },
         },
       };
       if (options?.jsonOutput) {

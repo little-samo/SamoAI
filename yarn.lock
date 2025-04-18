@@ -487,13 +487,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@google/genai@npm:^0.6.1":
-  version: 0.6.1
-  resolution: "@google/genai@npm:0.6.1"
+"@google/genai@npm:^0.9.0":
+  version: 0.9.0
+  resolution: "@google/genai@npm:0.9.0"
   dependencies:
     google-auth-library: "npm:^9.14.2"
     ws: "npm:^8.18.0"
-  checksum: 10c0/8c1ebd77c898cc4ee430c94fdc13d86a8bed4fa7f84ae51d139879ea01e62da6e48881ef0e7bf4c446a739356e2a3b71068b773c1a966ca83046086b70f2aad9
+    zod: "npm:^3.22.4"
+    zod-to-json-schema: "npm:^3.22.4"
+  checksum: 10c0/c0d2d7ff915e397f09bfdb03f1a13b306e48f9354e3e03f943361d133c451eac51de59e8f3f07c575d868f83df3ce1ed3f696cb75534c8e9a8d06ba03f25f304
   languageName: node
   linkType: hard
 
@@ -867,7 +869,7 @@ __metadata:
     "@anthropic-ai/sdk": "npm:^0.37.0"
     "@eslint/eslintrc": "npm:^3.1.0"
     "@eslint/js": "npm:^9.13.0"
-    "@google/genai": "npm:^0.6.1"
+    "@google/genai": "npm:^0.9.0"
     "@types/express": "npm:^5.0.0"
     "@types/jest": "npm:^29.5.2"
     "@types/lodash": "npm:^4"
@@ -6525,12 +6527,28 @@ __metadata:
   languageName: node
   linkType: hard
 
+"zod-to-json-schema@npm:^3.22.4":
+  version: 3.24.5
+  resolution: "zod-to-json-schema@npm:3.24.5"
+  peerDependencies:
+    zod: ^3.24.1
+  checksum: 10c0/0745b94ba53e652d39f262641cdeb2f75d24339fb6076a38ce55bcf53d82dfaea63adf524ebc5f658681005401687f8e9551c4feca7c4c882e123e66091dfb90
+  languageName: node
+  linkType: hard
+
 "zod-to-json-schema@npm:^3.24.1":
   version: 3.24.2
   resolution: "zod-to-json-schema@npm:3.24.2"
   peerDependencies:
     zod: ^3.24.1
   checksum: 10c0/86d0ce182b17cc1a94290fec207393a0af40051a4300441d65b6c2e4a05bba731e863f23782dff99500225c60d21f0a0a6de01ae9127f5df953329193427a7c9
+  languageName: node
+  linkType: hard
+
+"zod@npm:^3.22.4":
+  version: 3.24.3
+  resolution: "zod@npm:3.24.3"
+  checksum: 10c0/ab0369810968d0329a1a141e9418e01e5c9c2a4905cbb7cb7f5a131d6e9487596e1400e21eeff24c4a8ee28dacfa5bd6103893765c055b7a98c2006a5a4fc68d
   languageName: node
   linkType: hard
 
