@@ -938,8 +938,14 @@ export class WorldManager extends AsyncEventEmitter {
     const summaryMessages = agent.inputs[
       Agent.SUMMARY_INPUT_INDEX
     ].buildSummary(agentState.summary, messages, toolCalls);
-    const summary =
-      await agent.llms[Agent.SUMMARY_LLM_INDEX]?.generate(summaryMessages);
+    const summary = await agent.llms[Agent.SUMMARY_LLM_INDEX]?.generate(
+      summaryMessages,
+      {
+        maxTokens: agent.meta.maxTokens,
+        maxReasoningTokens: agent.meta.maxReasoningTokens,
+        verbose: ENV.DEBUG,
+      }
+    );
     await this.agentRepository.updateAgentStateSummary(
       agent.id,
       summary.slice(0, agent.meta.summaryLengthLimit)

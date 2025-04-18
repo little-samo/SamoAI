@@ -465,7 +465,7 @@ export class Agent extends Entity {
 
     const toolCalls = await llm.useTools(messages, Object.values(actions), {
       maxTokens: this.meta.maxTokens,
-      temperature: this.meta.temperature,
+      maxReasoningTokens: this.meta.maxReasoningTokens,
       verbose: ENV.DEBUG,
     });
     for (const toolCall of toolCalls) {
