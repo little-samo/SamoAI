@@ -425,7 +425,7 @@ export class Agent extends Entity {
       maxTokens: this.meta.maxTokens,
       temperature: this.meta.temperature,
       maxReasoningTokens: this.meta.maxReasoningTokens,
-      verbose: false,
+      verbose: ENV.DEBUG,
     });
     if (ENV.DEBUG) {
       console.log(
