@@ -26,7 +26,7 @@ export class GimmickWebSearchCore extends GimmickCore {
   public static readonly DEFAULT_MAX_SEARCH_RESULT_LENGTH = 2000;
 
   public override get description(): string {
-    return 'Searches the web for up-to-date or missing information using an LLM, providing both a summary and detailed results.';
+    return 'Searches the web for up-to-date or missing information using an LLM, providing both a summary and detailed results. Execution takes approximately 30 seconds.';
   }
 
   public override get parameters(): z.ZodSchema {
