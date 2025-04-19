@@ -41,7 +41,7 @@ export class GimmickWebSearchCore extends GimmickCore {
     };
   }
 
-  private async searchWebInternal(
+  private async searchWeb(
     entity: Entity,
     searchLlm: LlmService,
     summaryLlm: LlmService,
@@ -146,28 +146,6 @@ If the 'result' or 'summary' exceeds the specified character limits (${maxLlmRes
       entity,
       summary
     );
-  }
-
-  private async searchWeb(
-    entity: Entity,
-    searchLlm: LlmService,
-    summaryLlm: LlmService,
-    query: string
-  ): Promise<void> {
-    try {
-      await this.searchWebInternal(entity, searchLlm, summaryLlm, query);
-    } catch (error) {
-      console.error(error);
-      await this.gimmick.location.emitAsync(
-        'gimmickExecutionFailed',
-        this.gimmick,
-        entity,
-        query
-      );
-      await this.gimmick.location.addSystemMessage(
-        `Gimmick ${this.gimmick.name} failed to execute.`
-      );
-    }
   }
 
   public override async update(): Promise<boolean> {

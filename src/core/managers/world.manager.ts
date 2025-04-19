@@ -721,15 +721,38 @@ export class WorldManager extends AsyncEventEmitter {
       );
     });
 
+    async function handleGimmickExecuting(
+      gimmick: Gimmick,
+      entity: Entity,
+      parameters: GimmickParameters,
+      promise: Promise<boolean>
+    ): Promise<void> {
+      try {
+        await promise;
+      } catch (error) {
+        console.error(error);
+        await gimmick.location.emitAsync(
+          'gimmickExecutionFailed',
+          gimmick,
+          entity,
+          parameters
+        );
+        await gimmick.location.addSystemMessage(
+          `Gimmick ${gimmick.name} failed to execute.`
+        );
+      }
+    }
     location.on(
       'gimmickExecuting',
-      async (
+      (
         gimmick: Gimmick,
         entity: Entity,
         parameters: GimmickParameters,
         promise: Promise<boolean>
       ) => {
-        void options.handleSave!(promise);
+        void options.handleSave!(
+          handleGimmickExecuting(gimmick, entity, parameters, promise)
+        );
       }
     );
 
