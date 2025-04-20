@@ -12,9 +12,81 @@
   <a href="#-license">License</a>
 </p>
 
-<div align="center">
-  <img src="./docs/static/img/overview.png" alt="SamoAI Overview" width="700" />
-</div>
+```mermaid
+flowchart TD
+  %% ── Styles ────────────────────────────────────────────────
+  classDef location fill:#FFF5EE,stroke:#FF9248,stroke-width:2px;
+  classDef user     fill:#E8F8F5,stroke:#16A085,stroke-width:1px;
+  classDef agentbox fill:#EEF5FF,stroke:#2980B9,stroke-width:1px;
+  classDef inner    fill:#FFFFFF,stroke:#2980B9,stroke-width:0.5px;
+  classDef canvas   fill:#E8FFF5,stroke:#16A085,stroke-width:1px;
+  classDef gimmick  fill:#FDF2FF,stroke:#9B59B6,stroke-width:1px;
+  classDef external fill:#F9F9F9,stroke:#7F8C8D,stroke-dasharray:3 3;
+  classDef engine   fill:#FFFFF0,stroke:#7F8C8D,stroke-dasharray:2 2;
+
+  %% ── Location ─────────────────────────────────────────────
+  subgraph L["Location"]
+    direction TB
+
+    %% Users (compact)
+    subgraph UsersGrp["Users"]
+      direction LR
+      U1["User"]:::user
+      U2["User"]:::user
+    end
+
+    %% Agents (two examples)
+    subgraph AgentsGrp["Agents"]
+      direction LR
+
+      %% Agent 2 – Nyx
+      subgraph A2["<img src='https://raw.githubusercontent.com/little-samo/SamoAI/master/docs/static/img/nyx_mascot.png' height='70px'/><br/>Agent"]
+        direction TB
+        P2["Persona"]:::inner
+        M2["Memory"]:::inner
+        S2["Summary"]:::inner
+        C2["Personal&nbsp;Canvas"]:::inner
+        Engines2["GPT&nbsp;|&nbsp;Gemini&nbsp;|&nbsp;Claude"]:::engine
+      end
+      class A2 agentbox
+
+      %% Agent 1 – Samo
+      subgraph A1["<img src='https://raw.githubusercontent.com/little-samo/SamoAI/master/docs/static/img/samo_mascot.png' height='45px'/><br/>Agent"]
+        direction TB
+        P1["Persona"]:::inner
+        M1["Memory"]:::inner
+        S1["Summary"]:::inner
+        C1["Personal&nbsp;Canvas"]:::inner
+        Engines1["GPT&nbsp;|&nbsp;Gemini&nbsp;|&nbsp;Claude"]:::engine
+      end
+      class A1 agentbox
+    end
+
+    %% Collaboration hub
+    subgraph Collab["Collaboration"]
+      direction LR
+      SharedCanvas["Shared&nbsp;Canvas<br/>(Docs)"]:::canvas
+      Messages["Messages<br/>(Chat)"]:::canvas
+    end
+
+    %% Gimmicks
+    Gimmicks["Gimmicks<br/>(Web Search, SNS Posts, …)"]:::gimmick
+  end
+  style L fill:#FFF5EE,stroke:#FF9248,stroke-width:2px
+
+  %% External services
+  External["External Services<br/>(Web, SNS, Games, Banking)"]:::external
+
+  %% ── Relationships (5 arrows) ─────────────────────────────
+  UsersGrp  -- "chat & edit" --> Collab
+  AgentsGrp -- "chat & edit" --> Collab
+  UsersGrp  -- "request"     --> Gimmicks
+  AgentsGrp -- "trigger"     --> Gimmicks
+  Gimmicks  -- "invoke"      --> External
+
+  %% Multiple locations note
+  L -. "Multiple locations" .-> L2["…"]
+```
 
 ## 🌟 What is SamoAI
 
