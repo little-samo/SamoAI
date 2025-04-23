@@ -63,7 +63,7 @@ export const DEFAULT_LOCATION_META: LocationMeta = {
     {
       name: 'plan',
       description:
-        'For detailed, multi-step planning and long-term strategy development. Use this private space to outline goals, break down complex tasks into actionable steps, track progress towards objectives, list required resources or information, or draft sequences of actions before executing them via tools. Keep the plan organized and focused on achieving your objectives.',
+        'Your private workspace for strategic thinking and task management. **Use this canvas CONSISTENTLY for any task requiring multiple steps, long-term tracking, or persistent information.** Break down complex goals into actionable steps (Plan-Do-Check-Act cycle recommended: 1. Outline steps, 2. Execute first step(s), 3. Check progress/results, 4. Adjust plan). Draft sequences of actions, list required resources, track progress, and refine strategies here before using tools. Keep it updated and organized to ensure effective execution.',
       maxLength: 1000,
     },
   ],
