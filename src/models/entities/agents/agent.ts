@@ -444,7 +444,7 @@ export class Agent extends Entity {
     return result.toString().toLowerCase().includes('true');
   }
 
-  public async updateSummary(
+  public async generateSummary(
     inputMessages: LlmMessage[],
     prevToolCalls: LlmToolCall[],
     inputIndex: number = Agent.SUMMARY_INPUT_INDEX,
@@ -464,14 +464,11 @@ export class Agent extends Entity {
       throw new Error('No LlmService found');
     }
 
-    const summary = await this.llms[Agent.SUMMARY_LLM_INDEX]?.generate(
-      messages,
-      {
-        maxTokens: this.meta.maxTokens,
-        maxReasoningTokens: this.meta.maxReasoningTokens,
-        verbose: ENV.DEBUG,
-      }
-    );
+    const summary = await llm.generate(messages, {
+      maxTokens: this.meta.maxTokens,
+      maxReasoningTokens: this.meta.maxReasoningTokens,
+      verbose: ENV.DEBUG,
+    });
     return summary;
   }
 

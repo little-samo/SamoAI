@@ -960,7 +960,7 @@ export class WorldManager extends AsyncEventEmitter {
         agent.id
       );
       agent.state = agentState;
-      const summary = await agent.updateSummary(messages, toolCalls);
+      const summary = await agent.generateSummary(messages, toolCalls);
 
       await this.agentRepository.updateAgentStateSummary(
         agent.id,
