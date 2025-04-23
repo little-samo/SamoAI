@@ -158,6 +158,13 @@ export class GeminiService extends LlmService {
                 thinkingBudget: reasoningMaxTokens,
               }
             : undefined,
+          tools: options?.webSearch
+            ? [
+                {
+                  googleSearch: {},
+                },
+              ]
+            : undefined,
         },
       };
       if (options?.jsonOutput) {
