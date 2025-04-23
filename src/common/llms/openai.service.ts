@@ -244,26 +244,6 @@ Response can only be in JSON format and must strictly follow the following forma
 ]`,
       });
 
-      let responseFormat:
-        | ResponseFormatText
-        | ResponseFormatJSONObject
-        | ResponseFormatJSONSchema;
-      if (options?.jsonSchema) {
-        responseFormat = {
-          type: 'json_schema',
-          json_schema: {
-            name: 'response',
-            strict: true,
-            schema: zodToJsonSchema(options.jsonSchema, {
-              target: 'openAi',
-            }),
-          },
-        };
-      } else if (options?.jsonOutput) {
-        responseFormat = { type: 'json_object' };
-      } else {
-        responseFormat = { type: 'text' };
-      }
       const request: ChatCompletionCreateParamsNonStreaming = {
         model: this.model,
         messages: [...systemMessages, ...userAssistantMessages],
@@ -271,7 +251,7 @@ Response can only be in JSON format and must strictly follow the following forma
           ? undefined
           : (options?.temperature ?? LlmService.DEFAULT_TEMPERATURE),
         max_tokens: options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS,
-        response_format: responseFormat,
+        response_format: { type: 'json_object' },
       };
       if (options?.verbose) {
         console.log(request);

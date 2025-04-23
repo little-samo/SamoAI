@@ -167,7 +167,7 @@ export class GeminiService extends LlmService {
             : undefined,
         },
       };
-      if (options?.jsonOutput) {
+      if (options?.jsonOutput && !options?.webSearch) {
         request.config!.responseMimeType = 'application/json';
       }
       if (options?.verbose) {
@@ -180,9 +180,18 @@ export class GeminiService extends LlmService {
         throw new LlmInvalidContentError('Gemini returned no content');
       }
 
-      const responseText = response.text;
+      let responseText = response.text;
       if (options?.jsonOutput) {
         try {
+          // Remove potential markdown fences
+          if (responseText.startsWith('```json')) {
+            responseText = responseText.slice(7);
+          } else if (responseText.startsWith('```')) {
+            responseText = responseText.slice(3);
+          }
+          if (responseText.endsWith('```')) {
+            responseText = responseText.slice(0, -3);
+          }
           return JSON.parse(responseText) as T extends true
             ? Record<string, unknown>
             : string;

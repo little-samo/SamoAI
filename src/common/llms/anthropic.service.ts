@@ -166,9 +166,18 @@ export class AnthropicService extends LlmService {
         throw new LlmInvalidContentError('Anthropic returned no content');
       }
 
-      const responseText = (response.content[0] as TextBlock).text;
+      let responseText = (response.content[0] as TextBlock).text;
       if (options?.jsonOutput) {
         try {
+          // Remove potential markdown fences
+          if (responseText.startsWith('```json')) {
+            responseText = responseText.slice(7);
+          } else if (responseText.startsWith('```')) {
+            responseText = responseText.slice(3);
+          }
+          if (responseText.endsWith('```')) {
+            responseText = responseText.slice(0, -3);
+          }
           return JSON.parse(responseText) as T extends true
             ? Record<string, unknown>
             : string;
@@ -272,8 +281,17 @@ Response can only be in JSON format and must strictly follow the following forma
         throw new LlmInvalidContentError('Anthropic returned no content');
       }
 
-      const responseText = (response.content[0] as TextBlock).text;
+      let responseText = (response.content[0] as TextBlock).text;
       try {
+        // Remove potential markdown fences
+        if (responseText.startsWith('```json')) {
+          responseText = responseText.slice(7);
+        } else if (responseText.startsWith('```')) {
+          responseText = responseText.slice(3);
+        }
+        if (responseText.endsWith('```')) {
+          responseText = responseText.slice(0, -3);
+        }
         const toolCalls = JSON.parse(prefill + responseText) as LlmToolCall[];
         return toolCalls;
       } catch (error) {
