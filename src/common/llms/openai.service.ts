@@ -251,7 +251,7 @@ Response can only be in JSON format and must strictly follow the following forma
           ? undefined
           : (options?.temperature ?? LlmService.DEFAULT_TEMPERATURE),
         max_tokens: options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS,
-        response_format: { type: 'json_object' },
+        response_format: { type: 'text' },
       };
       if (options?.verbose) {
         console.log(request);
