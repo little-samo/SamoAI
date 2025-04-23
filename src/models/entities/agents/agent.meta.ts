@@ -90,7 +90,7 @@ export const DEFAULT_AGENT_META: AgentMeta = {
       reasoning: true,
     },
   ],
-  inputs: ['character'],
+  inputs: ['character', 'character_action_condition', 'summary', 'memory'],
   languages: ['English'],
   timeZone: 'UTC',
 

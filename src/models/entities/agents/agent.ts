@@ -29,15 +29,17 @@ import {
 import { AgentMemory, AgentState } from './states/agent.state';
 
 export class Agent extends Entity {
-  public static readonly ACTION_LLM_INDEX = 0;
+  public static readonly MAIN_LLM_INDEX = 0;
   public static readonly MINI_LLM_INDEX = 1;
-  public static readonly SUMMARY_LLM_INDEX = 1;
-  public static readonly MEMORY_LLM_INDEX = 1;
+  public static readonly ACTION_LLM_INDEX = 0;
+  public static readonly EVALUATE_LLM_INDEX = 1;
+  public static readonly SUMMARY_LLM_INDEX = 2;
+  public static readonly MEMORY_LLM_INDEX = 3;
 
   public static readonly ACTION_INPUT_INDEX = 0;
-  public static readonly EVALUATE_INPUT_INDEX = 0;
-  public static readonly SUMMARY_INPUT_INDEX = 0;
-  public static readonly MEMORY_INPUT_INDEX = 0;
+  public static readonly EVALUATE_INPUT_INDEX = 1;
+  public static readonly SUMMARY_INPUT_INDEX = 2;
+  public static readonly MEMORY_INPUT_INDEX = 3;
 
   private static _createEmptyState(agentId: AgentId): AgentState {
     return {
@@ -103,10 +105,11 @@ export class Agent extends Entity {
     for (const input of meta.inputs) {
       this.inputs.push(AgentInputFactory.createInput(input, location, this));
     }
+    const actionLlm =
+      this.llms.at(Agent.ACTION_LLM_INDEX) ??
+      this.llms.at(Agent.MAIN_LLM_INDEX);
     const actions = [
-      ...(this.llms.at(Agent.ACTION_LLM_INDEX)?.reasoning
-        ? []
-        : ['reasoning:latest']),
+      ...(actionLlm?.reasoning ? [] : ['reasoning:latest']),
       ...meta.actions,
       ...location.meta.actions,
     ];
@@ -384,8 +387,11 @@ export class Agent extends Entity {
     await this.location.emitAsync('agentExecuteNextActions', this);
 
     const input = this.inputs[inputIndex];
-    const messages = input.buildNextActions();
-    const llm = this.llms.at(llmIndex) ?? this.llms.at(0);
+    if (!input) {
+      throw new Error('No input found');
+    }
+    const messages = input.build();
+    const llm = this.llms.at(llmIndex) ?? this.llms.at(Agent.MAIN_LLM_INDEX);
     if (!llm) {
       throw new Error('No LlmService found');
     }
@@ -413,11 +419,14 @@ export class Agent extends Entity {
 
   public async evaluateActionCondition(
     inputIndex: number = Agent.EVALUATE_INPUT_INDEX,
-    llmIndex: number = Agent.MINI_LLM_INDEX
+    llmIndex: number = Agent.EVALUATE_LLM_INDEX
   ): Promise<boolean> {
     const input = this.inputs[inputIndex];
-    const messages = input.buildActionCondition();
-    const llm = this.llms.at(llmIndex) ?? this.llms.at(0);
+    if (!input) {
+      throw new Error('No input found');
+    }
+    const messages = input.build();
+    const llm = this.llms.at(llmIndex) ?? this.llms.at(Agent.MINI_LLM_INDEX);
     if (!llm) {
       throw new Error('No LlmService found');
     }
@@ -435,6 +444,37 @@ export class Agent extends Entity {
     return result.toString().toLowerCase().includes('true');
   }
 
+  public async updateSummary(
+    inputMessages: LlmMessage[],
+    prevToolCalls: LlmToolCall[],
+    inputIndex: number = Agent.SUMMARY_INPUT_INDEX,
+    llmIndex: number = Agent.SUMMARY_LLM_INDEX
+  ): Promise<string> {
+    const input = this.inputs[inputIndex];
+    if (!input) {
+      throw new Error('No input found');
+    }
+    const messages = input.build({
+      prevSummary: this.state.summary,
+      inputMessages,
+      toolCalls: prevToolCalls,
+    });
+    const llm = this.llms.at(llmIndex) ?? this.llms.at(Agent.MINI_LLM_INDEX);
+    if (!llm) {
+      throw new Error('No LlmService found');
+    }
+
+    const summary = await this.llms[Agent.SUMMARY_LLM_INDEX]?.generate(
+      messages,
+      {
+        maxTokens: this.meta.maxTokens,
+        maxReasoningTokens: this.meta.maxReasoningTokens,
+        verbose: ENV.DEBUG,
+      }
+    );
+    return summary;
+  }
+
   public async executeMemoryActions(
     inputMessages: LlmMessage[],
     prevToolCalls: LlmToolCall[],
@@ -442,8 +482,12 @@ export class Agent extends Entity {
     llmIndex: number = Agent.MEMORY_LLM_INDEX
   ): Promise<void> {
     const input = this.inputs[inputIndex];
-    const messages = input.buildNextMemoryActions(inputMessages, prevToolCalls);
-    const llm = this.llms.at(llmIndex) ?? this.llms.at(0);
+    if (!input) {
+      throw new Error('No input found');
+    }
+    const messages = input.build({ inputMessages, toolCalls: prevToolCalls });
+
+    const llm = this.llms.at(llmIndex) ?? this.llms.at(Agent.MINI_LLM_INDEX);
     if (!llm) {
       throw new Error('No LlmService found');
     }

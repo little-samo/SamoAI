@@ -950,42 +950,26 @@ export class WorldManager extends AsyncEventEmitter {
     });
   }
 
-  private async updateAgentSummaryInternal(
-    agent: Agent,
-    messages: LlmMessage[],
-    toolCalls: LlmToolCall[]
-  ): Promise<void> {
-    const agentState = await this.agentRepository.getOrCreateAgentState(
-      agent.id
-    );
-    const summaryMessages = agent.inputs[
-      Agent.SUMMARY_INPUT_INDEX
-    ].buildSummary(agentState.summary, messages, toolCalls);
-    const summary = await agent.llms[Agent.SUMMARY_LLM_INDEX]?.generate(
-      summaryMessages,
-      {
-        maxTokens: agent.meta.maxTokens,
-        maxReasoningTokens: agent.meta.maxReasoningTokens,
-        verbose: ENV.DEBUG,
-      }
-    );
-    await this.agentRepository.updateAgentStateSummary(
-      agent.id,
-      summary.slice(0, agent.meta.summaryLengthLimit)
-    );
-
-    if (ENV.DEBUG) {
-      console.log(`Agent ${agent.name} summary updated to ${summary}`);
-    }
-  }
-
   public async updateAgentSummary(
     agent: Agent,
     messages: LlmMessage[],
     toolCalls: LlmToolCall[]
   ): Promise<void> {
     return await this.withAgentSummaryUpdateLock(agent.id, async () => {
-      return await this.updateAgentSummaryInternal(agent, messages, toolCalls);
+      const agentState = await this.agentRepository.getOrCreateAgentState(
+        agent.id
+      );
+      agent.state = agentState;
+      const summary = await agent.updateSummary(messages, toolCalls);
+
+      await this.agentRepository.updateAgentStateSummary(
+        agent.id,
+        summary.slice(0, agent.meta.summaryLengthLimit)
+      );
+
+      if (ENV.DEBUG) {
+        console.log(`Agent ${agent.name} summary updated to ${summary}`);
+      }
     });
   }
 
@@ -995,6 +979,10 @@ export class WorldManager extends AsyncEventEmitter {
     toolCalls: LlmToolCall[]
   ): Promise<void> {
     return await this.withAgentMemoryUpdateLock(agent.id, async () => {
+      const agentState = await this.agentRepository.getOrCreateAgentState(
+        agent.id
+      );
+      agent.state = agentState;
       return await agent.executeMemoryActions(messages, toolCalls);
     });
   }

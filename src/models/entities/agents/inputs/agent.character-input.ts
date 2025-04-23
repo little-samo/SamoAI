@@ -1,14 +1,11 @@
 import type {
   LlmMessage,
   LlmMessageContent,
-  LlmMessageTextContent,
-  LlmToolCall,
 } from '@little-samo/samo-ai/common';
 
 import { type ItemKey } from '../../../entities';
 import { EntityCanvasContext } from '../../../entities/entity.context';
 import { GimmickContext } from '../../../entities/gimmicks/gimmick.context';
-import { type Location } from '../../../locations';
 import {
   LocationCanvasContext,
   LocationContext,
@@ -25,40 +22,9 @@ import {
 import { AgentInputBuilder } from './agent.input';
 import { RegisterAgentInput } from './agent.input-decorator';
 
-import type { Agent } from '../agent';
-
 @RegisterAgentInput('character')
 export class AgentCharacterInputBuilder extends AgentInputBuilder {
-  private static mergeMessageContents(
-    userContents: LlmMessageContent[],
-    separator: string = '\n\n'
-  ): LlmMessageContent[] {
-    const mergedContents: LlmMessageContent[] = [];
-    for (const content of userContents) {
-      if (content.type === 'image') {
-        mergedContents.push(content);
-      } else {
-        const text = content.text.trim();
-        if (
-          mergedContents.length > 0 &&
-          mergedContents[mergedContents.length - 1].type === 'text'
-        ) {
-          (
-            mergedContents[mergedContents.length - 1] as LlmMessageTextContent
-          ).text += `${separator}${text}`;
-        } else {
-          mergedContents.push(content);
-        }
-      }
-    }
-    return mergedContents;
-  }
-
-  public constructor(location: Location, agent: Agent) {
-    super(location, agent);
-  }
-
-  private buildPrompt(): string {
+  protected buildPrompt(): string {
     const prompts: string[] = [];
     prompts.push(`
 You are an AI Agent named "${this.agent.name}" and you are role-playing as a specific character in a particular location. Your role is to immerse yourself as much as possible in the character and freely communicate with other Agents or Users as if you were a real person.
@@ -172,7 +138,7 @@ Additional Rules for ${this.agent.name}:
     return prompts.map((p) => p.trim()).join('\n\n');
   }
 
-  private buildContext(): LlmMessageContent[] {
+  protected buildContext(): LlmMessageContent[] {
     const contexts: LlmMessageContent[] = [];
 
     contexts.push({
@@ -391,9 +357,7 @@ ${LocationMessageContext.FORMAT}
 `,
     });
 
-    contexts.push(
-      ...AgentCharacterInputBuilder.mergeMessageContents(messageContexts)
-    );
+    contexts.push(...AgentInputBuilder.mergeMessageContents(messageContexts));
 
     const lastAgentMessage = locationContext.messages
       .slice()
@@ -415,7 +379,7 @@ ${lastAgentMessage.build()}
     return contexts;
   }
 
-  public override buildNextActions(): LlmMessage[] {
+  public override build(): LlmMessage[] {
     const messages: LlmMessage[] = [];
 
     const prompt = this.buildPrompt();
@@ -482,225 +446,7 @@ ${this.location.state.rendering}
 
     messages.push({
       role: 'user',
-      content: AgentCharacterInputBuilder.mergeMessageContents(userContents),
-    });
-
-    return messages;
-  }
-
-  public override buildActionCondition(): LlmMessage[] {
-    const messages: LlmMessage[] = [];
-
-    const prompt = this.buildPrompt();
-    messages.push({
-      role: 'system',
-      content: prompt,
-    });
-
-    const userContents = this.buildContext();
-    userContents.push({
-      type: 'text',
-      text: `
-Available tools: ${Object.keys(this.agent.actions).join(', ')}.
-
-Based on the rules, your character (${JSON.stringify(this.agent.meta.character)}), your goals, the current context, and recent messages (especially those from others), decide if you (${this.agent.name}) should take any action *in this turn*.
-
-Consider these factors:
-*   **Direct Triggers:** Is there a direct question, request, or event that requires an immediate response or reaction from you?
-*   **Proactive Opportunities:** Based on the conversation flow, your character's personality/goals, or changes in the environment (new entities, gimmick status), is there a relevant observation you should share, a question you should ask, or an action you should initiate?
-*   **Implicit Expectations:** Is it reasonably your turn to contribute to the conversation or activity?
-
-Based on the above factors, output your final decision ONLY as the literal string 'true' or 'false', with no surrounding text, markdown, or JSON formatting.
-`.trim(),
-    });
-
-    messages.push({
-      role: 'user',
-      content: AgentCharacterInputBuilder.mergeMessageContents(userContents),
-    });
-
-    return messages;
-  }
-
-  public override buildSummary(
-    prevSummary: string,
-    inputMessages: LlmMessage[],
-    toolCalls: LlmToolCall[]
-  ): LlmMessage[] {
-    const messages: LlmMessage[] = [];
-
-    messages.push({
-      role: 'system',
-      content: `
-**Objective:** (Used by a separate background process) Generate an updated, **highly concise** summary in English based on the provided context. **Crucially, the AI agent (e.g., "Little Samo") operates simultaneously across multiple distinct Locations. Information and context are NOT automatically shared between these Locations.** This summary serves as the primary mechanism for the agent to maintain context, awareness, and continuity when switching between Locations or resuming interaction after a pause. It bridges the information gap by synthesizing the previous state (\`<CurrentSummary>\`) with the events of the latest turn (\`<Prompt>\`, \`<Input>\`, \`<Output>\`) in the *specific Location where this turn occurred*. Your generated summary must capture the absolute essentials needed for the agent to understand the situation if encountered again, possibly after interacting elsewhere, **clearly identifying which Location the new information pertains to and including date strings for key events.**
-
-**Context:**
-*   \`<Prompt>\` (in user message): Contains the system prompt used in the previous call, which defines the agent's role, rules, and behavior.
-*   \`<Input>\`: Shows the context the agent received (including summary state *before* this update).
-*   \`<Output>\`: Shows the agent's tool calls performed by the agent assistant.
-
-**Follow these rules strictly:**
-
-1.  **Synthesize, Condense & ISO 8601 date strings (CRITICAL):** Create a ***highly condensed***, coherent narrative integrating the *most relevant points* from the \`<CurrentSummary>\` with the *significant happenings* revealed in the \`<Input>\` and \`<Output>\` of the current turn. The new summary *replaces* the old one. **Incorporate relevant **ISO 8601 date strings** (as mentioned in main Rule #15, e.g., \`(time: '2025-04-19T10:00:00.000Z')\`) for key events** where available in the \`<Input>\` or \`<Output>\` (like messages, memory updates, or significant observations). Extract date strings directly associated with the events being summarized.
-2.  **Focus on Cross-Location Contextual Significance:** Prioritize information vital for understanding the ongoing situation, agent's state, user intentions, relationships, and unresolved tasks/goals **specifically if the agent were to revisit this Location after being active in others.** Ask: "What core facts (with date strings) from *this* turn in *this* Location must the agent remember to function effectively upon return?"
-3.  **Capture Key Interactions & Decisions:** Include *only the most important* user requests, agent responses, significant agent observations (from reasoning), confirmations, agreements, disagreements, or pivotal conversation moments relevant to the ongoing state *within the current Location*, **always adding date strings.**
-4.  **Note State Changes & Location (CRITICAL):** Mention critical changes (users entering/leaving, item transfers, key memory/canvas updates) impacting local context. **Crucially, ALL new information added MUST be clearly associated with the specific Location** using the format \`LOCATION_NAME (LOCATION_KEY)\` (e.g., \`Private Chat (location:123)\`). Find details in \`<Input>\`'s \`<Location>\` block. Prefixing entries is required, e.g., \`[Private Chat (location:123)] User user:456(Lucid) asked...(time:...)\`. **Include date strings for these state changes.**
-5.  **Prioritize Recency & Strict Limit (ABSOLUTELY CRITICAL):** Brevity is paramount. **The summary MUST STRICTLY ADHERE to a MAXIMUM limit of ${this.agent.meta.summaryLengthLimit} characters.**
-    *   **Prioritization Strategy:** When synthesizing, and especially **when approaching the ${this.agent.meta.summaryLengthLimit}-character limit, prioritize summarizing the *current turn's key events (with date strings)* and integrating them with the *most recent and contextually vital points* from the \`<CurrentSummary>\`.**
-    *   **Trimming:** Less critical or significantly older information from the \`<CurrentSummary>\` **must be condensed further or omitted entirely** if necessary to stay within the ${this.agent.meta.summaryLengthLimit}-character limit. The goal is to ensure the *latest interactions are always preserved*, even at the cost of older details.
-    *   **Warning:** Do NOT exceed ${this.agent.meta.summaryLengthLimit} characters. **Exceeding the limit WILL result in truncation and CRITICAL LOSS of recent context.** Edit ruthlessly.
-6.  **Maintain Neutrality and Factuality:** Report events objectively based *only* on the provided data for *this* turn in *this* Location. Do not add interpretations or predictions.
-7.  **Reference Entities Clearly:** Use the \`type:id(name)\` format (e.g., \`user:123(Alice)\`, \`agent:45(Bob)\`) consistently when referring to specific entities in the summary. Also remember the Location \`NAME (KEY)\` format (Summary Rule #4) and ISO 8601 Date Strings (Summary Rule #1).
-8.  **Language (CRITICAL):** The summary MUST be written entirely in **English** (as per main Rule #5).
-9.  **Output Format (CRITICAL):** Provide *only* the raw text of the new summary. No introductions, markdown, apologies, etc. **Crucially, ensure the final output rigorously adheres to the ${this.agent.meta.summaryLengthLimit}-character maximum (Summary Rule #5), includes Location identifiers (Summary Rule #4), uses the correct entity format (Summary Rule #7), and incorporates ISO 8601 Date Strings (Summary Rule #1). Double-check length before finalizing.**
-`.trim(),
-    });
-
-    const contents: LlmMessageContent[] = [];
-    contents.push({
-      type: 'text',
-      text: `
-<CurrentSummary>
-${prevSummary}
-</CurrentSummary>
-
-The system prompt used in the previous call, which defines the agent's role, rules, and behavior:
-<Prompt>
-`,
-    });
-
-    for (const message of inputMessages) {
-      if (message.role === 'assistant') {
-        contents.push({ type: 'text', text: message.content });
-      }
-    }
-
-    contents.push({
-      type: 'text',
-      text: `
-</Prompt>
-
-The context the agent received:
-<Input>
-`,
-    });
-
-    for (const message of inputMessages) {
-      if (message.role === 'user') {
-        if (typeof message.content === 'string') {
-          contents.push({ type: 'text', text: message.content });
-        } else {
-          contents.push(...message.content);
-        }
-      }
-    }
-
-    contents.push({
-      type: 'text',
-      text: `
-</Input>
-
-The agent's tool calls performed by the agent assistant:
-<Output>
-${JSON.stringify(toolCalls, null, 2)}
-</Output>
-`,
-    });
-
-    messages.push({
-      role: 'user',
-      content: AgentCharacterInputBuilder.mergeMessageContents(contents, '\n'),
-    });
-
-    return messages;
-  }
-
-  public override buildNextMemoryActions(
-    inputMessages: LlmMessage[],
-    toolCalls: LlmToolCall[]
-  ): LlmMessage[] {
-    const messages: LlmMessage[] = [];
-
-    messages.push({
-      role: 'system',
-      content: `
-**Objective:** Based on the agent's recent interaction (input, output including \`add_memory\` and \`add_entity_memory\` suggestions), decide which actual memory updates are necessary using the \`update_memory\` and \`update_entity_memory\` tools.
-
-**Context:**
-*   \`<Prompt>\` (in user message): Contains the system prompt used in the previous call, which defines the agent's role, rules, and behavior.
-*   \`<Input>\`: Shows the context the agent received (including current memory state *before* this update).
-*   \`<Output>\`: Shows the agent's actions, including any \`reasoning\` provided and \`add_memory\` or \`add_entity_memory\` calls (these are *suggestions*).
-
-**Rules:**
-
-1.  **Consider Reasoning:** First, review the agent's reasoning provided in the \`reasoning\` tool call within the \`<Output>\`. Use this reasoning to understand the *intent* behind any suggested memory additions.
-2.  **Review Suggestions:** Examine the \`add_memory\` and \`add_entity_memory\` calls in the \`<Output>\` in light of the agent's reasoning.
-3.  **Evaluate Necessity:** Based on the reasoning and the suggested content, determine if the information is truly important, new, or corrective compared to the existing memories shown in \`<Input>\` (<YourMemories>, <YourMemoriesAbout...>). Avoid redundant entries.
-4.  **Select Target Slot & Justify (Index Range: 0 to limit-1 - See CRITICAL NOTE):**
-    *   For \`add_memory\` suggestions deemed necessary: If there's an empty slot in \`<YourMemories>\` (indices 0 to ${this.agent.meta.memoryLimit - 1}), use the first available index. If all ${this.agent.meta.memoryLimit} slots are full, **explicitly justify** why the chosen existing memory (index between 0 and ${this.agent.meta.memoryLimit - 1}) is the *least important* or *most outdated* based on the agent's reasoning and current context, before selecting its index to overwrite. **Ensure the selected index is strictly less than ${this.agent.meta.memoryLimit}.**
-    *   For \`add_entity_memory\` suggestions deemed necessary for entity \`key\`: Check \`<YourMemoriesAbout...>\` for that 'key'. If there's an empty slot (indices 0 to ${this.agent.meta.entityMemoryLimit - 1}), use the first available index within that range. If all ${this.agent.meta.entityMemoryLimit} slots (indices 0 to ${this.agent.meta.entityMemoryLimit - 1}) for that entity are full, **explicitly justify** why the chosen existing memory (index between 0 and ${this.agent.meta.entityMemoryLimit - 1}) *for that specific entity* is the *least important* or *most outdated* based on reasoning and context, before selecting its index to overwrite. **Ensure the selected index is strictly less than ${this.agent.meta.entityMemoryLimit}.**
-5.  **Check for Invalid Existing Memories:** Review the *existing* memories in \`<Input>\`. If any memory slot contains information that is clearly outdated or invalidated by the current interaction context or the agent's reasoning (even without a specific 'add_...' suggestion), plan to update it. **If clearing/overwriting based on this rule, briefly justify why the existing memory is invalid.**
-6.  **Consolidate & Prioritize:** If multiple updates are suggested or needed, prioritize the most critical ones based on the agent's reasoning. You might consolidate related information if appropriate, respecting length limits.
-7.  **Use Update Tools:** For each necessary update, call the appropriate tool (ensuring the specified index is within the valid range: **0 to limit-1**):
-    *   'update_memory(index, memory)' for general memories (index 0 to ${this.agent.meta.memoryLimit - 1}).
-    *   'update_entity_memory(key, index, memory)' for entity-specific memories (index 0 to ${this.agent.meta.entityMemoryLimit - 1}).
-8.  **CRITICAL - Clearing Invalid Memories:** If existing information in a slot (identified in step 4 for overwriting, or step 5 for invalidation) is no longer relevant or correct based on the agent's reasoning or current context, use the update tool for that slot but provide an **empty string (\'\"\"\')** as the 'memory' argument to effectively clear it.
-9.  **English Only:** All 'memory' content provided to the update tools MUST be in English.
-10. **Conciseness:** Ensure the 'memory' content adheres to the length limits defined in the tool parameters.
-11. **CRITICAL INDEXING NOTE:** Memory slots use **zero-based indexing**. This means for a limit of \`N\`, the valid indices are **0, 1, ..., N-1**. The index \`N\` itself is **OUT OF BOUNDS**. For example, if the limit is 5, the valid indices are 0, 1, 2, 3, and 4. **Always use an index within the valid range.**
-`.trim(),
-    });
-
-    const contents: LlmMessageContent[] = [];
-    contents.push({
-      type: 'text',
-      text: `
-The system prompt used in the previous call, which defines the agent's role, rules, and behavior:
-<Prompt>
-`,
-    });
-
-    for (const message of inputMessages) {
-      if (message.role === 'assistant') {
-        contents.push({ type: 'text', text: message.content });
-      }
-    }
-
-    contents.push({
-      type: 'text',
-      text: `
-</Prompt>
-
-The context the agent received (including current memory state *before* this update):
-<Input>
-`,
-    });
-
-    for (const message of inputMessages) {
-      if (message.role === 'user') {
-        if (typeof message.content === 'string') {
-          contents.push({ type: 'text', text: message.content });
-        } else {
-          contents.push(...message.content);
-        }
-      }
-    }
-
-    contents.push({
-      type: 'text',
-      text: `
-</Input>
-
-Agent's actions, including any \`reasoning\` provided and \`add_memory\` or \`add_entity_memory\` calls (these are *suggestions*):
-<Output>
-${JSON.stringify(toolCalls, null, 2)}
-</Output>
-`,
-    });
-
-    messages.push({
-      role: 'user',
-      content: AgentCharacterInputBuilder.mergeMessageContents(contents, '\n'),
+      content: AgentInputBuilder.mergeMessageContents(userContents),
     });
 
     return messages;
