@@ -20,7 +20,7 @@ export class GimmickWebSearchCore extends GimmickCore {
   public static readonly DEFAULT_SEARCH_LLM_PLATFORM = LlmPlatform.GEMINI;
   public static readonly DEFAULT_SEARCH_LLM_MODEL =
     'gemini-2.5-flash-preview-04-17';
-  public static readonly LLM_MAX_TOKENS = 2048;
+  public static readonly LLM_MAX_TOKENS = 4096;
   public static readonly LLM_MAX_REASONING_TOKENS = 2048;
   public static readonly DEFAULT_MAX_SEARCH_RESULT_LENGTH = 2000;
 
