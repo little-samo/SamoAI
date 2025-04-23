@@ -76,57 +76,41 @@ You are tasked with performing a web search based on the user's query and then p
       content: query,
     });
 
-    try {
-      const searchSummaryResult = await searchLlm.generate(messages, {
-        maxTokens: maxTokens,
-        maxReasoningTokens: maxReasoningTokens,
-        webSearch: true,
-        jsonOutput: true,
-        verbose: ENV.DEBUG,
-      });
+    const searchSummaryResult = await searchLlm.generate(messages, {
+      maxTokens: maxTokens,
+      maxReasoningTokens: maxReasoningTokens,
+      webSearch: true,
+      jsonOutput: true,
+      verbose: ENV.DEBUG,
+    });
 
-      const rawSummary =
-        typeof searchSummaryResult?.summary === 'string'
-          ? searchSummaryResult.summary
-          : '';
-      const rawResult =
-        typeof searchSummaryResult?.result === 'string'
-          ? searchSummaryResult.result
-          : '';
+    const rawSummary =
+      typeof searchSummaryResult?.summary === 'string'
+        ? searchSummaryResult.summary
+        : '';
+    const rawResult =
+      typeof searchSummaryResult?.result === 'string'
+        ? searchSummaryResult.result
+        : '';
 
-      const summary = rawSummary.substring(0, maxSummaryLength);
-      const result = rawResult.substring(0, maxResultLength);
+    const summary = rawSummary.substring(0, maxSummaryLength);
+    const result = rawResult.substring(0, maxResultLength);
 
-      if (ENV.DEBUG) {
-        console.log(`Gimmick ${this.gimmick.name} executed: ${query}`);
-        console.log(`Summary: ${summary}`);
-      }
-
-      await entity.updateCanvas(this.canvas.name, result);
-      await entity.location.addGimmickMessage(this.gimmick, {
-        message: `Web Search Result: ${summary}`,
-      });
-      await entity.location.emitAsync(
-        'gimmickExecuted',
-        this.gimmick,
-        entity,
-        summary
-      );
-    } catch (error) {
-      console.error(
-        `Error executing gimmick ${this.gimmick.name} for entity ${entity.name}:`,
-        error
-      );
-      await entity.location.addGimmickMessage(this.gimmick, {
-        message: `Web search failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      });
-      await entity.location.emitAsync(
-        'gimmickFailed',
-        this.gimmick,
-        entity,
-        error instanceof Error ? error.message : 'Unknown error'
-      );
+    if (ENV.DEBUG) {
+      console.log(`Gimmick ${this.gimmick.name} executed: ${query}`);
+      console.log(`Summary: ${summary}`);
     }
+
+    await entity.updateCanvas(this.canvas.name, result);
+    await entity.location.addGimmickMessage(this.gimmick, {
+      message: `Web Search Result: ${summary}`,
+    });
+    await entity.location.emitAsync(
+      'gimmickExecuted',
+      this.gimmick,
+      entity,
+      summary
+    );
   }
 
   public override async update(): Promise<boolean> {
