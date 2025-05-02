@@ -34,6 +34,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.37.0",
     "@google/genai": "^0.9.0",
+    "@modelcontextprotocol/sdk": "^1.10.2",
     "dotenv": "^16.4.7",
     "lodash": "^4.17.21",
     "openai": "^4.83.0",
