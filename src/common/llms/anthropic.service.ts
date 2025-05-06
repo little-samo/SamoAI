@@ -248,7 +248,7 @@ parameters: ${JSON.stringify(parameters)}`,
 
       systemMessages.push({
         type: 'text',
-        text: `Refer to the definitions of the available tools above, and output the tools you plan to use in JSON format. Begin by using the reasoning tool to perform a chain-of-thought analysis. Based on that analysis, select and use the necessary tools from the rest—following the guidance provided in the previous prompt.
+        text: `Refer to the definitions of the available tools above, and output the tools you plan to use in JSON format. Based on that analysis, select and use the necessary tools from the rest—following the guidance provided in the previous prompt.
 
 Response can only be in JSON format and must strictly follow the following format, with no surrounding text or markdown:
 [
