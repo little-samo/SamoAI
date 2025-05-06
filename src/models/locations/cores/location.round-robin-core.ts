@@ -22,10 +22,7 @@ export class LocationRoundRobinCore extends LocationCore {
 
   public async update(): Promise<number> {
     const now = new Date();
-    const messages = [...this.location.messagesState.messages].sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
+    const messages = [...this.location.messagesState.messages].reverse();
     const lastMessage = this.lastMessage;
     const agents = Object.values(this.location.agents);
     if (!this.meta.sequential) {
