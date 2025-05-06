@@ -208,8 +208,10 @@ export class GimmickExecuteMcpCore extends GimmickCore {
       return 'Invalid parameters';
     }
 
-    const { tool, args } =
+    const coreParameters =
       parameters as object as GimmickExecuteMcpCoreParameters;
+    const { tool } = coreParameters;
+    let { args } = coreParameters;
 
     if (!tool || !args) {
       return 'Required parameters missing (tool, args)';
@@ -219,7 +221,10 @@ export class GimmickExecuteMcpCore extends GimmickCore {
       return `Unsupported tool: ${tool}`;
     }
 
-    // TODO: Add common parameters to the call
+    const entityArguments = this.meta.entityArguments?.[entity.key];
+    if (entityArguments) {
+      args = { ...entityArguments, ...args };
+    }
 
     const promise = this.callMcpServer(entity, tool, args);
 
