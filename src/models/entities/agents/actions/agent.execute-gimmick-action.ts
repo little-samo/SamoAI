@@ -32,11 +32,11 @@ export class AgentExecuteGimmickAction extends AgentAction {
           parameters: z
             .union([
               z.string(),
-              z.literal('NEXT_MESSAGE'),
+              z.literal('PREV_MESSAGE'),
               z.record(z.string(), z.unknown()),
             ])
             .describe(
-              `Optional parameters for the gimmick execution. These parameters MUST strictly conform to the schema defined by the target gimmick's 'PARAMETERS' field. If 'NEXT_MESSAGE' is used, it is only valid if the gimmick explicitly supports it; in this case, the text content of your *next* message in this turn will be passed as the argument, and you MUST call this 'execute_gimmick' tool *before* the messaging tool in the same turn.`
+              `Optional parameters for the gimmick execution. These parameters MUST strictly conform to the schema defined by the target gimmick's 'PARAMETERS' field. If 'PREV_MESSAGE' is used, it is only valid if the gimmick explicitly supports it; in this case, the text content of your *previous* message in this turn will be passed as the argument. You MUST call the messaging tool *before* this 'execute_gimmick' tool in the same turn. If there was no previous message in the turn, the tool call may be invalid.`
             ),
         });
     }
@@ -68,7 +68,64 @@ export class AgentExecuteGimmickAction extends AgentAction {
       return;
     }
 
-    const error = await gimmick.execute(this.agent, action.parameters, true);
+    let parameters = action.parameters as GimmickParameters;
+    const messages = [...this.location.messagesState.messages].reverse();
+    const lastMessage = messages.find(
+      (message) =>
+        message.entityType === EntityType.Agent &&
+        message.entityId === this.agent.model.id
+    );
+    const messageText = lastMessage?.message as string;
+    if (typeof parameters === 'string') {
+      if (parameters === 'PREV_MESSAGE') {
+        if (!messageText) {
+          await this.location.addSystemMessage(
+            `Agent ${this.agent.name} has no previous message in the current turn to execute gimmick ${action.gimmickKey}.`
+          );
+          return;
+        }
+        parameters = messageText;
+      }
+    } else {
+      const replaceWithPrevMessage = (
+        obj: Record<string, unknown>
+      ): Record<string, unknown> => {
+        const result: Record<string, unknown> = {};
+
+        for (const [key, value] of Object.entries(obj)) {
+          if (value === 'PREV_MESSAGE') {
+            if (!messageText) {
+              throw new Error(
+                `Agent ${this.agent.name} has no previous message in the current turn to execute gimmick ${action.gimmickKey}.`
+              );
+            }
+
+            result[key] = messageText;
+          } else if (typeof value === 'object' && value) {
+            result[key] = replaceWithPrevMessage(
+              value as Record<string, unknown>
+            );
+          } else {
+            result[key] = value;
+          }
+        }
+
+        return result;
+      };
+
+      try {
+        parameters = replaceWithPrevMessage(
+          parameters as Record<string, unknown>
+        );
+      } catch {
+        await this.location.addSystemMessage(
+          `Agent ${this.agent.name} has no previous message in the current turn to execute gimmick ${action.gimmickKey}.`
+        );
+        return;
+      }
+    }
+
+    const error = await gimmick.execute(this.agent, parameters, true);
     if (error) {
       await this.location.emitAsync(
         'gimmickExecutionFailed',
