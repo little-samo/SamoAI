@@ -73,7 +73,8 @@ export class AgentExecuteGimmickAction extends AgentAction {
     const lastMessage = messages.find(
       (message) =>
         message.entityType === EntityType.Agent &&
-        message.entityId === this.agent.model.id
+        message.entityId === this.agent.id &&
+        message.message
     );
     const messageText = lastMessage?.message as string;
     if (typeof parameters === 'string') {
