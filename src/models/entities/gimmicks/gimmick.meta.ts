@@ -1,8 +1,14 @@
+import { type LocationEntityCanvasMeta } from '../../locations';
 import { EntityMeta } from '../entity.meta';
+
+export interface GimmickCoreOptions {
+  [key: string]: unknown;
+}
 
 export interface GimmickCoreMeta {
   name: string;
-  options?: Record<string, unknown>;
+  canvas?: LocationEntityCanvasMeta;
+  options?: GimmickCoreOptions;
 }
 
 export interface GimmickMeta extends EntityMeta {

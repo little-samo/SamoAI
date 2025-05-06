@@ -33,11 +33,13 @@ export class GimmickWebSearchCore extends GimmickCore {
   }
 
   public override get canvas(): LocationEntityCanvasMeta {
-    return {
-      name: 'web_search',
-      description: 'Displays the detailed results of the web search.',
-      maxLength: GimmickWebSearchCore.DEFAULT_MAX_SEARCH_RESULT_LENGTH,
-    };
+    return (
+      super.canvas ?? {
+        name: 'web_search',
+        description: 'Displays the detailed results of the web search.',
+        maxLength: GimmickWebSearchCore.DEFAULT_MAX_SEARCH_RESULT_LENGTH,
+      }
+    );
   }
 
   private async searchWeb(
@@ -109,6 +111,7 @@ You are tasked with performing a web search based on the user's query and then p
       'gimmickExecuted',
       this.gimmick,
       entity,
+      result,
       summary
     );
   }

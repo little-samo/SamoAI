@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
 import { type LocationEntityCanvasMeta } from '../../../locations/location.meta';
-import { GimmickCoreMeta } from '../gimmick.meta';
-import { GimmickParameters } from '../gimmick.types';
+import { type GimmickCoreMeta, type GimmickCoreOptions } from '../gimmick.meta';
+import { type GimmickParameters } from '../gimmick.types';
 
 import type { Entity } from '../../entity';
 import type { Gimmick } from '../gimmick';
@@ -20,7 +20,10 @@ export abstract class GimmickCore {
   public abstract get description(): string;
   public abstract get parameters(): z.ZodSchema;
   public get canvas(): LocationEntityCanvasMeta | undefined {
-    return undefined;
+    return this.meta.canvas;
+  }
+  public get options(): GimmickCoreOptions {
+    return this.meta.options ?? {};
   }
 
   public abstract update(): Promise<boolean>;
