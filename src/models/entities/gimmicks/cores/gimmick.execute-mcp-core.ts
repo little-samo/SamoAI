@@ -12,35 +12,6 @@ import { GimmickParameters } from '../gimmick.types';
 import { GimmickCore } from './gimmick.core';
 import { RegisterGimmickCore } from './gimmick.core-decorator';
 
-// mcp server tools response schema
-const inputSchemaPropertySchema = z
-  .object({
-    type: z.string().optional(),
-    description: z.string().optional(),
-  })
-  .passthrough();
-
-const inputSchemaSchema = z
-  .object({
-    type: z.string().optional(),
-    properties: z.record(z.string(), inputSchemaPropertySchema).optional(),
-    description: z.string().optional(),
-  })
-  .passthrough();
-
-const mcpToolSchema = z
-  .object({
-    name: z.string(),
-    inputSchema: inputSchemaSchema.optional(),
-  })
-  .passthrough();
-
-const mcpToolsListResponseSchema = z
-  .object({
-    tools: z.array(mcpToolSchema),
-  })
-  .passthrough();
-
 export type ToolDefinition = {
   name: string;
   schema?: unknown;
@@ -164,74 +135,67 @@ export class GimmickExecuteMcpCore extends GimmickCore {
     return client;
   }
 
-  private simplifySchema(
-    schema: z.infer<typeof inputSchemaSchema> | undefined
-  ): SimplifiedMCPToolSchema | undefined {
-    if (!schema || typeof schema !== 'object') {
-      return undefined;
-    }
-
-    const result: SimplifiedMCPToolSchema = {};
-
-    if (schema.properties && typeof schema.properties === 'object') {
-      const properties: Record<string, SimplifiedMCPToolProperty> = {};
-
-      for (const [key, prop] of Object.entries(schema.properties)) {
-        if (key !== 'credentials' && typeof prop === 'object') {
-          const typedProp = prop as Record<string, unknown>;
-
-          properties[key] = {
-            type: typedProp.type as string | undefined,
-            description: typedProp.description as string | undefined,
-          };
-
-          if (typedProp.type === 'array' && typedProp.items) {
-            properties[key].items = {
-              type:
-                typeof typedProp.items === 'object'
-                  ? ((typedProp.items as Record<string, unknown>).type as
-                      | string
-                      | undefined)
-                  : undefined,
-            };
-          }
-        }
-      }
-
-      result.properties = properties;
-    }
-
-    if (Array.isArray(schema.required)) {
-      result.required = schema.required.filter(
-        (field) => field !== 'credentials'
-      );
-    }
-
-    return result;
-  }
-
   private async fetchAndCacheTools(): Promise<void> {
     try {
       const client = await this.createMcpClient();
 
-      const resultTools = await client.listTools();
+      const toolsList = await client.listTools();
 
       if (ENV.DEBUG) {
         console.log(
           'MCP Init - Available Tools List:',
-          JSON.stringify(resultTools, null, 2)
+          JSON.stringify(toolsList, null, 2)
         );
       }
-
-      const toolsList = mcpToolsListResponseSchema.parse(resultTools);
 
       if (toolsList && toolsList.tools && Array.isArray(toolsList.tools)) {
         const newToolsMap: Record<string, ToolDefinition> = {};
 
         for (const tool of toolsList.tools) {
+          const schema = {} as SimplifiedMCPToolSchema;
+
+          if (
+            tool.inputSchema.properties &&
+            typeof tool.inputSchema.properties === 'object'
+          ) {
+            const properties: Record<string, SimplifiedMCPToolProperty> = {};
+
+            for (const [key, prop] of Object.entries(
+              tool.inputSchema.properties
+            )) {
+              if (key !== 'credentials' && typeof prop === 'object') {
+                const typedProp = prop as Record<string, unknown>;
+
+                properties[key] = {
+                  type: typedProp.type as string | undefined,
+                  description: typedProp.description as string | undefined,
+                };
+
+                if (typedProp.type === 'array' && typedProp.items) {
+                  properties[key].items = {
+                    type:
+                      typeof typedProp.items === 'object'
+                        ? ((typedProp.items as Record<string, unknown>).type as
+                            | string
+                            | undefined)
+                        : undefined,
+                  };
+                }
+              }
+            }
+
+            schema.properties = properties;
+          }
+
+          if (Array.isArray(tool.inputSchema.required)) {
+            schema.required = tool.inputSchema.required.filter(
+              (field) => field !== 'credentials'
+            );
+          }
+
           newToolsMap[tool.name] = {
             name: tool.name,
-            schema: this.simplifySchema(tool.inputSchema),
+            schema: schema,
           };
         }
 
