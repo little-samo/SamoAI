@@ -94,15 +94,22 @@ export class GimmickExecuteMcpCore extends GimmickCore {
 
     const toolEnum = z.enum(toolNames as [string, ...string[]]);
 
+    const toolSchemas: Record<string, z.ZodTypeAny> = {};
+    for (const toolName of toolNames) {
+      if (this.cachedTools[toolName]?.schema) {
+        toolSchemas[toolName] = this.cachedTools[toolName]
+          .schema as z.ZodTypeAny;
+      }
+    }
+    const toolArgsSchema = z.object(toolSchemas);
+
     return z.object({
       tool: toolEnum.describe(
         "The specific tool offered by this Gimmick that you wish to use. Each tool performs a distinct function and requires specific arguments. Consult this Gimmick\'s main description for details on available tools, their functions, and their respective argument schemas."
       ),
-      args: z
-        .any()
-        .describe(
-          "The arguments for the selected tool. These must precisely match the parameter schema defined for that specific tool. Refer to the tool\'s individual description (which should be available within this Gimmick\'s main description or associated documentation) for details on required arguments and their structure."
-        ),
+      args: toolArgsSchema.describe(
+        "The arguments for the selected tool. These must precisely match the properties of the parameter schema defined for that specific tool. Be sure to include all required properties."
+      ),
     });
   }
 
