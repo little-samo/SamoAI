@@ -95,8 +95,14 @@ export class GimmickExecuteMcpCore extends GimmickCore {
     const toolEnum = z.enum(toolNames as [string, ...string[]]);
 
     return z.object({
-      tool: toolEnum.describe('MCP tool name to call'),
-      args: z.any().describe('Arguments to pass to the tool'),
+      tool: toolEnum.describe(
+        "The specific tool offered by this Gimmick that you wish to use. Each tool performs a distinct function and requires specific arguments. Consult this Gimmick\'s main description for details on available tools, their functions, and their respective argument schemas."
+      ),
+      args: z
+        .any()
+        .describe(
+          "The arguments for the selected tool. These must precisely match the parameter schema defined for that specific tool. Refer to the tool\'s individual description (which should be available within this Gimmick\'s main description or associated documentation) for details on required arguments and their structure."
+        ),
     });
   }
 
@@ -111,10 +117,6 @@ export class GimmickExecuteMcpCore extends GimmickCore {
   private get tools(): string[] {
     const allTools = Object.keys(this.cachedTools);
     return allTools;
-  }
-
-  private get toolDefinitions(): Record<string, ToolDefinition> {
-    return this.cachedTools;
   }
 
   private async createMcpClient(): Promise<Client> {
@@ -199,10 +201,7 @@ export class GimmickExecuteMcpCore extends GimmickCore {
           };
         }
 
-        this.cachedTools = {
-          ...this.cachedTools,
-          ...newToolsMap,
-        };
+        this.cachedTools = newToolsMap;
       }
 
       await client.close();
