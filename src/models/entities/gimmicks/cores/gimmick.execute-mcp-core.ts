@@ -196,6 +196,11 @@ export class GimmickExecuteMcpCore extends GimmickCore {
     await client.close();
   }
 
+  public override async init(): Promise<void> {
+    await super.init();
+    // TODO: Implement init
+  }
+
   public override async update(): Promise<boolean> {
     return false;
   }

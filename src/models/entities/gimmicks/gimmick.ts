@@ -75,7 +75,6 @@ export class Gimmick extends Entity {
   }
 
   public override get context(): GimmickContext {
-    this.reloadCore();
     const context = new GimmickContext({
       ...super.context,
       description: this.meta.description ?? this.core.description,
@@ -142,8 +141,13 @@ export class Gimmick extends Entity {
     return true;
   }
 
-  public async update(): Promise<boolean> {
+  public async init(): Promise<void> {
+    await super.init();
     this.reloadCore();
+    await this.core.init();
+  }
+
+  public async update(): Promise<boolean> {
     return await this.core.update();
   }
 

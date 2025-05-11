@@ -179,6 +179,8 @@ export abstract class Entity {
     canvas.updatedAt = new Date();
   }
 
+  public async init(): Promise<void> {}
+
   public abstract update(): Promise<boolean>;
 
   public async transferItem(

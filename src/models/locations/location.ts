@@ -387,8 +387,15 @@ export class Location extends AsyncEventEmitter {
     );
   }
 
-  public async update(): Promise<number> {
+  public async init(): Promise<void> {
     this.reloadCore();
+    for (const entity of Object.values(this.entities)) {
+      await entity.init();
+    }
+  }
+
+  public async update(): Promise<number> {
+    await this.init();
     if (ENV.DEBUG) {
       console.log(
         `Updating location ${this.model.name}, core: ${this.core.constructor.name}, ${Object.keys(this.agents).length} agents, ${Object.keys(this.users).length} users`

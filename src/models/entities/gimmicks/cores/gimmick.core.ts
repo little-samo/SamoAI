@@ -26,6 +26,8 @@ export abstract class GimmickCore {
     return this.meta.options ?? {};
   }
 
+  public async init(): Promise<void> {}
+
   public abstract update(): Promise<boolean>;
 
   public abstract execute(
