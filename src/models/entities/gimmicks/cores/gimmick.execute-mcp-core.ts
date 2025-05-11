@@ -26,7 +26,7 @@ type SimplifiedMCPToolProperty = {
 };
 
 type SimplifiedMCPToolSchema = {
-  properties?: Record<string, SimplifiedMCPToolProperty>;
+  arguments?: Record<string, SimplifiedMCPToolProperty>;
   required?: string[];
 };
 
@@ -94,21 +94,26 @@ export class GimmickExecuteMcpCore extends GimmickCore {
 
     const toolEnum = z.enum(toolNames as [string, ...string[]]);
 
-    const toolSchemas: Record<string, z.ZodTypeAny> = {};
+    const argsSchemas: z.ZodTypeAny[] = [];
+
     for (const toolName of toolNames) {
       if (this.cachedTools[toolName]?.schema) {
-        toolSchemas[toolName] = this.cachedTools[toolName]
-          .schema as z.ZodTypeAny;
+        const schema = this.cachedTools[toolName]
+          .schema as SimplifiedMCPToolSchema;
+        argsSchemas.push((schema as z.ZodTypeAny).describe(toolName));
       }
     }
-    const toolArgsSchema = z.object(toolSchemas);
+
+    const argsSchema = z.union(
+      argsSchemas as [z.ZodTypeAny, z.ZodTypeAny, ...z.ZodTypeAny[]]
+    );
 
     return z.object({
       tool: toolEnum.describe(
         "The specific tool offered by this Gimmick that you wish to use. Each tool performs a distinct function and requires specific arguments. Consult this Gimmick\'s main description for details on available tools, their functions, and their respective argument schemas."
       ),
-      args: toolArgsSchema.describe(
-        "The arguments for the selected tool. These must precisely match the properties of the parameter schema defined for that specific tool. Be sure to include all required properties."
+      args: argsSchema.describe(
+        'The arguments for the selected tool. These must precisely match the arguments schema defined for that specific tool. Be sure to include all required properties.'
       ),
     });
   }
@@ -193,7 +198,7 @@ export class GimmickExecuteMcpCore extends GimmickCore {
               }
             }
 
-            schema.properties = properties;
+            schema.arguments = properties;
           }
 
           if (Array.isArray(tool.inputSchema.required)) {
