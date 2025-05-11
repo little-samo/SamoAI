@@ -100,7 +100,7 @@ export class GimmickExecuteMcpCore extends GimmickCore {
       if (this.cachedTools[toolName]?.schema) {
         const schema = this.cachedTools[toolName]
           .schema as SimplifiedMCPToolSchema;
-        argsSchemas.push((schema as z.ZodTypeAny).describe(toolName));
+        argsSchemas.push(schema as z.ZodTypeAny);
       }
     }
 
