@@ -901,9 +901,6 @@ __metadata:
     typescript: "npm:^5.7.2"
     zod: "npm:^3.24.1"
     zod-to-json-schema: "npm:^3.24.1"
-  peerDependencies:
-    zod: ^3.24.1
-    zod-to-json-schema: ^3.24.1
   languageName: unknown
   linkType: soft
 
