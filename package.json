@@ -1,7 +1,7 @@
 {
   "name": "@little-samo/samo-ai",
   "version": "0.0.1",
-  "description": "The Multi-Agent AI Gaming Framework: Compete, Evolve, Adapt",
+  "description": "A multi-agent narrative layer that helps humans and AI communicate and collaborate naturally",
   "license": "MIT",
   "repository": {
     "type": "git",
