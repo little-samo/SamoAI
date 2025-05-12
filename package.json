@@ -19,6 +19,11 @@
     "./core": "./dist/core/index.js",
     "./models": "./dist/models/index.js"
   },
+  "files": [
+    "dist/",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "clean": "rimraf dist *.tsbuildinfo || true",
     "build": "yarn clean && tsc -p tsconfig.build.json",
