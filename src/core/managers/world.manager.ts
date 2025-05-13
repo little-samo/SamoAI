@@ -32,6 +32,7 @@ import {
   UserRepository,
 } from '../repositories';
 import { RedisLockService } from '../services';
+import { NoopRedisLockService } from '../services/noop-redis-lock.service';
 
 interface UpdateLocationOptions {
   ignorePauseUpdateUntil?: boolean;
@@ -40,6 +41,15 @@ interface UpdateLocationOptions {
   preAction?: (location: Location) => Promise<void>;
   postAction?: (location: Location) => Promise<void>;
   handleSave?: <T = void>(save: Promise<T>) => Promise<void>;
+}
+
+export interface WorldManagerOptions {
+  redisLockService?: RedisLockService;
+  locationRepository: LocationRepository;
+  agentRepository: AgentRepository;
+  userRepository: UserRepository;
+  gimmickRepository: GimmickRepository;
+  itemsRepository: ItemRepository;
 }
 
 export class WorldManager extends AsyncEventEmitter {
@@ -54,22 +64,8 @@ export class WorldManager extends AsyncEventEmitter {
 
   private static _instance: WorldManager;
 
-  public static initialize(
-    redisLockService: RedisLockService,
-    locationRepository: LocationRepository,
-    agentRepository: AgentRepository,
-    userRepository: UserRepository,
-    gimmickRepository: GimmickRepository,
-    itemsRepository: ItemRepository
-  ) {
-    WorldManager._instance = new WorldManager(
-      redisLockService,
-      locationRepository,
-      agentRepository,
-      userRepository,
-      gimmickRepository,
-      itemsRepository
-    );
+  public static initialize(options: WorldManagerOptions) {
+    WorldManager._instance = new WorldManager(options);
   }
 
   public static get instance() {
@@ -79,15 +75,22 @@ export class WorldManager extends AsyncEventEmitter {
     return this._instance;
   }
 
-  private constructor(
-    private readonly redisLockService: RedisLockService,
-    public readonly locationRepository: LocationRepository,
-    public readonly agentRepository: AgentRepository,
-    public readonly userRepository: UserRepository,
-    public readonly gimmickRepository: GimmickRepository,
-    public readonly itemsRepository: ItemRepository
-  ) {
+  private readonly redisLockService: RedisLockService;
+  public readonly locationRepository: LocationRepository;
+  public readonly agentRepository: AgentRepository;
+  public readonly userRepository: UserRepository;
+  public readonly gimmickRepository: GimmickRepository;
+  public readonly itemsRepository: ItemRepository;
+
+  private constructor(options: WorldManagerOptions) {
     super();
+    this.redisLockService =
+      options.redisLockService || new NoopRedisLockService();
+    this.locationRepository = options.locationRepository;
+    this.agentRepository = options.agentRepository;
+    this.userRepository = options.userRepository;
+    this.gimmickRepository = options.gimmickRepository;
+    this.itemsRepository = options.itemsRepository;
   }
 
   private async withLocationUpdateLock<T>(
