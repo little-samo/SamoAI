@@ -14,7 +14,7 @@ import { RegisterGimmickCore } from './gimmick.core-decorator';
 
 export type ToolDefinition = {
   name: string;
-  schema?: unknown;
+  schema?: SimplifiedMCPToolSchema;
 };
 
 type SimplifiedMCPToolProperty = {
@@ -98,9 +98,38 @@ export class GimmickExecuteMcpCore extends GimmickCore {
 
     for (const toolName of toolNames) {
       if (this.cachedTools[toolName]?.schema) {
-        const schema = this.cachedTools[toolName]
-          .schema as SimplifiedMCPToolSchema;
-        argsSchemas.push(schema as z.ZodTypeAny);
+        const toolSchema = this.cachedTools[toolName].schema;
+        let argumentsDescription: string = 'none';
+        if (toolSchema?.arguments) {
+          argumentsDescription = Object.entries(toolSchema.arguments)
+            .map(([argName, argDef]) => {
+              let line = `  - ${argName} (${argDef.type || 'no type'})`;
+              if (argDef.description) {
+                line += `: ${argDef.description}`;
+              }
+              if (argDef.items && argDef.items.type) {
+                line += ` (items type: ${argDef.items.type})`;
+              }
+              return line;
+            })
+            .join('\n');
+        }
+
+        let requiredString = 'none';
+        if (toolSchema?.required && toolSchema.required.length > 0) {
+          requiredString = toolSchema.required.join(', ');
+        }
+
+        const totalDescription = [
+          `Argument for Tool: ${toolName}`,
+          `Arguments: ${argumentsDescription}`,
+          `Required: ${requiredString}`,
+        ].join('\n');
+
+        const toolArgumentSchema = z
+          .record(z.string(), z.unknown())
+          .describe(totalDescription);
+        argsSchemas.push(toolArgumentSchema);
       }
     }
 
@@ -203,7 +232,7 @@ export class GimmickExecuteMcpCore extends GimmickCore {
 
           if (Array.isArray(tool.inputSchema.required)) {
             schema.required = tool.inputSchema.required.filter(
-              (field) => field !== 'credentials'
+              (field: string) => field !== 'credentials'
             );
           }
 
