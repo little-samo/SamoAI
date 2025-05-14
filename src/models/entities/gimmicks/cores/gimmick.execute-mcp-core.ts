@@ -49,7 +49,7 @@ export interface GimmickExecuteMcpCoreParameters {
   args: Record<string, unknown>;
 }
 
-@RegisterGimmickCore('execute-mcp')
+@RegisterGimmickCore('execute_mcp')
 export class GimmickExecuteMcpCore extends GimmickCore {
   private static readonly DEFAULT_MCP_CLIENT_NAME = 'samo-ai';
   private static readonly DEFAULT_MCP_CLIENT_VERSION = packageJson.version;
