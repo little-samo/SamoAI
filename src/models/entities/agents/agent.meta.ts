@@ -83,7 +83,11 @@ export const DEFAULT_AGENT_META: AgentMeta = {
   maxReasoningTokens: 1024,
   maxEvaluatationReasoningTokens: 256,
   llms: [
-    { platform: LlmPlatform.ANTHROPIC, model: 'claude-3-7-sonnet-20250219' },
+    {
+      platform: LlmPlatform.ANTHROPIC,
+      model: 'claude-3-7-sonnet-20250219',
+      reasoning: true,
+    },
     {
       platform: LlmPlatform.GEMINI,
       model: 'gemini-2.5-flash-preview-04-17',

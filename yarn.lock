@@ -15,18 +15,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@anthropic-ai/sdk@npm:^0.37.0":
-  version: 0.37.0
-  resolution: "@anthropic-ai/sdk@npm:0.37.0"
-  dependencies:
-    "@types/node": "npm:^18.11.18"
-    "@types/node-fetch": "npm:^2.6.4"
-    abort-controller: "npm:^3.0.0"
-    agentkeepalive: "npm:^4.2.1"
-    form-data-encoder: "npm:1.7.2"
-    formdata-node: "npm:^4.3.2"
-    node-fetch: "npm:^2.6.7"
-  checksum: 10c0/557195a066bc2685877cf00fc44b7928cc8c92f5031550c34e4d2c3ad898defcc2776040b5269d4fefe1da59a21df1481b636133c9591b1a33c52aa9c0d7c75f
+"@anthropic-ai/sdk@npm:^0.50.4":
+  version: 0.50.4
+  resolution: "@anthropic-ai/sdk@npm:0.50.4"
+  bin:
+    anthropic-ai-sdk: bin/cli
+  checksum: 10c0/43d350cc4f7d7e7e859400f2cada466600da2f3945d4ee6266ec9df148be1e51b1b65f38dd8e6d6dae369d261e5be39a4f4e5f9abfe131137466ff479cc097bb
   languageName: node
   linkType: hard
 
@@ -866,7 +860,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@little-samo/samo-ai@workspace:."
   dependencies:
-    "@anthropic-ai/sdk": "npm:^0.37.0"
+    "@anthropic-ai/sdk": "npm:^0.50.4"
     "@eslint/eslintrc": "npm:^3.1.0"
     "@eslint/js": "npm:^9.13.0"
     "@google/genai": "npm:^0.9.0"

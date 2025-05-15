@@ -156,6 +156,14 @@ export class AnthropicService extends LlmService {
         max_tokens: options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS,
         temperature: options?.temperature ?? LlmService.DEFAULT_TEMPERATURE,
       };
+      if (this.reasoning) {
+        request.thinking = {
+          type: 'enabled',
+          budget_tokens:
+            options?.maxReasoningTokens ??
+            LlmService.DEFAULT_MAX_REASONING_TOKENS,
+        };
+      }
       if (options?.verbose) {
         console.log(request);
       }
@@ -271,6 +279,14 @@ Response can only be in JSON format and must strictly follow the following forma
         max_tokens: options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS,
         temperature: options?.temperature ?? LlmService.DEFAULT_TEMPERATURE,
       };
+      if (this.reasoning) {
+        request.thinking = {
+          type: 'enabled',
+          budget_tokens:
+            options?.maxReasoningTokens ??
+            LlmService.DEFAULT_MAX_REASONING_TOKENS,
+        };
+      }
       if (options?.verbose) {
         console.log(request);
       }
