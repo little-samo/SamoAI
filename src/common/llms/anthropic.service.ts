@@ -176,7 +176,11 @@ export class AnthropicService extends LlmService {
         throw new LlmInvalidContentError('Anthropic returned no content');
       }
 
-      let responseText = (response.content[0] as TextBlock).text;
+      let responseText = (
+        response.content.filter(
+          (block) => block.type === 'text'
+        )[0] as TextBlock
+      ).text;
       if (options?.jsonOutput) {
         try {
           // Remove potential markdown fences
@@ -301,7 +305,11 @@ Response can only be in JSON format and must strictly follow the following forma
         throw new LlmInvalidContentError('Anthropic returned no content');
       }
 
-      let responseText = (response.content[0] as TextBlock).text;
+      let responseText = (
+        response.content.filter(
+          (block) => block.type === 'text'
+        )[0] as TextBlock
+      ).text;
       try {
         // Remove potential markdown fences
         if (responseText.startsWith('```json')) {
