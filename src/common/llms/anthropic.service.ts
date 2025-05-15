@@ -224,10 +224,8 @@ export class AnthropicService extends LlmService {
       );
       messages = messages.filter((message) => message.role !== 'assistant');
 
-      let prefill: string;
-      if (this.reasoning) {
-        prefill = `[`;
-      } else {
+      let prefill: string = '';
+      if (!this.reasoning) {
         prefill = `[
     {
       "name": "reasoning",
@@ -305,11 +303,13 @@ Response can only be in JSON format and must strictly follow the following forma
         throw new LlmInvalidContentError('Anthropic returned no content');
       }
 
-      let responseText = (
-        response.content.filter(
-          (block) => block.type === 'text'
-        )[0] as TextBlock
-      ).text;
+      let responseText =
+        prefill +
+        (
+          response.content.filter(
+            (block) => block.type === 'text'
+          )[0] as TextBlock
+        ).text;
       try {
         // Remove potential markdown fences
         if (responseText.startsWith('```json')) {
@@ -320,11 +320,11 @@ Response can only be in JSON format and must strictly follow the following forma
         if (responseText.endsWith('```')) {
           responseText = responseText.slice(0, -3);
         }
-        const toolCalls = JSON.parse(prefill + responseText) as LlmToolCall[];
+        const toolCalls = JSON.parse(responseText) as LlmToolCall[];
         return toolCalls;
       } catch (error) {
         console.error(error);
-        console.error(prefill + responseText);
+        console.error(responseText);
         return [];
       }
     } catch (error) {
