@@ -344,11 +344,6 @@ export class GimmickExecuteMcpCore extends GimmickCore {
       return 'Required parameters missing (tool, args)';
     }
 
-    // temporary fix for the issue that the tools are not fetched
-    if (this.tools.length === 0) {
-      await this.fetchAndCacheTools();
-    }
-
     if (!this.tools.includes(tool)) {
       return `Unsupported tool: ${tool}`;
     }
