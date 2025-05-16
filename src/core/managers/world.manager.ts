@@ -389,7 +389,7 @@ export class WorldManager extends AsyncEventEmitter {
     return gimmicks;
   }
 
-  public async addLoationMessage(
+  public async addLocationMessage(
     locationId: LocationId,
     message: LocationMessage,
     maxMessages?: number
@@ -430,7 +430,7 @@ export class WorldManager extends AsyncEventEmitter {
       createdAt: createdAt ?? new Date(),
       updatedAt: new Date(),
     };
-    await this.addLoationMessage(
+    await this.addLocationMessage(
       locationId,
       locationMessage,
       options.maxMessages
@@ -462,7 +462,7 @@ export class WorldManager extends AsyncEventEmitter {
         updatedAt: new Date(),
       };
 
-      await this.addLoationMessage(locationId, message, options.maxMessages);
+      await this.addLocationMessage(locationId, message, options.maxMessages);
     }
   }
 
@@ -485,7 +485,7 @@ export class WorldManager extends AsyncEventEmitter {
       updatedAt: new Date(),
     };
 
-    await this.addLoationMessage(locationId, message, options.maxMessages);
+    await this.addLocationMessage(locationId, message, options.maxMessages);
   }
 
   public async addLocationUserMessage(
@@ -516,7 +516,7 @@ export class WorldManager extends AsyncEventEmitter {
       createdAt: createdAt ?? new Date(),
       updatedAt: new Date(),
     };
-    await this.addLoationMessage(
+    await this.addLocationMessage(
       locationId,
       locationMessage,
       options.maxMessages
@@ -539,7 +539,7 @@ export class WorldManager extends AsyncEventEmitter {
       createdAt: createdAt ?? new Date(),
       updatedAt: new Date(),
     };
-    await this.addLoationMessage(
+    await this.addLocationMessage(
       locationId,
       locationMessage,
       options.maxMessages
@@ -597,7 +597,7 @@ export class WorldManager extends AsyncEventEmitter {
       'messageAdded',
       (location: Location, message: LocationMessage) => {
         void options.handleSave!(
-          this.addLoationMessage(
+          this.addLocationMessage(
             location.id,
             message,
             location.meta.messageLimit
