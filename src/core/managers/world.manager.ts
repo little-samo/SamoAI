@@ -882,7 +882,7 @@ export class WorldManager extends AsyncEventEmitter {
     let pauseUpdateDuration;
     try {
       if (options.executeSpecificAgentId) {
-        location.reloadCore();
+        await location.init();
         await location.agents[
           options.executeSpecificAgentId
         ].executeNextActions();
