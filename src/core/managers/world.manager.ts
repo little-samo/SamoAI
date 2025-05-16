@@ -49,7 +49,7 @@ export interface WorldManagerOptions {
   agentRepository: AgentRepository;
   userRepository: UserRepository;
   gimmickRepository: GimmickRepository;
-  itemsRepository: ItemRepository;
+  itemRepository: ItemRepository;
 }
 
 export class WorldManager extends AsyncEventEmitter {
@@ -80,7 +80,7 @@ export class WorldManager extends AsyncEventEmitter {
   public readonly agentRepository: AgentRepository;
   public readonly userRepository: UserRepository;
   public readonly gimmickRepository: GimmickRepository;
-  public readonly itemsRepository: ItemRepository;
+  public readonly itemRepository: ItemRepository;
 
   private constructor(options: WorldManagerOptions) {
     super();
@@ -90,7 +90,7 @@ export class WorldManager extends AsyncEventEmitter {
     this.agentRepository = options.agentRepository;
     this.userRepository = options.userRepository;
     this.gimmickRepository = options.gimmickRepository;
-    this.itemsRepository = options.itemsRepository;
+    this.itemRepository = options.itemRepository;
   }
 
   private async withLocationUpdateLock<T>(
@@ -276,7 +276,7 @@ export class WorldManager extends AsyncEventEmitter {
 
     const gimmicks = await this.getGimmicks(location);
 
-    const items = await this.itemsRepository.getEntityItemModels(
+    const items = await this.itemRepository.getEntityItemModels(
       Object.values(agents).map((agent) => agent.id),
       Object.values(users).map((user) => user.id)
     );
@@ -805,12 +805,12 @@ export class WorldManager extends AsyncEventEmitter {
         };
         if (stackable) {
           await options.handleSave!(
-            this.itemsRepository.addOrCreateItemModel(itemOwner, dataId, count)
+            this.itemRepository.addOrCreateItemModel(itemOwner, dataId, count)
           );
         } else {
           for (let i = 0; i < count; i++) {
             await options.handleSave!(
-              this.itemsRepository.addOrCreateItemModel(itemOwner, dataId, 1)
+              this.itemRepository.addOrCreateItemModel(itemOwner, dataId, 1)
             );
           }
         }
@@ -825,7 +825,7 @@ export class WorldManager extends AsyncEventEmitter {
           ownerUserId: entity.type === EntityType.User ? entity.id : null,
         };
         void options.handleSave!(
-          this.itemsRepository.removeItemModel(itemOwner, item, count)
+          this.itemRepository.removeItemModel(itemOwner, item, count)
         );
       }
     );
@@ -854,7 +854,7 @@ export class WorldManager extends AsyncEventEmitter {
               : null,
         };
         void options.handleSave!(
-          this.itemsRepository.transferItemModel(
+          this.itemRepository.transferItemModel(
             itemOwner,
             item,
             targetItemOwner,
