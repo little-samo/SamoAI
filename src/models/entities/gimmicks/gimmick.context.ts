@@ -41,6 +41,6 @@ export class GimmickContext
 
   public build(): string {
     const parameters = zodSchemaToLlmFriendlyString(this.parameters);
-    return `${this.key}\t${this.name}\t${this.description}\t${this.appearance}\t${this.expression}\t${this.occupierId ?? 'null'}\t${this.occupierType ?? 'null'}\t${this.occupationUntil?.toISOString() ?? 'null'}\t${parameters}\t${this.canvas ?? 'null'}`;
+    return `${this.key}\t${this.name}\t${JSON.stringify(this.description)}\t${JSON.stringify(this.appearance)}\t${JSON.stringify(this.expression)}\t${this.occupierId ?? 'null'}\t${this.occupierType ?? 'null'}\t${this.occupationUntil?.toISOString() ?? 'null'}\t${parameters}\t${this.canvas ?? 'null'}`;
   }
 }

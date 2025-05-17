@@ -85,7 +85,7 @@ export class LocationCanvasContext extends Context {
   }
 
   public build(): string {
-    return `${this.name}\t${this.description}\t${this.maxLength}\t${this.lastModeifierKey}\t${this.lastModifiedAt.toISOString()}\t${this.text}`;
+    return `${this.name}\t${JSON.stringify(this.description)}\t${this.maxLength}\t${this.lastModeifierKey}\t${this.lastModifiedAt.toISOString()}\t${this.text}`;
   }
 }
 
