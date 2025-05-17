@@ -1,5 +1,5 @@
+import { zodSchemaToLlmFriendlyString } from '@little-samo/samo-ai/common';
 import { z } from 'zod';
-import zodToJsonSchema from 'zod-to-json-schema';
 
 import { EntityContext, EntityContextOptions } from '../entity.context';
 import { EntityId, EntityType } from '../entity.types';
@@ -40,11 +40,7 @@ export class GimmickContext
   }
 
   public build(): string {
-    const parameters = zodToJsonSchema(this.parameters, {
-      target: 'openAi',
-    });
-    delete parameters['$schema'];
-
-    return `${this.key}\t${this.name}\t${this.description}\t${this.appearance}\t${this.expression}\t${this.occupierId ?? 'null'}\t${this.occupierType ?? 'null'}\t${this.occupationUntil?.toISOString() ?? 'null'}\t${JSON.stringify(parameters)}\t${this.canvas ?? 'null'}`;
+    const parameters = zodSchemaToLlmFriendlyString(this.parameters);
+    return `${this.key}\t${this.name}\t${this.description}\t${this.appearance}\t${this.expression}\t${this.occupierId ?? 'null'}\t${this.occupierType ?? 'null'}\t${this.occupationUntil?.toISOString() ?? 'null'}\t${parameters}\t${this.canvas ?? 'null'}`;
   }
 }

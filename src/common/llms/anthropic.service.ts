@@ -5,9 +5,8 @@ import {
   TextBlock,
   TextBlockParam,
 } from '@anthropic-ai/sdk/resources/messages/messages';
-import zodToJsonSchema from 'zod-to-json-schema';
 
-import { sleep } from '../utils';
+import { sleep, zodSchemaToLlmFriendlyString } from '../utils';
 
 import { LlmApiError, LlmInvalidContentError } from './llm.errors';
 import { LlmService } from './llm.service';
@@ -246,15 +245,12 @@ export class AnthropicService extends LlmService {
       });
 
       for (const tool of tools) {
-        const parameters = zodToJsonSchema(tool.parameters, {
-          target: 'openAi',
-        });
-        delete parameters['$schema'];
+        const parameters = zodSchemaToLlmFriendlyString(tool.parameters);
         systemMessages.push({
           type: 'text',
           text: `name: ${tool.name}
 description: ${tool.description}
-parameters: ${JSON.stringify(parameters)}`,
+parameters: ${parameters}`,
         });
       }
 

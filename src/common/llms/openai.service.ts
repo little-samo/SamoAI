@@ -10,7 +10,7 @@ import {
 } from 'openai/resources/chat/completions';
 import zodToJsonSchema from 'zod-to-json-schema';
 
-import { sleep } from '../utils';
+import { sleep, zodSchemaToLlmFriendlyString } from '../utils';
 
 import { LlmApiError } from './llm.errors';
 import { LlmInvalidContentError } from './llm.errors';
@@ -218,15 +218,12 @@ export class OpenAIService extends LlmService {
       });
 
       for (const tool of tools) {
-        const parameters = zodToJsonSchema(tool.parameters, {
-          target: 'openAi',
-        });
-        delete parameters['$schema'];
+        const parameters = zodSchemaToLlmFriendlyString(tool.parameters);
         systemMessages.push({
           role: 'system',
           content: `name: ${tool.name}
 description: ${tool.description}
-parameters: ${JSON.stringify(parameters)}`,
+parameters: ${parameters}`,
         });
       }
 
