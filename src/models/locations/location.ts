@@ -72,6 +72,8 @@ export class Location extends AsyncEventEmitter {
 
   private readonly _entityStates: Record<EntityKey, LocationEntityState> = {};
 
+  public updatingEntity: Entity | undefined;
+
   public static fixState(state: LocationState, meta: LocationMeta): void {
     for (const canvas of meta.canvases) {
       if (!state.canvases[canvas.name]) {

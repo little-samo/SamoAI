@@ -367,6 +367,7 @@ export class Agent extends Entity {
       }
       return false;
     }
+    await super.update();
     return await this.core.update();
   }
 

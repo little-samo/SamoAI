@@ -81,6 +81,7 @@ export class User extends Entity {
   }
 
   public async update(): Promise<boolean> {
+    await super.update();
     return false;
   }
 }

@@ -148,6 +148,7 @@ export class Gimmick extends Entity {
   }
 
   public async update(): Promise<boolean> {
+    await super.update();
     return await this.core.update();
   }
 

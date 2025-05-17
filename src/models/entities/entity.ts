@@ -181,7 +181,10 @@ export abstract class Entity {
 
   public async init(): Promise<void> {}
 
-  public abstract update(): Promise<boolean>;
+  public async update(): Promise<boolean> {
+    this.location.updatingEntity = this;
+    return false;
+  }
 
   public async transferItem(
     item: ItemModel,
