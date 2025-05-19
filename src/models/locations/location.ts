@@ -391,8 +391,14 @@ export class Location extends AsyncEventEmitter {
 
   public async init(): Promise<void> {
     this.reloadCore();
-    for (const entity of Object.values(this.entities)) {
-      await entity.init();
+    for (const gimmick of Object.values(this.gimmicks)) {
+      await gimmick.init();
+    }
+    for (const agent of Object.values(this.agents)) {
+      await agent.init();
+    }
+    for (const user of Object.values(this.users)) {
+      await user.init();
     }
   }
 
