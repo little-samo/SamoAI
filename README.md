@@ -9,7 +9,7 @@
   <a href="#-core-concepts">Core Concepts</a> •
   <a href="#-products">Products</a> •
   <a href="#️-getting-started">Getting Started</a> •
-  <a href="#-example">
+  <a href="#-example">Example</a> •
   <a href="#-license">License</a>
 </p>
 
