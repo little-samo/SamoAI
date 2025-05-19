@@ -57,7 +57,10 @@ interface CachedMcpTools {
 class McpToolsCache {
   private static readonly CACHE_EXPIRATION_TIME = 5 * 60 * 1000; // 5 minutes
 
-  private static cachedToolsByServerUrl: Record<string, CachedMcpTools> = {};
+  private static readonly cachedToolsByServerUrl: Record<
+    string,
+    CachedMcpTools
+  > = {};
 
   public static async cacheTools(
     serverUrl: string,
@@ -284,7 +287,10 @@ export class GimmickExecuteMcpCore extends GimmickCore {
 
   private async fetchAndCacheTools(): Promise<void> {
     try {
-      await McpToolsCache.cacheTools(this.serverUrl, this.createMcpClient);
+      await McpToolsCache.cacheTools(
+        this.serverUrl,
+        async () => await this.createMcpClient()
+      );
     } catch (error) {
       console.error(
         `[Gimmick ${this.gimmick.name}] MCP tools cache update error:`,
