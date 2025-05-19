@@ -184,7 +184,6 @@ Check out our example CLI application:
 
 <div align="center">
   <img src="https://media.githubusercontent.com/media/little-samo/CI/master/assets/examples/repositories/SamoAI-Example-CLI/demo/web.gif" alt="SamoAI Example CLI Demo" width="600" />
-  <p><em>SamoAI Example CLI Demo</em></p>
 </div>
 
 ## 📜 License
