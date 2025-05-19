@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="./docs/static/img/samo_mascot.png" alt="SamoAI Mascot" width="250" />
+  <img src="https://media.githubusercontent.com/media/little-samo/CI/master/assets/characters/samo/profile.png" alt="Little Samo Mascot" width="250" />
   <h1>SamoAI</h1>
   <p><em>A multi-agent narrative layer that helps humans and AI communicate and collaborate naturally</em></p>
 </div>
@@ -139,7 +139,7 @@ SamoAI creates a seamless multi-agent narrative layer between humans and AI, ena
   </a>
   <br>
   <div>
-    <a href="https://youtu.be/OKqeb6rp_zE?feature=shared" target="_blank">
+    <a href="https://www.youtube.com/@TeamSamoAI" target="_blank">
       <img src="https://img.shields.io/badge/Watch%20on-YouTube-red?style=for-the-badge&logo=youtube" alt="Watch on YouTube">
     </a>
     &nbsp;&nbsp;
@@ -169,11 +169,23 @@ Virtual teams of AI agents collaborating with specialized roles:
 ## 🛠️ Getting Started
 
 ```bash
-# Install dependencies
-yarn install
+# Using npm
+npm install --save @little-samo/samo-ai
 
-# More details coming soon
+# Using yarn
+yarn add @little-samo/samo-ai
 ```
+
+## 📝 Example
+
+Check out our example CLI application:
+
+[SamoAI-Example-CLI](https://github.com/little-samo/SamoAI-Example-CLI) - A command-line interface for interacting with SamoAI agents.
+
+<div align="center">
+  <img src="https://media.githubusercontent.com/media/little-samo/CI/master/assets/examples/repositories/SamoAI-Example-CLI/demo/web.gif" alt="SamoAI Example CLI Demo" width="600" />
+  <p><em>SamoAI Example CLI Demo</em></p>
+</div>
 
 ## 📜 License
 
