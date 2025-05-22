@@ -85,7 +85,7 @@ export const DEFAULT_AGENT_META: AgentMeta = {
   llms: [
     {
       platform: LlmPlatform.ANTHROPIC,
-      model: 'claude-3-7-sonnet-20250219',
+      model: 'claude-sonnet-4-20250514',
       reasoning: true,
     },
     {
