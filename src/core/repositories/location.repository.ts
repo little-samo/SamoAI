@@ -57,6 +57,15 @@ export interface LocationRepository {
     modifierEntityId: EntityId,
     text: string
   ): Promise<void>;
+  updateLocationStateImage(
+    locationId: LocationId,
+    index: number,
+    image: string
+  ): Promise<void>;
+  updateLocationStateRendering(
+    locationId: LocationId,
+    rendering: string | null
+  ): Promise<void>;
   addLocationMessage(
     locationId: LocationId,
     message: LocationMessage,
