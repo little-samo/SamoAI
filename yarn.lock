@@ -481,15 +481,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@google/genai@npm:^0.9.0":
-  version: 0.9.0
-  resolution: "@google/genai@npm:0.9.0"
+"@google/genai@npm:^1.0.1":
+  version: 1.0.1
+  resolution: "@google/genai@npm:1.0.1"
   dependencies:
     google-auth-library: "npm:^9.14.2"
     ws: "npm:^8.18.0"
     zod: "npm:^3.22.4"
     zod-to-json-schema: "npm:^3.22.4"
-  checksum: 10c0/c0d2d7ff915e397f09bfdb03f1a13b306e48f9354e3e03f943361d133c451eac51de59e8f3f07c575d868f83df3ce1ed3f696cb75534c8e9a8d06ba03f25f304
+  peerDependencies:
+    "@modelcontextprotocol/sdk": ^1.11.0
+  checksum: 10c0/1b908e4497ba6717598d93369ce54814059fb4879fb7fe9563059bae2298f4b8ceb50fd5ab3908b8fa04ccb90043d69ea824d530794e582476b8392c2d94303b
   languageName: node
   linkType: hard
 
@@ -863,7 +865,7 @@ __metadata:
     "@anthropic-ai/sdk": "npm:^0.50.4"
     "@eslint/eslintrc": "npm:^3.1.0"
     "@eslint/js": "npm:^9.13.0"
-    "@google/genai": "npm:^0.9.0"
+    "@google/genai": "npm:^1.0.1"
     "@modelcontextprotocol/sdk": "npm:^1.10.2"
     "@types/jest": "npm:^29.5.2"
     "@types/lodash": "npm:^4"
