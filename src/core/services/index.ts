@@ -1,2 +1,2 @@
-export * from './noop-redis-lock.service';
-export * from './redis-lock.service';
+export * from './in-memory-lock.service';
+export * from './lock.service';

@@ -31,8 +31,7 @@ import {
   LocationRepository,
   UserRepository,
 } from '../repositories';
-import { RedisLockService } from '../services';
-import { NoopRedisLockService } from '../services/noop-redis-lock.service';
+import { LockService, InMemoryLockService } from '../services';
 
 interface UpdateLocationOptions {
   ignorePauseUpdateUntil?: boolean;
@@ -44,7 +43,7 @@ interface UpdateLocationOptions {
 }
 
 export interface WorldManagerOptions {
-  redisLockService?: RedisLockService;
+  lockService?: LockService;
   locationRepository: LocationRepository;
   agentRepository: AgentRepository;
   userRepository: UserRepository;
@@ -75,7 +74,7 @@ export class WorldManager extends AsyncEventEmitter {
     return this._instance;
   }
 
-  private readonly redisLockService: RedisLockService;
+  private readonly lockService: LockService;
   public readonly locationRepository: LocationRepository;
   public readonly agentRepository: AgentRepository;
   public readonly userRepository: UserRepository;
@@ -84,8 +83,7 @@ export class WorldManager extends AsyncEventEmitter {
 
   private constructor(options: WorldManagerOptions) {
     super();
-    this.redisLockService =
-      options.redisLockService || new NoopRedisLockService();
+    this.lockService = options.lockService || new InMemoryLockService();
     this.locationRepository = options.locationRepository;
     this.agentRepository = options.agentRepository;
     this.userRepository = options.userRepository;
@@ -98,7 +96,7 @@ export class WorldManager extends AsyncEventEmitter {
     operation: () => Promise<T>
   ): Promise<T> {
     const lockKey = `${WorldManager.LOCATION_UPDATE_LOCK_PREFIX}${locationId}`;
-    const lock = await this.redisLockService.acquireLock(
+    const lock = await this.lockService.acquireLock(
       lockKey,
       WorldManager.LOCATION_UPDATE_LOCK_TTL
     );
@@ -117,7 +115,7 @@ export class WorldManager extends AsyncEventEmitter {
     operation: () => Promise<T>
   ): Promise<T | null> {
     const lockKey = `${WorldManager.LOCATION_UPDATE_LOCK_PREFIX}${locationId}`;
-    const lock = await this.redisLockService.acquireLockNoRetry(
+    const lock = await this.lockService.acquireLockNoRetry(
       lockKey,
       WorldManager.LOCATION_UPDATE_LOCK_TTL
     );
@@ -139,7 +137,7 @@ export class WorldManager extends AsyncEventEmitter {
     operation: () => Promise<T>
   ): Promise<T> {
     const lockKey = `${WorldManager.AGENT_SUMMARY_UPDATE_LOCK_PREFIX}${agentId}`;
-    const lock = await this.redisLockService.acquireLock(
+    const lock = await this.lockService.acquireLock(
       lockKey,
       WorldManager.AGENT_SUMMARY_UPDATE_LOCK_TTL
     );
@@ -158,7 +156,7 @@ export class WorldManager extends AsyncEventEmitter {
     operation: () => Promise<T>
   ): Promise<T> {
     const lockKey = `${WorldManager.AGENT_MEMORY_UPDATE_LOCK_PREFIX}${agentId}`;
-    const lock = await this.redisLockService.acquireLock(
+    const lock = await this.lockService.acquireLock(
       lockKey,
       WorldManager.AGENT_MEMORY_UPDATE_LOCK_TTL
     );
