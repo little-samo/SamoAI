@@ -52,12 +52,12 @@ export interface WorldManagerOptions {
 }
 
 export class WorldManager extends AsyncEventEmitter {
-  private static readonly LOCATION_UPDATE_LOCK_TTL = 15000; // 15 seconds
+  private static readonly LOCATION_UPDATE_LOCK_TTL = 30000; // 30 seconds
   private static readonly LOCATION_UPDATE_LOCK_PREFIX = 'lock:location-update:';
-  private static readonly AGENT_SUMMARY_UPDATE_LOCK_TTL = 5000; // 5 seconds
+  private static readonly AGENT_SUMMARY_UPDATE_LOCK_TTL = 15000; // 15 seconds
   private static readonly AGENT_SUMMARY_UPDATE_LOCK_PREFIX =
     'lock:agent-summary-update:';
-  private static readonly AGENT_MEMORY_UPDATE_LOCK_TTL = 5000; // 5 seconds
+  private static readonly AGENT_MEMORY_UPDATE_LOCK_TTL = 15000; // 15 seconds
   private static readonly AGENT_MEMORY_UPDATE_LOCK_PREFIX =
     'lock:agent-memory-update:';
 
