@@ -177,6 +177,13 @@ npm install --save @little-samo/samo-ai
 yarn add @little-samo/samo-ai
 ```
 
+### Environment Configuration
+
+To enable debug mode, set `process.env.DEBUG` to `'True'`:
+
+- Set environment variable: `DEBUG=True node your-app.js`
+- Or use dotenv package with `DEBUG=True` in `.env` file
+
 ## 📝 Example
 
 Check out our example CLI application:

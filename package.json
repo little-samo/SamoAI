@@ -17,10 +17,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
-    ".": "./dist/index.js",
-    "./common": "./dist/common/index.js",
-    "./core": "./dist/core/index.js",
-    "./models": "./dist/models/index.js"
+    ".": "./dist/index.js"
   },
   "files": [
     "dist/",
@@ -43,7 +40,6 @@
     "@anthropic-ai/sdk": "^0.50.4",
     "@google/genai": "^1.0.1",
     "@modelcontextprotocol/sdk": "^1.10.2",
-    "dotenv": "^16.4.7",
     "lodash": "^4.17.21",
     "openai": "^4.83.0",
     "reflect-metadata": "^0.2.2",
