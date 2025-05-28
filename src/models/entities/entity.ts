@@ -1,6 +1,4 @@
-import type { Location } from '@little-samo/samo-ai/models/locations/location';
-
-import { type LocationEntityState } from '../locations';
+import { type Location, type LocationEntityState } from '../locations';
 
 import { EntityContext } from './entity.context';
 import { ItemModel } from './entity.item-model';

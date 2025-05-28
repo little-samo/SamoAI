@@ -1,4 +1,4 @@
-import type { Location } from '@little-samo/samo-ai/models/locations/location';
+import type { Location } from '@little-samo/samo-ai/models';
 
 import type { Agent } from '../agent';
 import type { AgentInputBuilder } from './agent.input';

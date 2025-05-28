@@ -1,10 +1,10 @@
 import { ENV } from '@little-samo/samo-ai/common';
-import { Entity } from '@little-samo/samo-ai/models/entities/entity';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { z } from 'zod';
 
 import packageJson from '../../../../../package.json';
+import { type Entity } from '../../entity';
 import { type Gimmick } from '../gimmick';
 import { GimmickEntityArguments, type GimmickCoreMeta } from '../gimmick.meta';
 import { GimmickParameters } from '../gimmick.types';

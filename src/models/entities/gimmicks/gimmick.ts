@@ -1,6 +1,6 @@
-import { Location } from '@little-samo/samo-ai/models/locations/location';
 import { isEqual } from 'lodash';
 
+import { type Location } from '../../locations';
 import { LocationId } from '../../locations/location.type';
 import { Entity } from '../entity';
 import { ItemModel } from '../entity.item-model';

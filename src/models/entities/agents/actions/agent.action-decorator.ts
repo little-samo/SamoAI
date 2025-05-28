@@ -1,4 +1,4 @@
-import type { Location } from '@little-samo/samo-ai/models/locations/location';
+import type { Location } from '@little-samo/samo-ai/models';
 
 import { AgentActionFactory } from './agent.action-factory';
 

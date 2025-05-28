@@ -1,9 +1,6 @@
-import {
-  EntityId,
-  EntityType,
-} from '@little-samo/samo-ai/models/entities/entity.types';
-
 import { LocationId } from '../location.type';
+
+import type { EntityId, EntityType } from '../../entities';
 
 export interface LocationEntityCanvas {
   text: string;

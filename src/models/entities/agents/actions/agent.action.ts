@@ -1,8 +1,5 @@
-import {
-  LlmTool,
-  LlmToolCall,
-} from '@little-samo/samo-ai/common/llms/llm.tool';
-import { Location } from '@little-samo/samo-ai/models/locations/location';
+import { LlmTool, LlmToolCall } from '@little-samo/samo-ai/common';
+import { type Location } from '@little-samo/samo-ai/models';
 import { z } from 'zod';
 
 import { AGENT_ACTION_METADATA_KEY } from './agent.action-decorator';
