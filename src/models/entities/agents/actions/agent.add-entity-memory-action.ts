@@ -17,7 +17,7 @@ export class AgentAddEntityMemoryAction extends AgentAction {
     switch (this.version) {
       case 1:
       default:
-        return `Proposes adding a new memory specifically about the entity identified by 'key'. This serves as a **suggestion** for the separate memory update process. Use this to flag significant facts, interactions, or observations related *only* to that entity based on the current interaction. Refer to CRITICAL memory rules (Rule #8) for guidance on *what* constitutes good memory content.`;
+        return `Proposes adding a new memory specifically about the entity identified by 'key'. This serves as a **suggestion** for the separate memory update process. Use this to flag significant facts, interactions, or observations related *only* to that entity based on the current interaction. For guidance on *what* constitutes good memory content, recall that memories should be concise, factual, and in English.`;
     }
   }
 

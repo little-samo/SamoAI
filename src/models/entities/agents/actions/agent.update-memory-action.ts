@@ -15,7 +15,7 @@ export class AgentUpdateMemoryAction extends AgentAction {
     switch (this.version) {
       case 1:
       default:
-        return `Updates or overwrites a specific memory slot in the general memory list (indexed 0 to ${this.agent.meta.memoryLimit - 1}). This incorporates new/corrected information (potentially based on \'add_memory\` suggestions) or clears outdated facts. **To clear outdated/invalid information from a slot, provide an empty string ('') as the 'memory' value.** Choose the index carefully based on importance and timeliness (overwriting the least relevant if full). Refer to CRITICAL memory rules (Rule #8) for guidance.`;
+        return `Updates or overwrites a specific memory slot in the general memory list (indexed 0 to ${this.agent.meta.memoryLimit - 1}). This incorporates new/corrected information (potentially based on \'add_memory\` suggestions) or clears outdated facts. **To clear outdated/invalid information from a slot, provide an empty string ('') as the 'memory' value.** Choose the index carefully based on importance and timeliness (overwriting the least relevant if full). Remember that memories should be concise, factual, and in English.`;
     }
   }
 
