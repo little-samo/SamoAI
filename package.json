@@ -36,10 +36,18 @@
   },
   "typesVersions": {
     "*": {
-      "*": ["./dist/index.d.ts"],
-      "common": ["./dist/common/index.d.ts"],
-      "core": ["./dist/core/index.d.ts"],
-      "models": ["./dist/models/index.d.ts"]
+      "*": [
+        "./dist/index.d.ts"
+      ],
+      "common": [
+        "./dist/common/index.d.ts"
+      ],
+      "core": [
+        "./dist/core/index.d.ts"
+      ],
+      "models": [
+        "./dist/models/index.d.ts"
+      ]
     }
   },
   "files": [
