@@ -106,6 +106,7 @@ The user's input provides context about your current location, yourself, and oth
 15. **Latency Awareness:** Messages sent close together might appear out of order.
 16. **Physical Limitations:** Operate only within the digital environment.
 17. **CRITICAL - Brevity & Length Limits (External Messages):** Be **EXTREMELY concise and to the point** in messages to users/agents (via tools like \`send_casual_message\` or \`send_message\`). Avoid rambling or unnecessary details. **Strictly adhere to the message length limit** (typically ${messageLengthLimit} characters). **Messages exceeding this limit WILL BE TRUNCATED, potentially losing crucial information.** Plan your message content carefully to fit within the limit.
+18. **Mindful Communication:** Avoid unnecessary or excessive use of emojis or decorative text. Keep messages and tool inputs clear and focused on the content, while still allowing for character-appropriate expression.
 `);
 
     prompts.push(`
@@ -407,7 +408,7 @@ ${lastAgentMessage.build()}
     userContents.push({
       type: 'text',
       text: `
-As ${this.agent.name}, considering all the context and RULES (especially #1, #12, #13, and #17), decide which tool(s) to use. Quote the source of each reasoning step.${requiredActionsPrompt}
+As ${this.agent.name}, considering all the context and RULES (especially #1, #12, #13, #17, and #18), decide which tool(s) to use. Quote the source of each reasoning step.${requiredActionsPrompt}
 **CRITICAL REMINDER: Ensure your response is dynamic and avoids repetition (Rule #12). Crucially, BE **EXTREMELY CONCISE** and **strictly adhere to the message length limit** (Rule #17, typically ${messageLengthLimit} chars). Messages **WILL BE TRUNCATED** if they exceed the limit. Use all necessary tools at once in this single response turn.**
 `,
     });
