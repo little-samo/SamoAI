@@ -157,10 +157,9 @@ export class GeminiService extends LlmService {
           systemInstruction: systemMessages,
         },
       };
-      if (this.reasoning) {
+      if (this.thinking) {
         thinkingBudget =
-          options?.maxReasoningTokens ??
-          LlmService.DEFAULT_MAX_REASONING_TOKENS;
+          options?.maxThinkingTokens ?? LlmService.DEFAULT_MAX_THINKING_TOKENS;
         maxOutputTokens += thinkingBudget;
         request.config!.thinkingConfig = {
           includeThoughts: true,
@@ -290,10 +289,9 @@ Response can only be in JSON format and must strictly follow the following forma
           systemInstruction: systemMessages,
         },
       };
-      if (this.reasoning) {
+      if (this.thinking) {
         thinkingBudget =
-          options?.maxReasoningTokens ??
-          LlmService.DEFAULT_MAX_REASONING_TOKENS;
+          options?.maxThinkingTokens ?? LlmService.DEFAULT_MAX_THINKING_TOKENS;
         maxOutputTokens += thinkingBudget;
         request.config!.thinkingConfig = {
           includeThoughts: true,

@@ -12,13 +12,13 @@ export interface LlmServiceOptions {
   model: string;
   platform: LlmPlatform;
   apiKey: string;
-  reasoning?: boolean;
+  thinking?: boolean;
 }
 
 export interface LlmOptions {
   temperature?: number;
   maxTokens?: number;
-  maxReasoningTokens?: number;
+  maxThinkingTokens?: number;
   maxTries?: number;
   retryDelay?: number;
   jsonOutput?: boolean;

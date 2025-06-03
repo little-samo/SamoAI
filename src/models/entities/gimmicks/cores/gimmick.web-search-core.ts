@@ -21,7 +21,7 @@ export class GimmickWebSearchCore extends GimmickCore {
   public static readonly DEFAULT_SEARCH_LLM_MODEL =
     'gemini-2.5-flash-preview-04-17';
   public static readonly LLM_MAX_TOKENS = 4096;
-  public static readonly LLM_MAX_REASONING_TOKENS = 2048;
+  public static readonly LLM_MAX_THINKING_TOKENS = 2048;
   public static readonly DEFAULT_MAX_SEARCH_RESULT_LENGTH = 2000;
 
   public override get description(): string {
@@ -51,7 +51,7 @@ export class GimmickWebSearchCore extends GimmickCore {
     maxResultLength: number,
     maxSummaryLength: number,
     maxTokens: number,
-    maxReasoningTokens: number
+    maxThinkingTokens: number
   ): Promise<void> {
     const messages: LlmMessage[] = [];
     messages.push({
@@ -80,7 +80,7 @@ You are tasked with performing a web search based on the user's query and then p
 
     const searchSummaryResponse = await searchLlm.generate(messages, {
       maxTokens: maxTokens,
-      maxReasoningTokens: maxReasoningTokens,
+      maxThinkingTokens: maxThinkingTokens,
       webSearch: true,
       jsonOutput: true,
       verbose: ENV.DEBUG,
@@ -146,9 +146,9 @@ You are tasked with performing a web search based on the user's query and then p
     const maxTokens = Number(
       this.meta.options?.maxTokens ?? GimmickWebSearchCore.LLM_MAX_TOKENS
     );
-    const maxReasoningTokens = Number(
-      this.meta.options?.maxReasoningTokens ??
-        GimmickWebSearchCore.LLM_MAX_REASONING_TOKENS
+    const maxThinkingTokens = Number(
+      this.meta.options?.maxThinkingTokens ??
+        GimmickWebSearchCore.LLM_MAX_THINKING_TOKENS
     );
     if (!llmSearchOptions.apiKey) {
       return 'No API key found';
@@ -173,7 +173,7 @@ You are tasked with performing a web search based on the user's query and then p
       maxResultLength,
       maxSummaryLength,
       maxTokens,
-      maxReasoningTokens
+      maxThinkingTokens
     );
 
     await this.gimmick.location.emitAsync(

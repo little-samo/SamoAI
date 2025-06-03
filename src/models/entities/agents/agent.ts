@@ -109,7 +109,7 @@ export class Agent extends Entity {
       this.llms.at(Agent.ACTION_LLM_INDEX) ??
       this.llms.at(Agent.MAIN_LLM_INDEX);
     const actions = [
-      ...(actionLlm?.reasoning ? [] : ['reasoning:latest']),
+      ...(actionLlm?.thinking ? [] : ['reasoning:latest']),
       ...meta.actions,
       ...location.meta.actions,
     ];
@@ -406,7 +406,7 @@ export class Agent extends Entity {
       {
         maxTokens: this.meta.maxTokens,
         temperature: this.meta.temperature,
-        maxReasoningTokens: this.meta.maxReasoningTokens,
+        maxThinkingTokens: this.meta.maxThinkingTokens,
         verbose: ENV.DEBUG,
       }
     );
@@ -441,7 +441,7 @@ export class Agent extends Entity {
     const result = await llm.generate(messages, {
       maxTokens: this.meta.maxTokens,
       temperature: this.meta.temperature,
-      maxReasoningTokens: this.meta.maxEvaluatationReasoningTokens,
+      maxThinkingTokens: this.meta.maxEvaluatationThinkingTokens,
       verbose: ENV.DEBUG,
     });
     if (ENV.DEBUG) {
@@ -474,7 +474,7 @@ export class Agent extends Entity {
 
     const summaryResponse = await llm.generate(messages, {
       maxTokens: this.meta.maxTokens,
-      maxReasoningTokens: this.meta.maxReasoningTokens,
+      maxThinkingTokens: this.meta.maxThinkingTokens,
       verbose: ENV.DEBUG,
     });
 
@@ -501,7 +501,7 @@ export class Agent extends Entity {
     }
 
     const memoryActions = [
-      ...(llm.reasoning ? [] : ['reasoning:latest']),
+      ...(llm.thinking ? [] : ['reasoning:latest']),
       ...this.meta.memoryActions,
     ];
     const actions = Object.fromEntries(
@@ -520,7 +520,7 @@ export class Agent extends Entity {
       Object.values(actions),
       {
         maxTokens: this.meta.maxTokens,
-        maxReasoningTokens: this.meta.maxReasoningTokens,
+        maxThinkingTokens: this.meta.maxThinkingTokens,
         verbose: ENV.DEBUG,
       }
     );

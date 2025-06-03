@@ -164,10 +164,9 @@ export class AnthropicService extends LlmService {
         messages: userAssistantMessages,
         max_tokens: maxOutputTokens,
       };
-      if (this.reasoning) {
+      if (this.thinking) {
         thinkingBudget =
-          options?.maxReasoningTokens ??
-          LlmService.DEFAULT_MAX_REASONING_TOKENS;
+          options?.maxThinkingTokens ?? LlmService.DEFAULT_MAX_THINKING_TOKENS;
         maxOutputTokens += thinkingBudget;
         request.thinking = {
           type: 'enabled',
@@ -266,7 +265,7 @@ export class AnthropicService extends LlmService {
       messages = messages.filter((message) => message.role !== 'assistant');
 
       let prefill: string = '';
-      if (!this.reasoning) {
+      if (!this.thinking) {
         prefill = `[
     {
       "name": "reasoning",
@@ -323,10 +322,9 @@ Response can only be in JSON format and must strictly follow the following forma
         messages: userAssistantMessages,
         max_tokens: maxOutputTokens,
       };
-      if (this.reasoning) {
+      if (this.thinking) {
         thinkingBudget =
-          options?.maxReasoningTokens ??
-          LlmService.DEFAULT_MAX_REASONING_TOKENS;
+          options?.maxThinkingTokens ?? LlmService.DEFAULT_MAX_THINKING_TOKENS;
         maxOutputTokens += thinkingBudget;
         request.thinking = {
           type: 'enabled',
