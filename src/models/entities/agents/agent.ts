@@ -411,7 +411,12 @@ export class Agent extends Entity {
       }
     );
 
-    await this.location.emitAsync('llmUseTools', this, useToolsResponse);
+    await this.location.emitAsync(
+      'llmUseTools',
+      this.location,
+      this,
+      useToolsResponse
+    );
 
     for (const toolCall of useToolsResponse.toolCalls) {
       await this.executeToolCall(toolCall);
@@ -525,7 +530,12 @@ export class Agent extends Entity {
       }
     );
 
-    await this.location.emitAsync('llmUseTools', this, useToolsResponse);
+    await this.location.emitAsync(
+      'llmUseTools',
+      this.location,
+      this,
+      useToolsResponse
+    );
 
     for (const toolCall of useToolsResponse.toolCalls) {
       const action = actions[toolCall.name];
