@@ -17,6 +17,7 @@ import {
   LlmOptions,
   LlmGenerateResponse,
   LlmToolsResponse,
+  LlmPlatform,
 } from './llm.types';
 
 export class GeminiService extends LlmService {
@@ -202,6 +203,7 @@ export class GeminiService extends LlmService {
             responseText = responseText.slice(0, -3);
           }
           return {
+            platform: LlmPlatform.GEMINI,
             content: JSON.parse(responseText) as T extends true
               ? Record<string, unknown>
               : string,
@@ -221,6 +223,7 @@ export class GeminiService extends LlmService {
         }
       }
       return {
+        platform: LlmPlatform.GEMINI,
         content: responseText as T extends true
           ? Record<string, unknown>
           : string,
@@ -323,6 +326,7 @@ Response can only be in JSON format and must strictly follow the following forma
       try {
         const toolCalls = JSON.parse(response.text) as LlmToolCall[];
         return {
+          platform: LlmPlatform.GEMINI,
           toolCalls,
           model: this.model,
           maxOutputTokens,

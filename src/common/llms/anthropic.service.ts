@@ -19,6 +19,7 @@ import {
   LlmOptions,
   LlmGenerateResponse,
   LlmToolsResponse,
+  LlmPlatform,
 } from './llm.types';
 
 export class AnthropicService extends LlmService {
@@ -206,6 +207,7 @@ export class AnthropicService extends LlmService {
             responseText = responseText.slice(0, -3);
           }
           return {
+            platform: LlmPlatform.ANTHROPIC,
             content: JSON.parse(responseText) as T extends true
               ? Record<string, unknown>
               : string,
@@ -228,6 +230,7 @@ export class AnthropicService extends LlmService {
         }
       }
       return {
+        platform: LlmPlatform.ANTHROPIC,
         content: responseText as T extends true
           ? Record<string, unknown>
           : string,
@@ -366,6 +369,7 @@ Response can only be in JSON format and must strictly follow the following forma
         }
         const toolCalls = JSON.parse(responseText) as LlmToolCall[];
         return {
+          platform: LlmPlatform.ANTHROPIC,
           toolCalls,
           model: this.model,
           maxOutputTokens,

@@ -62,6 +62,7 @@ export type LlmMessage =
 // LLM Response interfaces for Prisma logging
 export interface LlmResponseBase {
   // Model Information
+  platform: LlmPlatform;
   model: string;
 
   // Request Configuration

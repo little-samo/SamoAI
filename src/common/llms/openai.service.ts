@@ -20,6 +20,7 @@ import {
   LlmGenerateResponse,
   LlmMessage,
   LlmOptions,
+  LlmPlatform,
   LlmServiceOptions,
   LlmToolsResponse,
 } from './llm.types';
@@ -195,6 +196,7 @@ export class OpenAIService extends LlmService {
       if (options?.jsonOutput) {
         try {
           return {
+            platform: LlmPlatform.OPENAI,
             content: JSON.parse(responseText) as T extends true
               ? Record<string, unknown>
               : string,
@@ -216,6 +218,7 @@ export class OpenAIService extends LlmService {
         }
       }
       return {
+        platform: LlmPlatform.OPENAI,
         content: responseText as T extends true
           ? Record<string, unknown>
           : string,
@@ -312,6 +315,7 @@ Response can only be in JSON format and must strictly follow the following forma
       try {
         const toolCalls = JSON.parse(responseText) as LlmToolCall[];
         return {
+          platform: LlmPlatform.OPENAI,
           toolCalls,
           model: this.model,
           maxOutputTokens,
