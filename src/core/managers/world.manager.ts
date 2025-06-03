@@ -1,4 +1,10 @@
-import { ENV, LlmMessage, LlmToolCall } from '@little-samo/samo-ai/common';
+import {
+  ENV,
+  LlmGenerateResponse,
+  LlmMessage,
+  LlmToolCall,
+  LlmToolsResponse,
+} from '@little-samo/samo-ai/common';
 import { AsyncEventEmitter } from '@little-samo/samo-ai/common';
 import {
   Agent,
@@ -586,6 +592,30 @@ export class WorldManager extends AsyncEventEmitter {
     if (options.preAction) {
       await options.preAction(location);
     }
+
+    location.on(
+      'llmGenerate',
+      async (entity: Entity, response: LlmGenerateResponse) => {
+        await this.emitAsync(
+          'locationLlmGenerate',
+          locationId,
+          entity,
+          response
+        );
+      }
+    );
+
+    location.on(
+      'llmUseTools',
+      async (entity: Entity, response: LlmToolsResponse) => {
+        await this.emitAsync(
+          'locationLlmUseTools',
+          locationId,
+          entity,
+          response
+        );
+      }
+    );
 
     location.on('agentExecuteNextActions', async (agent: Agent) => {
       await this.emitAsync('locationAgentExecution', locationId, agent);
