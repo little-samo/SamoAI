@@ -413,12 +413,7 @@ export class Agent extends Entity {
     );
 
     useToolsResponse.logType = LlmUsageType.EXECUTION;
-    await this.location.emitAsync(
-      'llmUseTools',
-      this.location,
-      this,
-      useToolsResponse
-    );
+    await this.location.emitAsync('llmUseTools', this, useToolsResponse);
 
     for (const toolCall of useToolsResponse.toolCalls) {
       await this.executeToolCall(toolCall);
@@ -452,7 +447,7 @@ export class Agent extends Entity {
       verbose: ENV.DEBUG,
     });
     response.logType = LlmUsageType.EVALUATION;
-    await this.location.emitAsync('llmGenerate', this.location, this, response);
+    await this.location.emitAsync('llmGenerate', this, response);
     if (ENV.DEBUG) {
       console.log(
         `Agent ${this.model.name} evaluated action condition: ${response.content}`
@@ -536,12 +531,7 @@ export class Agent extends Entity {
     );
 
     useToolsResponse.logType = LlmUsageType.MEMORY;
-    await this.location.emitAsync(
-      'llmUseTools',
-      this.location,
-      this,
-      useToolsResponse
-    );
+    await this.location.emitAsync('llmUseTools', this, useToolsResponse);
 
     for (const toolCall of useToolsResponse.toolCalls) {
       const action = actions[toolCall.name];
