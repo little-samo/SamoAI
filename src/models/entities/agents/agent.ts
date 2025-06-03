@@ -443,18 +443,19 @@ export class Agent extends Entity {
     if (!llm) {
       throw new Error('No LlmService found');
     }
-    const result = await llm.generate(messages, {
+    const response = await llm.generate(messages, {
       maxTokens: this.meta.maxTokens,
       temperature: this.meta.temperature,
       maxThinkingTokens: this.meta.maxEvaluatationThinkingTokens,
       verbose: ENV.DEBUG,
     });
+    await this.location.emitAsync('llmGenerate', this.location, this, response);
     if (ENV.DEBUG) {
       console.log(
-        `Agent ${this.model.name} evaluated action condition: ${result}`
+        `Agent ${this.model.name} evaluated action condition: ${response.content}`
       );
     }
-    return result.toString().toLowerCase().includes('true');
+    return response.content.toString().toLowerCase().includes('true');
   }
 
   public async generateSummary(
