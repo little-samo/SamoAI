@@ -64,6 +64,7 @@ export interface LlmResponseBase {
   // Model Information
   platform: LlmPlatform;
   model: string;
+  thinking: boolean;
 
   // Request Configuration
   maxOutputTokens?: number;

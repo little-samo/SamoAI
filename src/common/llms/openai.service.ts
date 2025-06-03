@@ -196,11 +196,12 @@ export class OpenAIService extends LlmService {
       if (options?.jsonOutput) {
         try {
           return {
-            platform: LlmPlatform.OPENAI,
             content: JSON.parse(responseText) as T extends true
               ? Record<string, unknown>
               : string,
+            platform: LlmPlatform.OPENAI,
             model: this.model,
+            thinking: this.thinking,
             maxOutputTokens,
             temperature,
             inputTokens: response.usage?.prompt_tokens ?? 0,
@@ -223,6 +224,7 @@ export class OpenAIService extends LlmService {
           ? Record<string, unknown>
           : string,
         model: this.model,
+        thinking: this.thinking,
         maxOutputTokens,
         temperature,
         inputTokens: response.usage?.prompt_tokens ?? 0,
@@ -315,9 +317,10 @@ Response can only be in JSON format and must strictly follow the following forma
       try {
         const toolCalls = JSON.parse(responseText) as LlmToolCall[];
         return {
-          platform: LlmPlatform.OPENAI,
           toolCalls,
+          platform: LlmPlatform.OPENAI,
           model: this.model,
+          thinking: this.thinking,
           maxOutputTokens,
           temperature,
           inputTokens: response.usage?.prompt_tokens ?? 0,

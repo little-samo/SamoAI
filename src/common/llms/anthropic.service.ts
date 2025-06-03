@@ -207,11 +207,12 @@ export class AnthropicService extends LlmService {
             responseText = responseText.slice(0, -3);
           }
           return {
-            platform: LlmPlatform.ANTHROPIC,
             content: JSON.parse(responseText) as T extends true
               ? Record<string, unknown>
               : string,
+            platform: LlmPlatform.ANTHROPIC,
             model: this.model,
+            thinking: this.thinking,
             maxOutputTokens,
             thinkingBudget,
             temperature,
@@ -230,11 +231,12 @@ export class AnthropicService extends LlmService {
         }
       }
       return {
-        platform: LlmPlatform.ANTHROPIC,
         content: responseText as T extends true
           ? Record<string, unknown>
           : string,
+        platform: LlmPlatform.ANTHROPIC,
         model: this.model,
+        thinking: this.thinking,
         maxOutputTokens,
         thinkingBudget,
         temperature,
@@ -369,9 +371,10 @@ Response can only be in JSON format and must strictly follow the following forma
         }
         const toolCalls = JSON.parse(responseText) as LlmToolCall[];
         return {
-          platform: LlmPlatform.ANTHROPIC,
           toolCalls,
+          platform: LlmPlatform.ANTHROPIC,
           model: this.model,
+          thinking: this.thinking,
           maxOutputTokens,
           thinkingBudget,
           temperature,

@@ -203,11 +203,12 @@ export class GeminiService extends LlmService {
             responseText = responseText.slice(0, -3);
           }
           return {
-            platform: LlmPlatform.GEMINI,
             content: JSON.parse(responseText) as T extends true
               ? Record<string, unknown>
               : string,
+            platform: LlmPlatform.GEMINI,
             model: this.model,
+            thinking: this.thinking,
             maxOutputTokens,
             thinkingBudget,
             temperature,
@@ -223,11 +224,12 @@ export class GeminiService extends LlmService {
         }
       }
       return {
-        platform: LlmPlatform.GEMINI,
         content: responseText as T extends true
           ? Record<string, unknown>
           : string,
+        platform: LlmPlatform.GEMINI,
         model: this.model,
+        thinking: this.thinking,
         maxOutputTokens,
         thinkingBudget,
         temperature,
@@ -329,6 +331,7 @@ Response can only be in JSON format and must strictly follow the following forma
           platform: LlmPlatform.GEMINI,
           toolCalls,
           model: this.model,
+          thinking: this.thinking,
           maxOutputTokens,
           thinkingBudget,
           temperature,
