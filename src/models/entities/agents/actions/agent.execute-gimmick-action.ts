@@ -63,7 +63,7 @@ export class AgentExecuteGimmickAction extends AgentAction {
 
     if (!(await gimmick.occupy(this.agent))) {
       await this.location.addSystemMessage(
-        `Gimmick ${action.gimmickKey} is not currently available.`
+        `${action.gimmickKey} is not currently available.`
       );
       return;
     }
@@ -81,7 +81,7 @@ export class AgentExecuteGimmickAction extends AgentAction {
       if (parameters === 'PREV_MESSAGE') {
         if (!messageText) {
           await this.location.addSystemMessage(
-            `Agent ${this.agent.name} has no previous message in the current turn to execute gimmick ${action.gimmickKey}.`
+            `Agent ${this.agent.name} has no previous message in the current turn to execute ${action.gimmickKey}.`
           );
           return;
         }
@@ -97,7 +97,7 @@ export class AgentExecuteGimmickAction extends AgentAction {
           if (value === 'PREV_MESSAGE') {
             if (!messageText) {
               throw new Error(
-                `Agent ${this.agent.name} has no previous message in the current turn to execute gimmick ${action.gimmickKey}.`
+                `Agent ${this.agent.name} has no previous message in the current turn to execute ${action.gimmickKey}.`
               );
             }
 
@@ -120,7 +120,7 @@ export class AgentExecuteGimmickAction extends AgentAction {
         );
       } catch {
         await this.location.addSystemMessage(
-          `Agent ${this.agent.name} has no previous message in the current turn to execute gimmick ${action.gimmickKey}.`
+          `Agent ${this.agent.name} has no previous message in the current turn to execute ${action.gimmickKey}.`
         );
         return;
       }
@@ -136,7 +136,7 @@ export class AgentExecuteGimmickAction extends AgentAction {
         error
       );
       await this.location.addSystemMessage(
-        `Agent ${this.agent.name} failed to execute gimmick ${action.gimmickKey}: ${error}`
+        `Agent ${this.agent.name} failed to execute ${action.gimmickKey}: ${error}`
       );
     }
   }

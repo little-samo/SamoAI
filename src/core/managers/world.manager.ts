@@ -734,8 +734,15 @@ export class WorldManager extends AsyncEventEmitter {
           entity,
           parameters
         );
+
+        let errorMessage;
+        if (error instanceof Error) {
+          errorMessage = error.message;
+        } else {
+          errorMessage = 'Unknown error';
+        }
         await gimmick.location.addSystemMessage(
-          `Gimmick ${gimmick.name} failed to execute.`
+          `${entity.type} ${entity.name} failed to execute ${gimmick.key}: ${errorMessage}`
         );
       }
     }
