@@ -16,7 +16,13 @@ import { LlmApiError } from './llm.errors';
 import { LlmInvalidContentError } from './llm.errors';
 import { LlmService } from './llm.service';
 import { LlmTool, LlmToolCall } from './llm.tool';
-import { LlmMessage, LlmOptions, LlmServiceOptions } from './llm.types';
+import {
+  LlmGenerateResponse,
+  LlmMessage,
+  LlmOptions,
+  LlmServiceOptions,
+  LlmToolsResponse,
+} from './llm.types';
 
 export class OpenAIService extends LlmService {
   private client: OpenAI;
@@ -132,7 +138,7 @@ export class OpenAIService extends LlmService {
   public async generate<T extends boolean = false>(
     messages: LlmMessage[],
     options?: LlmOptions & { jsonOutput?: T }
-  ): Promise<T extends true ? Record<string, unknown> : string> {
+  ): Promise<LlmGenerateResponse<T>> {
     try {
       // openai does not support assistant message prefilling
       messages = messages.filter((message) => message.role !== 'assistant');
@@ -160,20 +166,26 @@ export class OpenAIService extends LlmService {
       } else {
         responseFormat = { type: 'text' };
       }
+      const maxOutputTokens =
+        options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS;
+      let temperature: number | undefined;
       const request: ChatCompletionCreateParamsNonStreaming = {
         model: this.model,
         messages: [...systemMessages, ...userAssistantMessages],
-        temperature: options?.webSearch
-          ? undefined
-          : (options?.temperature ?? LlmService.DEFAULT_TEMPERATURE),
-        max_tokens: options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS,
+        max_tokens: maxOutputTokens,
         response_format: responseFormat,
       };
+      if (!options?.webSearch) {
+        temperature = options?.temperature ?? LlmService.DEFAULT_TEMPERATURE;
+        request.temperature = temperature;
+      }
       if (options?.verbose) {
         console.log(request);
       }
 
+      const startTime = Date.now();
       const response = await this.createCompletionWithRetry(request, options);
+      const responseTime = Date.now() - startTime;
 
       if (response.choices[0].message.content === null) {
         throw new LlmInvalidContentError('OpenAI returned no content');
@@ -182,16 +194,34 @@ export class OpenAIService extends LlmService {
       const responseText = response.choices[0].message.content;
       if (options?.jsonOutput) {
         try {
-          return JSON.parse(responseText) as T extends true
-            ? Record<string, unknown>
-            : string;
+          return {
+            content: JSON.parse(responseText) as T extends true
+              ? Record<string, unknown>
+              : string,
+            model: this.model,
+            maxOutputTokens,
+            temperature,
+            inputTokens: response.usage?.prompt_tokens ?? 0,
+            outputTokens: response.usage?.completion_tokens ?? 0,
+            responseTime,
+          };
         } catch (error) {
           console.error(error);
           console.error(responseText);
           throw new LlmInvalidContentError('OpenAI returned invalid JSON');
         }
       }
-      return responseText as T extends true ? Record<string, unknown> : string;
+      return {
+        content: responseText as T extends true
+          ? Record<string, unknown>
+          : string,
+        model: this.model,
+        maxOutputTokens,
+        temperature,
+        inputTokens: response.usage?.prompt_tokens ?? 0,
+        outputTokens: response.usage?.completion_tokens ?? 0,
+        responseTime,
+      };
     } catch (error) {
       if (error instanceof OpenAI.APIError) {
         throw new LlmApiError(error.status, error.message);
@@ -204,7 +234,7 @@ export class OpenAIService extends LlmService {
     messages: LlmMessage[],
     tools: LlmTool[],
     options?: LlmOptions
-  ): Promise<LlmToolCall[]> {
+  ): Promise<LlmToolsResponse> {
     try {
       // openai does not support assistant message prefilling
       messages = messages.filter((message) => message.role !== 'assistant');
@@ -241,20 +271,26 @@ Response can only be in JSON format and must strictly follow the following forma
 ]`,
       });
 
+      const maxOutputTokens =
+        options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS;
+      let temperature: number | undefined;
       const request: ChatCompletionCreateParamsNonStreaming = {
         model: this.model,
         messages: [...systemMessages, ...userAssistantMessages],
-        temperature: options?.webSearch
-          ? undefined
-          : (options?.temperature ?? LlmService.DEFAULT_TEMPERATURE),
-        max_tokens: options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS,
+        max_tokens: maxOutputTokens,
         response_format: { type: 'text' },
       };
+      if (!options?.webSearch) {
+        temperature = options?.temperature ?? LlmService.DEFAULT_TEMPERATURE;
+        request.temperature = temperature;
+      }
       if (options?.verbose) {
         console.log(request);
       }
 
+      const startTime = Date.now();
       const response = await this.createCompletionWithRetry(request, options);
+      const responseTime = Date.now() - startTime;
 
       if (response.choices.length === 0) {
         throw new LlmInvalidContentError('OpenAI returned no choices');
@@ -267,11 +303,19 @@ Response can only be in JSON format and must strictly follow the following forma
 
       try {
         const toolCalls = JSON.parse(responseText) as LlmToolCall[];
-        return toolCalls;
+        return {
+          toolCalls,
+          model: this.model,
+          maxOutputTokens,
+          temperature,
+          inputTokens: response.usage?.prompt_tokens ?? 0,
+          outputTokens: response.usage?.completion_tokens ?? 0,
+          responseTime,
+        };
       } catch (error) {
         console.error(error);
         console.error(responseText);
-        return [];
+        throw new LlmInvalidContentError('OpenAI returned invalid JSON');
       }
     } catch (error) {
       if (error instanceof OpenAI.APIError) {

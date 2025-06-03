@@ -58,3 +58,36 @@ export type LlmMessage =
   | LlmUserMessage
   | LlmAssistantMessage
   | LlmSystemMessage;
+
+// LLM Response interfaces for Prisma logging
+export interface LlmResponseBase {
+  // Model Information
+  model: string;
+
+  // Request Configuration
+  maxOutputTokens?: number;
+  thinkingBudget?: number;
+  temperature?: number;
+
+  // Token Usage
+  inputTokens: number;
+  outputTokens: number;
+  thinkingTokens?: number;
+  cachedInputTokens?: number;
+  cacheCreationTokens?: number;
+
+  // Performance
+  responseTime: number; // Response time in milliseconds
+}
+
+export interface LlmGenerateResponse<T extends boolean = false>
+  extends LlmResponseBase {
+  content: T extends true ? Record<string, unknown> : string;
+}
+
+export interface LlmToolsResponse extends LlmResponseBase {
+  toolCalls: Array<{
+    name: string;
+    arguments: unknown;
+  }>;
+}

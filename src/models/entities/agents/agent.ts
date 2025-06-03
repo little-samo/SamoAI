@@ -400,7 +400,7 @@ export class Agent extends Entity {
     if (!llm) {
       throw new Error('No LlmService found');
     }
-    const toolCalls = await llm.useTools(
+    const useToolsResponse = await llm.useTools(
       messages,
       Object.values(this.actions),
       {
@@ -410,7 +410,10 @@ export class Agent extends Entity {
         verbose: ENV.DEBUG,
       }
     );
-    for (const toolCall of toolCalls) {
+
+    await this.location.emitAsync('llmUseTools', this, useToolsResponse);
+
+    for (const toolCall of useToolsResponse.toolCalls) {
       await this.executeToolCall(toolCall);
     }
 
@@ -418,7 +421,7 @@ export class Agent extends Entity {
       'agentExecutedNextActions',
       this,
       messages,
-      toolCalls
+      useToolsResponse.toolCalls
     );
   }
 
@@ -469,12 +472,15 @@ export class Agent extends Entity {
       throw new Error('No LlmService found');
     }
 
-    const summary = await llm.generate(messages, {
+    const summaryResponse = await llm.generate(messages, {
       maxTokens: this.meta.maxTokens,
       maxReasoningTokens: this.meta.maxReasoningTokens,
       verbose: ENV.DEBUG,
     });
-    return summary;
+
+    await this.location.emitAsync('llmGenerate', this, summaryResponse);
+
+    return summaryResponse.content;
   }
 
   public async executeMemoryActions(
@@ -509,12 +515,19 @@ export class Agent extends Entity {
       })
     );
 
-    const toolCalls = await llm.useTools(messages, Object.values(actions), {
-      maxTokens: this.meta.maxTokens,
-      maxReasoningTokens: this.meta.maxReasoningTokens,
-      verbose: ENV.DEBUG,
-    });
-    for (const toolCall of toolCalls) {
+    const useToolsResponse = await llm.useTools(
+      messages,
+      Object.values(actions),
+      {
+        maxTokens: this.meta.maxTokens,
+        maxReasoningTokens: this.meta.maxReasoningTokens,
+        verbose: ENV.DEBUG,
+      }
+    );
+
+    await this.location.emitAsync('llmUseTools', this, useToolsResponse);
+
+    for (const toolCall of useToolsResponse.toolCalls) {
       const action = actions[toolCall.name];
       if (!action) {
         console.error(

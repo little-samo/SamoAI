@@ -1,5 +1,6 @@
 import { Anthropic, AnthropicError, APIError } from '@anthropic-ai/sdk';
 import {
+  Message,
   MessageCreateParamsNonStreaming,
   MessageParam,
   TextBlock,
@@ -12,7 +13,13 @@ import { LlmApiError, LlmInvalidContentError } from './llm.errors';
 import { LlmService } from './llm.service';
 import { LlmToolCall } from './llm.tool';
 import { LlmTool } from './llm.tool';
-import { LlmServiceOptions, LlmMessage, LlmOptions } from './llm.types';
+import {
+  LlmServiceOptions,
+  LlmMessage,
+  LlmOptions,
+  LlmGenerateResponse,
+  LlmToolsResponse,
+} from './llm.types';
 
 export class AnthropicService extends LlmService {
   private client: Anthropic;
@@ -31,7 +38,7 @@ export class AnthropicService extends LlmService {
       retryDelay?: number;
       verbose?: boolean;
     } = {}
-  ) {
+  ): Promise<Message> {
     const maxTries = options.maxTries ?? LlmService.DEFAULT_MAX_TRIES;
     const retryDelay = options.retryDelay ?? LlmService.DEFAULT_RETRY_DELAY;
     const startTime = Date.now();
@@ -137,7 +144,7 @@ export class AnthropicService extends LlmService {
   public async generate<T extends boolean = false>(
     messages: LlmMessage[],
     options?: LlmOptions & { jsonOutput?: T }
-  ): Promise<T extends true ? Record<string, unknown> : string> {
+  ): Promise<LlmGenerateResponse<T>> {
     try {
       const [systemMessages, userAssistantMessages] =
         this.llmMessagesToAnthropicMessages(messages);
@@ -148,28 +155,36 @@ export class AnthropicService extends LlmService {
         };
       }
 
+      let maxOutputTokens = options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS;
+      let thinkingBudget: number | undefined;
+      let temperature: number | undefined;
       const request: MessageCreateParamsNonStreaming = {
         model: this.model,
         system: systemMessages,
         messages: userAssistantMessages,
-        max_tokens: options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS,
+        max_tokens: maxOutputTokens,
       };
       if (this.reasoning) {
+        thinkingBudget =
+          options?.maxReasoningTokens ??
+          LlmService.DEFAULT_MAX_REASONING_TOKENS;
+        maxOutputTokens += thinkingBudget;
         request.thinking = {
           type: 'enabled',
-          budget_tokens:
-            options?.maxReasoningTokens ??
-            LlmService.DEFAULT_MAX_REASONING_TOKENS,
+          budget_tokens: thinkingBudget,
         };
+        request.max_tokens = maxOutputTokens;
       } else {
-        request.temperature =
-          options?.temperature ?? LlmService.DEFAULT_TEMPERATURE;
+        temperature = options?.temperature ?? LlmService.DEFAULT_TEMPERATURE;
+        request.temperature = temperature;
       }
       if (options?.verbose) {
         console.log(request);
       }
 
+      const startTime = Date.now();
       const response = await this.createMessageWithRetry(request, options);
+      const responseTime = Date.now() - startTime;
 
       if (response.content.length === 0) {
         throw new LlmInvalidContentError('Anthropic returned no content');
@@ -191,16 +206,43 @@ export class AnthropicService extends LlmService {
           if (responseText.endsWith('```')) {
             responseText = responseText.slice(0, -3);
           }
-          return JSON.parse(responseText) as T extends true
-            ? Record<string, unknown>
-            : string;
+          return {
+            content: JSON.parse(responseText) as T extends true
+              ? Record<string, unknown>
+              : string,
+            model: this.model,
+            maxOutputTokens,
+            thinkingBudget,
+            temperature,
+            inputTokens: response.usage.input_tokens,
+            outputTokens: response.usage.output_tokens,
+            cachedInputTokens:
+              response.usage.cache_read_input_tokens ?? undefined,
+            cacheCreationTokens:
+              response.usage.cache_creation_input_tokens ?? undefined,
+            responseTime,
+          };
         } catch (error) {
           console.error(error);
           console.error(responseText);
           throw new LlmInvalidContentError('Anthropic returned invalid JSON');
         }
       }
-      return responseText as T extends true ? Record<string, unknown> : string;
+      return {
+        content: responseText as T extends true
+          ? Record<string, unknown>
+          : string,
+        model: this.model,
+        maxOutputTokens,
+        thinkingBudget,
+        temperature,
+        inputTokens: response.usage.input_tokens,
+        outputTokens: response.usage.output_tokens,
+        cachedInputTokens: response.usage.cache_read_input_tokens ?? undefined,
+        cacheCreationTokens:
+          response.usage.cache_creation_input_tokens ?? undefined,
+        responseTime,
+      };
     } catch (error) {
       if (error instanceof AnthropicError) {
         if (error instanceof APIError) {
@@ -216,7 +258,7 @@ export class AnthropicService extends LlmService {
     messages: LlmMessage[],
     tools: LlmTool[],
     options?: LlmOptions
-  ): Promise<LlmToolCall[]> {
+  ): Promise<LlmToolsResponse> {
     try {
       const assistantMessage = messages.find(
         (message) => message.role === 'assistant'
@@ -272,28 +314,36 @@ Response can only be in JSON format and must strictly follow the following forma
         type: 'ephemeral',
       };
 
+      let maxOutputTokens = options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS;
+      let thinkingBudget: number | undefined;
+      let temperature: number | undefined;
       const request: MessageCreateParamsNonStreaming = {
         model: this.model,
         system: systemMessages,
         messages: userAssistantMessages,
-        max_tokens: options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS,
+        max_tokens: maxOutputTokens,
       };
       if (this.reasoning) {
+        thinkingBudget =
+          options?.maxReasoningTokens ??
+          LlmService.DEFAULT_MAX_REASONING_TOKENS;
+        maxOutputTokens += thinkingBudget;
         request.thinking = {
           type: 'enabled',
-          budget_tokens:
-            options?.maxReasoningTokens ??
-            LlmService.DEFAULT_MAX_REASONING_TOKENS,
+          budget_tokens: thinkingBudget,
         };
+        request.max_tokens = maxOutputTokens;
       } else {
-        request.temperature =
-          options?.temperature ?? LlmService.DEFAULT_TEMPERATURE;
+        temperature = options?.temperature ?? LlmService.DEFAULT_TEMPERATURE;
+        request.temperature = temperature;
       }
       if (options?.verbose) {
         console.log(request);
       }
 
+      const startTime = Date.now();
       const response = await this.createMessageWithRetry(request, options);
+      const responseTime = Date.now() - startTime;
 
       if (response.content.length === 0) {
         throw new LlmInvalidContentError('Anthropic returned no content');
@@ -317,11 +367,24 @@ Response can only be in JSON format and must strictly follow the following forma
           responseText = responseText.slice(0, -3);
         }
         const toolCalls = JSON.parse(responseText) as LlmToolCall[];
-        return toolCalls;
+        return {
+          toolCalls,
+          model: this.model,
+          maxOutputTokens,
+          thinkingBudget,
+          temperature,
+          inputTokens: response.usage.input_tokens,
+          outputTokens: response.usage.output_tokens,
+          cachedInputTokens:
+            response.usage.cache_read_input_tokens ?? undefined,
+          cacheCreationTokens:
+            response.usage.cache_creation_input_tokens ?? undefined,
+          responseTime,
+        };
       } catch (error) {
         console.error(error);
         console.error(responseText);
-        return [];
+        throw new LlmInvalidContentError('Anthropic returned invalid JSON');
       }
     } catch (error) {
       if (error instanceof AnthropicError) {

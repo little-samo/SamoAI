@@ -11,7 +11,13 @@ import { LlmApiError, LlmInvalidContentError } from './llm.errors';
 import { LlmService } from './llm.service';
 import { LlmToolCall } from './llm.tool';
 import { LlmTool } from './llm.tool';
-import { LlmServiceOptions, LlmMessage, LlmOptions } from './llm.types';
+import {
+  LlmServiceOptions,
+  LlmMessage,
+  LlmOptions,
+  LlmGenerateResponse,
+  LlmToolsResponse,
+} from './llm.types';
 
 export class GeminiService extends LlmService {
   private client: GoogleGenAI;
@@ -130,7 +136,7 @@ export class GeminiService extends LlmService {
   public async generate<T extends boolean = false>(
     messages: LlmMessage[],
     options?: LlmOptions & { jsonOutput?: T }
-  ): Promise<T extends true ? Record<string, unknown> : string> {
+  ): Promise<LlmGenerateResponse<T>> {
     try {
       // gemini does not support assistant message prefilling
       messages = messages.filter((message) => message.role !== 'assistant');
@@ -138,34 +144,37 @@ export class GeminiService extends LlmService {
       const [systemMessages, userAssistantMessages] =
         this.llmMessagesToGeminiMessages(messages);
 
-      const reasoningMaxTokens = this.reasoning
-        ? (options?.maxReasoningTokens ??
-          LlmService.DEFAULT_MAX_REASONING_TOKENS)
-        : 0;
+      let maxOutputTokens = options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS;
+      let thinkingBudget: number | undefined;
+      const temperature =
+        options?.temperature ?? LlmService.DEFAULT_TEMPERATURE;
       const request: GenerateContentParameters = {
         model: this.model,
         contents: userAssistantMessages,
         config: {
-          temperature: options?.temperature ?? LlmService.DEFAULT_TEMPERATURE,
-          maxOutputTokens:
-            (this.reasoning ? reasoningMaxTokens : 0) +
-            (options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS),
+          temperature,
+          maxOutputTokens,
           systemInstruction: systemMessages,
-          thinkingConfig: this.reasoning
-            ? {
-                includeThoughts: true,
-                thinkingBudget: reasoningMaxTokens,
-              }
-            : undefined,
-          tools: options?.webSearch
-            ? [
-                {
-                  googleSearch: {},
-                },
-              ]
-            : undefined,
         },
       };
+      if (this.reasoning) {
+        thinkingBudget =
+          options?.maxReasoningTokens ??
+          LlmService.DEFAULT_MAX_REASONING_TOKENS;
+        maxOutputTokens += thinkingBudget;
+        request.config!.thinkingConfig = {
+          includeThoughts: true,
+          thinkingBudget,
+        };
+        request.config!.maxOutputTokens = maxOutputTokens;
+      }
+      if (options?.webSearch) {
+        request.config!.tools = [
+          {
+            googleSearch: {},
+          },
+        ];
+      }
       if (options?.jsonOutput && !options?.webSearch) {
         request.config!.responseMimeType = 'application/json';
       }
@@ -173,7 +182,9 @@ export class GeminiService extends LlmService {
         console.log(request);
       }
 
+      const startTime = Date.now();
       const response = await this.generateContentWithRetry(request, options);
+      const responseTime = Date.now() - startTime;
 
       if (!response.text) {
         throw new LlmInvalidContentError('Gemini returned no content');
@@ -191,16 +202,38 @@ export class GeminiService extends LlmService {
           if (responseText.endsWith('```')) {
             responseText = responseText.slice(0, -3);
           }
-          return JSON.parse(responseText) as T extends true
-            ? Record<string, unknown>
-            : string;
+          return {
+            content: JSON.parse(responseText) as T extends true
+              ? Record<string, unknown>
+              : string,
+            model: this.model,
+            maxOutputTokens,
+            thinkingBudget,
+            temperature,
+            inputTokens: response.usageMetadata?.promptTokenCount ?? 0,
+            outputTokens: response.usageMetadata?.candidatesTokenCount ?? 0,
+            thinkingTokens: response.usageMetadata?.thoughtsTokenCount,
+            responseTime,
+          };
         } catch (error) {
           console.error(error);
           console.error(responseText);
           throw new LlmInvalidContentError('Gemini returned invalid JSON');
         }
       }
-      return responseText as T extends true ? Record<string, unknown> : string;
+      return {
+        content: responseText as T extends true
+          ? Record<string, unknown>
+          : string,
+        model: this.model,
+        maxOutputTokens,
+        thinkingBudget,
+        temperature,
+        inputTokens: response.usageMetadata?.promptTokenCount ?? 0,
+        outputTokens: response.usageMetadata?.candidatesTokenCount ?? 0,
+        thinkingTokens: response.usageMetadata?.thoughtsTokenCount,
+        responseTime,
+      };
     } catch (error) {
       throw error;
     }
@@ -210,7 +243,7 @@ export class GeminiService extends LlmService {
     messages: LlmMessage[],
     tools: LlmTool[],
     options?: LlmOptions
-  ): Promise<LlmToolCall[]> {
+  ): Promise<LlmToolsResponse> {
     try {
       // gemini does not support assistant message prefilling
       messages = messages.filter((message) => message.role !== 'assistant');
@@ -244,33 +277,46 @@ Response can only be in JSON format and must strictly follow the following forma
 ]`,
       });
 
-      const reasoningMaxTokens = this.reasoning
-        ? (options?.maxReasoningTokens ??
-          LlmService.DEFAULT_MAX_REASONING_TOKENS)
-        : 0;
+      let maxOutputTokens = options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS;
+      let thinkingBudget: number | undefined;
+      const temperature =
+        options?.temperature ?? LlmService.DEFAULT_TEMPERATURE;
       const request: GenerateContentParameters = {
         model: this.model,
         contents: userAssistantMessages,
         config: {
-          temperature: options?.temperature ?? LlmService.DEFAULT_TEMPERATURE,
-          maxOutputTokens:
-            reasoningMaxTokens +
-            (options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS),
-          responseMimeType: 'application/json',
+          temperature,
+          maxOutputTokens,
           systemInstruction: systemMessages,
-          thinkingConfig: this.reasoning
-            ? {
-                includeThoughts: true,
-                thinkingBudget: reasoningMaxTokens,
-              }
-            : undefined,
         },
       };
+      if (this.reasoning) {
+        thinkingBudget =
+          options?.maxReasoningTokens ??
+          LlmService.DEFAULT_MAX_REASONING_TOKENS;
+        maxOutputTokens += thinkingBudget;
+        request.config!.thinkingConfig = {
+          includeThoughts: true,
+          thinkingBudget,
+        };
+        request.config!.maxOutputTokens = maxOutputTokens;
+      }
+      if (options?.webSearch) {
+        request.config!.tools = [
+          {
+            googleSearch: {},
+          },
+        ];
+      } else {
+        request.config!.responseMimeType = 'application/json';
+      }
       if (options?.verbose) {
         console.log(request);
       }
 
+      const startTime = Date.now();
       const response = await this.generateContentWithRetry(request, options);
+      const responseTime = Date.now() - startTime;
 
       if (!response.text) {
         throw new LlmInvalidContentError('Gemini returned no content');
@@ -278,11 +324,21 @@ Response can only be in JSON format and must strictly follow the following forma
 
       try {
         const toolCalls = JSON.parse(response.text) as LlmToolCall[];
-        return toolCalls;
+        return {
+          toolCalls,
+          model: this.model,
+          maxOutputTokens,
+          thinkingBudget,
+          temperature,
+          inputTokens: response.usageMetadata?.promptTokenCount ?? 0,
+          outputTokens: response.usageMetadata?.candidatesTokenCount ?? 0,
+          thinkingTokens: response.usageMetadata?.thoughtsTokenCount,
+          responseTime,
+        };
       } catch (error) {
         console.error(error);
         console.error(response.text);
-        return [];
+        throw new LlmInvalidContentError('Gemini returned invalid JSON');
       }
     } catch (error) {
       throw error;

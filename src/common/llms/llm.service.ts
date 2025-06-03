@@ -1,9 +1,11 @@
-import { LlmTool, LlmToolCall } from './llm.tool';
+import { LlmTool } from './llm.tool';
 import {
   LlmMessage,
   LlmOptions,
   LlmPlatform,
   LlmServiceOptions,
+  LlmGenerateResponse,
+  LlmToolsResponse,
 } from './llm.types';
 
 export abstract class LlmService {
@@ -28,11 +30,11 @@ export abstract class LlmService {
   public abstract generate<T extends boolean = false>(
     messages: LlmMessage[],
     options?: LlmOptions & { jsonOutput?: T }
-  ): Promise<T extends true ? Record<string, unknown> : string>;
+  ): Promise<LlmGenerateResponse<T>>;
 
   public abstract useTools(
     messages: LlmMessage[],
     tools: LlmTool[],
     options?: LlmOptions
-  ): Promise<LlmToolCall[]>;
+  ): Promise<LlmToolsResponse>;
 }

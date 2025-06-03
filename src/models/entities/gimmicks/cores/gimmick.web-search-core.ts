@@ -78,7 +78,7 @@ You are tasked with performing a web search based on the user's query and then p
       content: query,
     });
 
-    const searchSummaryResult = await searchLlm.generate(messages, {
+    const searchSummaryResponse = await searchLlm.generate(messages, {
       maxTokens: maxTokens,
       maxReasoningTokens: maxReasoningTokens,
       webSearch: true,
@@ -86,6 +86,13 @@ You are tasked with performing a web search based on the user's query and then p
       verbose: ENV.DEBUG,
     });
 
+    await entity.location.emitAsync(
+      'llmGenerate',
+      entity,
+      searchSummaryResponse
+    );
+
+    const searchSummaryResult = searchSummaryResponse.content;
     const rawSummary =
       typeof searchSummaryResult?.summary === 'string'
         ? searchSummaryResult.summary
