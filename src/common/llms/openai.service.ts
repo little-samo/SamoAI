@@ -203,6 +203,10 @@ export class OpenAIService extends LlmService {
             temperature,
             inputTokens: response.usage?.prompt_tokens ?? 0,
             outputTokens: response.usage?.completion_tokens ?? 0,
+            thinkingTokens:
+              response.usage?.completion_tokens_details?.reasoning_tokens ?? 0,
+            cachedInputTokens:
+              response.usage?.prompt_tokens_details?.cached_tokens ?? 0,
             responseTime,
           };
         } catch (error) {
@@ -220,6 +224,10 @@ export class OpenAIService extends LlmService {
         temperature,
         inputTokens: response.usage?.prompt_tokens ?? 0,
         outputTokens: response.usage?.completion_tokens ?? 0,
+        thinkingTokens:
+          response.usage?.completion_tokens_details?.reasoning_tokens ?? 0,
+        cachedInputTokens:
+          response.usage?.prompt_tokens_details?.cached_tokens ?? 0,
         responseTime,
       };
     } catch (error) {
@@ -310,6 +318,10 @@ Response can only be in JSON format and must strictly follow the following forma
           temperature,
           inputTokens: response.usage?.prompt_tokens ?? 0,
           outputTokens: response.usage?.completion_tokens ?? 0,
+          thinkingTokens:
+            response.usage?.completion_tokens_details?.reasoning_tokens ?? 0,
+          cachedInputTokens:
+            response.usage?.prompt_tokens_details?.cached_tokens ?? 0,
           responseTime,
         };
       } catch (error) {
