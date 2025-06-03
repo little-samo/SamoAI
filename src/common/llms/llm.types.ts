@@ -59,6 +59,17 @@ export type LlmMessage =
   | LlmAssistantMessage
   | LlmSystemMessage;
 
+export const LlmUsageType = {
+  UNKNOWN: 'UNKNOWN',
+  EVALUATION: 'EVALUATION',
+  EXECUTION: 'EXECUTION',
+  SUMMARY: 'SUMMARY',
+  MEMORY: 'MEMORY',
+  GIMMICK: 'GIMMICK',
+} as const;
+
+export type LlmUsageType = (typeof LlmUsageType)[keyof typeof LlmUsageType];
+
 // LLM Response interfaces for Prisma logging
 export interface LlmResponseBase {
   // Model Information
@@ -78,7 +89,7 @@ export interface LlmResponseBase {
   cachedInputTokens?: number;
   cacheCreationTokens?: number;
 
-  // Performance
+  logType?: LlmUsageType;
   responseTime: number; // Response time in milliseconds
 }
 

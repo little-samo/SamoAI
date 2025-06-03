@@ -4,6 +4,7 @@ import {
   LlmMessage,
   LlmService,
   LlmToolCall,
+  LlmUsageType,
 } from '@little-samo/samo-ai/common';
 import { type AgentInputBuilder } from '@little-samo/samo-ai/models';
 
@@ -411,6 +412,7 @@ export class Agent extends Entity {
       }
     );
 
+    useToolsResponse.logType = LlmUsageType.EXECUTION;
     await this.location.emitAsync(
       'llmUseTools',
       this.location,
@@ -449,6 +451,7 @@ export class Agent extends Entity {
       maxThinkingTokens: this.meta.maxEvaluatationThinkingTokens,
       verbose: ENV.DEBUG,
     });
+    response.logType = LlmUsageType.EVALUATION;
     await this.location.emitAsync('llmGenerate', this.location, this, response);
     if (ENV.DEBUG) {
       console.log(
@@ -484,6 +487,7 @@ export class Agent extends Entity {
       verbose: ENV.DEBUG,
     });
 
+    summaryResponse.logType = LlmUsageType.SUMMARY;
     await this.location.emitAsync('llmGenerate', this, summaryResponse);
 
     return summaryResponse.content;
@@ -531,6 +535,7 @@ export class Agent extends Entity {
       }
     );
 
+    useToolsResponse.logType = LlmUsageType.MEMORY;
     await this.location.emitAsync(
       'llmUseTools',
       this.location,

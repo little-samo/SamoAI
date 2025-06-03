@@ -5,6 +5,7 @@ import {
   LlmPlatform,
   LlmService,
   LlmServiceOptions,
+  LlmUsageType,
 } from '@little-samo/samo-ai/common';
 import { z } from 'zod';
 
@@ -86,6 +87,7 @@ You are tasked with performing a web search based on the user's query and then p
       verbose: ENV.DEBUG,
     });
 
+    searchSummaryResponse.logType = LlmUsageType.GIMMICK;
     await entity.location.emitAsync(
       'llmGenerate',
       entity,
