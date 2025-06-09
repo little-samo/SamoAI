@@ -1,22 +1,21 @@
 import { type AgentId } from './agents';
-import { type ItemDataId, type ItemId } from './entity.types';
 import { type UserId } from './users';
 
 export interface ItemModel {
-  id: ItemId;
+  id: string | number | bigint;
   createdAt: Date;
   updatedAt: Date;
 
   ownerAgentId: AgentId | null;
   ownerUserId: UserId | null;
 
-  itemDataId: ItemDataId;
+  itemDataId: number;
   itemData?: ItemDataModel;
   count: number;
 }
 
 export interface ItemDataModel {
-  id: ItemDataId;
+  id: number;
   createdAt: Date;
   updatedAt: Date;
 
