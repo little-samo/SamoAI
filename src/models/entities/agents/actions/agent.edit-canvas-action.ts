@@ -63,7 +63,8 @@ export class AgentEditCanvasAction extends AgentAction {
       this.agent.id,
       name,
       existing_content,
-      new_content
+      new_content,
+      reason
     );
 
     if (!success) {

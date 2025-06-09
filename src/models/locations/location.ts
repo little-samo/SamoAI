@@ -367,7 +367,8 @@ export class Location extends AsyncEventEmitter {
     modifierEntityType: EntityType,
     modifierEntityId: EntityId,
     canvasName: string,
-    text: string
+    text: string,
+    reason?: string
   ): Promise<void> {
     const canvas = this.state.canvases[canvasName];
     if (!canvas) {
@@ -385,7 +386,8 @@ export class Location extends AsyncEventEmitter {
       modifierEntityType,
       modifierEntityId,
       canvasName,
-      text
+      text,
+      reason
     );
   }
 
@@ -394,7 +396,8 @@ export class Location extends AsyncEventEmitter {
     modifierEntityId: EntityId,
     canvasName: string,
     existingContent: string,
-    newContent: string
+    newContent: string,
+    reason?: string
   ): Promise<boolean> {
     const canvas = this.state.canvases[canvasName];
     if (!canvas) {
@@ -440,7 +443,8 @@ export class Location extends AsyncEventEmitter {
       canvasName,
       existingContent,
       newContent,
-      updatedText
+      updatedText,
+      reason
     );
 
     return true;
