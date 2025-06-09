@@ -1,5 +1,5 @@
 export interface LocationModel {
-  id: number;
+  id: string | number | bigint;
 
   name: string;
   meta: unknown;

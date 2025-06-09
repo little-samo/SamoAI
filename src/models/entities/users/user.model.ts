@@ -1,5 +1,5 @@
 export interface UserModel {
-  id: number;
+  id: string | number | bigint;
 
   username: string | null;
   nickname: string;

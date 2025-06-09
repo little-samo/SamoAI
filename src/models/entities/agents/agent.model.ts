@@ -1,5 +1,5 @@
 export interface AgentModel {
-  id: number;
+  id: string | number | bigint;
 
   name: string;
   username: string | null;
