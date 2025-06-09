@@ -6,6 +6,7 @@ import { RegisterAgentAction } from './agent.action-decorator';
 
 export interface AgentUpdateCanvasParameters {
   name: string;
+  reason: string;
   text: string;
 }
 
@@ -27,6 +28,11 @@ export class AgentUpdateCanvasAction extends AgentAction {
             .describe(
               `The exact NAME of the public Location Canvas (from <LocationCanvases>) to update.`
             ),
+          reason: z
+            .string()
+            .describe(
+              'A reason for updating the canvas, which will be visible to other agents.'
+            ),
           text: z
             .string()
             .describe(
@@ -38,7 +44,7 @@ export class AgentUpdateCanvasAction extends AgentAction {
 
   public override async execute(call: LlmToolCall): Promise<void> {
     const action = call.arguments as AgentUpdateCanvasParameters;
-    const { name, text } = action;
+    const { name, text, reason } = action;
 
     if (ENV.DEBUG) {
       console.log(
@@ -53,7 +59,9 @@ export class AgentUpdateCanvasAction extends AgentAction {
       text
     );
     await this.location.addAgentMessage(this.agent, {
-      action: `update_canvas --name ${JSON.stringify(name)}`,
+      action: `update_canvas --name ${JSON.stringify(
+        name
+      )} --reason ${JSON.stringify(reason)}`,
     });
   }
 }
