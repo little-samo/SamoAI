@@ -13,7 +13,13 @@ import { AgentInputFactory } from '../agents/inputs';
 import { Entity } from '../entity';
 import { EntityCanvasContext } from '../entity.context';
 import { ItemModel } from '../entity.item-model';
-import { EntityType, EntityKey, EntityId, ItemId } from '../entity.types';
+import {
+  EntityType,
+  EntityKey,
+  EntityId,
+  ItemId,
+  ItemDataId,
+} from '../entity.types';
 
 import { AgentActionFactory } from './actions';
 import { AgentAction } from './actions/agent.action';
@@ -83,7 +89,7 @@ export class Agent extends Entity {
     const meta = {
       ...DEFAULT_AGENT_META,
       ...(model.meta as object),
-      ...((location.meta.agentMetas[model.id as AgentId] as object) ?? {}),
+      ...((location.meta.agentMetas[model.id.toString()] as object) ?? {}),
     };
     const state = options.state ?? Agent._createEmptyState(model.id as AgentId);
     const items = options.items ?? [];
@@ -142,7 +148,7 @@ export class Agent extends Entity {
     this._meta = {
       ...value,
       ...(this.model.meta as object),
-      ...((this.location.meta.agentMetas[this.id] as object) ?? {}),
+      ...((this.location.meta.agentMetas[this.id.toString()] as object) ?? {}),
     };
   }
 
@@ -344,7 +350,7 @@ export class Agent extends Entity {
     entityState.isActive = active;
   }
 
-  public override createItem(itemDataId: number): ItemModel {
+  public override createItem(itemDataId: ItemDataId): ItemModel {
     return {
       id: 0 as ItemId,
       createdAt: new Date(),

@@ -14,7 +14,7 @@ export interface GimmickRepository {
   getOrCreateGimmickStates(
     locationId: LocationId,
     gimmickIds: GimmickId[]
-  ): Promise<Record<GimmickId, GimmickState>>;
+  ): Promise<Map<GimmickId, GimmickState>>;
 
   updateGimmickStateOccupier(
     locationId: LocationId,

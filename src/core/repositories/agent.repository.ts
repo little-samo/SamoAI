@@ -10,11 +10,11 @@ import {
 
 export interface AgentRepository {
   getAgentModel(agentId: AgentId): Promise<AgentModel>;
-  getAgentModels(agentIds: AgentId[]): Promise<Record<AgentId, AgentModel>>;
+  getAgentModels(agentIds: AgentId[]): Promise<Map<AgentId, AgentModel>>;
   getOrCreateAgentState(agentId: AgentId): Promise<AgentState>;
   getOrCreateAgentStates(
     agentIds: AgentId[]
-  ): Promise<Record<AgentId, AgentState>>;
+  ): Promise<Map<AgentId, AgentState>>;
   getOrCreateAgentEntityState(
     agentId: AgentId,
     type: EntityType,
@@ -24,7 +24,7 @@ export interface AgentRepository {
     agentIds: AgentId[],
     targetAgentIds: AgentId[],
     targetUserIds: UserId[]
-  ): Promise<Record<AgentId, AgentEntityState[]>>;
+  ): Promise<Map<AgentId, AgentEntityState[]>>;
 
   updateAgentStateMemory(
     agentId: AgentId,

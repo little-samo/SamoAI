@@ -1,7 +1,7 @@
 import { type Location } from '../../locations';
 import { Entity } from '../entity';
 import { ItemModel } from '../entity.item-model';
-import { EntityType, ItemId } from '../entity.types';
+import { EntityType, ItemDataId, ItemId } from '../entity.types';
 
 import { UserState } from './states/user.state';
 import { UserContext } from './user.context';
@@ -67,7 +67,7 @@ export class User extends Entity {
     });
   }
 
-  public override createItem(itemDataId: number): ItemModel {
+  public override createItem(itemDataId: ItemDataId): ItemModel {
     return {
       id: 0 as ItemId,
       createdAt: new Date(),

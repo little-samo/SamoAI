@@ -61,9 +61,9 @@ export class Location extends AsyncEventEmitter {
   public core!: LocationCore;
 
   public readonly entities: Record<EntityKey, Entity> = {};
-  public readonly agents: Record<AgentId, Agent> = {};
-  public readonly users: Record<UserId, User> = {};
-  public readonly gimmicks: Record<GimmickId, Gimmick> = {};
+  public readonly agents: Map<AgentId, Agent> = new Map();
+  public readonly users: Map<UserId, User> = new Map();
+  public readonly gimmicks: Map<GimmickId, Gimmick> = new Map();
 
   public readonly state: LocationState;
   public readonly messagesState: LocationMessagesState;
@@ -149,11 +149,11 @@ export class Location extends AsyncEventEmitter {
   public addEntity(entity: Entity, updateIds: boolean = true): void {
     this.entities[entity.key] = entity;
     if (entity instanceof Agent) {
-      this.agents[entity.model.id as AgentId] = entity;
+      this.agents.set(entity.model.id as AgentId, entity);
     } else if (entity instanceof User) {
-      this.users[entity.model.id as UserId] = entity;
+      this.users.set(entity.model.id as UserId, entity);
     } else if (entity instanceof Gimmick) {
-      this.gimmicks[entity.id as GimmickId] = entity;
+      this.gimmicks.set(entity.id as GimmickId, entity);
     }
     if (updateIds) {
       if (entity instanceof Agent) {
@@ -167,11 +167,11 @@ export class Location extends AsyncEventEmitter {
   public removeEntity(entity: Entity, updateIds: boolean = true): void {
     delete this.entities[entity.key];
     if (entity instanceof Agent) {
-      delete this.agents[entity.model.id as AgentId];
+      this.agents.delete(entity.model.id as AgentId);
     } else if (entity instanceof User) {
-      delete this.users[entity.model.id as UserId];
+      this.users.delete(entity.model.id as UserId);
     } else if (entity instanceof Gimmick) {
-      delete this.gimmicks[entity.id as GimmickId];
+      this.gimmicks.delete(entity.id as GimmickId);
     }
     if (updateIds) {
       if (entity instanceof Agent) {

@@ -7,8 +7,8 @@ import {
 
 export interface UserRepository {
   getUserModel(userId: UserId): Promise<UserModel>;
-  getUserModels(userIds: UserId[]): Promise<Record<UserId, UserModel>>;
+  getUserModels(userIds: UserId[]): Promise<Map<UserId, UserModel>>;
   getUserLlmApiKeys(userId: UserId): Promise<LlmApiKeyModel[]>;
   getOrCreateUserState(userId: UserId): Promise<UserState>;
-  getOrCreateUserStates(userIds: UserId[]): Promise<Record<UserId, UserState>>;
+  getOrCreateUserStates(userIds: UserId[]): Promise<Map<UserId, UserState>>;
 }

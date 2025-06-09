@@ -5,6 +5,4 @@ export interface AgentModel {
   username: string | null;
 
   meta: unknown;
-
-  isActive: boolean;
 }
