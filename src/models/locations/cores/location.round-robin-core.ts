@@ -1,5 +1,6 @@
 import { ENV, shuffle } from '@little-samo/samo-ai/common';
 
+import { type AgentId } from '../../entities';
 import { EntityType } from '../../entities/entity.types';
 import { LocationMessage } from '../states/location.messages-state';
 
@@ -24,11 +25,11 @@ export class LocationRoundRobinCore extends LocationCore {
     const now = new Date();
     const messages = [...this.location.messagesState.messages].reverse();
     const lastMessage = this.lastMessage;
-    const agents = Object.values(this.location.agents);
+    const agents = Array.from(this.location.agents.values());
     if (!this.meta.sequential) {
       shuffle(agents);
     }
-    const updatedAgentIds: Set<number> = new Set();
+    const updatedAgentIds: Set<AgentId> = new Set();
     for (const agent of agents) {
       if (
         lastMessage?.entityType == EntityType.Agent &&
@@ -46,7 +47,7 @@ export class LocationRoundRobinCore extends LocationCore {
         now.getTime() - new Date(agentLastMessage.createdAt).getTime() >
           LocationRoundRobinCore.AGENT_MESSAGE_COOLDOWN
       ) {
-        updatedAgentIds.add(agent.model.id);
+        updatedAgentIds.add(agent.model.id as AgentId);
         if (!(await agent.update()) || this.lastMessage === lastMessage) {
           if (ENV.DEBUG) {
             console.log(`Agent ${agent.name} did not execute next actions`);
@@ -59,7 +60,7 @@ export class LocationRoundRobinCore extends LocationCore {
     }
 
     for (const agent of agents) {
-      if (updatedAgentIds.has(agent.model.id)) {
+      if (updatedAgentIds.has(agent.model.id as AgentId)) {
         continue;
       }
       if (!(await agent.update()) || this.lastMessage === lastMessage) {

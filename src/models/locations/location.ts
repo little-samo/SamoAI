@@ -452,13 +452,13 @@ export class Location extends AsyncEventEmitter {
 
   public async init(): Promise<void> {
     this.reloadCore();
-    for (const gimmick of Object.values(this.gimmicks)) {
+    for (const gimmick of this.gimmicks.values()) {
       await gimmick.init();
     }
-    for (const agent of Object.values(this.agents)) {
+    for (const agent of this.agents.values()) {
       await agent.init();
     }
-    for (const user of Object.values(this.users)) {
+    for (const user of this.users.values()) {
       await user.init();
     }
   }
@@ -467,7 +467,7 @@ export class Location extends AsyncEventEmitter {
     await this.init();
     if (ENV.DEBUG) {
       console.log(
-        `Updating location ${this.model.name}, core: ${this.core.constructor.name}, ${Object.keys(this.agents).length} agents, ${Object.keys(this.users).length} users`
+        `Updating location ${this.model.name}, core: ${this.core.constructor.name}, ${this.agents.size} agents, ${this.users.size} users`
       );
     }
     return await this.core.update();
