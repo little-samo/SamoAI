@@ -1,13 +1,10 @@
-import { type AgentId } from './agents';
-import { type UserId } from './users';
-
 export interface ItemModel {
   id: string | number | bigint;
   createdAt: Date;
   updatedAt: Date;
 
-  ownerAgentId: AgentId | null;
-  ownerUserId: UserId | null;
+  ownerAgentId: string | number | bigint | null;
+  ownerUserId: string | number | bigint | null;
 
   itemDataId: number;
   itemData?: ItemDataModel;
