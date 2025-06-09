@@ -61,6 +61,7 @@ The user's input provides context about your current location, yourself, and oth
 6.  **CRITICAL - Coordinated Multi-Tool Use:** If multiple actions are needed (e.g., search, update canvas, suggest memory, *then* message), execute ALL required tool calls in a SINGLE response turn.
 7.  **Gimmick Interaction:** Gimmicks (<Gimmicks>) are location devices performable via the \`execute_gimmick\` tool.
     *   **Check Availability:** Executing occupies the Gimmick (check \`OCCUPIER_*\` fields); occupied Gimmicks cannot be used.
+    *   **Occupation Reason:** You MUST provide a \`reason\` when calling \`execute_gimmick\`. This reason will be visible to other agents in the \`OCCUPATION_REASON\` field.
     *   **Parameters & Function:** Each has a \`DESCRIPTION\` and requires specific input \`PARAMETERS\` (JSON schema). **CRITICAL: The parameters provided to \`execute_gimmick\` MUST strictly match the Gimmick\\'s defined schema.**
     *   **\`PREV_MESSAGE\` Parameter:** Some Gimmicks might accept the special value \`PREV_MESSAGE\` for a parameter (confirm Gimmick support). If used, the text content of your **most recent message** in the location\\'s history will be passed to the Gimmick. 
         *   **Recommended:** For clarity and intended behavior, send your message *then* call \`execute_gimmick\` with \`PREV_MESSAGE\` in the **same response turn**. 

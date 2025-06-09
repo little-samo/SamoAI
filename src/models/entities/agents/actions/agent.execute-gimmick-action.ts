@@ -10,6 +10,7 @@ import { RegisterAgentAction } from './agent.action-decorator';
 
 export interface AgentExecuteGimmickActionParameters {
   gimmickKey: EntityKey;
+  reason: string;
   parameters: GimmickParameters;
 }
 
@@ -29,6 +30,11 @@ export class AgentExecuteGimmickAction extends AgentAction {
       default:
         return z.object({
           gimmickKey: z.string().describe(`The key of the gimmick to execute.`),
+          reason: z
+            .string()
+            .describe(
+              'A reason for executing the gimmick, which will be visible to other agents.'
+            ),
           parameters: z
             .union([
               z.string(),
@@ -61,7 +67,7 @@ export class AgentExecuteGimmickAction extends AgentAction {
       throw new Error(`Gimmick ${action.gimmickKey} not found`);
     }
 
-    if (!(await gimmick.occupy(this.agent))) {
+    if (!(await gimmick.occupy(this.agent, undefined, action.reason))) {
       await this.location.addSystemMessage(
         `${action.gimmickKey} is not currently available.`
       );

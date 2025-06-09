@@ -9,6 +9,7 @@ export interface GimmickContextOptions extends EntityContextOptions {
   occupierId?: EntityId;
   occupierType?: EntityType;
   occupationUntil?: Date | string;
+  occupationReason?: string;
   parameters: z.ZodSchema;
   canvas?: string;
 }
@@ -18,12 +19,13 @@ export class GimmickContext
   implements GimmickContextOptions
 {
   public static readonly FORMAT: string =
-    'KEY\tNAME\tDESCRIPTION\tAPPEARANCE\tEXPRESSION\tOCCUPIER_ID\tOCCUPIER_TYPE\tOCCUPATION_UNTIL\tPARAMETERS\tCANVAS';
+    'KEY\tNAME\tDESCRIPTION\tAPPEARANCE\tEXPRESSION\tOCCUPIER_ID\tOCCUPIER_TYPE\tOCCUPATION_UNTIL\tOCCUPATION_REASON\tPARAMETERS\tCANVAS';
 
   public readonly description: string;
   public readonly occupierId?: EntityId;
   public readonly occupierType?: EntityType;
   public readonly occupationUntil?: Date;
+  public readonly occupationReason?: string;
   public readonly parameters: z.ZodSchema;
   public readonly canvas?: string;
 
@@ -35,12 +37,16 @@ export class GimmickContext
     this.occupationUntil = options.occupationUntil
       ? new Date(options.occupationUntil)
       : undefined;
+    this.occupationReason = options.occupationReason;
     this.parameters = options.parameters;
     this.canvas = options.canvas;
   }
 
   public build(): string {
     const parameters = zodSchemaToLlmFriendlyString(this.parameters);
-    return `${this.key}\t${this.name}\t${JSON.stringify(this.description)}\t${JSON.stringify(this.appearance)}\t${JSON.stringify(this.expression)}\t${this.occupierId ?? 'null'}\t${this.occupierType ?? 'null'}\t${this.occupationUntil?.toISOString() ?? 'null'}\t${parameters}\t${this.canvas ?? 'null'}`;
+    const occupationReason = this.occupationReason
+      ? JSON.stringify(this.occupationReason)
+      : 'null';
+    return `${this.key}\t${this.name}\t${JSON.stringify(this.description)}\t${JSON.stringify(this.appearance)}\t${JSON.stringify(this.expression)}\t${this.occupierId ?? 'null'}\t${this.occupierType ?? 'null'}\t${this.occupationUntil?.toISOString() ?? 'null'}\t${occupationReason}\t${parameters}\t${this.canvas ?? 'null'}`;
   }
 }

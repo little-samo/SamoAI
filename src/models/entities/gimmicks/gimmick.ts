@@ -33,6 +33,7 @@ export class Gimmick extends Entity {
       state.occupierType = undefined;
       state.occupierId = undefined;
       state.occupationUntil = undefined;
+      state.occupationReason = undefined;
     }
   }
 
@@ -81,6 +82,7 @@ export class Gimmick extends Entity {
       occupierId: this.state.occupierId,
       occupierType: this.state.occupierType,
       occupationUntil: this.state.occupationUntil,
+      occupationReason: this.state.occupationReason,
       parameters: this.core.parameters,
       canvas: this.core.canvas?.name,
     });
@@ -108,7 +110,11 @@ export class Gimmick extends Entity {
     this.core = GimmickCoreFactory.createCore(this);
   }
 
-  public async occupy(entity: Entity, duration?: number): Promise<boolean> {
+  public async occupy(
+    entity: Entity,
+    duration?: number,
+    reason?: string
+  ): Promise<boolean> {
     if (this.state.occupierType) {
       return false;
     }
@@ -117,12 +123,14 @@ export class Gimmick extends Entity {
     this.state.occupationUntil = duration
       ? new Date(Date.now() + duration)
       : new Date(Date.now() + Gimmick.DEFAULT_OCCUPATION_DURATION);
+    this.state.occupationReason = reason;
 
     await this.location.emitAsync(
       'gimmickOccupied',
       this,
       entity,
-      this.state.occupationUntil
+      this.state.occupationUntil,
+      this.state.occupationReason
     );
 
     return true;
@@ -135,6 +143,7 @@ export class Gimmick extends Entity {
     this.state.occupierType = undefined;
     this.state.occupierId = undefined;
     this.state.occupationUntil = undefined;
+    this.state.occupationReason = undefined;
 
     await this.location.emitAsync('gimmickReleased', this);
 

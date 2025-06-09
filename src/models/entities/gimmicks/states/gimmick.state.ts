@@ -10,4 +10,5 @@ export interface GimmickState extends EntityState {
   occupierType?: EntityType;
   occupierId?: EntityId;
   occupationUntil?: Date;
+  occupationReason?: string;
 }
