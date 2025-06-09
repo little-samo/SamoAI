@@ -57,7 +57,7 @@ The user's input provides context about your current location, yourself, and oth
     // === Actions & Tool Usage ===
     importantRules.push(`
 4.  **CRITICAL - Tool-Based Actions:** ALL external actions (messages, expressions, memory suggestions, canvas updates, gimmick execution, etc.) MUST be performed via tool calls. Use your Chain of Thought (CoT) based on context and rules to decide which tool(s) to use.
-5.  **CRITICAL - Internal Language (ENGLISH):** All internal processing (CoT, reasoning), memory content, and canvas content MUST be in ENGLISH for consistency. This overrides Rule #2 internally.
+5.  **CRITICAL - Internal Language (ENGLISH):** All internal processing (CoT, reasoning), and memory content MUST be in ENGLISH for consistency. This overrides Rule #2 internally.
 6.  **CRITICAL - Coordinated Multi-Tool Use:** If multiple actions are needed (e.g., search, update canvas, suggest memory, *then* message), execute ALL required tool calls in a SINGLE response turn.
 7.  **Gimmick Interaction:** Gimmicks (<Gimmicks>) are location devices performable via the \`execute_gimmick\` tool.
     *   **Check Availability:** Executing occupies the Gimmick (check \`OCCUPIER_*\` fields); occupied Gimmicks cannot be used.
@@ -75,7 +75,7 @@ The user's input provides context about your current location, yourself, and oth
     *   **Check Current State:** Always refer to the provided memory state (<YourMemories>, <YourMemoriesAbout...>) for context, but be aware it reflects the state *after the last background update*, not necessarily including *your current suggestions*.
     *   **Persistence:** General memories (<YourMemories>) persist across locations. Entity memories (<YourMemoriesAbout...>) are specific to that entity.
     *   **Entity References:** When referring to entities in memory content, use the format \`type:id(name)\` (e.g., \`user:123(Alice)\`, \`agent:45(Bob)\`) for clarity.
-9.  **Canvas Usage (Plans, Drafts, Analysis - Rule #5 Applies: English Only):** Use Canvases (<LocationCanvases>, <YourCanvases>) as **persistent workspaces** for complex tasks.
+9.  **Canvas Usage (Plans, Drafts, Analysis):** Use Canvases (<LocationCanvases>, <YourCanvases>) as **persistent workspaces** for complex tasks.
     *   **Use For:** Developing plans, drafting messages/content, detailed analysis, collaboration (Location Canvases). Use your private agent canvases (e.g., 'plan') for your own work.
     *   **Avoid For:** Simple facts (Use Memory).
     *   **Refer & Update:** Check relevant canvases by NAME/DESCRIPTION. Update using canvas tools. Respect MAX_LENGTH.

@@ -36,7 +36,7 @@ export class AgentUpdateCanvasAction extends AgentAction {
           text: z
             .string()
             .describe(
-              `The **entire new text content** for the canvas. **CRITICAL: Check the canvas's specific \`MAX_LENGTH\` in '<LocationCanvases>' context BEFORE generating text.** Text exceeding this specific limit **WILL BE TRUNCATED** upon execution. Content MUST be in English.`
+              `The **entire new text content** for the canvas. **CRITICAL: Check the canvas's specific \`MAX_LENGTH\` in '<LocationCanvases>' context BEFORE generating text.** Text exceeding this specific limit **WILL BE TRUNCATED** upon execution.`
             ),
         });
     }
