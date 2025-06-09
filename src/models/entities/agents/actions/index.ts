@@ -15,5 +15,6 @@ export * from './agent.send-message-action';
 export * from './agent.transfer-item-action';
 export * from './agent.update-agent-canvas';
 export * from './agent.update-canvas';
+export * from './agent.edit-canvas-action';
 export * from './agent.update-entity-memory-action';
 export * from './agent.update-memory-action';

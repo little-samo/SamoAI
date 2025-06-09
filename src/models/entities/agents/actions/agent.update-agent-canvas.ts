@@ -12,7 +12,7 @@ export interface AgentUpdateAgentCanvasParameters {
 @RegisterAgentAction('update_agent_canvas')
 export class AgentUpdateAgentCanvasAction extends AgentAction {
   public override get description(): string {
-    return `Updates the text content of one of **your private Agent Canvases** (found in '<YourCanvases>'). This **overwrites** the entire existing text. Use according to the canvas's NAME/DESCRIPTION (e.g., for personal notes, planning, drafting). Only you can view and modify these. Content MUST be in English.`;
+    return `Updates the text content of one of **your private Agent Canvases** (found in '<YourCanvases>'). This **overwrites** the entire existing text. Use according to the canvas's NAME/DESCRIPTION (e.g., for personal notes, planning, drafting). Only you can view and modify these.`;
   }
 
   public override get parameters(): z.ZodSchema {
@@ -25,7 +25,7 @@ export class AgentUpdateAgentCanvasAction extends AgentAction {
       text: z
         .string()
         .describe(
-          `The **entire new text content** for the canvas. **CRITICAL: Check the canvas's specific \`MAX_LENGTH\` in '<YourCanvases>' context BEFORE generating text.** Text exceeding this specific limit **WILL BE TRUNCATED** upon execution. Content MUST be in English.`
+          `The **entire new text content** for the canvas. **CRITICAL: Check the canvas's specific \`MAX_LENGTH\` in '<YourCanvases>' context BEFORE generating text.** Text exceeding this specific limit **WILL BE TRUNCATED** upon execution.`
         ),
     });
   }

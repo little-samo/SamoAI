@@ -622,6 +622,29 @@ export class WorldManager extends AsyncEventEmitter {
     );
 
     location.on(
+      'canvasEdited',
+      (
+        location: Location,
+        modifierEntityType: EntityType,
+        modifierEntityId: EntityId,
+        canvasName: string,
+        existingContent: string,
+        newContent: string,
+        text: string
+      ) => {
+        void options.handleSave!(
+          this.locationRepository.updateLocationStateCanvas(
+            location.id,
+            canvasName,
+            modifierEntityType,
+            modifierEntityId,
+            text
+          )
+        );
+      }
+    );
+
+    location.on(
       'agentUpdateMemory',
       (agent: Agent, state: AgentState, index: number, memory: string) => {
         void options.handleSave!(

@@ -53,6 +53,7 @@ export const DEFAULT_LOCATION_META: LocationMeta = {
   actions: [
     'send_casual_message:latest',
     'update_canvas:latest',
+    'edit_canvas:latest',
     'update_agent_canvas:latest',
   ],
   requiredActions: [],

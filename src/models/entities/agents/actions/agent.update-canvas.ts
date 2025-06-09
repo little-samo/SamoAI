@@ -15,7 +15,7 @@ export class AgentUpdateCanvasAction extends AgentAction {
   public static readonly type: string = 'update_canvas';
 
   public override get description(): string {
-    return `Updates the text content of a specific **public Location Canvas** (found in '<LocationCanvases>'). This **overwrites** the entire existing text. Use according to the canvas's NAME/DESCRIPTION (e.g., for shared plans, notes). Be mindful that anyone in the location can see and modify these canvases. Content MUST be in English.`;
+    return `Updates the text content of a specific **public Location Canvas** (found in '<LocationCanvases>'). This **overwrites** the entire existing text. Use for major revisions or replacing content completely. For minor edits, additions, or corrections, use \`edit_canvas\`. Be mindful that anyone in the location can see and modify these canvases.`;
   }
 
   public override get parameters(): z.ZodSchema {

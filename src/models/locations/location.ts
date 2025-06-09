@@ -389,6 +389,63 @@ export class Location extends AsyncEventEmitter {
     );
   }
 
+  public async editCanvas(
+    modifierEntityType: EntityType,
+    modifierEntityId: EntityId,
+    canvasName: string,
+    existingContent: string,
+    newContent: string
+  ): Promise<boolean> {
+    const canvas = this.state.canvases[canvasName];
+    if (!canvas) {
+      throw new Error(`Canvas with name ${canvasName} not found`);
+    }
+
+    let updatedText: string;
+
+    if (existingContent === '') {
+      // If existing_content is empty, append new content
+      updatedText = canvas.text + newContent;
+    } else {
+      // Check if existing content exists in the canvas
+      const existingIndex = canvas.text.indexOf(existingContent);
+      if (existingIndex === -1) {
+        // Return false instead of throwing error when existing content not found
+        return false;
+      }
+
+      // Replace the first occurrence of existing content with new content
+      updatedText =
+        canvas.text.substring(0, existingIndex) +
+        newContent +
+        canvas.text.substring(existingIndex + existingContent.length);
+    }
+
+    // Check max length constraint
+    const canvasMeta = this.meta.canvases.find((c) => c.name === canvasName);
+    if (canvasMeta && updatedText.length > canvasMeta.maxLength) {
+      updatedText = updatedText.substring(0, canvasMeta.maxLength);
+    }
+
+    canvas.lastModifierEntityType = modifierEntityType;
+    canvas.lastModifierEntityId = modifierEntityId;
+    canvas.text = updatedText;
+    canvas.updatedAt = new Date();
+
+    await this.emitAsync(
+      'canvasEdited',
+      this,
+      modifierEntityType,
+      modifierEntityId,
+      canvasName,
+      existingContent,
+      newContent,
+      updatedText
+    );
+
+    return true;
+  }
+
   public async init(): Promise<void> {
     this.reloadCore();
     for (const gimmick of Object.values(this.gimmicks)) {
