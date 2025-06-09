@@ -265,20 +265,20 @@ export class WorldManager extends AsyncEventEmitter {
     const gimmicks = await this.getGimmicks(location);
 
     const items = await this.itemRepository.getEntityItemModels(
-      Object.values(agents).map((agent) => agent.id),
-      Object.values(users).map((user) => user.id)
+      Array.from(agents.keys()),
+      Array.from(users.keys())
     );
 
-    for (const gimmick of Object.values(gimmicks)) {
+    for (const gimmick of gimmicks.values()) {
       location.addEntity(gimmick, false);
     }
 
-    for (const agent of Object.values(agents)) {
+    for (const agent of agents.values()) {
       agent.setItems(items[agent.key] ?? []);
       location.addEntity(agent, false);
     }
 
-    for (const user of Object.values(users)) {
+    for (const user of users.values()) {
       user.setItems(items[user.key] ?? []);
       location.addEntity(user, false);
     }
@@ -286,9 +286,9 @@ export class WorldManager extends AsyncEventEmitter {
     const entityStates =
       await this.locationRepository.getOrCreateLocationEntityStates(
         locationId,
-        Object.values(location.agents).map((agent) => agent.id),
-        Object.values(location.users).map((user) => user.id),
-        Object.values(location.gimmicks).map((gimmick) => gimmick.id)
+        Array.from(location.agents.keys()),
+        Array.from(location.users.keys()),
+        Array.from(location.gimmicks.keys())
       );
     for (const entityState of entityStates) {
       location.addEntityState(entityState);
@@ -550,7 +550,7 @@ export class WorldManager extends AsyncEventEmitter {
       llmApiKeyUserId,
       preLoadLocation: options.preLoadLocation,
     });
-    if (Object.keys(location.agents).length === 0) {
+    if (location.agents.size === 0) {
       console.log(`No agents in location ${locationId}, pausing update`);
       await this.locationRepository.updateLocationStatePauseUpdateUntil(
         locationId,
