@@ -55,7 +55,7 @@ export class AgentControlGbaAction extends AgentAction {
     }
 
     await this.location.addAgentMessage(this.agent, {
-      action: `control_gba --inputs "${action.inputs.slice(0, 4).join(',')}"`,
+      action: `control_gba --inputs ${action.inputs.slice(0, 4).join(',')}`,
     });
   }
 }
