@@ -69,7 +69,12 @@ export class AgentExecuteGimmickAction extends AgentAction {
     }
 
     const parameters = action.parameters as GimmickParameters;
-    const error = await gimmick.execute(this.agent, parameters, true);
+    const error = await gimmick.execute(
+      this.agent,
+      parameters,
+      action.reason,
+      true
+    );
     if (error) {
       await this.location.emitAsync(
         'gimmickExecutionFailed',

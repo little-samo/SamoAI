@@ -164,13 +164,20 @@ export class Gimmick extends Entity {
   public async execute(
     entity: Entity,
     parameters: GimmickParameters,
+    reason?: string,
     force: boolean = false
   ): Promise<string | undefined> {
     if (!this.isExecutable && !force) {
       return 'Gimmick is not executable';
     }
 
-    await this.location.emitAsync('gimmickExecute', this, entity, parameters);
+    await this.location.emitAsync(
+      'gimmickExecute',
+      this,
+      entity,
+      parameters,
+      reason
+    );
 
     return await this.core.execute(entity, parameters);
   }
