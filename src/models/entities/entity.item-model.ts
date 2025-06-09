@@ -1,5 +1,7 @@
+import { type ItemId } from './entity.types';
+
 export interface ItemModel {
-  id: number;
+  id: ItemId;
   createdAt: Date;
   updatedAt: Date;
 

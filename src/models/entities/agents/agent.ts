@@ -13,7 +13,7 @@ import { AgentInputFactory } from '../agents/inputs';
 import { Entity } from '../entity';
 import { EntityCanvasContext } from '../entity.context';
 import { ItemModel } from '../entity.item-model';
-import { EntityType, EntityKey, EntityId } from '../entity.types';
+import { EntityType, EntityKey, EntityId, ItemId } from '../entity.types';
 
 import { AgentActionFactory } from './actions';
 import { AgentAction } from './actions/agent.action';
@@ -346,7 +346,7 @@ export class Agent extends Entity {
 
   public override createItem(itemDataId: number): ItemModel {
     return {
-      id: 0,
+      id: 0 as ItemId,
       createdAt: new Date(),
       updatedAt: new Date(),
       ownerAgentId: this.id,
