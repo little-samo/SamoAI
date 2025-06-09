@@ -6,35 +6,30 @@ import {
   UserId,
 } from '@little-samo/samo-ai/models';
 
-export interface ItemOwner {
-  ownerAgentId: AgentId | null;
-  ownerUserId: UserId | null;
-}
-
 export interface ItemRepository {
   getEntityItemModels(
     agentIds: AgentId[],
     userIds: UserId[]
   ): Promise<Record<EntityKey, ItemModel[]>>;
   createItemModel(
-    owner: ItemOwner,
+    ownerEntityKey: EntityKey,
     dataId: ItemDataId,
     count: number
   ): Promise<ItemModel>;
   addOrCreateItemModel(
-    owner: ItemOwner,
+    ownerEntityKey: EntityKey,
     dataId: ItemDataId,
     count: number
   ): Promise<ItemModel>;
   removeItemModel(
-    owner: ItemOwner,
+    ownerEntityKey: EntityKey,
     item: ItemModel,
     count: number
   ): Promise<void>;
   transferItemModel(
-    owner: ItemOwner,
+    ownerEntityKey: EntityKey,
     item: ItemModel,
-    targetOwner: ItemOwner,
+    targetEntityKey: EntityKey,
     count: number
   ): Promise<void>;
 }

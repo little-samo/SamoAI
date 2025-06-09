@@ -26,7 +26,6 @@ import {
 import {
   AgentRepository,
   GimmickRepository,
-  ItemOwner,
   ItemRepository,
   LocationRepository,
   UserRepository,
@@ -212,13 +211,8 @@ export class WorldManager extends AsyncEventEmitter {
           );
         }
       }
-      if (
-        Object.keys(lastUserMessageAt).length >=
-        location.meta.agentUserContextLimit
-      ) {
-        agentContextUserIds = Object.keys(lastUserMessageAt).map(
-          (userId) => Number(userId) as UserId
-        );
+      if (lastUserMessageAt.size >= location.meta.agentUserContextLimit) {
+        agentContextUserIds = Array.from(lastUserMessageAt.keys());
       } else {
         agentContextUserIds = [...agentContextUserIds];
       }
@@ -251,12 +245,8 @@ export class WorldManager extends AsyncEventEmitter {
           }
         }
       }
-      if (
-        Object.keys(lastUserMessageAt).length >= location.meta.userContextLimit
-      ) {
-        locationContextUserIds = Object.keys(lastUserMessageAt).map(
-          (userId) => Number(userId) as UserId
-        );
+      if (lastUserMessageAt.size >= location.meta.userContextLimit) {
+        locationContextUserIds = Array.from(lastUserMessageAt.keys());
       } else {
         locationContextUserIds = [...locationContextUserIds];
       }
@@ -822,20 +812,14 @@ export class WorldManager extends AsyncEventEmitter {
         count: number,
         stackable: boolean
       ) => {
-        const itemOwner: ItemOwner = {
-          ownerAgentId:
-            entity.type === EntityType.Agent ? (entity.id as AgentId) : null,
-          ownerUserId:
-            entity.type === EntityType.User ? (entity.id as UserId) : null,
-        };
         if (stackable) {
           await options.handleSave!(
-            this.itemRepository.addOrCreateItemModel(itemOwner, dataId, count)
+            this.itemRepository.addOrCreateItemModel(entity.key, dataId, count)
           );
         } else {
           for (let i = 0; i < count; i++) {
             await options.handleSave!(
-              this.itemRepository.addOrCreateItemModel(itemOwner, dataId, 1)
+              this.itemRepository.addOrCreateItemModel(entity.key, dataId, 1)
             );
           }
         }
@@ -845,14 +829,8 @@ export class WorldManager extends AsyncEventEmitter {
     location.on(
       'entityRemoveItem',
       (entity: Entity, item: ItemModel, count: number) => {
-        const itemOwner: ItemOwner = {
-          ownerAgentId:
-            entity.type === EntityType.Agent ? (entity.id as AgentId) : null,
-          ownerUserId:
-            entity.type === EntityType.User ? (entity.id as UserId) : null,
-        };
         void options.handleSave!(
-          this.itemRepository.removeItemModel(itemOwner, item, count)
+          this.itemRepository.removeItemModel(entity.key, item, count)
         );
       }
     );
@@ -865,28 +843,11 @@ export class WorldManager extends AsyncEventEmitter {
         count: number,
         targetEntityKey: EntityKey
       ) => {
-        const itemOwner: ItemOwner = {
-          ownerAgentId:
-            entity.type === EntityType.Agent ? (entity.id as AgentId) : null,
-          ownerUserId:
-            entity.type === EntityType.User ? (entity.id as UserId) : null,
-        };
-        const [targetEntityType, targetEntityId] = targetEntityKey.split(':');
-        const targetItemOwner: ItemOwner = {
-          ownerAgentId:
-            targetEntityType === EntityType.Agent
-              ? (Number(targetEntityId) as AgentId)
-              : null,
-          ownerUserId:
-            targetEntityType === EntityType.User
-              ? (Number(targetEntityId) as UserId)
-              : null,
-        };
         void options.handleSave!(
           this.itemRepository.transferItemModel(
-            itemOwner,
+            entity.key,
             item,
-            targetItemOwner,
+            targetEntityKey,
             count
           )
         );
