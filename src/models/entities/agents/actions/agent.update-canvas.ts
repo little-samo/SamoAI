@@ -53,7 +53,7 @@ export class AgentUpdateCanvasAction extends AgentAction {
       text
     );
     await this.location.addAgentMessage(this.agent, {
-      action: `UPDATE_CANVAS:"${name}"`,
+      action: `update_canvas --name ${JSON.stringify(name)}`,
     });
   }
 }

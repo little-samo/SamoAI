@@ -41,7 +41,7 @@ export class AgentMoveGbaAction extends AgentAction {
     }
 
     await this.location.addAgentMessage(this.agent, {
-      action: `MOVE_GBA:${action.destination}`,
+      action: `move_gba --destination "${action.destination}"`,
     });
   }
 }
