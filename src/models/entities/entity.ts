@@ -194,7 +194,7 @@ export abstract class Entity {
   ): Promise<boolean> {
     const { emitEvent = true } = options;
 
-    const targetEntity = this.location.entities[targetEntityKey];
+    const targetEntity = this.location.getEntity(targetEntityKey);
     if (!targetEntity) {
       return false;
     }

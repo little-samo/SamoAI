@@ -56,7 +56,7 @@ export class AgentExecuteGimmickAction extends AgentAction {
       action: `execute_gimmick --gimmick-key ${action.gimmickKey} --reason ${JSON.stringify(action.reason)} --parameters ${JSON.stringify(action.parameters)}`,
     });
 
-    const gimmick = this.location.entities[action.gimmickKey] as Gimmick;
+    const gimmick = this.location.getEntity(action.gimmickKey) as Gimmick;
     if (!gimmick || gimmick.type !== EntityType.Gimmick) {
       throw new Error(`Gimmick ${action.gimmickKey} not found`);
     }

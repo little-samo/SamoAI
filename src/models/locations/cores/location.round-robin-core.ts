@@ -25,7 +25,7 @@ export class LocationRoundRobinCore extends LocationCore {
     const now = new Date();
     const messages = [...this.location.messagesState.messages].reverse();
     const lastMessage = this.lastMessage;
-    const agents = Array.from(this.location.agents.values());
+    const agents = this.location.getAgents();
     if (!this.meta.sequential) {
       shuffle(agents);
     }

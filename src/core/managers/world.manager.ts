@@ -286,9 +286,9 @@ export class WorldManager extends AsyncEventEmitter {
     const entityStates =
       await this.locationRepository.getOrCreateLocationEntityStates(
         locationId,
-        Array.from(location.agents.keys()),
-        Array.from(location.users.keys()),
-        Array.from(location.gimmicks.keys())
+        location.getAgentIds(),
+        location.getUserIds(),
+        location.getGimmickIds()
       );
     for (const entityState of entityStates) {
       location.addEntityState(entityState);
@@ -550,7 +550,7 @@ export class WorldManager extends AsyncEventEmitter {
       llmApiKeyUserId,
       preLoadLocation: options.preLoadLocation,
     });
-    if (location.agents.size === 0) {
+    if (location.getAgentCount() === 0) {
       console.log(`No agents in location ${locationId}, pausing update`);
       await this.locationRepository.updateLocationStatePauseUpdateUntil(
         locationId,
@@ -873,8 +873,8 @@ export class WorldManager extends AsyncEventEmitter {
     try {
       if (options.executeSpecificAgentId) {
         await location.init();
-        await location.agents
-          .get(options.executeSpecificAgentId)!
+        await location
+          .getAgent(options.executeSpecificAgentId as AgentId)!
           .executeNextActions();
         pauseUpdateDuration = location.core.defaultPauseUpdateDuration;
       } else {

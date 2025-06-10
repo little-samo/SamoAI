@@ -60,17 +60,17 @@ export class Location extends AsyncEventEmitter {
 
   public core!: LocationCore;
 
-  public readonly entities: Record<EntityKey, Entity> = {};
-  public readonly agents: Map<AgentId, Agent> = new Map();
-  public readonly users: Map<UserId, User> = new Map();
-  public readonly gimmicks: Map<GimmickId, Gimmick> = new Map();
+  private readonly entities: Record<EntityKey, Entity> = {};
+  private readonly agents: Map<AgentId, Agent> = new Map();
+  private readonly users: Map<UserId, User> = new Map();
+  private readonly gimmicks: Map<GimmickId, Gimmick> = new Map();
 
   public readonly state: LocationState;
   public readonly messagesState: LocationMessagesState;
 
   public readonly apiKeys: Record<string, LlmApiKeyModel> = {};
 
-  private readonly _entityStates: Record<EntityKey, LocationEntityState> = {};
+  private readonly entityStates: Record<EntityKey, LocationEntityState> = {};
 
   public updatingEntity: Entity | undefined;
 
@@ -186,13 +186,77 @@ export class Location extends AsyncEventEmitter {
     }
   }
 
+  public getEntity(key: EntityKey): Entity | undefined {
+    return this.entities[key];
+  }
+
+  public getEntities(): Entity[] {
+    return Object.values(this.entities);
+  }
+
+  public getEntityIds(): EntityId[] {
+    return Object.values(this.entities).map((entity) => entity.id);
+  }
+
+  public getEntityCount(): number {
+    return Object.keys(this.entities).length;
+  }
+
+  public getAgent(id: AgentId): Agent | undefined {
+    return this.agents.get(id);
+  }
+
+  public getAgents(): Agent[] {
+    return Array.from(this.agents.values());
+  }
+
+  public getAgentIds(): AgentId[] {
+    return Array.from(this.agents.keys());
+  }
+
+  public getAgentCount(): number {
+    return this.agents.size;
+  }
+
+  public getUser(id: UserId): User | undefined {
+    return this.users.get(id);
+  }
+
+  public getUsers(): User[] {
+    return Array.from(this.users.values());
+  }
+
+  public getUserIds(): UserId[] {
+    return Array.from(this.users.keys());
+  }
+
+  public getUserCount(): number {
+    return this.users.size;
+  }
+
+  public getGimmick(id: GimmickId): Gimmick | undefined {
+    return this.gimmicks.get(id);
+  }
+
+  public getGimmicks(): Gimmick[] {
+    return Array.from(this.gimmicks.values());
+  }
+
+  public getGimmickIds(): GimmickId[] {
+    return Array.from(this.gimmicks.keys());
+  }
+
+  public getGimmickCount(): number {
+    return this.gimmicks.size;
+  }
+
   public getEntityState(key: EntityKey): LocationEntityState | undefined {
-    return this._entityStates[key];
+    return this.entityStates[key];
   }
 
   public getEntityStateByTarget(target: Entity): LocationEntityState {
     const key = `${target.type}:${target.id}` as EntityKey;
-    return this._entityStates[key];
+    return this.entityStates[key];
   }
 
   public addEntityState(state: LocationEntityState): LocationEntityState {
@@ -203,14 +267,14 @@ export class Location extends AsyncEventEmitter {
       throw new Error(`Entity with key ${key} not found`);
     }
 
-    this._entityStates[key] = entity.fixLocationEntityState(state);
+    this.entityStates[key] = entity.fixLocationEntityState(state);
 
     return state;
   }
 
   public removeEntityStateByTarget(target: Entity): void {
     const key = target.key;
-    delete this._entityStates[key];
+    delete this.entityStates[key];
   }
 
   public get context(): LocationContext {
@@ -240,7 +304,7 @@ export class Location extends AsyncEventEmitter {
   }
 
   public getEntityStates(): LocationEntityState[] {
-    return Object.values(this._entityStates);
+    return Object.values(this.entityStates);
   }
 
   public reloadCore(): void {

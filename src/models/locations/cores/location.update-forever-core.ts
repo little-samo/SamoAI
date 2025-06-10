@@ -13,7 +13,7 @@ export class LocationUpdateForeverCore extends LocationCore {
   }
 
   public async update(): Promise<number> {
-    const entities = Object.values(this.location.entities);
+    const entities = this.location.getEntities();
     if (!this.meta.sequential) {
       shuffle(entities);
     }

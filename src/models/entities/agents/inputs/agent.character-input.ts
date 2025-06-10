@@ -210,7 +210,7 @@ ${agentContext.canvases.length > 0 ? agentContext.canvases.map((c) => c.build())
     });
 
     const otherAgentContexts: string[] = [];
-    for (const agent of this.location.agents.values()) {
+    for (const agent of this.location.getAgents()) {
       if (agent === this.agent) {
         continue;
       }
@@ -253,7 +253,7 @@ ${otherAgentContexts.join('\n')}
     });
 
     const usersContexts: string[] = [];
-    for (const user of this.location.users.values()) {
+    for (const user of this.location.getUsers()) {
       let userContext = `<OtherUser>
 ${user.context.build()}
 <YourMemoriesAboutOtherUser>`;
@@ -293,7 +293,7 @@ ${usersContexts.join('\n')}
     });
 
     const gimmickContexts: string[] = [];
-    for (const gimmick of this.location.gimmicks.values()) {
+    for (const gimmick of this.location.getGimmicks()) {
       gimmickContexts.push(gimmick.context.build());
     }
     contexts.push({
