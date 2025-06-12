@@ -19,12 +19,14 @@ export abstract class LlmService {
   public readonly model: string;
   public readonly apiKey: string;
   public readonly thinking: boolean;
+  public readonly baseUrl?: string;
 
   public constructor(options: LlmServiceOptions) {
     this.model = options.model;
     this.platform = options.platform;
     this.apiKey = options.apiKey;
     this.thinking = options.thinking ?? false;
+    this.baseUrl = options.baseUrl;
   }
 
   public abstract generate<T extends boolean = false>(

@@ -1,4 +1,5 @@
 export * from './anthropic.service';
+export * from './deepseek.service';
 export * from './gemini.service';
 export * from './llm.errors';
 export * from './llm.factory';

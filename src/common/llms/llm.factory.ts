@@ -1,4 +1,5 @@
 import { AnthropicService } from './anthropic.service';
+import { DeepSeekService } from './deepseek.service';
 import { GeminiService } from './gemini.service';
 import { LlmService } from './llm.service';
 import { LlmServiceOptions, LlmPlatform } from './llm.types';
@@ -13,6 +14,8 @@ export class LlmFactory {
         return new AnthropicService(options);
       case LlmPlatform.GEMINI:
         return new GeminiService(options);
+      case LlmPlatform.DEEPSEEK:
+        return new DeepSeekService(options);
       default:
         throw new Error(`Unsupported LLM platform: ${options.platform}`);
     }

@@ -20,18 +20,19 @@ import {
   LlmGenerateResponse,
   LlmMessage,
   LlmOptions,
-  LlmPlatform,
   LlmServiceOptions,
   LlmToolsResponse,
 } from './llm.types';
 
 export class OpenAIService extends LlmService {
   private client: OpenAI;
+  protected readonly serviceName: string = 'OpenAI';
 
   public constructor(options: LlmServiceOptions) {
     super(options);
     this.client = new OpenAI({
       apiKey: this.apiKey,
+      ...(this.baseUrl && { baseURL: this.baseUrl }),
     });
   }
 
@@ -49,7 +50,7 @@ export class OpenAIService extends LlmService {
         if (options.verbose) {
           console.log(JSON.stringify(response, null, 2));
           console.log(
-            `OpenAI time taken: ${((Date.now() - startTime) / 1000).toFixed(2)}s`
+            `${this.serviceName} time taken: ${((Date.now() - startTime) / 1000).toFixed(2)}s`
           );
         }
         return response;
@@ -189,7 +190,9 @@ export class OpenAIService extends LlmService {
       const responseTime = Date.now() - startTime;
 
       if (response.choices[0].message.content === null) {
-        throw new LlmInvalidContentError('OpenAI returned no content');
+        throw new LlmInvalidContentError(
+          `${this.serviceName} returned no content`
+        );
       }
 
       const responseText = response.choices[0].message.content;
@@ -199,7 +202,7 @@ export class OpenAIService extends LlmService {
             content: JSON.parse(responseText) as T extends true
               ? Record<string, unknown>
               : string,
-            platform: LlmPlatform.OPENAI,
+            platform: this.platform,
             model: this.model,
             thinking: this.thinking,
             maxOutputTokens,
@@ -215,11 +218,13 @@ export class OpenAIService extends LlmService {
         } catch (error) {
           console.error(error);
           console.error(responseText);
-          throw new LlmInvalidContentError('OpenAI returned invalid JSON');
+          throw new LlmInvalidContentError(
+            `${this.serviceName} returned invalid JSON`
+          );
         }
       }
       return {
-        platform: LlmPlatform.OPENAI,
+        platform: this.platform,
         content: responseText as T extends true
           ? Record<string, unknown>
           : string,
@@ -306,19 +311,23 @@ Response can only be in JSON format and must strictly follow the following forma
       const responseTime = Date.now() - startTime;
 
       if (response.choices.length === 0) {
-        throw new LlmInvalidContentError('OpenAI returned no choices');
+        throw new LlmInvalidContentError(
+          `${this.serviceName} returned no choices`
+        );
       }
 
       const responseText = response.choices[0].message.content;
       if (responseText === null) {
-        throw new LlmInvalidContentError('OpenAI returned no content');
+        throw new LlmInvalidContentError(
+          `${this.serviceName} returned no content`
+        );
       }
 
       try {
         const toolCalls = JSON.parse(responseText) as LlmToolCall[];
         return {
           toolCalls,
-          platform: LlmPlatform.OPENAI,
+          platform: this.platform,
           model: this.model,
           thinking: this.thinking,
           maxOutputTokens,
@@ -334,7 +343,9 @@ Response can only be in JSON format and must strictly follow the following forma
       } catch (error) {
         console.error(error);
         console.error(responseText);
-        throw new LlmInvalidContentError('OpenAI returned invalid JSON');
+        throw new LlmInvalidContentError(
+          `${this.serviceName} returned invalid JSON`
+        );
       }
     } catch (error) {
       if (error instanceof OpenAI.APIError) {

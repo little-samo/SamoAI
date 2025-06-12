@@ -4,6 +4,7 @@ export const LlmPlatform = {
   OPENAI: 'OPENAI',
   ANTHROPIC: 'ANTHROPIC',
   GEMINI: 'GEMINI',
+  DEEPSEEK: 'DEEPSEEK',
 } as const;
 
 export type LlmPlatform = (typeof LlmPlatform)[keyof typeof LlmPlatform];
@@ -13,6 +14,7 @@ export interface LlmServiceOptions {
   platform: LlmPlatform;
   apiKey: string;
   thinking?: boolean;
+  baseUrl?: string;
 }
 
 export interface LlmOptions {
