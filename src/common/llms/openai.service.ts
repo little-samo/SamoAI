@@ -189,15 +189,21 @@ export class OpenAIService extends LlmService {
       const response = await this.createCompletionWithRetry(request, options);
       const responseTime = Date.now() - startTime;
 
-      if (response.choices[0].message.content === null) {
+      let responseText = response.choices[0].message.content;
+      if (responseText === null) {
         throw new LlmInvalidContentError(
           `${this.serviceName} returned no content`
         );
       }
 
-      const responseText = response.choices[0].message.content;
       if (options?.jsonOutput) {
         try {
+          // Remove potential markdown fences
+          if (responseText.startsWith('```json')) {
+            responseText = responseText.slice(7);
+          } else if (responseText.startsWith('```')) {
+            responseText = responseText.slice(3);
+          }
           return {
             content: JSON.parse(responseText) as T extends true
               ? Record<string, unknown>
@@ -316,7 +322,7 @@ Response can only be in JSON format and must strictly follow the following forma
         );
       }
 
-      const responseText = response.choices[0].message.content;
+      let responseText = response.choices[0].message.content;
       if (responseText === null) {
         throw new LlmInvalidContentError(
           `${this.serviceName} returned no content`
@@ -324,6 +330,15 @@ Response can only be in JSON format and must strictly follow the following forma
       }
 
       try {
+        // Remove potential markdown fences
+        if (responseText.startsWith('```json')) {
+          responseText = responseText.slice(7);
+        } else if (responseText.startsWith('```')) {
+          responseText = responseText.slice(3);
+        }
+        if (responseText.endsWith('```')) {
+          responseText = responseText.slice(0, -3);
+        }
         const toolCalls = JSON.parse(responseText) as LlmToolCall[];
         return {
           toolCalls,

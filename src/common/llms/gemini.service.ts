@@ -325,7 +325,17 @@ Response can only be in JSON format and must strictly follow the following forma
         throw new LlmInvalidContentError('Gemini returned no content');
       }
 
+      let responseText = response.text;
       try {
+        // Remove potential markdown fences
+        if (responseText.startsWith('```json')) {
+          responseText = responseText.slice(7);
+        } else if (responseText.startsWith('```')) {
+          responseText = responseText.slice(3);
+        }
+        if (responseText.endsWith('```')) {
+          responseText = responseText.slice(0, -3);
+        }
         const toolCalls = JSON.parse(response.text) as LlmToolCall[];
         return {
           platform: LlmPlatform.GEMINI,
