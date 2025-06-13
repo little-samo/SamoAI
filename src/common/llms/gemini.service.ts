@@ -191,6 +191,12 @@ export class GeminiService extends LlmService {
       }
 
       let responseText = response.text;
+      let outputTokens = response.usageMetadata?.candidatesTokenCount ?? 0;
+      const thinkingTokens =
+        response.usageMetadata?.thoughtsTokenCount ?? undefined;
+      if (thinkingTokens) {
+        outputTokens += thinkingTokens;
+      }
       if (options?.jsonOutput) {
         try {
           // Remove potential markdown fences
@@ -213,8 +219,8 @@ export class GeminiService extends LlmService {
             thinkingBudget,
             temperature,
             inputTokens: response.usageMetadata?.promptTokenCount ?? 0,
-            outputTokens: response.usageMetadata?.candidatesTokenCount ?? 0,
-            thinkingTokens: response.usageMetadata?.thoughtsTokenCount,
+            outputTokens,
+            thinkingTokens,
             responseTime,
           };
         } catch (error) {
@@ -234,8 +240,8 @@ export class GeminiService extends LlmService {
         thinkingBudget,
         temperature,
         inputTokens: response.usageMetadata?.promptTokenCount ?? 0,
-        outputTokens: response.usageMetadata?.candidatesTokenCount ?? 0,
-        thinkingTokens: response.usageMetadata?.thoughtsTokenCount,
+        outputTokens,
+        thinkingTokens,
         responseTime,
       };
     } catch (error) {
@@ -326,6 +332,12 @@ Response can only be in JSON format and must strictly follow the following forma
       }
 
       let responseText = response.text;
+      let outputTokens = response.usageMetadata?.candidatesTokenCount ?? 0;
+      const thinkingTokens =
+        response.usageMetadata?.thoughtsTokenCount ?? undefined;
+      if (thinkingTokens) {
+        outputTokens += thinkingTokens;
+      }
       try {
         // Remove potential markdown fences
         if (responseText.startsWith('```json')) {
@@ -346,8 +358,8 @@ Response can only be in JSON format and must strictly follow the following forma
           thinkingBudget,
           temperature,
           inputTokens: response.usageMetadata?.promptTokenCount ?? 0,
-          outputTokens: response.usageMetadata?.candidatesTokenCount ?? 0,
-          thinkingTokens: response.usageMetadata?.thoughtsTokenCount,
+          outputTokens,
+          thinkingTokens,
           responseTime,
         };
       } catch (error) {
