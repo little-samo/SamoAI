@@ -48,10 +48,6 @@ export class AgentSummaryInputBuilder extends AgentInputBuilder {
     contents.push({
       type: 'text',
       text: `
-  <CurrentSummary>
-  ${prevSummary}
-  </CurrentSummary>
-  
   The system prompt used in the previous call, which defines the agent's role, rules, and behavior:
   <Prompt>
   `,
@@ -92,6 +88,10 @@ export class AgentSummaryInputBuilder extends AgentInputBuilder {
   <Output>
   ${JSON.stringify(toolCalls, null, 2)}
   </Output>
+  
+  <CurrentSummary>
+  ${prevSummary}
+  </CurrentSummary>
   `,
     });
 
