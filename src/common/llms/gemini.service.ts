@@ -221,6 +221,8 @@ export class GeminiService extends LlmService {
             inputTokens: response.usageMetadata?.promptTokenCount ?? 0,
             outputTokens,
             thinkingTokens,
+            cachedInputTokens:
+              response.usageMetadata?.cachedContentTokenCount ?? undefined,
             responseTime,
           };
         } catch (error) {
@@ -242,6 +244,8 @@ export class GeminiService extends LlmService {
         inputTokens: response.usageMetadata?.promptTokenCount ?? 0,
         outputTokens,
         thinkingTokens,
+        cachedInputTokens:
+          response.usageMetadata?.cachedContentTokenCount ?? undefined,
         responseTime,
       };
     } catch (error) {
@@ -360,6 +364,8 @@ Response can only be in JSON format and must strictly follow the following forma
           inputTokens: response.usageMetadata?.promptTokenCount ?? 0,
           outputTokens,
           thinkingTokens,
+          cachedInputTokens:
+            response.usageMetadata?.cachedContentTokenCount ?? undefined,
           responseTime,
         };
       } catch (error) {
