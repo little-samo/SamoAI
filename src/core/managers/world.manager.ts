@@ -409,6 +409,7 @@ export class WorldManager extends AsyncEventEmitter {
     } = {}
   ): Promise<void> {
     const locationMessage: LocationMessage = {
+      locationId,
       entityType: EntityType.Agent,
       entityId: agentId,
       targetEntityType: options.targetEntityType,
@@ -443,6 +444,7 @@ export class WorldManager extends AsyncEventEmitter {
 
     if (locationMessages.length === 0) {
       const message: LocationMessage = {
+        locationId,
         entityType: EntityType.Agent,
         entityId: agentId,
         name,
@@ -466,6 +468,7 @@ export class WorldManager extends AsyncEventEmitter {
     } = {}
   ): Promise<void> {
     const message: LocationMessage = {
+      locationId,
       entityType: EntityType.Agent,
       entityId: agentId,
       name,
@@ -493,6 +496,7 @@ export class WorldManager extends AsyncEventEmitter {
     } = {}
   ): Promise<void> {
     const locationMessage: LocationMessage = {
+      locationId,
       entityType: EntityType.User,
       entityId: userId,
       targetEntityType: options?.targetEntityType,
@@ -521,6 +525,7 @@ export class WorldManager extends AsyncEventEmitter {
     } = {}
   ): Promise<void> {
     const locationMessage: LocationMessage = {
+      locationId,
       entityType: EntityType.System,
       entityId: 0 as EntityId,
       name: '[SYSTEM]',

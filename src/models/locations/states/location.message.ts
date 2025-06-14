@@ -1,6 +1,10 @@
+import { LocationId } from '../location.type';
+
 import type { EntityId, EntityType } from '../../entities';
 
 export interface LocationMessage {
+  locationId: LocationId;
+
   entityType: EntityType;
   entityId: EntityId;
 

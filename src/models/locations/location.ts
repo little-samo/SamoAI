@@ -347,6 +347,7 @@ export class Location extends AsyncEventEmitter {
     } = {}
   ): Promise<void> {
     const locationMessage: LocationMessage = {
+      locationId: this.id,
       entityType: EntityType.Agent,
       entityId: agent.model.id as AgentId,
       name: agent.name,
@@ -370,6 +371,7 @@ export class Location extends AsyncEventEmitter {
     } = {}
   ): Promise<void> {
     const locationMessage: LocationMessage = {
+      locationId: this.id,
       entityType: EntityType.User,
       entityId: user.model.id as UserId,
       name: user.name,
@@ -393,6 +395,7 @@ export class Location extends AsyncEventEmitter {
     } = {}
   ): Promise<void> {
     const locationMessage: LocationMessage = {
+      locationId: this.id,
       entityType: EntityType.Gimmick,
       entityId: gimmick.id as GimmickId,
       name: gimmick.name,
@@ -409,6 +412,7 @@ export class Location extends AsyncEventEmitter {
 
   public async addSystemMessage(message: string): Promise<void> {
     const locationMessage: LocationMessage = {
+      locationId: this.id,
       entityType: EntityType.System,
       entityId: 0 as EntityId,
       name: '[SYSTEM]',
