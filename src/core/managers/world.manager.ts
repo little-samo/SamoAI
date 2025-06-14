@@ -61,6 +61,16 @@ export class WorldManager extends AsyncEventEmitter {
   private static readonly AGENT_MEMORY_UPDATE_LOCK_PREFIX =
     'lock:agent-memory-update:';
 
+  // Pause update reason constants
+  public static readonly PAUSE_REASON_NO_AGENTS =
+    'LOCATION_EMPTY_NO_AGENTS_PRESENT';
+  public static readonly PAUSE_REASON_UPDATE_ERROR =
+    'LOCATION_UPDATE_FAILED_WITH_ERROR';
+  public static readonly PAUSE_REASON_SCHEDULED_PAUSE =
+    'LOCATION_PAUSED_FOR_SCHEDULED_DURATION';
+  public static readonly PAUSE_REASON_UPDATE_COMPLETED =
+    'LOCATION_UPDATE_CYCLE_COMPLETED';
+
   private static _instance: WorldManager;
 
   public static initialize(options: WorldManagerOptions) {
@@ -536,7 +546,8 @@ export class WorldManager extends AsyncEventEmitter {
       console.log(`No agents in location ${locationId}, pausing update`);
       await this.locationRepository.updateLocationStatePauseUpdateUntil(
         locationId,
-        null
+        null,
+        WorldManager.PAUSE_REASON_NO_AGENTS
       );
       return location;
     }
@@ -876,7 +887,8 @@ export class WorldManager extends AsyncEventEmitter {
     } catch (error) {
       await this.locationRepository.updateLocationStatePauseUpdateUntil(
         locationId,
-        null
+        null,
+        WorldManager.PAUSE_REASON_UPDATE_ERROR
       );
       throw error;
     }
@@ -889,7 +901,8 @@ export class WorldManager extends AsyncEventEmitter {
       }
       await this.locationRepository.updateLocationStatePauseUpdateUntil(
         locationId,
-        pauseUpdateUntil
+        pauseUpdateUntil,
+        WorldManager.PAUSE_REASON_SCHEDULED_PAUSE
       );
     } else {
       if (ENV.DEBUG) {
@@ -897,7 +910,8 @@ export class WorldManager extends AsyncEventEmitter {
       }
       await this.locationRepository.updateLocationStatePauseUpdateUntil(
         locationId,
-        null
+        null,
+        WorldManager.PAUSE_REASON_UPDATE_COMPLETED
       );
     }
 

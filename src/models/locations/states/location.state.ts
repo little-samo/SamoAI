@@ -19,6 +19,7 @@ export interface LocationState {
   userIds: UserId[];
 
   pauseUpdateUntil: Date | null;
+  pauseUpdateReason: string | null;
 
   canvases: Record<string, LocationCanvas>;
 
