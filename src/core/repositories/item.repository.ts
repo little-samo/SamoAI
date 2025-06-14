@@ -11,11 +11,6 @@ export interface ItemRepository {
     agentIds: AgentId[],
     userIds: UserId[]
   ): Promise<Record<EntityKey, ItemModel[]>>;
-  createItemModel(
-    ownerEntityKey: EntityKey,
-    dataId: ItemDataId,
-    count: number
-  ): Promise<ItemModel>;
   addOrCreateItemModel(
     ownerEntityKey: EntityKey,
     dataId: ItemDataId,
