@@ -817,39 +817,56 @@ export class WorldManager extends AsyncEventEmitter {
             this.itemRepository.addOrCreateItemModel(entity.key, dataId, count)
           );
         } else {
-          for (let i = 0; i < count; i++) {
-            await options.handleSave!(
-              this.itemRepository.addOrCreateItemModel(entity.key, dataId, 1)
-            );
-          }
+          await Promise.all(
+            Array.from({ length: count }, async () => {
+              await options.handleSave!(
+                this.itemRepository.addOrCreateItemModel(entity.key, dataId, 1)
+              );
+            })
+          );
         }
-      }
-    );
-
-    location.on(
-      'entityRemoveItem',
-      (entity: Entity, item: ItemModel, count: number) => {
-        void options.handleSave!(
-          this.itemRepository.removeItemModel(entity.key, item, count)
+        await location.emitAsync(
+          'entityItemAdded',
+          entity,
+          dataId,
+          count,
+          stackable
         );
       }
     );
 
     location.on(
-      'entityItemTransferred',
-      (
+      'entityRemoveItem',
+      async (entity: Entity, item: ItemModel, count: number) => {
+        await options.handleSave!(
+          this.itemRepository.removeItemModel(entity.key, item, count)
+        );
+        await location.emitAsync('entityItemRemoved', entity, item, count);
+      }
+    );
+
+    location.on(
+      'entityTransferItem',
+      async (
         entity: Entity,
         item: ItemModel,
         count: number,
         targetEntityKey: EntityKey
       ) => {
-        void options.handleSave!(
+        await options.handleSave!(
           this.itemRepository.transferItemModel(
             entity.key,
             item,
             targetEntityKey,
             count
           )
+        );
+        await location.emitAsync(
+          'entityItemTransferred',
+          entity,
+          item,
+          count,
+          targetEntityKey
         );
       }
     );
