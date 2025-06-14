@@ -14,10 +14,7 @@ export class AgentResponseEveryMessageCore extends AgentCore {
   }
 
   public async update(): Promise<boolean> {
-    const lastMessage =
-      this.agent.location.messagesState.messages[
-        this.agent.location.messagesState.messages.length - 1
-      ];
+    const lastMessage = this.agent.location.messages.at(-1);
     if (
       lastMessage &&
       lastMessage.entityType === EntityType.Agent &&

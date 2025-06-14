@@ -2,7 +2,7 @@ import { ENV, shuffle } from '@little-samo/samo-ai/common';
 
 import { type AgentId } from '../../entities';
 import { EntityType } from '../../entities/entity.types';
-import { LocationMessage } from '../states/location.messages-state';
+import { LocationMessage } from '../states/location.message';
 
 import { LocationCore } from './location.core';
 import { RegisterLocationCore } from './location.core-decorator';
@@ -18,12 +18,12 @@ export class LocationRoundRobinCore extends LocationCore {
   }
 
   private get lastMessage(): LocationMessage | undefined {
-    return this.location.messagesState.messages.at(-1);
+    return this.location.messages.at(-1);
   }
 
   public async update(): Promise<number> {
     const now = new Date();
-    const messages = [...this.location.messagesState.messages].reverse();
+    const messages = [...this.location.messages].reverse();
     const lastMessage = this.lastMessage;
     const agents = this.location.getAgents();
     if (!this.meta.sequential) {

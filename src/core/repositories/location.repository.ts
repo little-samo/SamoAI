@@ -1,6 +1,5 @@
 import {
   LocationState,
-  LocationMessagesState,
   LocationEntityState,
   LocationId,
   EntityId,
@@ -15,9 +14,10 @@ import {
 export interface LocationRepository {
   getLocationModel(locationId: LocationId): Promise<LocationModel>;
   getOrCreateLocationState(locationId: LocationId): Promise<LocationState>;
-  getOrCreateLocationMessagesState(
-    locationId: LocationId
-  ): Promise<LocationMessagesState>;
+  getOrCreateLocationMessages(
+    locationId: LocationId,
+    limit: number
+  ): Promise<LocationMessage[]>;
   getOrCreateLocationEntityState(
     locationId: LocationId,
     type: EntityType,

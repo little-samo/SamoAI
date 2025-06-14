@@ -18,6 +18,7 @@ import {
   LocationEntityState,
   LocationId,
   LocationMessage,
+  LocationMeta,
   LocationModel,
   User,
   UserId,
@@ -182,11 +183,14 @@ export class WorldManager extends AsyncEventEmitter {
 
     const locationModel =
       await this.locationRepository.getLocationModel(locationId);
+    const locationMeta = locationModel.meta as LocationMeta;
+
     const locationState =
       await this.locationRepository.getOrCreateLocationState(locationId);
-    const locationMessagesState =
-      await this.locationRepository.getOrCreateLocationMessagesState(
-        locationId
+    const locationMessages =
+      await this.locationRepository.getOrCreateLocationMessages(
+        locationId,
+        locationMeta.messageLimit
       );
 
     if (options.preLoadLocation) {
@@ -195,7 +199,7 @@ export class WorldManager extends AsyncEventEmitter {
 
     const location = new Location(locationModel, {
       state: locationState,
-      messagesState: locationMessagesState,
+      messages: locationMessages,
       apiKeys,
     });
 
@@ -203,7 +207,7 @@ export class WorldManager extends AsyncEventEmitter {
     let agentContextUserIds = location.state.userIds;
     if (agentContextUserIds.length > location.meta.agentUserContextLimit) {
       lastUserMessageAt = new Map();
-      for (const message of location.messagesState.messages) {
+      for (const message of location.messages) {
         if (message.entityType == EntityType.User) {
           lastUserMessageAt.set(
             message.entityId as UserId,
@@ -236,7 +240,7 @@ export class WorldManager extends AsyncEventEmitter {
     if (locationContextUserIds.length > location.meta.userContextLimit) {
       if (!lastUserMessageAt) {
         lastUserMessageAt = new Map();
-        for (const message of location.messagesState.messages) {
+        for (const message of location.messages) {
           if (message.entityType == EntityType.User) {
             lastUserMessageAt.set(
               message.entityId as UserId,
@@ -434,12 +438,10 @@ export class WorldManager extends AsyncEventEmitter {
       maxMessages?: number;
     } = {}
   ): Promise<void> {
-    const locationMessagesState =
-      await this.locationRepository.getOrCreateLocationMessagesState(
-        locationId
-      );
+    const locationMessages =
+      await this.locationRepository.getOrCreateLocationMessages(locationId, 1);
 
-    if (locationMessagesState.messages.length === 0) {
+    if (locationMessages.length === 0) {
       const message: LocationMessage = {
         entityType: EntityType.Agent,
         entityId: agentId,

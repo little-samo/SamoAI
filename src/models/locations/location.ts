@@ -26,10 +26,7 @@ import { DEFAULT_LOCATION_META, LocationMeta } from './location.meta';
 import { LocationModel } from './location.model';
 import { LocationId, LocationKey } from './location.type';
 import { LocationEntityState } from './states/location.entity-state';
-import {
-  LocationMessage,
-  LocationMessagesState,
-} from './states/location.messages-state';
+import { LocationMessage } from './states/location.message';
 import { LocationState } from './states/location.state';
 
 export class Location extends AsyncEventEmitter {
@@ -66,7 +63,7 @@ export class Location extends AsyncEventEmitter {
   private readonly gimmicks: Map<GimmickId, Gimmick> = new Map();
 
   public readonly state: LocationState;
-  public readonly messagesState: LocationMessagesState;
+  public readonly messages: LocationMessage[];
 
   public readonly apiKeys: Record<string, LlmApiKeyModel> = {};
 
@@ -94,22 +91,18 @@ export class Location extends AsyncEventEmitter {
     }
   }
 
-  public static fixMessagesState(
-    _state: LocationMessagesState,
-    _meta: LocationMeta
-  ): void {
-    if (_state.messages.length > _meta.messageLimit) {
-      _state.messages = _state.messages.slice(
-        _state.messages.length - _meta.messageLimit
-      );
-    }
+  public static fixMessages(
+    messages: LocationMessage[],
+    meta: LocationMeta
+  ): LocationMessage[] {
+    return messages.slice(messages.length - meta.messageLimit);
   }
 
   public constructor(
     public readonly model: LocationModel,
     options: {
       state: LocationState;
-      messagesState: LocationMessagesState;
+      messages: LocationMessage[];
       apiKeys?: LlmApiKeyModel[];
     }
   ) {
@@ -118,13 +111,12 @@ export class Location extends AsyncEventEmitter {
     this.key = `location:${model.id}` as LocationKey;
     this.meta = DEFAULT_LOCATION_META;
 
-    const { state, messagesState, apiKeys } = options;
+    const { state, messages, apiKeys } = options;
 
     Location.fixState(state, this.meta);
     this.state = state;
 
-    Location.fixMessagesState(messagesState, this.meta);
-    this.messagesState = messagesState;
+    this.messages = Location.fixMessages(messages, this.meta);
 
     this.reloadCore();
 
@@ -281,7 +273,7 @@ export class Location extends AsyncEventEmitter {
     return new LocationContext({
       key: this.key,
       description: this.meta.description,
-      messages: this.messagesState.messages.map(Location.messageToContext),
+      messages: this.messages.map(Location.messageToContext),
       canvases: this.meta.canvases.map((c) => {
         const canvas = this.state.canvases[c.name];
         return new LocationCanvasContext({
@@ -299,7 +291,7 @@ export class Location extends AsyncEventEmitter {
   }
 
   public get lastMessageContext(): LocationMessageContext | undefined {
-    const lastMessage = this.messagesState.messages.at(-1);
+    const lastMessage = this.messages.at(-1);
     return lastMessage ? Location.messageToContext(lastMessage) : undefined;
   }
 
@@ -332,13 +324,13 @@ export class Location extends AsyncEventEmitter {
       message.createdAt = new Date();
     }
     message.updatedAt = new Date();
-    this.messagesState.messages.push(message);
-    this.messagesState.messages.sort(
+    this.messages.push(message);
+    this.messages.sort(
       (a, b) =>
         new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
     );
-    if (this.messagesState.messages.length > this.meta.messageLimit) {
-      this.messagesState.messages.shift();
+    if (this.messages.length > this.meta.messageLimit) {
+      this.messages.shift();
     }
 
     await this.emitAsync('messageAdded', this, message);
