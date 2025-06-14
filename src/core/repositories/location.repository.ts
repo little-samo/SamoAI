@@ -68,8 +68,7 @@ export interface LocationRepository {
   ): Promise<void>;
   addLocationMessage(
     locationId: LocationId,
-    message: LocationMessage,
-    maxMessages?: number
+    message: LocationMessage
   ): Promise<void>;
   updateLocationEntityStateIsActive(
     locationId: LocationId,

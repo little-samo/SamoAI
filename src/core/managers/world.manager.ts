@@ -381,14 +381,9 @@ export class WorldManager extends AsyncEventEmitter {
 
   public async addLocationMessage(
     locationId: LocationId,
-    message: LocationMessage,
-    maxMessages?: number
+    message: LocationMessage
   ): Promise<void> {
-    await this.locationRepository.addLocationMessage(
-      locationId,
-      message,
-      maxMessages
-    );
+    await this.locationRepository.addLocationMessage(locationId, message);
     await this.emitAsync('locationMessageAdded', locationId, message);
   }
 
@@ -404,7 +399,6 @@ export class WorldManager extends AsyncEventEmitter {
       expression?: string;
       emotion?: string;
       image?: string;
-      maxMessages?: number;
     } = {}
   ): Promise<void> {
     const locationMessage: LocationMessage = {
@@ -421,11 +415,7 @@ export class WorldManager extends AsyncEventEmitter {
       createdAt: createdAt ?? new Date(),
       updatedAt: new Date(),
     };
-    await this.addLocationMessage(
-      locationId,
-      locationMessage,
-      options.maxMessages
-    );
+    await this.addLocationMessage(locationId, locationMessage);
   }
 
   public async addLocationAgentGreetingMessage(
@@ -433,10 +423,7 @@ export class WorldManager extends AsyncEventEmitter {
     agentId: AgentId,
     name: string,
     greeting: string,
-    createdAt?: Date,
-    options: {
-      maxMessages?: number;
-    } = {}
+    createdAt?: Date
   ): Promise<void> {
     const locationMessages = await this.locationRepository.getLocationMessages(
       locationId,
@@ -454,7 +441,7 @@ export class WorldManager extends AsyncEventEmitter {
         updatedAt: new Date(),
       };
 
-      await this.addLocationMessage(locationId, message, options.maxMessages);
+      await this.addLocationMessage(locationId, message);
     }
   }
 
@@ -464,9 +451,7 @@ export class WorldManager extends AsyncEventEmitter {
     name: string,
     action: string,
     createdAt?: Date,
-    options: {
-      maxMessages?: number;
-    } = {}
+    _options: {} = {}
   ): Promise<void> {
     const message: LocationMessage = {
       locationId,
@@ -478,7 +463,7 @@ export class WorldManager extends AsyncEventEmitter {
       updatedAt: new Date(),
     };
 
-    await this.addLocationMessage(locationId, message, options.maxMessages);
+    await this.addLocationMessage(locationId, message);
   }
 
   public async addLocationUserMessage(
@@ -493,7 +478,6 @@ export class WorldManager extends AsyncEventEmitter {
       expression?: string;
       emotion?: string;
       image?: string;
-      maxMessages?: number;
     } = {}
   ): Promise<void> {
     const locationMessage: LocationMessage = {
@@ -510,20 +494,14 @@ export class WorldManager extends AsyncEventEmitter {
       createdAt: createdAt ?? new Date(),
       updatedAt: new Date(),
     };
-    await this.addLocationMessage(
-      locationId,
-      locationMessage,
-      options.maxMessages
-    );
+    await this.addLocationMessage(locationId, locationMessage);
   }
 
   public async addLocationSystemMessage(
     locationId: LocationId,
     message: string,
     createdAt?: Date,
-    options: {
-      maxMessages?: number;
-    } = {}
+    _options: {} = {}
   ): Promise<void> {
     const locationMessage: LocationMessage = {
       locationId,
@@ -534,11 +512,7 @@ export class WorldManager extends AsyncEventEmitter {
       createdAt: createdAt ?? new Date(),
       updatedAt: new Date(),
     };
-    await this.addLocationMessage(
-      locationId,
-      locationMessage,
-      options.maxMessages
-    );
+    await this.addLocationMessage(locationId, locationMessage);
   }
 
   private async updateLocationInternal(
@@ -587,13 +561,7 @@ export class WorldManager extends AsyncEventEmitter {
     location.on(
       'messageAdded',
       (location: Location, message: LocationMessage) => {
-        void options.handleSave!(
-          this.addLocationMessage(
-            location.id,
-            message,
-            location.meta.messageLimit
-          )
-        );
+        void options.handleSave!(this.addLocationMessage(location.id, message));
       }
     );
 
