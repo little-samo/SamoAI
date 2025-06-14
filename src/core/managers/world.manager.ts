@@ -23,6 +23,7 @@ import {
   User,
   UserId,
 } from '@little-samo/samo-ai/models';
+import { LocationPauseReason } from '@little-samo/samo-ai/models/locations/location.constants';
 
 import {
   AgentRepository,
@@ -60,16 +61,6 @@ export class WorldManager extends AsyncEventEmitter {
   private static readonly AGENT_MEMORY_UPDATE_LOCK_TTL = 15000; // 15 seconds
   private static readonly AGENT_MEMORY_UPDATE_LOCK_PREFIX =
     'lock:agent-memory-update:';
-
-  // Pause update reason constants
-  public static readonly PAUSE_REASON_NO_AGENTS =
-    'LOCATION_EMPTY_NO_AGENTS_PRESENT';
-  public static readonly PAUSE_REASON_UPDATE_ERROR =
-    'LOCATION_UPDATE_FAILED_WITH_ERROR';
-  public static readonly PAUSE_REASON_SCHEDULED_PAUSE =
-    'LOCATION_PAUSED_FOR_SCHEDULED_DURATION';
-  public static readonly PAUSE_REASON_UPDATE_COMPLETED =
-    'LOCATION_UPDATE_CYCLE_COMPLETED';
 
   private static _instance: WorldManager;
 
@@ -547,7 +538,7 @@ export class WorldManager extends AsyncEventEmitter {
       await this.locationRepository.updateLocationStatePauseUpdateUntil(
         locationId,
         null,
-        WorldManager.PAUSE_REASON_NO_AGENTS
+        LocationPauseReason.NO_AGENTS
       );
       return location;
     }
@@ -888,7 +879,7 @@ export class WorldManager extends AsyncEventEmitter {
       await this.locationRepository.updateLocationStatePauseUpdateUntil(
         locationId,
         null,
-        WorldManager.PAUSE_REASON_UPDATE_ERROR
+        LocationPauseReason.UPDATE_ERROR
       );
       throw error;
     }
@@ -902,7 +893,7 @@ export class WorldManager extends AsyncEventEmitter {
       await this.locationRepository.updateLocationStatePauseUpdateUntil(
         locationId,
         pauseUpdateUntil,
-        WorldManager.PAUSE_REASON_SCHEDULED_PAUSE
+        LocationPauseReason.SCHEDULED_PAUSE
       );
     } else {
       if (ENV.DEBUG) {
@@ -911,7 +902,7 @@ export class WorldManager extends AsyncEventEmitter {
       await this.locationRepository.updateLocationStatePauseUpdateUntil(
         locationId,
         null,
-        WorldManager.PAUSE_REASON_UPDATE_COMPLETED
+        LocationPauseReason.UPDATE_COMPLETED
       );
     }
 
