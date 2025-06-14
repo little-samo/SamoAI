@@ -1,4 +1,4 @@
-import { LocationId } from '../location.type';
+import { LocationId } from '../location.types';
 
 import type { EntityId, EntityType } from '../../entities';
 

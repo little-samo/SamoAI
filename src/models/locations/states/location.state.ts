@@ -1,6 +1,6 @@
 import { AgentId, EntityId, EntityType, UserId } from '@little-samo/samo-ai';
 
-import { LocationId } from '../location.type';
+import { LocationId } from '../location.types';
 
 export interface LocationCanvas {
   lastModifierEntityType: EntityType;

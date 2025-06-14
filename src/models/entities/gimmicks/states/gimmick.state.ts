@@ -1,4 +1,4 @@
-import { LocationId } from '../../../locations/location.type';
+import { LocationId } from '../../../locations/location.types';
 import { EntityState } from '../../entity.state';
 import { EntityId, EntityType } from '../../entity.types';
 import { GimmickId } from '../gimmick.types';

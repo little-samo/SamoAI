@@ -1,7 +1,7 @@
 import { isEqual } from 'lodash';
 
 import { type Location } from '../../locations';
-import { LocationId } from '../../locations/location.type';
+import { LocationId } from '../../locations/location.types';
 import { Entity } from '../entity';
 import { ItemModel } from '../entity.item-model';
 import { EntityType } from '../entity.types';

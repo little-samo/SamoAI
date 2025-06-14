@@ -24,7 +24,7 @@ import {
 } from './location.context';
 import { DEFAULT_LOCATION_META, LocationMeta } from './location.meta';
 import { LocationModel } from './location.model';
-import { LocationId, LocationKey } from './location.type';
+import { LocationId, LocationKey } from './location.types';
 import { LocationEntityState } from './states/location.entity-state';
 import { LocationMessage } from './states/location.message';
 import { LocationState } from './states/location.state';
