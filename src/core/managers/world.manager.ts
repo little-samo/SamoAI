@@ -187,11 +187,10 @@ export class WorldManager extends AsyncEventEmitter {
 
     const locationState =
       await this.locationRepository.getOrCreateLocationState(locationId);
-    const locationMessages =
-      await this.locationRepository.getOrCreateLocationMessages(
-        locationId,
-        locationMeta.messageLimit
-      );
+    const locationMessages = await this.locationRepository.getLocationMessages(
+      locationId,
+      locationMeta.messageLimit
+    );
 
     if (options.preLoadLocation) {
       await options.preLoadLocation(locationModel);
@@ -439,8 +438,10 @@ export class WorldManager extends AsyncEventEmitter {
       maxMessages?: number;
     } = {}
   ): Promise<void> {
-    const locationMessages =
-      await this.locationRepository.getOrCreateLocationMessages(locationId, 1);
+    const locationMessages = await this.locationRepository.getLocationMessages(
+      locationId,
+      1
+    );
 
     if (locationMessages.length === 0) {
       const message: LocationMessage = {

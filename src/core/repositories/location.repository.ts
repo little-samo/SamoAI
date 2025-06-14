@@ -14,7 +14,7 @@ import {
 export interface LocationRepository {
   getLocationModel(locationId: LocationId): Promise<LocationModel>;
   getOrCreateLocationState(locationId: LocationId): Promise<LocationState>;
-  getOrCreateLocationMessages(
+  getLocationMessages(
     locationId: LocationId,
     limit: number
   ): Promise<LocationMessage[]>;
