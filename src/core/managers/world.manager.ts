@@ -788,38 +788,46 @@ export class WorldManager extends AsyncEventEmitter {
         entity: Entity,
         dataId: ItemDataId,
         count: number,
-        stackable: boolean
+        stackable: boolean,
+        reason?: string
       ) => {
         if (stackable) {
           await options.handleSave!(
-            this.itemRepository.addOrCreateItemModel(entity.key, dataId, count)
+            this.itemRepository.addOrCreateItemModel(
+              entity.key,
+              dataId,
+              count,
+              reason
+            )
           );
         } else {
           await Promise.all(
             Array.from({ length: count }, async () => {
               await options.handleSave!(
-                this.itemRepository.addOrCreateItemModel(entity.key, dataId, 1)
+                this.itemRepository.addOrCreateItemModel(
+                  entity.key,
+                  dataId,
+                  1,
+                  reason
+                )
               );
             })
           );
         }
-        await location.emitAsync(
-          'entityItemAdded',
-          entity,
-          dataId,
-          count,
-          stackable
-        );
       }
     );
 
     location.on(
       'entityRemoveItem',
-      async (entity: Entity, item: ItemModel, count: number) => {
+      async (
+        entity: Entity,
+        item: ItemModel,
+        count: number,
+        reason?: string
+      ) => {
         await options.handleSave!(
-          this.itemRepository.removeItemModel(entity.key, item, count)
+          this.itemRepository.removeItemModel(entity.key, item, count, reason)
         );
-        await location.emitAsync('entityItemRemoved', entity, item, count);
       }
     );
 
@@ -829,22 +837,17 @@ export class WorldManager extends AsyncEventEmitter {
         entity: Entity,
         item: ItemModel,
         count: number,
-        targetEntityKey: EntityKey
+        targetEntityKey: EntityKey,
+        reason?: string
       ) => {
         await options.handleSave!(
           this.itemRepository.transferItemModel(
             entity.key,
             item,
             targetEntityKey,
-            count
+            count,
+            reason
           )
-        );
-        await location.emitAsync(
-          'entityItemTransferred',
-          entity,
-          item,
-          count,
-          targetEntityKey
         );
       }
     );

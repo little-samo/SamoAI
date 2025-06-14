@@ -102,9 +102,10 @@ export abstract class Entity {
     options: {
       stackable?: boolean;
       emitEvent?: boolean;
+      reason?: string;
     } = {}
   ): Promise<void> {
-    const { stackable = true, emitEvent = true } = options;
+    const { stackable = true, emitEvent = true, reason } = options;
 
     if (emitEvent) {
       await this.location.emitAsync(
@@ -112,7 +113,8 @@ export abstract class Entity {
         this,
         dataId,
         count,
-        stackable
+        stackable,
+        reason
       );
     }
 
@@ -135,6 +137,17 @@ export abstract class Entity {
         this._itemsByDataId[dataId].push(item);
       }
     }
+
+    if (emitEvent) {
+      await this.location.emitAsync(
+        'entityItemAdded',
+        this,
+        dataId,
+        count,
+        stackable,
+        reason
+      );
+    }
   }
 
   public async removeItem(
@@ -142,9 +155,10 @@ export abstract class Entity {
     count: number,
     options: {
       emitEvent?: boolean;
+      reason?: string;
     } = {}
   ): Promise<boolean> {
-    const { emitEvent = true } = options;
+    const { emitEvent = true, reason } = options;
 
     if (item.count < count) {
       return false;
@@ -152,7 +166,13 @@ export abstract class Entity {
 
     try {
       if (emitEvent) {
-        await this.location.emitAsync('entityRemoveItem', this, item, count);
+        await this.location.emitAsync(
+          'entityRemoveItem',
+          this,
+          item,
+          count,
+          reason
+        );
       }
     } catch (error) {
       console.error(
@@ -163,6 +183,16 @@ export abstract class Entity {
     }
 
     item.count -= count;
+
+    if (emitEvent) {
+      await this.location.emitAsync(
+        'entityItemRemoved',
+        this,
+        item,
+        count,
+        reason
+      );
+    }
 
     return true;
   }
@@ -190,44 +220,57 @@ export abstract class Entity {
     targetEntityKey: EntityKey,
     options: {
       emitEvent?: boolean;
+      reason?: string;
     } = {}
   ): Promise<boolean> {
-    const { emitEvent = true } = options;
+    const { emitEvent = true, reason } = options;
 
     const targetEntity = this.location.getEntity(targetEntityKey);
     if (!targetEntity) {
       return false;
     }
 
-    const stackable = item.itemData?.stackable ?? true;
-
-    if (await this.removeItem(item, count, { emitEvent: false })) {
-      await targetEntity.addItem(item.itemDataId as ItemDataId, count, {
-        stackable,
-        emitEvent: false,
-      });
-
-      if (emitEvent) {
-        try {
-          await this.location.emitAsync(
-            'entityTransferItem',
-            this,
-            item,
-            count,
-            targetEntityKey
-          );
-        } catch (error) {
-          console.error(
-            `Error transferring item ${item.itemData?.name ?? item.itemDataId} from ${this.key} to ${targetEntityKey}:`,
-            error
-          );
-          return false;
-        }
-      }
-
-      return true;
+    if (item.count < count) {
+      return false;
     }
 
-    return false;
+    if (emitEvent) {
+      try {
+        await this.location.emitAsync(
+          'entityTransferItem',
+          this,
+          item,
+          count,
+          targetEntityKey,
+          reason
+        );
+      } catch (error) {
+        console.error(
+          `Error transferring item ${item.itemData?.name ?? item.itemDataId} from ${this.key} to ${targetEntityKey}:`,
+          error
+        );
+        return false;
+      }
+    }
+
+    await this.removeItem(item, count, { emitEvent: false, reason });
+    const stackable = item.itemData?.stackable ?? true;
+    await targetEntity.addItem(item.itemDataId as ItemDataId, count, {
+      stackable,
+      emitEvent: false,
+    });
+
+    if (emitEvent) {
+      await this.location.emitAsync(
+        'entityItemTransferred',
+        this,
+        item,
+        count,
+        targetEntityKey,
+        reason
+      );
+    }
+
+    return true;
   }
 }

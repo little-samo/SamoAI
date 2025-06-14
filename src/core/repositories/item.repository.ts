@@ -14,17 +14,20 @@ export interface ItemRepository {
   addOrCreateItemModel(
     ownerEntityKey: EntityKey,
     dataId: ItemDataId,
-    count: number
+    count: number,
+    reason?: string
   ): Promise<ItemModel>;
   removeItemModel(
     ownerEntityKey: EntityKey,
     item: ItemModel,
-    count: number
+    count: number,
+    reason?: string
   ): Promise<void>;
   transferItemModel(
     ownerEntityKey: EntityKey,
     item: ItemModel,
     targetEntityKey: EntityKey,
-    count: number
+    count: number,
+    reason?: string
   ): Promise<void>;
 }
