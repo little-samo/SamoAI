@@ -22,8 +22,8 @@ import {
   LocationModel,
   User,
   UserId,
+  LocationPauseReason,
 } from '@little-samo/samo-ai/models';
-import { LocationPauseReason } from '@little-samo/samo-ai/models/locations/location.constants';
 
 import {
   AgentRepository,
