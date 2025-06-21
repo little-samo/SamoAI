@@ -11,6 +11,7 @@ export function RegisterAgentInput(input: string): ClassDecorator {
   return function (target: object) {
     Reflect.defineMetadata(AGENT_INPUT_METADATA_KEY, input, target);
     AgentInputFactory.INPUT_MAP[input] = target as new (
+      version: number,
       location: Location,
       agent: Agent
     ) => AgentInputBuilder;

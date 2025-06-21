@@ -34,6 +34,7 @@ export abstract class AgentInputBuilder {
   }
 
   protected constructor(
+    public readonly version: number,
     public readonly location: Location,
     public readonly agent: Agent
   ) {}

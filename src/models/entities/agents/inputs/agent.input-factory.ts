@@ -6,18 +6,28 @@ import type { AgentInputBuilder } from './agent.input';
 export class AgentInputFactory {
   public static readonly INPUT_MAP: Record<
     string,
-    new (location: Location, agent: Agent) => AgentInputBuilder
+    new (version: number, location: Location, agent: Agent) => AgentInputBuilder
   > = {};
 
   public static createInput(
-    type: string,
+    input: string,
     location: Location,
     agent: Agent
   ): AgentInputBuilder {
-    const InputClass = this.INPUT_MAP[type];
-    if (!InputClass) {
-      throw new Error(`Unknown input type: ${type}`);
+    let version = 0;
+    const inputMatch = input.match(/^(\w+):(\w+)$/);
+    if (inputMatch) {
+      input = inputMatch[1];
+      const versionStr = inputMatch[2];
+      if (versionStr !== 'latest') {
+        version = parseInt(versionStr);
+      }
     }
-    return new InputClass(location, agent);
+
+    const InputClass = this.INPUT_MAP[input];
+    if (!InputClass) {
+      throw new Error(`Unknown input type: ${input}`);
+    }
+    return new InputClass(version, location, agent);
   }
 }
