@@ -484,7 +484,7 @@ export class Agent extends Entity {
 
     const summaryResponse = await llm.generate(messages, {
       maxTokens: this.meta.maxTokens,
-      maxThinkingTokens: this.meta.maxThinkingTokens,
+      maxThinkingTokens: this.meta.maxSummaryThinkingTokens,
       verbose: ENV.DEBUG,
     });
 
@@ -531,7 +531,7 @@ export class Agent extends Entity {
       Object.values(actions),
       {
         maxTokens: this.meta.maxTokens,
-        maxThinkingTokens: this.meta.maxThinkingTokens,
+        maxThinkingTokens: this.meta.maxMemoryThinkingTokens,
         verbose: ENV.DEBUG,
       }
     );

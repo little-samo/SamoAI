@@ -14,6 +14,8 @@ export interface AgentMeta extends EntityMeta {
   maxTokens: number;
   maxThinkingTokens: number;
   maxEvaluatationThinkingTokens: number;
+  maxSummaryThinkingTokens: number;
+  maxMemoryThinkingTokens: number;
   llms: AgentLlmMeta[];
   inputs: string[];
   languages: string[];
@@ -82,6 +84,8 @@ export const DEFAULT_AGENT_META: AgentMeta = {
   maxTokens: 2048,
   maxThinkingTokens: 1024,
   maxEvaluatationThinkingTokens: 256,
+  maxSummaryThinkingTokens: 256,
+  maxMemoryThinkingTokens: 256,
   llms: [
     {
       platform: LlmPlatform.ANTHROPIC,
