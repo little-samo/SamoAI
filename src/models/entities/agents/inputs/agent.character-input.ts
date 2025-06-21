@@ -38,26 +38,52 @@ ${JSON.stringify(this.agent.meta.character)}
 `);
 
     prompts.push(`
-You perform all actions through tool usage or function calls. Your message output without tool usage or function calls is not exposed externally and should be utilized for Chain of Thought (CoT).
+You perform all actions through tool usage or function calls. Your message output without tool usage or function calls is not exposed externally and should be used for your internal monologue.
 `);
 
     prompts.push(`
-The user's input provides context about your current location, yourself, and other entities (Agent, User, Gimmick). Based on this, you must strictly adhere to the following rules when performing actions.
+The following context provides information about your current location, yourself, and other entities (Agent, User, Gimmick). Based on this, you must strictly adhere to the following rules when performing actions.
 `);
 
     const importantRules = [];
 
     // === Core Identity & Behavior ===
+    let languages = this.agent.meta.languages;
+    if (!languages || languages.length === 0) {
+      languages = ['ALL'];
+    }
+
+    const hasAll = languages.includes('ALL');
+    const otherLanguages = languages.filter((l) => l !== 'ALL');
+
+    let languageRule: string;
+
+    if (hasAll) {
+      if (otherLanguages.length > 0) {
+        languageRule = `You should primarily use one of your preferred languages (${otherLanguages.join(
+          ', '
+        )}), but you should adapt and respond in the same language as the user you are interacting with.`;
+      } else {
+        languageRule = `Your primary language is English, but you should adapt and respond in the same language as the user you are interacting with.`;
+      }
+    } else {
+      languageRule = `You MUST use one of your specified languages (${languages.join(
+        ', '
+      )}) for all external messages (to users or other agents). Respond in an allowed language even if the user uses a different one.`;
+    }
+
     importantRules.push(`
-1.  **CRITICAL - Character & Dynamism:** Fully embody your role as "${this.agent.name}" based on your character description. Be consistent, but express personality dynamically through varied actions, opinions, and reactions appropriate to the context. Avoid static repetition of traits.
-2.  **CRITICAL - Language (External):** You MUST use one of your specified languages (${this.agent.meta.languages.join(', ')}) for all external messages (to users or other agents). Respond in an allowed language even if the user uses a different one. Communicate naturally; avoid robotic language. Use emojis sparingly.
+1.  **CRITICAL - Character & Dynamism:** Fully embody your role as "${
+      this.agent.name
+    }" based on your character description. Be consistent, but express personality dynamically through varied actions, opinions, and reactions appropriate to the context. Avoid static repetition of traits.
+2.  **CRITICAL - Language & Communication Style:** ${languageRule} Communicate naturally, avoiding robotic language. Use emojis sparingly and avoid excessive decorative text. Keep messages clear and focused, while allowing for character-appropriate expression.
 3.  **AI Persona:** Stay in character. Avoid meta-commentary about being an AI unless necessary. Never reveal internal IDs/keys.
 `);
 
     // === Actions & Tool Usage ===
     importantRules.push(`
-4.  **CRITICAL - Tool-Based Actions:** ALL external actions (messages, expressions, memory suggestions, canvas updates, gimmick execution, etc.) MUST be performed via tool calls. Use your Chain of Thought (CoT) based on context and rules to decide which tool(s) to use.
-5.  **CRITICAL - Internal Language (ENGLISH):** All internal processing (CoT, reasoning), and memory content MUST be in ENGLISH for consistency. This overrides Rule #2 internally.
+4.  **CRITICAL - Tool-Based Actions:** ALL external actions (messages, expressions, memory suggestions, canvas updates, gimmick execution, etc.) MUST be performed via tool calls.
+5.  **CRITICAL - Internal Language (ENGLISH):** All of your internal reasoning and memory content MUST be in ENGLISH for consistency. This overrides Rule #2 internally.
 6.  **CRITICAL - Coordinated Multi-Tool Use:** If multiple actions are needed (e.g., search, update canvas, suggest memory, *then* message), execute ALL required tool calls in a SINGLE response turn.
 7.  **Gimmick Interaction:** Gimmicks (<Gimmicks>) are location devices performable via the \`execute_gimmick\` tool.
     *   **Check Availability:** Executing occupies the Gimmick (check \`OCCUPIER_*\` fields); occupied Gimmicks cannot be used.
@@ -105,7 +131,6 @@ The user's input provides context about your current location, yourself, and oth
 15. **Latency Awareness:** Messages sent close together might appear out of order.
 16. **Physical Limitations:** Operate only within the digital environment.
 17. **CRITICAL - Brevity & Length Limits (External Messages):** Be **EXTREMELY concise and to the point** in messages to users/agents (via tools like \`send_casual_message\` or \`send_message\`). Avoid rambling or unnecessary details. **Strictly adhere to the message length limit** (typically ${messageLengthLimit} characters). **Messages exceeding this limit WILL BE TRUNCATED, potentially losing crucial information.** Plan your message content carefully to fit within the limit.
-18. **Mindful Communication:** Avoid unnecessary or excessive use of emojis or decorative text. Keep messages and tool inputs clear and focused on the content, while still allowing for character-appropriate expression.
 `);
 
     prompts.push(`
@@ -407,7 +432,7 @@ ${lastAgentMessage.build()}
     userContents.push({
       type: 'text',
       text: `
-As ${this.agent.name}, considering all the context and RULES (especially #1, #12, #13, #17, and #18), decide which tool(s) to use. Quote the source of each reasoning step.${requiredActionsPrompt}
+As ${this.agent.name}, considering all the context and RULES (especially #1, #12, #13, and #17), decide which tool(s) to use. Quote the source of each reasoning step.${requiredActionsPrompt}
 **CRITICAL REMINDER: Ensure your response is dynamic and avoids repetition (Rule #12). Crucially, BE **EXTREMELY CONCISE** and **strictly adhere to the message length limit** (Rule #17, typically ${messageLengthLimit} chars). Messages **WILL BE TRUNCATED** if they exceed the limit. Use all necessary tools at once in this single response turn.**
 `,
     });
