@@ -6,7 +6,7 @@ import { z } from 'zod';
 import packageJson from '../../../../../package.json';
 import { type Entity } from '../../entity';
 import { type Gimmick } from '../gimmick';
-import { GimmickEntityArguments, type GimmickCoreMeta } from '../gimmick.meta';
+import { type GimmickArguments, type GimmickCoreMeta } from '../gimmick.meta';
 import { GimmickParameters } from '../gimmick.types';
 
 import { GimmickCore } from './gimmick.core';
@@ -136,21 +136,21 @@ class McpToolsCache {
 
   public static getTools(
     serverUrl: string,
-    entityArguments?: GimmickEntityArguments
+    gimmickArguments?: GimmickArguments
   ): Record<string, McpToolDefinition> {
     const cachedTools = this.cachedToolsByServerUrl[serverUrl];
     if (cachedTools && cachedTools.expiresAt > new Date()) {
       let tools = cachedTools.tools;
-      if (entityArguments) {
+      if (gimmickArguments) {
         // deep copy and edit
         tools = JSON.parse(JSON.stringify(tools));
         for (const tool of Object.values(tools)) {
-          for (const key of Object.keys(entityArguments)) {
+          for (const key of Object.keys(gimmickArguments)) {
             delete tool.schema.parameters[key];
           }
           if (tool.schema.required) {
             tool.schema.required = tool.schema.required.filter(
-              (required: string) => !entityArguments[required]
+              (required: string) => !gimmickArguments[required]
             );
           }
         }
@@ -199,12 +199,23 @@ export class GimmickExecuteMcpCore extends GimmickCore {
   }
 
   public override get parameters(): z.ZodSchema {
-    let entityArguments: GimmickEntityArguments | undefined = undefined;
-    if (this.meta.entityArguments && this.gimmick.location.updatingEntity) {
-      entityArguments =
-        this.meta.entityArguments[this.gimmick.location.updatingEntity.key];
+    let gimmickArguments: GimmickArguments | undefined = undefined;
+    if (this.meta.arguments) {
+      gimmickArguments = this.meta.arguments;
     }
-    const tools = McpToolsCache.getTools(this.serverUrl, entityArguments);
+    if (this.meta.entityArguments && this.gimmick.location.updatingEntity) {
+      const entityArguments =
+        this.meta.entityArguments[this.gimmick.location.updatingEntity.key];
+      if (gimmickArguments) {
+        gimmickArguments = {
+          ...gimmickArguments,
+          ...entityArguments,
+        };
+      } else {
+        gimmickArguments = entityArguments;
+      }
+    }
+    const tools = McpToolsCache.getTools(this.serverUrl, gimmickArguments);
     const toolEnum = z.enum(Object.keys(tools) as [string, ...string[]]);
 
     const argsSchemas: z.ZodTypeAny[] = [];
@@ -393,6 +404,9 @@ export class GimmickExecuteMcpCore extends GimmickCore {
       return `Unsupported tool: ${tool}`;
     }
 
+    if (this.meta.arguments) {
+      args = { ...this.meta.arguments, ...args };
+    }
     const entityArguments = this.meta.entityArguments?.[entity.key];
     if (entityArguments) {
       args = { ...entityArguments, ...args };

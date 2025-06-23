@@ -6,7 +6,7 @@ export interface GimmickCoreOptions {
   [key: string]: unknown;
 }
 
-export interface GimmickEntityArguments {
+export interface GimmickArguments {
   [key: string]: unknown;
 }
 
@@ -14,7 +14,8 @@ export interface GimmickCoreMeta {
   name: string;
   canvas?: LocationEntityCanvasMeta;
   options?: GimmickCoreOptions;
-  entityArguments?: Record<EntityKey, GimmickEntityArguments>;
+  arguments?: GimmickArguments;
+  entityArguments?: Record<EntityKey, GimmickArguments>;
 }
 
 export interface GimmickMeta extends EntityMeta {
