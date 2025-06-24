@@ -11,7 +11,9 @@ export class LocationUpdateOnceCore extends LocationCore {
       shuffle(entities);
     }
     for (const entity of entities) {
-      await entity.update();
+      if (await entity.update()) {
+        break;
+      }
     }
     return 0;
   }
