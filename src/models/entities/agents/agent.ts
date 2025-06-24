@@ -117,8 +117,11 @@ export class Agent extends Entity {
       this.llms.at(Agent.MAIN_LLM_INDEX);
     const actions = [
       ...(actionLlm?.thinking ? [] : ['reasoning:latest']),
-      ...meta.actions,
+      ...[location.meta.messageAction],
       ...location.meta.actions,
+      ...(location.meta.addActions ?? []),
+      ...meta.actions,
+      ...(meta.addActions ?? []),
     ];
     this.actions = Object.fromEntries(
       actions.map((actionWithVersion) => {

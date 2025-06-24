@@ -23,6 +23,7 @@ export interface AgentMeta extends EntityMeta {
   greeting?: string;
 
   actions: string[];
+  addActions?: string[];
   requiredActions: string[];
   memoryActions: string[];
 
@@ -108,6 +109,7 @@ export const DEFAULT_AGENT_META: AgentMeta = {
   timeZone: 'UTC',
 
   actions: [
+    'update_agent_canvas:latest',
     'add_memory:latest',
     'add_entity_memory:latest',
     'transfer_item:latest',
