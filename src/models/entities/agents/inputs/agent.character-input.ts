@@ -464,7 +464,7 @@ As ${this.agent.name}, considering all the context and RULES (especially #1, #12
     if (this.location.state.rendering) {
       userContents.push({
         type: 'text',
-        text: `Location rendering:${this.location.meta.renderingDescription ? ` ${this.location.meta.renderingDescription}` : ''}
+        text: `Location rendering: ${this.location.meta.renderingDescription ? ` ${this.location.meta.renderingDescription}` : ''}
 <Rendering>
 ${this.location.state.rendering}
 </Rendering>`,
