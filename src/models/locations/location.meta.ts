@@ -49,7 +49,7 @@ export const DEFAULT_LOCATION_META: LocationMeta = {
   imageDescriptions: [],
 
   messageLimit: 20,
-  messageLengthLimit: 250,
+  messageLengthLimit: 500,
   userContextLimit: 8,
   agentUserContextLimit: 4,
   messageAction: 'send_casual_message:latest',
