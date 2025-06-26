@@ -1,4 +1,8 @@
-import { ENV } from '@little-samo/samo-ai/common';
+import {
+  ENV,
+  MCPJsonSchema,
+  mcpSchemaToZod,
+} from '@little-samo/samo-ai/common';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { z } from 'zod';
@@ -14,27 +18,14 @@ import { RegisterGimmickCore } from './gimmick.core-decorator';
 
 export type McpToolDefinition = {
   name: string;
-  schema: McpToolSchema;
-};
-
-export type McpToolPropertyDef = {
-  type?: string;
   description?: string;
-  items?: {
-    type?: string;
-  };
-};
-
-export type McpToolSchema = {
-  parameters: Record<string, McpToolPropertyDef>;
-  required?: string[];
+  schema: z.ZodTypeAny;
 };
 
 // gimmick options schema
 const GimmickExecuteMcpCoreOptionsSchema = z.object({
   serverUrl: z.string().min(1, 'serverUrl is required'),
-  serverName: z.string().min(1, 'serverName is required'),
-  serverDescription: z.string().min(1, 'serverDescription is required'),
+  serverInstructions: z.string().optional(),
 
   clientName: z.string().optional(),
   clientVersion: z.string().optional(),
@@ -50,6 +41,7 @@ export interface GimmickExecuteMcpCoreParameters {
 }
 
 interface CachedMcpTools {
+  instructions?: string;
   tools: Record<string, McpToolDefinition>;
   expiresAt: Date;
 }
@@ -71,67 +63,46 @@ class McpToolsCache {
       return;
     }
 
-    const client = await createMcpClient();
-    const toolsList = await client.listTools();
+    let client: Client | null = null;
+    try {
+      client = await createMcpClient();
+      const instructions = client.getInstructions();
+      const toolsList = await client.listTools();
 
-    if (ENV.DEBUG) {
-      console.log(
-        'McpToolsCache update - Available Tools List:',
-        JSON.stringify(toolsList, null, 2)
-      );
-    }
-
-    const tools: Record<string, McpToolDefinition> = {};
-    for (const tool of toolsList.tools) {
-      const schema = {} as McpToolSchema;
-
-      if (
-        tool.inputSchema.properties &&
-        typeof tool.inputSchema.properties === 'object'
-      ) {
-        const parameters: Record<string, McpToolPropertyDef> = {};
-
-        for (const [key, prop] of Object.entries(tool.inputSchema.properties)) {
-          if (typeof prop === 'object') {
-            const typedProp = prop as Record<string, unknown>;
-
-            parameters[key] = {
-              type: typedProp.type as string | undefined,
-              description: typedProp.description as string | undefined,
-            };
-
-            if (typedProp.type === 'array' && typedProp.items) {
-              parameters[key].items = {
-                type:
-                  typeof typedProp.items === 'object'
-                    ? ((typedProp.items as Record<string, unknown>).type as
-                        | string
-                        | undefined)
-                    : undefined,
-              };
-            }
-          }
-        }
-
-        schema.parameters = parameters;
+      if (ENV.DEBUG) {
+        console.log(
+          'McpToolsCache update - Available Tools List:',
+          JSON.stringify(toolsList, null, 2)
+        );
       }
 
-      if (Array.isArray(tool.inputSchema.required)) {
-        schema.required = [...tool.inputSchema.required];
+      const tools: Record<string, McpToolDefinition> = {};
+      for (const tool of toolsList.tools) {
+        tools[tool.name] = {
+          name: tool.name,
+          description: tool.description,
+          schema: mcpSchemaToZod(tool.inputSchema as MCPJsonSchema),
+        };
       }
 
-      tools[tool.name] = {
-        name: tool.name,
-        schema: schema,
+      this.cachedToolsByServerUrl[serverUrl] = {
+        instructions: instructions,
+        tools: tools,
+        expiresAt: new Date(Date.now() + this.CACHE_EXPIRATION_TIME),
       };
+    } finally {
+      if (client) {
+        await client.close();
+      }
     }
+  }
 
-    this.cachedToolsByServerUrl[serverUrl] = {
-      tools: tools,
-      expiresAt: new Date(Date.now() + this.CACHE_EXPIRATION_TIME),
-    };
-
-    await client.close();
+  public static getInstructions(serverUrl: string): string | undefined {
+    const cachedTools = this.cachedToolsByServerUrl[serverUrl];
+    if (!cachedTools || cachedTools.expiresAt < new Date()) {
+      throw new Error(`McpToolsCache expired for server ${serverUrl}`);
+    }
+    return cachedTools.instructions;
   }
 
   public static getTools(
@@ -139,25 +110,33 @@ class McpToolsCache {
     gimmickArguments?: GimmickArguments
   ): Record<string, McpToolDefinition> {
     const cachedTools = this.cachedToolsByServerUrl[serverUrl];
-    if (cachedTools && cachedTools.expiresAt > new Date()) {
-      let tools = cachedTools.tools;
-      if (gimmickArguments) {
-        // deep copy and edit
-        tools = JSON.parse(JSON.stringify(tools));
-        for (const tool of Object.values(tools)) {
-          for (const key of Object.keys(gimmickArguments)) {
-            delete tool.schema.parameters[key];
-          }
-          if (tool.schema.required) {
-            tool.schema.required = tool.schema.required.filter(
-              (required: string) => !gimmickArguments[required]
-            );
-          }
-        }
-      }
-      return tools;
+    if (!cachedTools || cachedTools.expiresAt < new Date()) {
+      throw new Error(`McpToolsCache expired for server ${serverUrl}`);
     }
-    throw new Error(`McpToolsCache expired for server ${serverUrl}`);
+
+    if (!gimmickArguments) {
+      return cachedTools.tools;
+    }
+
+    const mask: Record<string, true | undefined> = {};
+    for (const key of Object.keys(gimmickArguments)) {
+      mask[key] = true;
+    }
+
+    const tools: Record<string, McpToolDefinition> = {};
+    for (const [name, tool] of Object.entries(cachedTools.tools)) {
+      if (tool.schema instanceof z.ZodObject) {
+        tools[name] = {
+          name: name,
+          description: tool.description,
+          schema: tool.schema.omit(mask),
+        };
+      } else {
+        tools[name] = tool;
+      }
+    }
+
+    return tools;
   }
 }
 
@@ -195,7 +174,11 @@ export class GimmickExecuteMcpCore extends GimmickCore {
   }
 
   public override get description(): string {
-    return this.options.serverDescription;
+    return (
+      this.options.serverInstructions ??
+      McpToolsCache.getInstructions(this.serverUrl) ??
+      `Execute an MCP tool on the server.`
+    );
   }
 
   public override get parameters(): z.ZodSchema {
@@ -215,58 +198,42 @@ export class GimmickExecuteMcpCore extends GimmickCore {
         gimmickArguments = entityArguments;
       }
     }
+
     const tools = McpToolsCache.getTools(this.serverUrl, gimmickArguments);
-    const toolEnum = z.enum(Object.keys(tools) as [string, ...string[]]);
 
-    const argsSchemas: z.ZodTypeAny[] = [];
-    for (const toolName of Object.keys(tools)) {
-      const toolSchema = tools[toolName].schema;
-      const argumentsDescription = Object.entries(toolSchema.parameters)
-        .map(([argName, argDef]) => {
-          let line = `  - ${argName} (${argDef.type || 'no type'})`;
-          if (argDef.description) {
-            line += `: ${argDef.description}`;
-          }
-          if (argDef.items && argDef.items.type) {
-            line += ` (items type: ${argDef.items.type})`;
-          }
-          return line;
-        })
-        .join('\n');
+    const toolSchemas = Object.entries(tools).map(([name, tool]) => {
+      const description = tool.description || `Arguments for the ${name} tool.`;
+      const argsSchemaWithDescription = tool.schema.describe(description);
 
-      let requiredString = 'none';
-      if (toolSchema.required && toolSchema.required.length > 0) {
-        requiredString = toolSchema.required.join(', ');
-      }
+      return z.object({
+        tool: z.literal(name).describe(tool.description || name),
+        args: argsSchemaWithDescription,
+      });
+    });
 
-      const totalDescription = [
-        `Argument for Tool: ${toolName}`,
-        `Arguments: ${argumentsDescription}`,
-        `Required: ${requiredString}`,
-      ].join('\n');
-
-      const toolArgumentSchema = z
-        .record(z.string(), z.unknown())
-        .describe(totalDescription);
-      argsSchemas.push(toolArgumentSchema);
+    if (toolSchemas.length === 0) {
+      return z.object({
+        tool: z.string().describe('No tools available on the MCP server.'),
+        args: z.object({}).describe('No arguments needed.'),
+      });
     }
 
-    const argsSchema = z.union(
-      argsSchemas as [z.ZodTypeAny, z.ZodTypeAny, ...z.ZodTypeAny[]]
+    if (toolSchemas.length === 1) {
+      return toolSchemas[0];
+    }
+
+    const discriminatedUnion = z.discriminatedUnion(
+      'tool',
+      toolSchemas as unknown as [
+        z.AnyZodObject,
+        z.AnyZodObject,
+        ...z.AnyZodObject[],
+      ]
     );
 
-    return z.object({
-      tool: toolEnum.describe(
-        "The specific tool offered by this Gimmick that you wish to use. Each tool performs a distinct function and requires specific arguments. Consult this Gimmick\'s main description for details on available tools, their functions, and their respective argument schemas."
-      ),
-      args: argsSchema.describe(
-        'The arguments for the selected tool. These must precisely match the arguments schema defined for that specific tool. Be sure to include all required properties.'
-      ),
-    });
-  }
-
-  private get serverName(): string {
-    return this.options.serverName;
+    return discriminatedUnion.describe(
+      'Execute a tool on a remote MCP server. Select a tool and provide the corresponding arguments.'
+    );
   }
 
   private get serverUrl(): string {
@@ -320,7 +287,7 @@ export class GimmickExecuteMcpCore extends GimmickCore {
 
     if (ENV.DEBUG) {
       console.log(
-        `Connected to MCP server: ${this.serverName} - ${this.serverUrl}/mcp`
+        `Connected to MCP server: ${this.gimmick.name} - ${this.serverUrl}/mcp`
       );
     }
 
@@ -353,9 +320,7 @@ export class GimmickExecuteMcpCore extends GimmickCore {
     }
 
     if (ENV.DEBUG) {
-      console.log(
-        `Gimmick ${this.gimmick.name} - ${this.serverName} executed: ${tool}`
-      );
+      console.log(`Gimmick ${this.gimmick.name} executed: ${tool}`);
     }
 
     await entity.updateCanvas(this.canvas!.name, result);
@@ -404,12 +369,33 @@ export class GimmickExecuteMcpCore extends GimmickCore {
       return `Unsupported tool: ${tool}`;
     }
 
+    // Get the tool definition for validation
+    const tools = McpToolsCache.getTools(this.serverUrl);
+    const toolDefinition = tools[tool];
+    if (!toolDefinition) {
+      return `Tool definition not found: ${tool}`;
+    }
+
+    // Merge with gimmick and entity arguments
     if (this.meta.arguments) {
       args = { ...this.meta.arguments, ...args };
     }
     const entityArguments = this.meta.entityArguments?.[entity.key];
     if (entityArguments) {
       args = { ...entityArguments, ...args };
+    }
+
+    // Validate args using the Zod schema
+    try {
+      toolDefinition.schema.parse(args);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const errorMessage = error.errors
+          .map((e) => `${e.path.join('.')}: ${e.message}`)
+          .join(', ');
+        return `Invalid arguments for tool ${tool}: ${errorMessage}`;
+      }
+      return `Validation error for tool ${tool}: ${String(error)}`;
     }
 
     const promise = this.callMcpServer(entity, tool, args);
