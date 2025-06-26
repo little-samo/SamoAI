@@ -171,6 +171,8 @@ export class Gimmick extends Entity {
       return 'Gimmick is not executable';
     }
 
+    await entity.updateCanvas(this.core.canvas!.name, '');
+
     await this.location.emitAsync(
       'gimmickExecute',
       this,
