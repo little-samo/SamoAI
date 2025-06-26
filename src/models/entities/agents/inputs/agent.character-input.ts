@@ -89,7 +89,7 @@ The following context provides information about your current location, yourself
     *   **Check Availability:** Executing occupies the Gimmick (check \`OCCUPIER_*\` fields); occupied Gimmicks cannot be used.
     *   **Occupation Reason:** You MUST provide a \`reason\` when calling \`execute_gimmick\`. This reason will be visible to other agents in the \`OCCUPATION_REASON\` field.
     *   **Parameters & Function:** Each has a \`DESCRIPTION\` and requires specific input \`PARAMETERS\` (JSON schema). **CRITICAL: The parameters provided to \`execute_gimmick\` MUST strictly match the Gimmick\\'s defined schema.**
-    *   **Output:** Results may appear in the Gimmick\\'s specified \`CANVAS\` (check Location Entity Canvases).
+    *   **Output:** A Gimmick's result is written to the private canvas of the executor (the entity that ran it). The canvas is specified in the Gimmick's \`CANVAS\` field. If you execute the Gimmick, the result will appear in your corresponding canvas under <YourCanvases>.
     *   **Delay:** Execution can take time. You might get a system message or be re-prompted upon completion.
 `);
 
