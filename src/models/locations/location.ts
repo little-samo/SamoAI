@@ -71,16 +71,8 @@ export class Location extends AsyncEventEmitter {
 
   public updatingEntity: Entity | undefined;
 
-  public fixState(state: LocationState): void {
-    const canvases = [...this.meta.canvases];
-    for (const gimmick of this.getGimmicks()) {
-      const gimmickCanvas = gimmick.core.canvas;
-      if (gimmickCanvas) {
-        canvases.push(gimmickCanvas);
-      }
-    }
-
-    for (const canvas of canvases) {
+  public static fixState(state: LocationState, meta: LocationMeta): void {
+    for (const canvas of meta.canvases) {
       if (!state.canvases[canvas.name]) {
         state.canvases[canvas.name] = {
           lastModifierEntityType: EntityType.System,
@@ -93,7 +85,7 @@ export class Location extends AsyncEventEmitter {
     }
 
     for (const name of Object.keys(state.canvases)) {
-      if (!canvases.some((c) => c.name === name)) {
+      if (!meta.canvases.some((c) => c.name === name)) {
         delete state.canvases[name];
       }
     }
@@ -121,7 +113,7 @@ export class Location extends AsyncEventEmitter {
 
     const { state, messages, apiKeys } = options;
 
-    this.fixState(state);
+    Location.fixState(state, this.meta);
     this.state = state;
 
     this.messages = Location.fixMessages(messages, this.meta);
@@ -278,18 +270,11 @@ export class Location extends AsyncEventEmitter {
   }
 
   public get context(): LocationContext {
-    const canvases = [...this.meta.canvases];
-    for (const gimmick of this.getGimmicks()) {
-      const gimmickCanvas = gimmick.core.canvas;
-      if (gimmickCanvas) {
-        canvases.push(gimmickCanvas);
-      }
-    }
     return new LocationContext({
       key: this.key,
       description: this.meta.description,
       messages: this.messages.map(Location.messageToContext),
-      canvases: canvases.map((c) => {
+      canvases: this.meta.canvases.map((c) => {
         const canvas = this.state.canvases[c.name];
         return new LocationCanvasContext({
           name: c.name,

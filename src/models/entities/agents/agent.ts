@@ -166,6 +166,12 @@ export class Agent extends Entity {
   public override get context(): AgentContext {
     const entityState = this.location.getEntityState(this.key);
     const canvases = [...this.location.meta.agentCanvases];
+    for (const gimmick of this.location.getGimmicks()) {
+      const gimmickCanvas = gimmick.core.canvas;
+      if (gimmickCanvas) {
+        canvases.push(gimmickCanvas);
+      }
+    }
     const context = new AgentContext({
       ...super.context,
       handle: this.model.username ?? undefined,
@@ -206,6 +212,13 @@ export class Agent extends Entity {
     state: LocationEntityState
   ): LocationEntityState {
     const canvases = [...this.location.meta.agentCanvases];
+    for (const gimmick of this.location.getGimmicks()) {
+      const gimmickCanvas = gimmick.core.canvas;
+      if (gimmickCanvas) {
+        canvases.push(gimmickCanvas);
+      }
+    }
+
     for (const canvas of canvases) {
       if (!state.canvases[canvas.name]) {
         state.canvases[canvas.name] = {
