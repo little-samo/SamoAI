@@ -718,12 +718,6 @@ export class WorldManager extends AsyncEventEmitter {
         await promise;
       } catch (error) {
         console.error(error);
-        await gimmick.location.emitAsync(
-          'gimmickExecutionFailed',
-          gimmick,
-          entity,
-          parameters
-        );
 
         let errorMessage;
         if (error instanceof Error) {
@@ -731,6 +725,14 @@ export class WorldManager extends AsyncEventEmitter {
         } else {
           errorMessage = 'Unknown error';
         }
+        await gimmick.location.emitAsync(
+          'gimmickExecutionFailed',
+          gimmick,
+          entity,
+          parameters,
+          errorMessage
+        );
+
         await gimmick.location.addSystemMessage(
           `${entity.type} ${entity.name} failed to execute ${gimmick.key}: ${errorMessage}`
         );
@@ -752,13 +754,18 @@ export class WorldManager extends AsyncEventEmitter {
 
     location.on(
       'gimmickExecutionFailed',
-      (gimmick: Gimmick, _entity: Entity, _parameters: GimmickParameters) => {
+      (
+        gimmick: Gimmick,
+        entity: Entity,
+        _parameters: GimmickParameters,
+        _error: string | undefined
+      ) => {
         void options.handleSave!(gimmick.release());
         void options.handleSave!(
           this.updateLocation(llmApiKeyUserId, locationId, {
             ...options,
             ignorePauseUpdateUntil: true,
-            executeSpecificAgentId: _entity.id as AgentId,
+            executeSpecificAgentId: entity.id as AgentId,
           })
         );
       }
