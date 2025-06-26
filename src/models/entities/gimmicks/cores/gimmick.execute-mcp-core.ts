@@ -291,52 +291,58 @@ export class GimmickExecuteMcpCore extends GimmickCore {
       );
     }
 
-    const rawResult = await client.callTool({
-      name: tool,
-      arguments: args,
-    });
+    try {
+      const rawResult = await client.callTool({
+        name: tool,
+        arguments: args,
+      });
 
-    let result = '';
-    if (rawResult && typeof rawResult === 'object') {
-      if (rawResult.content && Array.isArray(rawResult.content)) {
-        for (const item of rawResult.content) {
-          if (item.type === 'text' && item.text) {
-            result += item.text + '\n';
-          }
-        }
+      let result: string;
+      const content = rawResult.content;
+      if (content && Array.isArray(content)) {
+        result = content
+          .map((item) => {
+            if (item.type === 'text' && item.text) {
+              return item.text;
+            }
+            return JSON.stringify(item, null, 2);
+          })
+          .join('\n\n');
       } else {
-        result = JSON.stringify(rawResult, null, 2);
+        result = JSON.stringify(content, null, 2);
       }
-    } else {
-      result = String(rawResult);
+
+      if (rawResult.isError) {
+        throw new Error(`MCP server returned an error\n${result}`);
+      }
+
+      const maxResultLength = this.canvas!.maxLength - 100;
+
+      if (result.length > maxResultLength) {
+        result =
+          result.substring(0, maxResultLength) +
+          `\n\n... [Result too long, ${result.length - maxResultLength} characters truncated] ...`;
+      }
+
+      if (ENV.DEBUG) {
+        console.log(`Gimmick ${this.gimmick.name} executed: ${tool}`);
+      }
+
+      await entity.updateCanvas(this.canvas!.name, result);
+
+      await entity.location.addGimmickMessage(this.gimmick, {
+        message: `Executed: ${tool}`,
+      });
+
+      await entity.location.emitAsync(
+        'gimmickExecuted',
+        this.gimmick,
+        entity,
+        result
+      );
+    } finally {
+      await client.close();
     }
-
-    const maxResultLength = this.canvas!.maxLength - 100;
-
-    if (result.length > maxResultLength) {
-      result =
-        result.substring(0, maxResultLength) +
-        `\n\n... [Result too long, ${result.length - maxResultLength} characters truncated] ...`;
-    }
-
-    if (ENV.DEBUG) {
-      console.log(`Gimmick ${this.gimmick.name} executed: ${tool}`);
-    }
-
-    await entity.updateCanvas(this.canvas!.name, result);
-
-    await entity.location.addGimmickMessage(this.gimmick, {
-      message: `Executed: ${tool}`,
-    });
-
-    await entity.location.emitAsync(
-      'gimmickExecuted',
-      this.gimmick,
-      entity,
-      result
-    );
-
-    await client.close();
   }
 
   public override async init(): Promise<void> {
