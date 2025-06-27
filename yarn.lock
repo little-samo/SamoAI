@@ -897,6 +897,11 @@ __metadata:
     typescript: "npm:^5.7.2"
     zod: "npm:^3.24.1"
     zod-to-json-schema: "npm:^3.24.1"
+  peerDependencies:
+    lodash: ^4.17.21
+    reflect-metadata: ^0.2.2
+    zod: ^3.24.1
+    zod-to-json-schema: ^3.24.1
   languageName: unknown
   linkType: soft
 
@@ -6592,8 +6597,8 @@ __metadata:
   linkType: hard
 
 "zod@npm:^3.24.1":
-  version: 3.24.2
-  resolution: "zod@npm:3.24.2"
-  checksum: 10c0/c638c7220150847f13ad90635b3e7d0321b36cce36f3fc6050ed960689594c949c326dfe2c6fa87c14b126ee5d370ccdebd6efb304f41ef5557a4aaca2824565
+  version: 3.25.67
+  resolution: "zod@npm:3.25.67"
+  checksum: 10c0/80a0cab3033272c4ab9312198081f0c4ea88e9673c059aa36dc32024906363729db54bdb78f3dc9d5529bd1601f74974d5a56c0a23e40c6f04a9270c9ff22336
   languageName: node
   linkType: hard
