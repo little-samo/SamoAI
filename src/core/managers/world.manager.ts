@@ -833,7 +833,9 @@ export class WorldManager extends AsyncEventEmitter {
         reason?: string
       ) => {
         await options.handleSave!(
-          this.itemRepository.removeItemModel(entity.key, item, count, reason)
+          this.itemRepository.removeItemModel(entity.key, item, count, {
+            reason,
+          })
         );
       }
     );
@@ -853,7 +855,9 @@ export class WorldManager extends AsyncEventEmitter {
             item,
             targetEntityKey,
             count,
-            reason
+            {
+              reason,
+            }
           )
         );
       }

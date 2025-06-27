@@ -21,13 +21,19 @@ export interface ItemRepository {
     ownerEntityKey: EntityKey,
     item: ItemModel,
     count: number,
-    reason?: string
+    options?: {
+      reason?: string;
+      force?: boolean;
+    }
   ): Promise<void>;
   transferItemModel(
     ownerEntityKey: EntityKey,
     item: ItemModel,
     targetEntityKey: EntityKey,
     count: number,
-    reason?: string
+    options?: {
+      reason?: string;
+      force?: boolean;
+    }
   ): Promise<void>;
 }
