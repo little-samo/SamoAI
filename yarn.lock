@@ -898,10 +898,7 @@ __metadata:
     zod: "npm:^3.24.1"
     zod-to-json-schema: "npm:^3.24.1"
   peerDependencies:
-    lodash: ^4.17.21
-    reflect-metadata: ^0.2.2
     zod: ^3.24.1
-    zod-to-json-schema: ^3.24.1
   languageName: unknown
   linkType: soft
 
