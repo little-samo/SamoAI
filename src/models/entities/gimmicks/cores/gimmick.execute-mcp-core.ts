@@ -407,20 +407,53 @@ export class GimmickExecuteMcpCore extends GimmickCore {
       args = { ...entityArguments, ...args };
     }
 
-    // Validate args using the Zod schema
-    try {
-      toolDefinition.schema.parse(args);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        const errorMessage = error.errors
+    // Validate and clean args using the Zod schema
+    const parseResult = toolDefinition.schema.safeParse(args);
+    let cleanedArgs = args;
+    let removedFields: string[] = [];
+
+    if (!parseResult.success) {
+      // Extract valid fields from the schema and filter args
+      if (toolDefinition.schema instanceof z.ZodObject) {
+        const schemaShape = toolDefinition.schema.shape;
+        const validKeys = Object.keys(schemaShape);
+        const originalKeys = Object.keys(args);
+
+        cleanedArgs = {};
+        for (const key of validKeys) {
+          if (key in args) {
+            cleanedArgs[key] = args[key];
+          }
+        }
+
+        // Track removed fields
+        removedFields = originalKeys.filter((key) => !validKeys.includes(key));
+
+        // Re-validate with cleaned args
+        const reParseResult = toolDefinition.schema.safeParse(cleanedArgs);
+        if (!reParseResult.success) {
+          const errorMessage = reParseResult.error.errors
+            .map((e) => `${e.path.join('.')}: ${e.message}`)
+            .join(', ');
+          return `Invalid arguments for tool ${tool}: ${errorMessage}`;
+        }
+      } else {
+        // For non-object schemas, return the original error
+        const errorMessage = parseResult.error.errors
           .map((e) => `${e.path.join('.')}: ${e.message}`)
           .join(', ');
         return `Invalid arguments for tool ${tool}: ${errorMessage}`;
       }
-      return `Validation error for tool ${tool}: ${String(error)}`;
     }
 
-    const promise = this.callMcpServer(entity, tool, args);
+    // Add gimmick message if fields were removed
+    if (removedFields.length > 0) {
+      await entity.location.addGimmickMessage(this.gimmick, {
+        message: `Removed unknown fields from ${tool} arguments: ${removedFields.join(', ')}`,
+      });
+    }
+
+    const promise = this.callMcpServer(entity, tool, cleanedArgs);
 
     await this.gimmick.location.emitAsync(
       'gimmickExecuting',
