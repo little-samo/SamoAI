@@ -4,7 +4,10 @@ import {
   mcpSchemaToZod,
 } from '@little-samo/samo-ai/common';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
+import {
+  StreamableHTTPClientTransport,
+  StreamableHTTPClientTransportOptions,
+} from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { z } from 'zod';
 
 import packageJson from '../../../../../package.json';
@@ -23,15 +26,17 @@ export type McpToolDefinition = {
 };
 
 // gimmick options schema
-const GimmickExecuteMcpCoreOptionsSchema = z.object({
+export const GimmickExecuteMcpCoreOptionsSchema = z.object({
   serverUrl: z.string().min(1, 'serverUrl is required'),
   serverInstructions: z.string().optional(),
 
   clientName: z.string().optional(),
   clientVersion: z.string().optional(),
+
+  useEntityAuthorization: z.boolean().optional(),
 });
 
-export type McpGimmickOptions = z.infer<
+export type GimmickExecuteMcpCoreOptions = z.infer<
   typeof GimmickExecuteMcpCoreOptionsSchema
 >;
 
@@ -169,8 +174,8 @@ export class GimmickExecuteMcpCore extends GimmickCore {
     }
   }
 
-  public override get options(): McpGimmickOptions {
-    return this.meta.options as McpGimmickOptions;
+  public override get options(): GimmickExecuteMcpCoreOptions {
+    return this.meta.options as GimmickExecuteMcpCoreOptions;
   }
 
   public override get description(): string {
@@ -245,9 +250,12 @@ export class GimmickExecuteMcpCore extends GimmickCore {
     return Object.keys(tools);
   }
 
-  private async createMcpClient(): Promise<Client> {
+  private async createMcpClient(
+    options?: StreamableHTTPClientTransportOptions
+  ): Promise<Client> {
     const transport = new StreamableHTTPClientTransport(
-      new URL('mcp', this.serverUrl)
+      new URL('mcp', this.serverUrl),
+      options
     );
 
     const client = new Client({
@@ -283,7 +291,15 @@ export class GimmickExecuteMcpCore extends GimmickCore {
     tool: string,
     args: Record<string, unknown>
   ): Promise<void> {
-    const client = await this.createMcpClient();
+    const options: StreamableHTTPClientTransportOptions = {};
+    if (this.options.useEntityAuthorization && entity.authorizationHeader) {
+      options.requestInit = {
+        headers: {
+          Authorization: entity.authorizationHeader,
+        },
+      };
+    }
+    const client = await this.createMcpClient(options);
 
     if (ENV.DEBUG) {
       console.log(

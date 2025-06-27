@@ -19,6 +19,8 @@ export abstract class Entity {
   protected _itemsByItemKey: Record<ItemKey, ItemModel> = {};
   protected _itemsByDataId: Record<ItemDataId, ItemModel[]> = {};
 
+  public authorizationHeader: string | undefined;
+
   protected constructor(
     public readonly location: Location,
     public readonly name: string,
