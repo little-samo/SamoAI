@@ -10,7 +10,7 @@ import {
 } from 'openai/resources/chat/completions';
 import zodToJsonSchema from 'zod-to-json-schema';
 
-import { sleep, zodSchemaToLlmFriendlyString } from '../utils';
+import { sleep, zodSchemaToLlmFriendlyString, parseAndFixJson } from '../utils';
 
 import { LlmApiError } from './llm.errors';
 import { LlmInvalidContentError } from './llm.errors';
@@ -189,7 +189,7 @@ export class OpenAIService extends LlmService {
       const response = await this.createCompletionWithRetry(request, options);
       const responseTime = Date.now() - startTime;
 
-      let responseText = response.choices[0].message.content;
+      const responseText = response.choices[0].message.content;
       if (responseText === null) {
         throw new LlmInvalidContentError(
           `${this.serviceName} returned no content`
@@ -198,14 +198,9 @@ export class OpenAIService extends LlmService {
 
       if (options?.jsonOutput) {
         try {
-          // Remove potential markdown fences
-          if (responseText.startsWith('```json')) {
-            responseText = responseText.slice(7);
-          } else if (responseText.startsWith('```')) {
-            responseText = responseText.slice(3);
-          }
+          const content = parseAndFixJson(responseText);
           return {
-            content: JSON.parse(responseText) as T extends true
+            content: content as T extends true
               ? Record<string, unknown>
               : string,
             platform: this.platform,
@@ -322,7 +317,7 @@ Response can only be in JSON format and must strictly follow the following forma
         );
       }
 
-      let responseText = response.choices[0].message.content;
+      const responseText = response.choices[0].message.content;
       if (responseText === null) {
         throw new LlmInvalidContentError(
           `${this.serviceName} returned no content`
@@ -330,16 +325,7 @@ Response can only be in JSON format and must strictly follow the following forma
       }
 
       try {
-        // Remove potential markdown fences
-        if (responseText.startsWith('```json')) {
-          responseText = responseText.slice(7);
-        } else if (responseText.startsWith('```')) {
-          responseText = responseText.slice(3);
-        }
-        if (responseText.endsWith('```')) {
-          responseText = responseText.slice(0, -3);
-        }
-        const toolCalls = JSON.parse(responseText) as LlmToolCall[];
+        const toolCalls = parseAndFixJson<LlmToolCall[]>(responseText);
         return {
           toolCalls,
           platform: this.platform,

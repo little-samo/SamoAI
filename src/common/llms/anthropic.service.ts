@@ -7,7 +7,7 @@ import {
   TextBlockParam,
 } from '@anthropic-ai/sdk/resources/messages/messages';
 
-import { sleep, zodSchemaToLlmFriendlyString } from '../utils';
+import { sleep, zodSchemaToLlmFriendlyString, parseAndFixJson } from '../utils';
 
 import { LlmApiError, LlmInvalidContentError } from './llm.errors';
 import { LlmService } from './llm.service';
@@ -190,24 +190,16 @@ export class AnthropicService extends LlmService {
         throw new LlmInvalidContentError('Anthropic returned no content');
       }
 
-      let responseText = (
+      const responseText = (
         response.content.filter(
           (block) => block.type === 'text'
         )[0] as TextBlock
       ).text;
       if (options?.jsonOutput) {
         try {
-          // Remove potential markdown fences
-          if (responseText.startsWith('```json')) {
-            responseText = responseText.slice(7);
-          } else if (responseText.startsWith('```')) {
-            responseText = responseText.slice(3);
-          }
-          if (responseText.endsWith('```')) {
-            responseText = responseText.slice(0, -3);
-          }
+          const content = parseAndFixJson(responseText);
           return {
-            content: JSON.parse(responseText) as T extends true
+            content: content as T extends true
               ? Record<string, unknown>
               : string,
             platform: LlmPlatform.ANTHROPIC,
@@ -352,7 +344,7 @@ Response can only be in JSON format and must strictly follow the following forma
         throw new LlmInvalidContentError('Anthropic returned no content');
       }
 
-      let responseText =
+      const responseText =
         prefill +
         (
           response.content.filter(
@@ -360,16 +352,7 @@ Response can only be in JSON format and must strictly follow the following forma
           )[0] as TextBlock
         ).text;
       try {
-        // Remove potential markdown fences
-        if (responseText.startsWith('```json')) {
-          responseText = responseText.slice(7);
-        } else if (responseText.startsWith('```')) {
-          responseText = responseText.slice(3);
-        }
-        if (responseText.endsWith('```')) {
-          responseText = responseText.slice(0, -3);
-        }
-        const toolCalls = JSON.parse(responseText) as LlmToolCall[];
+        const toolCalls = parseAndFixJson<LlmToolCall[]>(responseText);
         return {
           toolCalls,
           platform: LlmPlatform.ANTHROPIC,

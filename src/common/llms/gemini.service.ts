@@ -5,7 +5,7 @@ import {
   GoogleGenAI,
 } from '@google/genai';
 
-import { sleep, zodSchemaToLlmFriendlyString } from '../utils';
+import { sleep, zodSchemaToLlmFriendlyString, parseAndFixJson } from '../utils';
 
 import { LlmApiError, LlmInvalidContentError } from './llm.errors';
 import { LlmService } from './llm.service';
@@ -190,7 +190,7 @@ export class GeminiService extends LlmService {
         throw new LlmInvalidContentError('Gemini returned no content');
       }
 
-      let responseText = response.text;
+      const responseText = response.text;
       let outputTokens = response.usageMetadata?.candidatesTokenCount ?? 0;
       const thinkingTokens =
         response.usageMetadata?.thoughtsTokenCount ?? undefined;
@@ -199,17 +199,9 @@ export class GeminiService extends LlmService {
       }
       if (options?.jsonOutput) {
         try {
-          // Remove potential markdown fences
-          if (responseText.startsWith('```json')) {
-            responseText = responseText.slice(7);
-          } else if (responseText.startsWith('```')) {
-            responseText = responseText.slice(3);
-          }
-          if (responseText.endsWith('```')) {
-            responseText = responseText.slice(0, -3);
-          }
+          const content = parseAndFixJson(responseText);
           return {
-            content: JSON.parse(responseText) as T extends true
+            content: content as T extends true
               ? Record<string, unknown>
               : string,
             platform: LlmPlatform.GEMINI,
@@ -335,7 +327,7 @@ Response can only be in JSON format and must strictly follow the following forma
         throw new LlmInvalidContentError('Gemini returned no content');
       }
 
-      let responseText = response.text;
+      const responseText = response.text;
       let outputTokens = response.usageMetadata?.candidatesTokenCount ?? 0;
       const thinkingTokens =
         response.usageMetadata?.thoughtsTokenCount ?? undefined;
@@ -343,16 +335,7 @@ Response can only be in JSON format and must strictly follow the following forma
         outputTokens += thinkingTokens;
       }
       try {
-        // Remove potential markdown fences
-        if (responseText.startsWith('```json')) {
-          responseText = responseText.slice(7);
-        } else if (responseText.startsWith('```')) {
-          responseText = responseText.slice(3);
-        }
-        if (responseText.endsWith('```')) {
-          responseText = responseText.slice(0, -3);
-        }
-        const toolCalls = JSON.parse(response.text) as LlmToolCall[];
+        const toolCalls = parseAndFixJson<LlmToolCall[]>(responseText);
         return {
           platform: LlmPlatform.GEMINI,
           toolCalls,
@@ -370,7 +353,7 @@ Response can only be in JSON format and must strictly follow the following forma
         };
       } catch (error) {
         console.error(error);
-        console.error(response.text);
+        console.error(responseText);
         throw new LlmInvalidContentError('Gemini returned invalid JSON');
       }
     } catch (error) {
