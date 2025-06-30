@@ -24,11 +24,19 @@ import { RegisterAgentInput } from './agent.input-decorator';
 
 @RegisterAgentInput('character')
 export class AgentCharacterInputBuilder extends AgentInputBuilder {
-  protected buildPrompt(): string {
+  protected buildPrompt(
+    options: {
+      guidance?: string;
+    } = {}
+  ): string {
+    const guidance =
+      options.guidance ??
+      `As ${this.agent.name}, which tools will you use to fulfill your role while following all the rules below? Quote the source of each reasoning step.`;
+
     const prompts: string[] = [];
     prompts.push(`
 You are an AI Agent named "${this.agent.name}" and you are role-playing as a specific character in a particular location. Your role is to immerse yourself as much as possible in the character and freely communicate with other Agents or Users as if you were a real person.
-As ${this.agent.name}, which tools will you use to fulfill your role while following all the rules below? Quote the source of each reasoning step.
+${guidance}
 `);
 
     prompts.push(`
@@ -403,6 +411,40 @@ ${lastAgentMessage.build()}
       });
     }
 
+    for (let i = 0; i < this.location.state.images.length; ++i) {
+      const image = this.location.state.images[i];
+      if (!image) {
+        continue;
+      }
+
+      const imageDescription = this.location.meta.imageDescriptions[i];
+      if (imageDescription) {
+        contexts.push({
+          type: 'text',
+          text: `Location image ${i + 1}: ${imageDescription}`,
+        });
+      } else {
+        contexts.push({
+          type: 'text',
+          text: `Location image ${i + 1}:`,
+        });
+      }
+      contexts.push({
+        type: 'image',
+        image,
+      });
+    }
+
+    if (this.location.state.rendering) {
+      contexts.push({
+        type: 'text',
+        text: `Location rendering: ${this.location.meta.renderingDescription ? ` ${this.location.meta.renderingDescription}` : ''}
+<Rendering>
+${this.location.state.rendering}
+</Rendering>`,
+      });
+    }
+
     return contexts;
   }
 
@@ -415,61 +457,31 @@ ${lastAgentMessage.build()}
       content: prompt,
     });
 
-    const userContents = this.buildContext();
     const requiredActions = [
       ...this.agent.meta.requiredActions,
       ...this.location.meta.requiredActions,
     ];
     let requiredActionsPrompt;
     if (requiredActions.length > 0) {
-      requiredActionsPrompt = ` In particular, I MUST use the following tools: ${requiredActions.join(', ')}.`;
+      requiredActionsPrompt = ` In particular, you MUST use the following tools: ${requiredActions.join(', ')}.`;
     } else {
       requiredActionsPrompt = ``;
     }
     const messageLengthLimit =
       this.location.meta.agentMessageLengthLimit ??
       this.location.meta.messageLengthLimit;
-    userContents.push({
-      type: 'text',
-      text: `
+
+    const contextContents = this.buildContext();
+    const userContents: LlmMessageContent[] = [
+      {
+        type: 'text',
+        text: `
 As ${this.agent.name}, considering all the context and RULES (especially #1, #12, #13, and #17), decide which tool(s) to use. Quote the source of each reasoning step.${requiredActionsPrompt}
 **CRITICAL REMINDER: Ensure your response is dynamic and avoids repetition (Rule #12). Crucially, BE **EXTREMELY CONCISE** and **strictly adhere to the message length limit** (Rule #17, typically ${messageLengthLimit} chars). Messages **WILL BE TRUNCATED** if they exceed the limit. Use all necessary tools at once in this single response turn.**
 `,
-    });
-
-    for (let i = 0; i < this.location.state.images.length; ++i) {
-      const image = this.location.state.images[i];
-      if (!image) {
-        continue;
-      }
-
-      const imageDescription = this.location.meta.imageDescriptions[i];
-      if (imageDescription) {
-        userContents.push({
-          type: 'text',
-          text: `Location image ${i + 1}: ${imageDescription}`,
-        });
-      } else {
-        userContents.push({
-          type: 'text',
-          text: `Location image ${i + 1}:`,
-        });
-      }
-      userContents.push({
-        type: 'image',
-        image,
-      });
-    }
-
-    if (this.location.state.rendering) {
-      userContents.push({
-        type: 'text',
-        text: `Location rendering: ${this.location.meta.renderingDescription ? ` ${this.location.meta.renderingDescription}` : ''}
-<Rendering>
-${this.location.state.rendering}
-</Rendering>`,
-      });
-    }
+      },
+      ...contextContents,
+    ];
 
     messages.push({
       role: 'user',

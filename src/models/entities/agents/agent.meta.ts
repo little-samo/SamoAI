@@ -101,7 +101,7 @@ export const DEFAULT_AGENT_META: AgentMeta = {
   ],
   inputs: [
     'character:latest',
-    'character_action_condition:latest',
+    'character_evaluation:latest',
     'summary:latest',
     'memory:latest',
   ],
