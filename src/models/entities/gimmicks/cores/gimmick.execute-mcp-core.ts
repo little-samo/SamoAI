@@ -381,7 +381,7 @@ export class GimmickExecuteMcpCore extends GimmickCore {
     const coreParameters =
       parameters as object as GimmickExecuteMcpCoreParameters;
     const { tool } = coreParameters;
-    let { args } = coreParameters;
+    const { args } = coreParameters;
 
     if (!tool || !args) {
       return 'Required parameters missing (tool, args)';
@@ -391,20 +391,28 @@ export class GimmickExecuteMcpCore extends GimmickCore {
       return `Unsupported tool: ${tool}`;
     }
 
-    // Get the tool definition for validation
-    const tools = McpToolsCache.getTools(this.serverUrl);
-    const toolDefinition = tools[tool];
-    if (!toolDefinition) {
-      return `Tool definition not found: ${tool}`;
-    }
-
-    // Merge with gimmick and entity arguments
+    // Get additional arguments from gimmick and entity
+    let gimmickArguments: GimmickArguments | undefined = undefined;
     if (this.meta.arguments) {
-      args = { ...this.meta.arguments, ...args };
+      gimmickArguments = this.meta.arguments;
     }
     const entityArguments = this.meta.entityArguments?.[entity.key];
     if (entityArguments) {
-      args = { ...entityArguments, ...args };
+      if (gimmickArguments) {
+        gimmickArguments = {
+          ...gimmickArguments,
+          ...entityArguments,
+        };
+      } else {
+        gimmickArguments = entityArguments;
+      }
+    }
+
+    // Get the tool definition for validation
+    const tools = McpToolsCache.getTools(this.serverUrl, gimmickArguments);
+    const toolDefinition = tools[tool];
+    if (!toolDefinition) {
+      return `Tool definition not found: ${tool}`;
     }
 
     // Validate and clean args using the Zod schema
@@ -451,6 +459,11 @@ export class GimmickExecuteMcpCore extends GimmickCore {
       await entity.location.addGimmickMessage(this.gimmick, {
         message: `Removed unknown fields from ${tool} arguments: ${removedFields.join(', ')}`,
       });
+    }
+
+    // Merge with gimmick and entity arguments
+    if (gimmickArguments) {
+      cleanedArgs = { ...cleanedArgs, ...gimmickArguments };
     }
 
     const promise = this.callMcpServer(entity, tool, cleanedArgs);
