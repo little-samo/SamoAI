@@ -143,6 +143,33 @@ class McpToolsCache {
 
     return tools;
   }
+
+  public static getTool(
+    serverUrl: string,
+    toolName: string,
+    gimmickArguments?: GimmickArguments
+  ): McpToolDefinition | undefined {
+    const cachedTools = this.cachedToolsByServerUrl[serverUrl];
+    if (!cachedTools || cachedTools.expiresAt < new Date()) {
+      throw new Error(`McpToolsCache expired for server ${serverUrl}`);
+    }
+
+    const tool = cachedTools.tools[toolName];
+    if (!tool || !gimmickArguments || !(tool.schema instanceof z.ZodObject)) {
+      return tool;
+    }
+
+    const mask: Record<string, true | undefined> = {};
+    for (const key of Object.keys(gimmickArguments)) {
+      mask[key] = true;
+    }
+
+    return {
+      name: tool.name,
+      description: tool.description,
+      schema: tool.schema.omit(mask),
+    };
+  }
 }
 
 @RegisterGimmickCore('execute_mcp')
@@ -187,23 +214,7 @@ export class GimmickExecuteMcpCore extends GimmickCore {
   }
 
   public override get parameters(): z.ZodSchema {
-    let gimmickArguments: GimmickArguments | undefined = undefined;
-    if (this.meta.arguments) {
-      gimmickArguments = this.meta.arguments;
-    }
-    if (this.meta.entityArguments && this.gimmick.location.updatingEntity) {
-      const entityArguments =
-        this.meta.entityArguments[this.gimmick.location.updatingEntity.key];
-      if (gimmickArguments) {
-        gimmickArguments = {
-          ...gimmickArguments,
-          ...entityArguments,
-        };
-      } else {
-        gimmickArguments = entityArguments;
-      }
-    }
-
+    const gimmickArguments = this.getGimmickArguments();
     const tools = McpToolsCache.getTools(this.serverUrl, gimmickArguments);
 
     const toolSchemas = Object.entries(tools).map(([name, tool]) => {
@@ -245,9 +256,29 @@ export class GimmickExecuteMcpCore extends GimmickCore {
     return this.options.serverUrl;
   }
 
-  private get tools(): string[] {
-    const tools = McpToolsCache.getTools(this.serverUrl);
-    return Object.keys(tools);
+  private getGimmickArguments(entity?: Entity): GimmickArguments | undefined {
+    let gimmickArguments: GimmickArguments | undefined = undefined;
+    if (this.meta.arguments) {
+      gimmickArguments = this.meta.arguments;
+    }
+
+    // Use the provided entity or fall back to updatingEntity
+    const targetEntity = entity ?? this.gimmick.location.updatingEntity;
+    if (this.meta.entityArguments && targetEntity) {
+      const entityArguments = this.meta.entityArguments[targetEntity.key];
+      if (entityArguments) {
+        if (gimmickArguments) {
+          gimmickArguments = {
+            ...gimmickArguments,
+            ...entityArguments,
+          };
+        } else {
+          gimmickArguments = entityArguments;
+        }
+      }
+    }
+
+    return gimmickArguments;
   }
 
   private async createMcpClient(
@@ -380,50 +411,33 @@ export class GimmickExecuteMcpCore extends GimmickCore {
 
     const coreParameters =
       parameters as object as GimmickExecuteMcpCoreParameters;
-    const { tool } = coreParameters;
-    const { args } = coreParameters;
+    const { tool: toolName, args } = coreParameters;
 
-    if (!tool || !args) {
+    if (!toolName || !args) {
       return 'Required parameters missing (tool, args)';
     }
 
-    if (!this.tools.includes(tool)) {
-      return `Unsupported tool: ${tool}`;
-    }
-
     // Get additional arguments from gimmick and entity
-    let gimmickArguments: GimmickArguments | undefined = undefined;
-    if (this.meta.arguments) {
-      gimmickArguments = this.meta.arguments;
-    }
-    const entityArguments = this.meta.entityArguments?.[entity.key];
-    if (entityArguments) {
-      if (gimmickArguments) {
-        gimmickArguments = {
-          ...gimmickArguments,
-          ...entityArguments,
-        };
-      } else {
-        gimmickArguments = entityArguments;
-      }
-    }
+    const gimmickArguments = this.getGimmickArguments(entity);
 
-    // Get the tool definition for validation
-    const tools = McpToolsCache.getTools(this.serverUrl, gimmickArguments);
-    const toolDefinition = tools[tool];
-    if (!toolDefinition) {
-      return `Tool definition not found: ${tool}`;
+    const tool = McpToolsCache.getTool(
+      this.serverUrl,
+      toolName,
+      gimmickArguments
+    );
+    if (!tool) {
+      return `Unsupported tool: ${toolName}`;
     }
 
     // Validate and clean args using the Zod schema
-    const parseResult = toolDefinition.schema.safeParse(args);
+    const parseResult = tool.schema.safeParse(args);
     let cleanedArgs = args;
     let removedFields: string[] = [];
 
     if (!parseResult.success) {
       // Extract valid fields from the schema and filter args
-      if (toolDefinition.schema instanceof z.ZodObject) {
-        const schemaShape = toolDefinition.schema.shape;
+      if (tool.schema instanceof z.ZodObject) {
+        const schemaShape = tool.schema.shape;
         const validKeys = Object.keys(schemaShape);
         const originalKeys = Object.keys(args);
 
@@ -438,19 +452,19 @@ export class GimmickExecuteMcpCore extends GimmickCore {
         removedFields = originalKeys.filter((key) => !validKeys.includes(key));
 
         // Re-validate with cleaned args
-        const reParseResult = toolDefinition.schema.safeParse(cleanedArgs);
+        const reParseResult = tool.schema.safeParse(cleanedArgs);
         if (!reParseResult.success) {
           const errorMessage = reParseResult.error.errors
             .map((e) => `${e.path.join('.')}: ${e.message}`)
             .join(', ');
-          return `Invalid arguments for tool ${tool}: ${errorMessage}`;
+          return `Invalid arguments for tool ${tool}:: ${errorMessage}`;
         }
       } else {
         // For non-object schemas, return the original error
         const errorMessage = parseResult.error.errors
           .map((e) => `${e.path.join('.')}: ${e.message}`)
           .join(', ');
-        return `Invalid arguments for tool ${tool}: ${errorMessage}`;
+        return `Invalid arguments for tool ${tool}:: ${errorMessage}`;
       }
     }
 
@@ -466,7 +480,7 @@ export class GimmickExecuteMcpCore extends GimmickCore {
       cleanedArgs = { ...cleanedArgs, ...gimmickArguments };
     }
 
-    const promise = this.callMcpServer(entity, tool, cleanedArgs);
+    const promise = this.callMcpServer(entity, toolName, cleanedArgs);
 
     await this.gimmick.location.emitAsync(
       'gimmickExecuting',
