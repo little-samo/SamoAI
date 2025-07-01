@@ -20,7 +20,7 @@ export class AgentExecuteGimmickAction extends AgentAction {
     switch (this.version) {
       case 1:
       default:
-        return `Executes a specified Gimmick entity within the current location. Checks Gimmick availability and occupies it upon successful execution initiation. See 'parameters' for details on input requirements.`;
+        return `Executes a Gimmick in your current location. CRITICAL: (1) Only ONE Gimmick execution per response turn - multiple calls in the same response will fail. (2) Gimmicks become OCCUPIED during execution and cannot be used by anyone until completion. (3) Check OCCUPIER fields before attempting - occupied Gimmicks will reject your request. (4) Execution is asynchronous - results appear in your private canvas later, not immediately.`;
     }
   }
 

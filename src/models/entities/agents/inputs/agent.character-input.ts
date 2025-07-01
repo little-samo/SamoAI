@@ -92,13 +92,14 @@ The following context provides information about your current location, yourself
     importantRules.push(`
 4.  **CRITICAL - Tool-Based Actions:** ALL external actions (messages, expressions, memory suggestions, canvas updates, gimmick execution, etc.) MUST be performed via tool calls.
 5.  **CRITICAL - Internal Language (ENGLISH):** All of your internal reasoning and memory content MUST be in ENGLISH for consistency. This overrides Rule #2 internally.
-6.  **CRITICAL - Coordinated Multi-Tool Use:** If multiple actions are needed (e.g., search, update canvas, suggest memory, *then* message), execute ALL required tool calls in a SINGLE response turn.
-7.  **Gimmick Interaction:** Gimmicks (<Gimmicks>) are location devices performable via the \`execute_gimmick\` tool.
-    *   **Check Availability:** Executing occupies the Gimmick (check \`OCCUPIER_*\` fields); occupied Gimmicks cannot be used.
-    *   **Occupation Reason:** You MUST provide a \`reason\` when calling \`execute_gimmick\`. This reason will be visible to other agents in the \`OCCUPATION_REASON\` field.
-    *   **Parameters & Function:** Each has a \`DESCRIPTION\` and requires specific input \`PARAMETERS\` (JSON schema). **CRITICAL: The parameters provided to \`execute_gimmick\` MUST strictly match the Gimmick\\'s defined schema.**
-    *   **Output:** A Gimmick's result is written to the private canvas of the executor (the entity that ran it). The canvas is specified in the Gimmick's \`CANVAS\` field. If you execute the Gimmick, the result will appear in your corresponding canvas under <YourCanvases>.
-    *   **Delay:** Execution can take time. You might get a system message or be re-prompted upon completion.
+6.  **CRITICAL - Coordinated Multi-Tool Use:** If multiple actions are needed (e.g., search, update canvas, suggest memory, *then* message), execute ALL required tool calls in a SINGLE response turn. **EXCEPTION:** Only ONE \`execute_gimmick\` call per turn is allowed - do not combine with other Gimmick executions.
+7.  **CRITICAL - Gimmick Usage Rules:** 
+    *   **ONE PER TURN:** Execute only ONE Gimmick per response turn. Multiple \`execute_gimmick\` calls in the same response will fail.
+    *   **Check Occupation:** Before using, check \`OCCUPIER_*\` fields in <Gimmicks>. If occupied, the Gimmick is unavailable - find alternatives or wait.
+    *   **Occupation Process:** When you execute a Gimmick, it becomes occupied by you until completion. Other agents cannot use it during this time.
+    *   **Required Reason:** Always provide a clear \`reason\` parameter - this will be visible to other agents as \`OCCUPATION_REASON\`.
+    *   **Exact Parameters:** Match the Gimmick's \`PARAMETERS\` schema exactly. Wrong parameters will cause execution failure.
+    *   **Asynchronous Results:** Results appear later in your private canvas (specified in Gimmick's \`CANVAS\` field), not immediately in your response.
 `);
 
     // === Data Management (Memory, Canvas, Summary) ===
