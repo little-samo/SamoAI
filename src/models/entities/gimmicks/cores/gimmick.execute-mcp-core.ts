@@ -442,9 +442,6 @@ export class GimmickExecuteMcpCore extends GimmickCore {
         const schemaShape = tool.schema.shape;
         const validKeys = Object.keys(schemaShape);
         const originalKeys = Object.keys(args);
-        console.log(`gimmickArguments: ${JSON.stringify(gimmickArguments)}`);
-        console.log(`validKeys: ${JSON.stringify(validKeys)}`);
-        console.log(`originalKeys: ${JSON.stringify(originalKeys)}`);
 
         cleanedArgs = {};
         for (const key of validKeys) {
