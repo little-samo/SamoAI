@@ -136,8 +136,7 @@ class McpToolsCache {
     for (const [name, tool] of Object.entries(cachedTools.tools)) {
       if (tool.schema instanceof z.ZodObject) {
         tools[name] = {
-          name: name,
-          description: tool.description,
+          ...tool,
           schema: tool.schema.omit(mask),
         };
       } else {
@@ -169,8 +168,7 @@ class McpToolsCache {
     }
 
     return {
-      name: tool.name,
-      description: tool.description,
+      ...tool,
       schema: tool.schema.omit(mask),
     };
   }
@@ -444,6 +442,9 @@ export class GimmickExecuteMcpCore extends GimmickCore {
         const schemaShape = tool.schema.shape;
         const validKeys = Object.keys(schemaShape);
         const originalKeys = Object.keys(args);
+        console.log(`gimmickArguments: ${JSON.stringify(gimmickArguments)}`);
+        console.log(`validKeys: ${JSON.stringify(validKeys)}`);
+        console.log(`originalKeys: ${JSON.stringify(originalKeys)}`);
 
         cleanedArgs = {};
         for (const key of validKeys) {
@@ -461,21 +462,21 @@ export class GimmickExecuteMcpCore extends GimmickCore {
           const errorMessage = reParseResult.error.errors
             .map((e) => `${e.path.join('.')}: ${e.message}`)
             .join(', ');
-          return `Invalid arguments for tool ${tool}:: ${errorMessage}`;
+          return `Invalid arguments for tool ${toolName}:: ${errorMessage}`;
         }
       } else {
         // For non-object schemas, return the original error
         const errorMessage = parseResult.error.errors
           .map((e) => `${e.path.join('.')}: ${e.message}`)
           .join(', ');
-        return `Invalid arguments for tool ${tool}:: ${errorMessage}`;
+        return `Invalid arguments for tool ${toolName}:: ${errorMessage}`;
       }
     }
 
     // Add gimmick message if fields were removed
     if (removedFields.length > 0) {
       await entity.location.addGimmickMessage(this.gimmick, {
-        message: `Removed unknown fields from ${tool} arguments: ${removedFields.join(', ')}`,
+        message: `Removed unknown fields from ${toolName} arguments: ${removedFields.join(', ')}`,
       });
     }
 
