@@ -83,10 +83,14 @@ class McpToolsCache {
 
       const tools: Record<string, McpToolDefinition> = {};
       for (const tool of toolsList.tools) {
+        let schema = mcpSchemaToZod(tool.inputSchema as MCPJsonSchema);
+        if (schema instanceof z.ZodObject) {
+          schema = schema.strict();
+        }
         tools[tool.name] = {
           name: tool.name,
           description: tool.description,
-          schema: mcpSchemaToZod(tool.inputSchema as MCPJsonSchema),
+          schema,
         };
       }
 
