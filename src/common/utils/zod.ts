@@ -283,3 +283,12 @@ export function mcpSchemaToZod(schema: MCPJsonSchema): ZodTypeAny {
   const baseSchema = toZod(schema);
   return schema.nullable ? baseSchema.nullable() : baseSchema;
 }
+
+/**
+ * Formats Zod validation errors into a readable error message string
+ */
+export function formatZodErrorMessage(error: z.ZodError): string {
+  return error.errors
+    .map((e) => `${e.path.join('.')}: ${e.message}`)
+    .join(', ');
+}

@@ -2,6 +2,7 @@ import {
   ENV,
   MCPJsonSchema,
   mcpSchemaToZod,
+  formatZodErrorMessage,
 } from '@little-samo/samo-ai/common';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import {
@@ -456,16 +457,12 @@ export class GimmickExecuteMcpCore extends GimmickCore {
         // Re-validate with cleaned args
         const reParseResult = tool.schema.safeParse(cleanedArgs);
         if (!reParseResult.success) {
-          const errorMessage = reParseResult.error.errors
-            .map((e) => `${e.path.join('.')}: ${e.message}`)
-            .join(', ');
+          const errorMessage = formatZodErrorMessage(reParseResult.error);
           return `Invalid arguments for tool ${toolName}:: ${errorMessage}`;
         }
       } else {
         // For non-object schemas, return the original error
-        const errorMessage = parseResult.error.errors
-          .map((e) => `${e.path.join('.')}: ${e.message}`)
-          .join(', ');
+        const errorMessage = formatZodErrorMessage(parseResult.error);
         return `Invalid arguments for tool ${toolName}:: ${errorMessage}`;
       }
     }
