@@ -20,7 +20,7 @@ export class LlmApiError extends LlmError {
 export class LlmInvalidContentError extends LlmError {
   public constructor(
     message: string,
-    public readonly result?: LlmResponseBase
+    public readonly llmResponse?: LlmResponseBase
   ) {
     super(message);
     this.name = 'LlmInvalidContentError';

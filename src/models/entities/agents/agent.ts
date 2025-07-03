@@ -1,9 +1,12 @@
 import {
   ENV,
   LlmFactory,
+  LlmGenerateResponse,
+  LlmInvalidContentError,
   LlmMessage,
   LlmService,
   LlmToolCall,
+  LlmToolsResponse,
   LlmUsageType,
 } from '@little-samo/samo-ai/common';
 import { type AgentInputBuilder } from '@little-samo/samo-ai/models';
@@ -410,16 +413,24 @@ export class Agent extends Entity {
     if (!llm) {
       throw new Error('No LlmService found');
     }
-    const useToolsResponse = await llm.useTools(
-      messages,
-      Object.values(this.actions),
-      {
-        maxTokens: this.meta.maxTokens,
-        temperature: this.meta.temperature,
-        maxThinkingTokens: this.meta.maxThinkingTokens,
-        verbose: ENV.VERBOSE_LLM,
+    let useToolsResponse: LlmToolsResponse;
+    try {
+      useToolsResponse = await llm.useTools(
+        messages,
+        Object.values(this.actions),
+        {
+          maxTokens: this.meta.maxTokens,
+          temperature: this.meta.temperature,
+          maxThinkingTokens: this.meta.maxThinkingTokens,
+          verbose: ENV.VERBOSE_LLM,
+        }
+      );
+    } catch (error) {
+      if (error instanceof LlmInvalidContentError && error.llmResponse) {
+        await this.location.emitAsync('llmUseTools', this, error.llmResponse);
       }
-    );
+      throw error;
+    }
 
     useToolsResponse.logType = LlmUsageType.EXECUTION;
     await this.location.emitAsync('llmUseTools', this, useToolsResponse);
@@ -449,12 +460,21 @@ export class Agent extends Entity {
     if (!llm) {
       throw new Error('No LlmService found');
     }
-    const response = await llm.generate(messages, {
-      maxTokens: this.meta.maxTokens,
-      temperature: this.meta.temperature,
-      maxThinkingTokens: this.meta.maxEvaluatationThinkingTokens,
-      verbose: ENV.VERBOSE_LLM,
-    });
+    let response: LlmGenerateResponse;
+    try {
+      response = await llm.generate(messages, {
+        maxTokens: this.meta.maxTokens,
+        temperature: this.meta.temperature,
+        maxThinkingTokens: this.meta.maxEvaluatationThinkingTokens,
+        verbose: ENV.VERBOSE_LLM,
+      });
+    } catch (error) {
+      if (error instanceof LlmInvalidContentError && error.llmResponse) {
+        await this.location.emitAsync('llmGenerate', this, error.llmResponse);
+      }
+      throw error;
+    }
+
     response.logType = LlmUsageType.EVALUATION;
     await this.location.emitAsync('llmGenerate', this, response);
     if (ENV.DEBUG) {
@@ -485,11 +505,19 @@ export class Agent extends Entity {
       throw new Error('No LlmService found');
     }
 
-    const summaryResponse = await llm.generate(messages, {
-      maxTokens: this.meta.maxTokens,
-      maxThinkingTokens: this.meta.maxSummaryThinkingTokens,
-      verbose: ENV.VERBOSE_LLM,
-    });
+    let summaryResponse: LlmGenerateResponse;
+    try {
+      summaryResponse = await llm.generate(messages, {
+        maxTokens: this.meta.maxTokens,
+        maxThinkingTokens: this.meta.maxSummaryThinkingTokens,
+        verbose: ENV.VERBOSE_LLM,
+      });
+    } catch (error) {
+      if (error instanceof LlmInvalidContentError && error.llmResponse) {
+        await this.location.emitAsync('llmGenerate', this, error.llmResponse);
+      }
+      throw error;
+    }
 
     summaryResponse.logType = LlmUsageType.SUMMARY;
     await this.location.emitAsync('llmGenerate', this, summaryResponse);
@@ -529,15 +557,19 @@ export class Agent extends Entity {
       })
     );
 
-    const useToolsResponse = await llm.useTools(
-      messages,
-      Object.values(actions),
-      {
+    let useToolsResponse: LlmToolsResponse;
+    try {
+      useToolsResponse = await llm.useTools(messages, Object.values(actions), {
         maxTokens: this.meta.maxTokens,
         maxThinkingTokens: this.meta.maxMemoryThinkingTokens,
         verbose: ENV.VERBOSE_LLM,
+      });
+    } catch (error) {
+      if (error instanceof LlmInvalidContentError && error.llmResponse) {
+        await this.location.emitAsync('llmUseTools', this, error.llmResponse);
       }
-    );
+      throw error;
+    }
 
     useToolsResponse.logType = LlmUsageType.MEMORY;
     await this.location.emitAsync('llmUseTools', this, useToolsResponse);

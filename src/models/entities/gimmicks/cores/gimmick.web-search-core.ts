@@ -1,6 +1,8 @@
 import {
   ENV,
   LlmFactory,
+  LlmGenerateResponse,
+  LlmInvalidContentError,
   LlmMessage,
   LlmPlatform,
   LlmService,
@@ -78,13 +80,25 @@ You are tasked with performing a web search based on the user's query and then p
       content: query,
     });
 
-    const searchSummaryResponse = await searchLlm.generate(messages, {
-      maxTokens: maxTokens,
-      maxThinkingTokens: maxThinkingTokens,
-      webSearch: true,
-      jsonOutput: true,
-      verbose: ENV.VERBOSE_LLM,
-    });
+    let searchSummaryResponse: LlmGenerateResponse<true>;
+    try {
+      searchSummaryResponse = await searchLlm.generate(messages, {
+        maxTokens: maxTokens,
+        maxThinkingTokens: maxThinkingTokens,
+        webSearch: true,
+        jsonOutput: true,
+        verbose: ENV.VERBOSE_LLM,
+      });
+    } catch (error) {
+      if (error instanceof LlmInvalidContentError && error.llmResponse) {
+        await entity.location.emitAsync(
+          'llmGenerate',
+          entity,
+          error.llmResponse
+        );
+      }
+      throw error;
+    }
 
     searchSummaryResponse.logType = LlmUsageType.GIMMICK;
     await entity.location.emitAsync(
