@@ -1,3 +1,5 @@
+import { LlmResponseBase } from './llm.types';
+
 export class LlmError extends Error {
   public constructor(message: string) {
     super(message);
@@ -16,7 +18,10 @@ export class LlmApiError extends LlmError {
 }
 
 export class LlmInvalidContentError extends LlmError {
-  public constructor(message: string) {
+  public constructor(
+    message: string,
+    public readonly result?: LlmResponseBase
+  ) {
     super(message);
     this.name = 'LlmInvalidContentError';
   }

@@ -91,6 +91,11 @@ export interface LlmResponseBase {
   cachedInputTokens?: number;
   cacheCreationTokens?: number;
 
+  // Request and Response
+  request: object;
+  response: object;
+
+  // Logging
   logType?: LlmUsageType;
   responseTime: number; // Response time in milliseconds
 }

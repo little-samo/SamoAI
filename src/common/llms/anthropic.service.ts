@@ -20,6 +20,7 @@ import {
   LlmGenerateResponse,
   LlmToolsResponse,
   LlmPlatform,
+  LlmResponseBase,
 } from './llm.types';
 
 export class AnthropicService extends LlmService {
@@ -186,46 +187,7 @@ export class AnthropicService extends LlmService {
       const response = await this.createMessageWithRetry(request, options);
       const responseTime = Date.now() - startTime;
 
-      if (response.content.length === 0) {
-        throw new LlmInvalidContentError('Anthropic returned no content');
-      }
-
-      const responseText = (
-        response.content.filter(
-          (block) => block.type === 'text'
-        )[0] as TextBlock
-      ).text;
-      if (options?.jsonOutput) {
-        try {
-          const content = parseAndFixJson(responseText);
-          return {
-            content: content as T extends true
-              ? Record<string, unknown>
-              : string,
-            platform: LlmPlatform.ANTHROPIC,
-            model: this.model,
-            thinking: this.thinking,
-            maxOutputTokens,
-            thinkingBudget,
-            temperature,
-            inputTokens: response.usage.input_tokens,
-            outputTokens: response.usage.output_tokens,
-            cachedInputTokens:
-              response.usage.cache_read_input_tokens ?? undefined,
-            cacheCreationTokens:
-              response.usage.cache_creation_input_tokens ?? undefined,
-            responseTime,
-          };
-        } catch (error) {
-          console.error(error);
-          console.error(responseText);
-          throw new LlmInvalidContentError('Anthropic returned invalid JSON');
-        }
-      }
-      return {
-        content: responseText as T extends true
-          ? Record<string, unknown>
-          : string,
+      const result: LlmResponseBase = {
         platform: LlmPlatform.ANTHROPIC,
         model: this.model,
         thinking: this.thinking,
@@ -237,7 +199,46 @@ export class AnthropicService extends LlmService {
         cachedInputTokens: response.usage.cache_read_input_tokens ?? undefined,
         cacheCreationTokens:
           response.usage.cache_creation_input_tokens ?? undefined,
+        request,
+        response,
         responseTime,
+      };
+
+      const responseText = (
+        response.content
+          .filter((block) => block.type === 'text')
+          .at(0) as TextBlock
+      )?.text;
+      if (!responseText) {
+        throw new LlmInvalidContentError(
+          'Anthropic returned no content',
+          result
+        );
+      }
+
+      if (options?.jsonOutput) {
+        try {
+          const content = parseAndFixJson(responseText);
+          return {
+            ...result,
+            content: content as T extends true
+              ? Record<string, unknown>
+              : string,
+          };
+        } catch (error) {
+          console.error(error);
+          console.error(responseText);
+          throw new LlmInvalidContentError(
+            'Anthropic returned invalid JSON',
+            result
+          );
+        }
+      }
+      return {
+        ...result,
+        content: responseText as T extends true
+          ? Record<string, unknown>
+          : string,
       };
     } catch (error) {
       if (error instanceof AnthropicError) {
@@ -340,39 +341,49 @@ Response can only be in JSON format and must strictly follow the following forma
       const response = await this.createMessageWithRetry(request, options);
       const responseTime = Date.now() - startTime;
 
-      if (response.content.length === 0) {
-        throw new LlmInvalidContentError('Anthropic returned no content');
-      }
+      const result: LlmResponseBase = {
+        platform: LlmPlatform.ANTHROPIC,
+        model: this.model,
+        thinking: this.thinking,
+        maxOutputTokens,
+        thinkingBudget,
+        temperature,
+        inputTokens: response.usage.input_tokens,
+        outputTokens: response.usage.output_tokens,
+        cachedInputTokens: response.usage.cache_read_input_tokens ?? undefined,
+        cacheCreationTokens:
+          response.usage.cache_creation_input_tokens ?? undefined,
+        request,
+        response,
+        responseTime,
+      };
 
-      const responseText =
-        prefill +
-        (
-          response.content.filter(
-            (block) => block.type === 'text'
-          )[0] as TextBlock
-        ).text;
+      let responseText = (
+        response.content
+          .filter((block) => block.type === 'text')
+          .at(0) as TextBlock
+      )?.text;
+      if (!responseText) {
+        throw new LlmInvalidContentError(
+          'Anthropic returned no content',
+          result
+        );
+      }
+      responseText = prefill + responseText;
+
       try {
         const toolCalls = parseAndFixJson<LlmToolCall[]>(responseText);
         return {
+          ...result,
           toolCalls,
-          platform: LlmPlatform.ANTHROPIC,
-          model: this.model,
-          thinking: this.thinking,
-          maxOutputTokens,
-          thinkingBudget,
-          temperature,
-          inputTokens: response.usage.input_tokens,
-          outputTokens: response.usage.output_tokens,
-          cachedInputTokens:
-            response.usage.cache_read_input_tokens ?? undefined,
-          cacheCreationTokens:
-            response.usage.cache_creation_input_tokens ?? undefined,
-          responseTime,
         };
       } catch (error) {
         console.error(error);
         console.error(responseText);
-        throw new LlmInvalidContentError('Anthropic returned invalid JSON');
+        throw new LlmInvalidContentError(
+          'Anthropic returned invalid JSON',
+          result
+        );
       }
     } catch (error) {
       if (error instanceof AnthropicError) {

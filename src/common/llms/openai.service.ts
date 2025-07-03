@@ -20,6 +20,7 @@ import {
   LlmGenerateResponse,
   LlmMessage,
   LlmOptions,
+  LlmResponseBase,
   LlmServiceOptions,
   LlmToolsResponse,
 } from './llm.types';
@@ -189,46 +190,8 @@ export class OpenAIService extends LlmService {
       const response = await this.createCompletionWithRetry(request, options);
       const responseTime = Date.now() - startTime;
 
-      const responseText = response.choices[0].message.content;
-      if (responseText === null) {
-        throw new LlmInvalidContentError(
-          `${this.serviceName} returned no content`
-        );
-      }
-
-      if (options?.jsonOutput) {
-        try {
-          const content = parseAndFixJson(responseText);
-          return {
-            content: content as T extends true
-              ? Record<string, unknown>
-              : string,
-            platform: this.platform,
-            model: this.model,
-            thinking: this.thinking,
-            maxOutputTokens,
-            temperature,
-            inputTokens: response.usage?.prompt_tokens ?? 0,
-            outputTokens: response.usage?.completion_tokens ?? 0,
-            thinkingTokens:
-              response.usage?.completion_tokens_details?.reasoning_tokens ?? 0,
-            cachedInputTokens:
-              response.usage?.prompt_tokens_details?.cached_tokens ?? 0,
-            responseTime,
-          };
-        } catch (error) {
-          console.error(error);
-          console.error(responseText);
-          throw new LlmInvalidContentError(
-            `${this.serviceName} returned invalid JSON`
-          );
-        }
-      }
-      return {
+      const result: LlmResponseBase = {
         platform: this.platform,
-        content: responseText as T extends true
-          ? Record<string, unknown>
-          : string,
         model: this.model,
         thinking: this.thinking,
         maxOutputTokens,
@@ -239,7 +202,42 @@ export class OpenAIService extends LlmService {
           response.usage?.completion_tokens_details?.reasoning_tokens ?? 0,
         cachedInputTokens:
           response.usage?.prompt_tokens_details?.cached_tokens ?? 0,
+        request,
+        response,
         responseTime,
+      };
+
+      const responseText = response.choices.at(0)?.message.content;
+      if (!responseText) {
+        throw new LlmInvalidContentError(
+          `${this.serviceName} returned no content`,
+          result
+        );
+      }
+
+      if (options?.jsonOutput) {
+        try {
+          const content = parseAndFixJson(responseText);
+          return {
+            ...result,
+            content: content as T extends true
+              ? Record<string, unknown>
+              : string,
+          };
+        } catch (error) {
+          console.error(error);
+          console.error(responseText);
+          throw new LlmInvalidContentError(
+            `${this.serviceName} returned invalid JSON`,
+            result
+          );
+        }
+      }
+      return {
+        ...result,
+        content: responseText as T extends true
+          ? Record<string, unknown>
+          : string,
       };
     } catch (error) {
       if (error instanceof OpenAI.APIError) {
@@ -311,41 +309,43 @@ Response can only be in JSON format and must strictly follow the following forma
       const response = await this.createCompletionWithRetry(request, options);
       const responseTime = Date.now() - startTime;
 
-      if (response.choices.length === 0) {
-        throw new LlmInvalidContentError(
-          `${this.serviceName} returned no choices`
-        );
-      }
+      const result: LlmResponseBase = {
+        platform: this.platform,
+        model: this.model,
+        thinking: this.thinking,
+        maxOutputTokens,
+        temperature,
+        inputTokens: response.usage?.prompt_tokens ?? 0,
+        outputTokens: response.usage?.completion_tokens ?? 0,
+        thinkingTokens:
+          response.usage?.completion_tokens_details?.reasoning_tokens ?? 0,
+        cachedInputTokens:
+          response.usage?.prompt_tokens_details?.cached_tokens ?? 0,
+        request,
+        response,
+        responseTime,
+      };
 
-      const responseText = response.choices[0].message.content;
-      if (responseText === null) {
+      const responseText = response.choices.at(0)?.message.content;
+      if (!responseText) {
         throw new LlmInvalidContentError(
-          `${this.serviceName} returned no content`
+          `${this.serviceName} returned no content`,
+          result
         );
       }
 
       try {
         const toolCalls = parseAndFixJson<LlmToolCall[]>(responseText);
         return {
+          ...result,
           toolCalls,
-          platform: this.platform,
-          model: this.model,
-          thinking: this.thinking,
-          maxOutputTokens,
-          temperature,
-          inputTokens: response.usage?.prompt_tokens ?? 0,
-          outputTokens: response.usage?.completion_tokens ?? 0,
-          thinkingTokens:
-            response.usage?.completion_tokens_details?.reasoning_tokens ?? 0,
-          cachedInputTokens:
-            response.usage?.prompt_tokens_details?.cached_tokens ?? 0,
-          responseTime,
         };
       } catch (error) {
         console.error(error);
         console.error(responseText);
         throw new LlmInvalidContentError(
-          `${this.serviceName} returned invalid JSON`
+          `${this.serviceName} returned invalid JSON`,
+          result
         );
       }
     } catch (error) {

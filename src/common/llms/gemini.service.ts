@@ -18,6 +18,7 @@ import {
   LlmGenerateResponse,
   LlmToolsResponse,
   LlmPlatform,
+  LlmResponseBase,
 } from './llm.types';
 
 export class GeminiService extends LlmService {
@@ -138,111 +139,103 @@ export class GeminiService extends LlmService {
     messages: LlmMessage[],
     options?: LlmOptions & { jsonOutput?: T }
   ): Promise<LlmGenerateResponse<T>> {
-    try {
-      // gemini does not support assistant message prefilling
-      messages = messages.filter((message) => message.role !== 'assistant');
+    // gemini does not support assistant message prefilling
+    messages = messages.filter((message) => message.role !== 'assistant');
 
-      const [systemMessages, userAssistantMessages] =
-        this.llmMessagesToGeminiMessages(messages);
+    const [systemMessages, userAssistantMessages] =
+      this.llmMessagesToGeminiMessages(messages);
 
-      let maxOutputTokens = options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS;
-      let thinkingBudget: number | undefined;
-      const temperature =
-        options?.temperature ?? LlmService.DEFAULT_TEMPERATURE;
-      const request: GenerateContentParameters = {
-        model: this.model,
-        contents: userAssistantMessages,
-        config: {
-          temperature,
-          maxOutputTokens,
-          systemInstruction: systemMessages,
-        },
-      };
-      if (this.thinking) {
-        thinkingBudget =
-          options?.maxThinkingTokens ?? LlmService.DEFAULT_MAX_THINKING_TOKENS;
-        maxOutputTokens += thinkingBudget;
-        request.config!.thinkingConfig = {
-          includeThoughts: true,
-          thinkingBudget,
-        };
-        request.config!.maxOutputTokens = maxOutputTokens;
-      }
-      if (options?.webSearch) {
-        request.config!.tools = [
-          {
-            googleSearch: {},
-          },
-        ];
-      }
-      if (options?.jsonOutput && !options?.webSearch) {
-        request.config!.responseMimeType = 'application/json';
-      }
-      if (options?.verbose) {
-        console.log(request);
-      }
-
-      const startTime = Date.now();
-      const response = await this.generateContentWithRetry(request, options);
-      const responseTime = Date.now() - startTime;
-
-      if (!response.text) {
-        throw new LlmInvalidContentError('Gemini returned no content');
-      }
-
-      const responseText = response.text;
-      let outputTokens = response.usageMetadata?.candidatesTokenCount ?? 0;
-      const thinkingTokens =
-        response.usageMetadata?.thoughtsTokenCount ?? undefined;
-      if (thinkingTokens) {
-        outputTokens += thinkingTokens;
-      }
-      if (options?.jsonOutput) {
-        try {
-          const content = parseAndFixJson(responseText);
-          return {
-            content: content as T extends true
-              ? Record<string, unknown>
-              : string,
-            platform: LlmPlatform.GEMINI,
-            model: this.model,
-            thinking: this.thinking,
-            maxOutputTokens,
-            thinkingBudget,
-            temperature,
-            inputTokens: response.usageMetadata?.promptTokenCount ?? 0,
-            outputTokens,
-            thinkingTokens,
-            cachedInputTokens:
-              response.usageMetadata?.cachedContentTokenCount ?? undefined,
-            responseTime,
-          };
-        } catch (error) {
-          console.error(error);
-          console.error(responseText);
-          throw new LlmInvalidContentError('Gemini returned invalid JSON');
-        }
-      }
-      return {
-        content: responseText as T extends true
-          ? Record<string, unknown>
-          : string,
-        platform: LlmPlatform.GEMINI,
-        model: this.model,
-        thinking: this.thinking,
-        maxOutputTokens,
-        thinkingBudget,
+    let maxOutputTokens = options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS;
+    let thinkingBudget: number | undefined;
+    const temperature = options?.temperature ?? LlmService.DEFAULT_TEMPERATURE;
+    const request: GenerateContentParameters = {
+      model: this.model,
+      contents: userAssistantMessages,
+      config: {
         temperature,
-        inputTokens: response.usageMetadata?.promptTokenCount ?? 0,
-        outputTokens,
-        thinkingTokens,
-        cachedInputTokens:
-          response.usageMetadata?.cachedContentTokenCount ?? undefined,
-        responseTime,
+        maxOutputTokens,
+        systemInstruction: systemMessages,
+      },
+    };
+    if (this.thinking) {
+      thinkingBudget =
+        options?.maxThinkingTokens ?? LlmService.DEFAULT_MAX_THINKING_TOKENS;
+      maxOutputTokens += thinkingBudget;
+      request.config!.thinkingConfig = {
+        includeThoughts: true,
+        thinkingBudget,
       };
-    } catch (error) {
-      throw error;
+      request.config!.maxOutputTokens = maxOutputTokens;
     }
+    if (options?.webSearch) {
+      request.config!.tools = [
+        {
+          googleSearch: {},
+        },
+      ];
+    }
+    if (options?.jsonOutput && !options?.webSearch) {
+      request.config!.responseMimeType = 'application/json';
+    }
+    if (options?.verbose) {
+      console.log(request);
+    }
+
+    const startTime = Date.now();
+    const response = await this.generateContentWithRetry(request, options);
+    const responseTime = Date.now() - startTime;
+
+    const responseText = response.text;
+    let outputTokens = response.usageMetadata?.candidatesTokenCount ?? 0;
+    const thinkingTokens =
+      response.usageMetadata?.thoughtsTokenCount ?? undefined;
+    if (thinkingTokens) {
+      outputTokens += thinkingTokens;
+    }
+
+    const result: LlmResponseBase = {
+      platform: LlmPlatform.GEMINI,
+      model: this.model,
+      thinking: this.thinking,
+      maxOutputTokens,
+      thinkingBudget,
+      temperature,
+      inputTokens: response.usageMetadata?.promptTokenCount ?? 0,
+      outputTokens,
+      thinkingTokens,
+      cachedInputTokens:
+        response.usageMetadata?.cachedContentTokenCount ?? undefined,
+      request,
+      response,
+      responseTime,
+    };
+
+    if (!responseText) {
+      throw new LlmInvalidContentError('Gemini returned no content', result);
+    }
+
+    if (options?.jsonOutput) {
+      try {
+        const content = parseAndFixJson(responseText);
+        return {
+          ...result,
+          content: content as T extends true ? Record<string, unknown> : string,
+        };
+      } catch (error) {
+        console.error(error);
+        console.error(responseText);
+        throw new LlmInvalidContentError(
+          'Gemini returned invalid JSON',
+          result
+        );
+      }
+    }
+    return {
+      ...result,
+      content: responseText as T extends true
+        ? Record<string, unknown>
+        : string,
+    };
   }
 
   public async useTools(
@@ -250,114 +243,114 @@ export class GeminiService extends LlmService {
     tools: LlmTool[],
     options?: LlmOptions
   ): Promise<LlmToolsResponse> {
-    try {
-      // gemini does not support assistant message prefilling
-      messages = messages.filter((message) => message.role !== 'assistant');
+    // gemini does not support assistant message prefilling
+    messages = messages.filter((message) => message.role !== 'assistant');
 
-      const [systemMessages, userAssistantMessages] =
-        this.llmMessagesToGeminiMessages(messages);
+    const [systemMessages, userAssistantMessages] =
+      this.llmMessagesToGeminiMessages(messages);
 
+    systemMessages.parts!.push({
+      text: `The definition of the tools you have can be organized as a JSON Schema as follows. Clearly understand the definition and purpose of each tool.`,
+    });
+
+    for (const tool of tools) {
+      const parameters = zodSchemaToLlmFriendlyString(tool.parameters);
       systemMessages.parts!.push({
-        text: `The definition of the tools you have can be organized as a JSON Schema as follows. Clearly understand the definition and purpose of each tool.`,
-      });
-
-      for (const tool of tools) {
-        const parameters = zodSchemaToLlmFriendlyString(tool.parameters);
-        systemMessages.parts!.push({
-          text: `name: ${tool.name}
+        text: `name: ${tool.name}
 description: ${tool.description}
 parameters: ${parameters}`,
-        });
-      }
+      });
+    }
 
-      systemMessages.parts!.push({
-        text: `Refer to the definitions of the available tools above, and output the tools you plan to use in JSON format. Based on that analysis, select and use the necessary tools from the rest—following the guidance provided in the previous prompt.
+    systemMessages.parts!.push({
+      text: `Refer to the definitions of the available tools above, and output the tools you plan to use in JSON format. Based on that analysis, select and use the necessary tools from the rest—following the guidance provided in the previous prompt.
 
 Response can only be in JSON format and must strictly follow the following format, with no surrounding text or markdown:
 [
-  {
-    "name": "tool_name",
-    "arguments": { ... }
-  },
-  ... // (Include additional tool calls as needed)
+{
+  "name": "tool_name",
+  "arguments": { ... }
+},
+... // (Include additional tool calls as needed)
 ]`,
-      });
+    });
 
-      let maxOutputTokens = options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS;
-      let thinkingBudget: number | undefined;
-      const temperature =
-        options?.temperature ?? LlmService.DEFAULT_TEMPERATURE;
-      const request: GenerateContentParameters = {
-        model: this.model,
-        contents: userAssistantMessages,
-        config: {
-          temperature,
-          maxOutputTokens,
-          systemInstruction: systemMessages,
-        },
+    let maxOutputTokens = options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS;
+    let thinkingBudget: number | undefined;
+    const temperature = options?.temperature ?? LlmService.DEFAULT_TEMPERATURE;
+    const request: GenerateContentParameters = {
+      model: this.model,
+      contents: userAssistantMessages,
+      config: {
+        temperature,
+        maxOutputTokens,
+        systemInstruction: systemMessages,
+      },
+    };
+    if (this.thinking) {
+      thinkingBudget =
+        options?.maxThinkingTokens ?? LlmService.DEFAULT_MAX_THINKING_TOKENS;
+      maxOutputTokens += thinkingBudget;
+      request.config!.thinkingConfig = {
+        includeThoughts: true,
+        thinkingBudget,
       };
-      if (this.thinking) {
-        thinkingBudget =
-          options?.maxThinkingTokens ?? LlmService.DEFAULT_MAX_THINKING_TOKENS;
-        maxOutputTokens += thinkingBudget;
-        request.config!.thinkingConfig = {
-          includeThoughts: true,
-          thinkingBudget,
-        };
-        request.config!.maxOutputTokens = maxOutputTokens;
-      }
-      if (options?.webSearch) {
-        request.config!.tools = [
-          {
-            googleSearch: {},
-          },
-        ];
-      } else {
-        request.config!.responseMimeType = 'application/json';
-      }
-      if (options?.verbose) {
-        console.log(request);
-      }
+      request.config!.maxOutputTokens = maxOutputTokens;
+    }
+    if (options?.webSearch) {
+      request.config!.tools = [
+        {
+          googleSearch: {},
+        },
+      ];
+    } else {
+      request.config!.responseMimeType = 'application/json';
+    }
+    if (options?.verbose) {
+      console.log(request);
+    }
 
-      const startTime = Date.now();
-      const response = await this.generateContentWithRetry(request, options);
-      const responseTime = Date.now() - startTime;
+    const startTime = Date.now();
+    const response = await this.generateContentWithRetry(request, options);
+    const responseTime = Date.now() - startTime;
 
-      if (!response.text) {
-        throw new LlmInvalidContentError('Gemini returned no content');
-      }
+    const responseText = response.text;
+    let outputTokens = response.usageMetadata?.candidatesTokenCount ?? 0;
+    const thinkingTokens =
+      response.usageMetadata?.thoughtsTokenCount ?? undefined;
 
-      const responseText = response.text;
-      let outputTokens = response.usageMetadata?.candidatesTokenCount ?? 0;
-      const thinkingTokens =
-        response.usageMetadata?.thoughtsTokenCount ?? undefined;
-      if (thinkingTokens) {
-        outputTokens += thinkingTokens;
-      }
-      try {
-        const toolCalls = parseAndFixJson<LlmToolCall[]>(responseText);
-        return {
-          platform: LlmPlatform.GEMINI,
-          toolCalls,
-          model: this.model,
-          thinking: this.thinking,
-          maxOutputTokens,
-          thinkingBudget,
-          temperature,
-          inputTokens: response.usageMetadata?.promptTokenCount ?? 0,
-          outputTokens,
-          thinkingTokens,
-          cachedInputTokens:
-            response.usageMetadata?.cachedContentTokenCount ?? undefined,
-          responseTime,
-        };
-      } catch (error) {
-        console.error(error);
-        console.error(responseText);
-        throw new LlmInvalidContentError('Gemini returned invalid JSON');
-      }
+    if (thinkingTokens) {
+      outputTokens += thinkingTokens;
+    }
+
+    const result: LlmResponseBase = {
+      platform: LlmPlatform.GEMINI,
+      model: this.model,
+      thinking: this.thinking,
+      maxOutputTokens,
+      thinkingBudget,
+      temperature,
+      inputTokens: response.usageMetadata?.promptTokenCount ?? 0,
+      outputTokens,
+      thinkingTokens,
+      cachedInputTokens:
+        response.usageMetadata?.cachedContentTokenCount ?? undefined,
+      request,
+      response,
+      responseTime,
+    };
+    if (!responseText) {
+      throw new LlmInvalidContentError('Gemini returned no content', result);
+    }
+    try {
+      return {
+        ...result,
+        toolCalls: parseAndFixJson<LlmToolCall[]>(responseText),
+      };
     } catch (error) {
-      throw error;
+      console.error(error);
+      console.error(responseText);
+      throw new LlmInvalidContentError('Gemini returned invalid JSON', result);
     }
   }
 }
