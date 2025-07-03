@@ -417,7 +417,7 @@ export class Agent extends Entity {
         maxTokens: this.meta.maxTokens,
         temperature: this.meta.temperature,
         maxThinkingTokens: this.meta.maxThinkingTokens,
-        verbose: ENV.DEBUG,
+        verbose: ENV.VERBOSE_LLM,
       }
     );
 
@@ -453,7 +453,7 @@ export class Agent extends Entity {
       maxTokens: this.meta.maxTokens,
       temperature: this.meta.temperature,
       maxThinkingTokens: this.meta.maxEvaluatationThinkingTokens,
-      verbose: ENV.DEBUG,
+      verbose: ENV.VERBOSE_LLM,
     });
     response.logType = LlmUsageType.EVALUATION;
     await this.location.emitAsync('llmGenerate', this, response);
@@ -488,7 +488,7 @@ export class Agent extends Entity {
     const summaryResponse = await llm.generate(messages, {
       maxTokens: this.meta.maxTokens,
       maxThinkingTokens: this.meta.maxSummaryThinkingTokens,
-      verbose: ENV.DEBUG,
+      verbose: ENV.VERBOSE_LLM,
     });
 
     summaryResponse.logType = LlmUsageType.SUMMARY;
@@ -535,7 +535,7 @@ export class Agent extends Entity {
       {
         maxTokens: this.meta.maxTokens,
         maxThinkingTokens: this.meta.maxMemoryThinkingTokens,
-        verbose: ENV.DEBUG,
+        verbose: ENV.VERBOSE_LLM,
       }
     );
 

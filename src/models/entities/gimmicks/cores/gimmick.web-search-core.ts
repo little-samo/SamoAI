@@ -83,7 +83,7 @@ You are tasked with performing a web search based on the user's query and then p
       maxThinkingTokens: maxThinkingTokens,
       webSearch: true,
       jsonOutput: true,
-      verbose: ENV.DEBUG,
+      verbose: ENV.VERBOSE_LLM,
     });
 
     searchSummaryResponse.logType = LlmUsageType.GIMMICK;
