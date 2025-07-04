@@ -110,6 +110,7 @@ export const DEFAULT_AGENT_META: AgentMeta = {
 
   actions: [
     'update_agent_canvas:latest',
+    'edit_agent_canvas:latest',
     'add_memory:latest',
     'add_entity_memory:latest',
     'transfer_item:latest',

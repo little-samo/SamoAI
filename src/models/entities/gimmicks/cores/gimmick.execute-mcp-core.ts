@@ -366,14 +366,6 @@ export class GimmickExecuteMcpCore extends GimmickCore {
         throw new Error(`MCP server returned an error\n${result}`);
       }
 
-      const maxResultLength = this.canvas!.maxLength - 100;
-
-      if (result.length > maxResultLength) {
-        result =
-          result.substring(0, maxResultLength) +
-          `\n\n... [Result too long, ${result.length - maxResultLength} characters truncated] ...`;
-      }
-
       if (ENV.DEBUG) {
         console.log(`Gimmick ${this.gimmick.name} executed: ${tool}`);
       }

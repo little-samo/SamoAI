@@ -114,8 +114,9 @@ The following context provides information about your current location, yourself
     *   **Use For:** Developing plans, drafting messages/content, detailed analysis, collaboration (Location Canvases). Use your private agent canvases (e.g., 'plan') for your own work.
     *   **Avoid For:** Simple facts (Use Memory).
     *   **Refer & Update:** Check relevant canvases by NAME/DESCRIPTION. Use canvas tools to modify them, respecting \`MAX_LENGTH\`.
-        *   \`update_canvas\`: **Overwrites** the entire canvas. Use for major revisions or replacing content completely.
-        *   \`edit_canvas\`: **Modifies** a part of the canvas. Use to replace specific text or append new content, which is useful for minor edits, additions, or corrections.
+        *   **Canvas Tools:** Two types available - Location (public, shared) and Agent (private, your own)
+            *   \`update_canvas\` / \`update_agent_canvas\`: **Overwrites** entire canvas. Use for major revisions.
+            *   \`edit_canvas\` / \`edit_agent_canvas\`: **Modifies** part of canvas. Use for minor edits, additions, or corrections.
     *   **Location vs. Private:** Location Canvases are shared within *that* location. **CRITICAL: Your private agent canvases (<YourCanvases>) are SEPARATE for each location context; content is NOT shared between locations.**
 10. **Summary Usage (Cross-Location Context):** The <Summary> block is updated by a background process and synthesizes past interactions (potentially across locations).
     *   **Purpose:** Use it critically to maintain awareness and continuity when switching between or returning to locations. It bridges context gaps.

@@ -1,4 +1,8 @@
-import { AsyncEventEmitter, ENV } from '@little-samo/samo-ai/common';
+import {
+  AsyncEventEmitter,
+  ENV,
+  truncateString,
+} from '@little-samo/samo-ai/common';
 import { isEqual } from 'lodash';
 
 import {
@@ -435,9 +439,20 @@ export class Location extends AsyncEventEmitter {
       throw new Error(`Canvas with name ${canvasName} not found`);
     }
 
+    // Check max length constraint
+    const canvasMeta = this.meta.canvases.find((c) => c.name === canvasName);
+    let finalText = text;
+    let wasTruncated = false;
+
+    if (canvasMeta && text.length > canvasMeta.maxLength) {
+      const result = truncateString(text, canvasMeta.maxLength);
+      finalText = result.text;
+      wasTruncated = result.wasTruncated;
+    }
+
     canvas.lastModifierEntityType = modifierEntityType;
     canvas.lastModifierEntityId = modifierEntityId;
-    canvas.text = text;
+    canvas.text = finalText;
     canvas.updatedAt = new Date();
 
     await this.emitAsync(
@@ -446,8 +461,9 @@ export class Location extends AsyncEventEmitter {
       modifierEntityType,
       modifierEntityId,
       canvasName,
-      text,
-      reason
+      finalText,
+      reason,
+      wasTruncated
     );
   }
 
@@ -486,13 +502,18 @@ export class Location extends AsyncEventEmitter {
 
     // Check max length constraint
     const canvasMeta = this.meta.canvases.find((c) => c.name === canvasName);
+    let finalText = updatedText;
+    let wasTruncated = false;
+
     if (canvasMeta && updatedText.length > canvasMeta.maxLength) {
-      updatedText = updatedText.substring(0, canvasMeta.maxLength);
+      const result = truncateString(updatedText, canvasMeta.maxLength);
+      finalText = result.text;
+      wasTruncated = result.wasTruncated;
     }
 
     canvas.lastModifierEntityType = modifierEntityType;
     canvas.lastModifierEntityId = modifierEntityId;
-    canvas.text = updatedText;
+    canvas.text = finalText;
     canvas.updatedAt = new Date();
 
     await this.emitAsync(
@@ -503,8 +524,9 @@ export class Location extends AsyncEventEmitter {
       canvasName,
       existingContent,
       newContent,
-      updatedText,
-      reason
+      finalText,
+      reason,
+      wasTruncated
     );
 
     return true;

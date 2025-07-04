@@ -1,3 +1,5 @@
+import { truncateString } from '@little-samo/samo-ai/common';
+
 import { type Location, type LocationEntityState } from '../locations';
 
 import { EntityContext } from './entity.context';
@@ -204,9 +206,87 @@ export abstract class Entity {
     if (!canvas) {
       throw new Error(`Canvas with name ${canvasName} not found`);
     }
-    await this.location.emitAsync('entityUpdateCanvas', this, canvasName, text);
-    canvas.text = text;
+
+    // Check max length constraint
+    const agentCanvasMeta = this.location.meta.agentCanvases.find(
+      (c) => c.name === canvasName
+    );
+    let finalText = text;
+    let wasTruncated = false;
+
+    if (agentCanvasMeta && text.length > agentCanvasMeta.maxLength) {
+      const result = truncateString(text, agentCanvasMeta.maxLength);
+      finalText = result.text;
+      wasTruncated = result.wasTruncated;
+    }
+
+    await this.location.emitAsync(
+      'entityUpdateCanvas',
+      this,
+      canvasName,
+      finalText,
+      wasTruncated
+    );
+    canvas.text = finalText;
     canvas.updatedAt = new Date();
+  }
+
+  public async editCanvas(
+    canvasName: string,
+    existingContent: string,
+    newContent: string
+  ): Promise<boolean> {
+    const canvas = this.location.getEntityState(this.key)?.canvases[canvasName];
+    if (!canvas) {
+      throw new Error(`Canvas with name ${canvasName} not found`);
+    }
+
+    let updatedText: string;
+
+    if (existingContent === '') {
+      // If existing_content is empty, append new content
+      updatedText = canvas.text + newContent;
+    } else {
+      // Check if existing content exists in the canvas
+      const existingIndex = canvas.text.indexOf(existingContent);
+      if (existingIndex === -1) {
+        // Return false instead of throwing error when existing content not found
+        return false;
+      }
+
+      // Replace the first occurrence of existing content with new content
+      updatedText =
+        canvas.text.substring(0, existingIndex) +
+        newContent +
+        canvas.text.substring(existingIndex + existingContent.length);
+    }
+
+    // Check max length constraint - need to find the canvas meta from agent canvases
+    const agentCanvasMeta = this.location.meta.agentCanvases.find(
+      (c) => c.name === canvasName
+    );
+    let finalText = updatedText;
+    let wasTruncated = false;
+
+    if (agentCanvasMeta && updatedText.length > agentCanvasMeta.maxLength) {
+      const result = truncateString(updatedText, agentCanvasMeta.maxLength);
+      finalText = result.text;
+      wasTruncated = result.wasTruncated;
+    }
+
+    await this.location.emitAsync(
+      'entityEditCanvas',
+      this,
+      canvasName,
+      existingContent,
+      newContent,
+      finalText,
+      wasTruncated
+    );
+    canvas.text = finalText;
+    canvas.updatedAt = new Date();
+
+    return true;
   }
 
   public async init(): Promise<void> {}
