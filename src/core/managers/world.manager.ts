@@ -804,7 +804,9 @@ export class WorldManager extends AsyncEventEmitter {
               entity.key,
               dataId,
               count,
-              reason
+              {
+                reason,
+              }
             )
           );
         } else {
@@ -815,7 +817,9 @@ export class WorldManager extends AsyncEventEmitter {
                   entity.key,
                   dataId,
                   1,
-                  reason
+                  {
+                    reason,
+                  }
                 )
               );
             })

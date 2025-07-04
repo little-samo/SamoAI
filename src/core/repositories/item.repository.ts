@@ -15,7 +15,9 @@ export interface ItemRepository {
     ownerEntityKey: EntityKey,
     dataId: ItemDataId,
     count: number,
-    reason?: string
+    options?: {
+      reason?: string;
+    }
   ): Promise<ItemModel>;
   removeItemModel(
     ownerEntityKey: EntityKey,
