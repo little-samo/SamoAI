@@ -27,11 +27,15 @@ export class GimmickWebSearchCore extends GimmickCore {
   public static readonly DEFAULT_MAX_SEARCH_RESULT_LENGTH = 2000;
 
   public override get description(): string {
-    return 'Searches the web for up-to-date or missing information using an LLM, providing both a summary and detailed results. Execution takes approximately 30 seconds.';
+    return 'Searches the web for up-to-date or missing information using an LLM, providing both a summary and detailed results. Execution takes approximately 30 seconds. IMPORTANT: This gimmick does NOT have access to your conversation context, so provide complete, self-contained search queries with all necessary details, keywords, and context as if searching independently on Google.';
   }
 
   public override get parameters(): z.ZodSchema {
-    return z.string().describe('The specific search query for the web search.');
+    return z
+      .string()
+      .describe(
+        'A detailed, comprehensive search query that includes all relevant context, specific terms, dates, locations, or other important details. Since this gimmick has no access to conversation context, write complete queries as you would on Google. Avoid vague terms like "this", "that", or references to previous conversation.'
+      );
   }
 
   public override get canvas(): LocationEntityCanvasMeta {
