@@ -60,13 +60,13 @@ export class GimmickWebSearchCore extends GimmickCore {
       role: 'system',
       content: `
 You are tasked with performing a web search based on the user's query and then processing the results. Generate two outputs in a STRICTLY VALID JSON format:
-1.  'result': A detailed compilation of the most important information found in the search results. Aim to be comprehensive and informative within the character limit of ${maxLlmResultLength}. Include key facts, data points, or direct quotes where relevant. Prioritize official sources, expert opinions, and well-established publications. Pay attention to the publication date to ensure the information is up-to-date.
-2.  'summary': A concise paragraph summarizing the key findings from the search results. This summary must not exceed ${maxLlmSummaryLength} characters and should reflect the essence of the detailed result.
+1.  'result': A detailed compilation of the most important information found in the search results. Aim to be comprehensive and informative within the character limit of ${maxLlmResultLength}, but consider leaving some buffer space as character count estimation can be inaccurate. Include key facts, data points, or direct quotes where relevant. Prioritize official sources, expert opinions, and well-established publications. Pay attention to the publication date to ensure the information is up-to-date.
+2.  'summary': A concise paragraph summarizing the key findings from the search results. This summary must not exceed ${maxLlmSummaryLength} characters and should reflect the essence of the detailed result. Consider leaving some buffer space as character count estimation can be inaccurate.
 
 # Constraints
 - Verify the credibility of sources by cross-referencing information with multiple trusted websites if possible based on search results.
 - Ensure the output is ONLY a valid JSON object with no extra text, markdown, or formatting outside the JSON structure.
-- Adhere strictly to the character limits for 'result' (${maxLlmResultLength}) and 'summary' (${maxLlmSummaryLength}). Truncation will occur if limits are exceeded.
+- Adhere strictly to the character limits for 'result' (${maxLlmResultLength}) and 'summary' (${maxLlmSummaryLength}), but consider leaving buffer space as character count estimation can be inaccurate. Truncation will occur if limits are exceeded.
 
 # Output Format
 {
@@ -108,17 +108,14 @@ You are tasked with performing a web search based on the user's query and then p
     );
 
     const searchSummaryResult = searchSummaryResponse.content;
-    const rawSummary =
+    const summary =
       typeof searchSummaryResult?.summary === 'string'
         ? searchSummaryResult.summary
         : '';
-    const rawResult =
+    const result =
       typeof searchSummaryResult?.result === 'string'
         ? searchSummaryResult.result
         : '';
-
-    const summary = rawSummary.substring(0, maxSummaryLength);
-    const result = rawResult.substring(0, maxResultLength);
 
     if (ENV.DEBUG) {
       console.log(`Gimmick ${this.gimmick.name} executed: ${query}`);
@@ -175,9 +172,9 @@ You are tasked with performing a web search based on the user's query and then p
       this.meta.options?.maxResultLength ??
         GimmickWebSearchCore.DEFAULT_MAX_SEARCH_RESULT_LENGTH
     );
-    const maxLlmResultLength = maxResultLength - 200; // Reserve buffer
+    const maxLlmResultLength = maxResultLength; // Use full length, let LLM consider buffer
     const maxSummaryLength = this.gimmick.location.meta.messageLengthLimit;
-    const maxLlmSummaryLength = maxSummaryLength - 50; // Reserve buffer
+    const maxLlmSummaryLength = maxSummaryLength - 20; // Reserve for "Web Search Result: " prefix
 
     const promise = this.searchWeb(
       entity,

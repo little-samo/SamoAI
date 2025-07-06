@@ -319,10 +319,16 @@ export class Location extends AsyncEventEmitter {
   public async addMessage(message: LocationMessage): Promise<void> {
     const messageLengthLimit: number = this.meta.messageLengthLimit;
     if (message.expression) {
-      message.expression = message.expression.substring(0, messageLengthLimit);
+      message.expression = truncateString(
+        message.expression,
+        messageLengthLimit
+      ).text;
     }
     if (message.message) {
-      message.message = message.message.substring(0, messageLengthLimit);
+      message.message = truncateString(
+        message.message,
+        messageLengthLimit
+      ).text;
     }
     if (!message.createdAt) {
       message.createdAt = new Date();
