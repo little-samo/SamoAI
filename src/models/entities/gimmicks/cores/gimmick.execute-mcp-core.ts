@@ -450,12 +450,12 @@ export class GimmickExecuteMcpCore extends GimmickCore {
         const reParseResult = tool.schema.safeParse(cleanedArgs);
         if (!reParseResult.success) {
           const errorMessage = formatZodErrorMessage(reParseResult.error);
-          return `Invalid arguments for tool ${toolName}:: ${errorMessage}`;
+          return `Invalid arguments for tool ${toolName} - ${errorMessage}`;
         }
       } else {
         // For non-object schemas, return the original error
         const errorMessage = formatZodErrorMessage(parseResult.error);
-        return `Invalid arguments for tool ${toolName}:: ${errorMessage}`;
+        return `Invalid arguments for tool ${toolName} - ${errorMessage}`;
       }
     }
 
