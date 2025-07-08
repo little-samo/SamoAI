@@ -313,7 +313,7 @@ export class GimmickExecuteMcpCore extends GimmickCore {
       );
     } catch (error) {
       console.error(
-        `[Gimmick ${this.gimmick.name}] MCP tools cache update error:`,
+        `[Gimmick ${this.gimmick.name}] MCP tools cache update error (${this.serverUrl}):`,
         error
       );
       throw error;
