@@ -76,15 +76,15 @@ export class AgentExecuteGimmickAction extends AgentAction {
       true
     );
     if (error) {
+      await this.location.addSystemMessage(
+        `Agent ${this.agent.name} failed to execute ${action.gimmickKey}: ${error}`
+      );
       await this.location.emitAsync(
         'gimmickExecutionFailed',
         gimmick,
         this.agent,
         action.parameters,
         error
-      );
-      await this.location.addSystemMessage(
-        `Agent ${this.agent.name} failed to execute ${action.gimmickKey}: ${error}`
       );
     }
   }
