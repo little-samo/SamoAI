@@ -95,6 +95,7 @@ You are tasked with performing a web search based on the user's query and then p
       });
     } catch (error) {
       if (error instanceof LlmInvalidContentError && error.llmResponse) {
+        error.llmResponse.logType = LlmUsageType.GIMMICK;
         await entity.location.emitAsync(
           'llmGenerate',
           entity,
