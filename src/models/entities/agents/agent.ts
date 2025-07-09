@@ -427,6 +427,7 @@ export class Agent extends Entity {
       );
     } catch (error) {
       if (error instanceof LlmInvalidContentError && error.llmResponse) {
+        error.llmResponse.logType = LlmUsageType.EXECUTION;
         await this.location.emitAsync('llmUseTools', this, error.llmResponse);
       }
       throw error;
@@ -470,6 +471,7 @@ export class Agent extends Entity {
       });
     } catch (error) {
       if (error instanceof LlmInvalidContentError && error.llmResponse) {
+        error.llmResponse.logType = LlmUsageType.EVALUATION;
         await this.location.emitAsync('llmGenerate', this, error.llmResponse);
       }
       throw error;
@@ -509,11 +511,13 @@ export class Agent extends Entity {
     try {
       summaryResponse = await llm.generate(messages, {
         maxTokens: this.meta.maxTokens,
+        temperature: this.meta.temperature,
         maxThinkingTokens: this.meta.maxSummaryThinkingTokens,
         verbose: ENV.VERBOSE_LLM,
       });
     } catch (error) {
       if (error instanceof LlmInvalidContentError && error.llmResponse) {
+        error.llmResponse.logType = LlmUsageType.SUMMARY;
         await this.location.emitAsync('llmGenerate', this, error.llmResponse);
       }
       throw error;
@@ -561,11 +565,13 @@ export class Agent extends Entity {
     try {
       useToolsResponse = await llm.useTools(messages, Object.values(actions), {
         maxTokens: this.meta.maxTokens,
+        temperature: this.meta.temperature,
         maxThinkingTokens: this.meta.maxMemoryThinkingTokens,
         verbose: ENV.VERBOSE_LLM,
       });
     } catch (error) {
       if (error instanceof LlmInvalidContentError && error.llmResponse) {
+        error.llmResponse.logType = LlmUsageType.MEMORY;
         await this.location.emitAsync('llmUseTools', this, error.llmResponse);
       }
       throw error;
