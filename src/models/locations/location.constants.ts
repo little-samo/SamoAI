@@ -6,6 +6,8 @@ const locationPauseReasonValues = [
   'UPDATE_ERROR',
   'SCHEDULED_PAUSE',
   'UPDATE_COMPLETED',
+  'GIMMICK_EXECUTED',
+  'GIMMICK_EXECUTION_FAILED',
 ] as const;
 
 export const LocationPauseReason = Object.fromEntries(

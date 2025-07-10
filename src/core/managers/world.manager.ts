@@ -763,11 +763,12 @@ export class WorldManager extends AsyncEventEmitter {
       ) => {
         void options.handleSave!(gimmick.release());
         void options.handleSave!(
-          this.updateLocation(llmApiKeyUserId, locationId, {
-            ...options,
-            ignorePauseUpdateUntil: true,
-            executeSpecificAgentId: entity.id as AgentId,
-          })
+          this.locationRepository.updateLocationStatePauseUpdateUntil(
+            locationId,
+            new Date(),
+            LocationPauseReason.GIMMICK_EXECUTION_FAILED,
+            entity.id as AgentId
+          )
         );
       }
     );
@@ -781,11 +782,12 @@ export class WorldManager extends AsyncEventEmitter {
           );
         }
         void options.handleSave!(
-          this.updateLocation(llmApiKeyUserId, locationId, {
-            ...options,
-            ignorePauseUpdateUntil: true,
-            executeSpecificAgentId: entity.id as AgentId,
-          })
+          this.locationRepository.updateLocationStatePauseUpdateUntil(
+            locationId,
+            new Date(),
+            LocationPauseReason.GIMMICK_EXECUTED,
+            entity.id as AgentId
+          )
         );
       }
     });
@@ -884,12 +886,12 @@ export class WorldManager extends AsyncEventEmitter {
     );
 
     let pauseUpdateDuration;
+    const nextAgentId =
+      options.executeSpecificAgentId ?? location.state.pauseUpdateNextAgentId;
     try {
-      if (options.executeSpecificAgentId) {
+      if (nextAgentId) {
         await location.init();
-        await location
-          .getAgent(options.executeSpecificAgentId as AgentId)!
-          .executeNextActions();
+        await location.getAgent(nextAgentId)!.executeNextActions();
         pauseUpdateDuration = location.core.defaultPauseUpdateDuration;
       } else {
         pauseUpdateDuration = await location.update();

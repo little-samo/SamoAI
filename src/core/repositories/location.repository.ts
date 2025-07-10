@@ -49,7 +49,8 @@ export interface LocationRepository {
   updateLocationStatePauseUpdateUntil(
     locationId: LocationId,
     pauseUpdateUntil: Date | null,
-    pauseUpdateReason?: string | null
+    pauseUpdateReason?: string | null,
+    pauseUpdateNextAgentId?: AgentId | null
   ): Promise<void>;
   updateLocationStateCanvas(
     locationId: LocationId,

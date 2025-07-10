@@ -20,6 +20,7 @@ export interface LocationState {
 
   pauseUpdateUntil: Date | null;
   pauseUpdateReason: string | null;
+  pauseUpdateNextAgentId: AgentId | null;
 
   canvases: Record<string, LocationCanvas>;
 
