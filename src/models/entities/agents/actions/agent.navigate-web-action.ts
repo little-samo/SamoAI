@@ -4,8 +4,16 @@ import { z } from 'zod';
 import { AgentAction } from './agent.action';
 import { RegisterAgentAction } from './agent.action-decorator';
 
+export enum AgentNavigateWebActionType {
+  GO = 'GO',
+  BACK = 'BACK',
+  FORWARD = 'FORWARD',
+  REFRESH = 'REFRESH',
+}
+
 export interface AgentNavigateWebActionParameters {
-  destination: string;
+  type: AgentNavigateWebActionType;
+  destination?: string;
 }
 
 @RegisterAgentAction('navigate_web')
@@ -14,7 +22,7 @@ export class AgentNavigateWebAction extends AgentAction {
     switch (this.version) {
       case 1:
       default:
-        return `Navigate the web browser to the specified URL. Use for moving to different web pages or specific URLs. Supports absolute URLs (https://example.com) and relative paths. ALWAYS use this as a standalone action - never combine with other actions in control_web since navigation requires waiting for page load completion. After navigation, wait for the page to fully load before performing any additional actions.`;
+        return 'Navigate the web browser. GO navigates to specified URL, BACK goes to previous page, FORWARD goes to next page, REFRESH reloads current page. Always use as standalone action since navigation requires waiting for page load completion. After navigation, wait for page to fully load before performing additional actions.';
     }
   }
 
@@ -22,26 +30,47 @@ export class AgentNavigateWebAction extends AgentAction {
     switch (this.version) {
       case 1:
       default:
-        return z.object({
+        const schema = z.object({
+          type: z.nativeEnum(AgentNavigateWebActionType),
           destination: z
             .string()
+            .optional()
             .describe(
-              `Target URL or path for navigation (e.g., "https://example.com", "/login", "about.html")`
+              'Target URL or path for GO action (e.g., "https://example.com", "/login")'
             ),
         });
+
+        return schema.refine(
+          (data) => {
+            if (data.type === AgentNavigateWebActionType.GO) {
+              return data.destination !== undefined;
+            }
+            return true;
+          },
+          {
+            message: 'GO action requires destination parameter',
+          }
+        );
     }
   }
 
   public override async execute(call: LlmToolCall): Promise<void> {
     const action = call.arguments as AgentNavigateWebActionParameters;
     if (ENV.DEBUG) {
+      const detail = action.destination ? ` to ${action.destination}` : '';
       console.log(
-        `Agent ${this.agent.name} navigates web browser to: ${action.destination}`
+        `Agent ${this.agent.name} navigates: ${action.type}${detail}`
       );
     }
 
+    let actionStr = `navigate_web --type ${action.type}`;
+
+    if (action.destination) {
+      actionStr += ` --destination "${action.destination}"`;
+    }
+
     await this.location.addAgentMessage(this.agent, {
-      action: `navigate_web --destination "${action.destination}"`,
+      action: actionStr,
     });
   }
 }
