@@ -76,10 +76,7 @@ class McpToolsCache {
       const toolsList = await client.listTools();
 
       if (ENV.DEBUG) {
-        console.log(
-          'McpToolsCache update - Available Tools List:',
-          JSON.stringify(toolsList, null, 2)
-        );
+        console.log('McpToolsCache update');
       }
 
       const tools: Record<string, McpToolDefinition> = {};
@@ -93,6 +90,10 @@ class McpToolsCache {
           description: tool.description,
           schema,
         };
+
+        if (ENV.DEBUG) {
+          console.log(`Tool ${tool.name} - ${tool.description}`);
+        }
       }
 
       this.cachedToolsByServerUrl[serverUrl] = {
