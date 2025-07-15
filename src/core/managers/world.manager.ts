@@ -715,7 +715,7 @@ export class WorldManager extends AsyncEventEmitter {
       promise: Promise<boolean>
     ): Promise<void> {
       try {
-        await promise;
+        await options.handleSave!(promise);
       } catch (error) {
         console.error(error);
 
@@ -739,6 +739,7 @@ export class WorldManager extends AsyncEventEmitter {
         );
       }
     }
+
     location.on(
       'gimmickExecuting',
       (
