@@ -188,7 +188,10 @@ function toZod(schema: MCPJsonSchema, depth: number = MAX_DEPTH): ZodTypeAny {
           Object.keys(s.not).length === 0
         );
       })
+      // Also filter out null type schemas from anyOf since they should be handled by nullable
+      .filter((s) => s.type !== 'null')
       .map((s) => toZod(s, depth - 1));
+
     if (schemas.length === 0) {
       return applyNullable(schema, z.any());
     }
@@ -198,7 +201,13 @@ function toZod(schema: MCPJsonSchema, depth: number = MAX_DEPTH): ZodTypeAny {
         z.union([schemas[0], schemas[1], ...schemas.slice(2)])
       );
     } else if (schemas.length === 1) {
-      return applyNullable(schema, schemas[0]);
+      // For single schema in anyOf, check if original anyOf had null type
+      const hasNullType = schema.anyOf.some(
+        (s) => isSchemaObject(s) && s.type === 'null'
+      );
+      // Apply optional if there was a null type in the original anyOf
+      const resultSchema = hasNullType ? schemas[0].optional() : schemas[0];
+      return applyNullable(schema, resultSchema);
     }
   }
 
@@ -213,7 +222,10 @@ function toZod(schema: MCPJsonSchema, depth: number = MAX_DEPTH): ZodTypeAny {
           Object.keys(s.not).length === 0
         );
       })
+      // Also filter out null type schemas from oneOf since they should be handled by nullable
+      .filter((s) => s.type !== 'null')
       .map((s) => toZod(s, depth - 1));
+
     if (schemas.length === 0) {
       return applyNullable(schema, z.any());
     }
@@ -223,7 +235,13 @@ function toZod(schema: MCPJsonSchema, depth: number = MAX_DEPTH): ZodTypeAny {
         z.union([schemas[0], schemas[1], ...schemas.slice(2)])
       );
     } else if (schemas.length === 1) {
-      return applyNullable(schema, schemas[0]);
+      // For single schema in oneOf, check if original oneOf had null type
+      const hasNullType = schema.oneOf.some(
+        (s) => isSchemaObject(s) && s.type === 'null'
+      );
+      // Apply optional if there was a null type in the original oneOf
+      const resultSchema = hasNullType ? schemas[0].optional() : schemas[0];
+      return applyNullable(schema, resultSchema);
     }
   }
 
@@ -323,7 +341,13 @@ function toZod(schema: MCPJsonSchema, depth: number = MAX_DEPTH): ZodTypeAny {
       const props = schema.properties ?? {};
 
       for (const [key, child] of Object.entries(props)) {
-        shape[key] = isSchemaObject(child) ? toZod(child, depth - 1) : z.any();
+        if (isSchemaObject(child)) {
+          // Check if this child schema should be optional based on anyOf/oneOf patterns
+          const childSchema = toZod(child, depth - 1);
+          shape[key] = childSchema;
+        } else {
+          shape[key] = z.any();
+        }
       }
 
       let objectSchema = z.object(shape);
@@ -332,7 +356,14 @@ function toZod(schema: MCPJsonSchema, depth: number = MAX_DEPTH): ZodTypeAny {
       if (schema.required && schema.required.length > 0) {
         const refinedShape: Record<string, ZodTypeAny> = {};
         for (const [k, v] of Object.entries(shape)) {
-          refinedShape[k] = schema.required.includes(k) ? v : v.optional();
+          // Only make non-required fields optional if they aren't already optional
+          if (schema.required.includes(k)) {
+            refinedShape[k] = v;
+          } else {
+            // Check if the field is already optional to avoid double-wrapping
+            refinedShape[k] =
+              v._def?.typeName === 'ZodOptional' ? v : v.optional();
+          }
         }
         objectSchema = z.object(refinedShape);
       } else {
