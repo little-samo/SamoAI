@@ -22,6 +22,7 @@ import { RegisterGimmickCore } from './gimmick.core-decorator';
 export class GimmickWebSearchCore extends GimmickCore {
   public static readonly DEFAULT_SEARCH_LLM_PLATFORM = LlmPlatform.GEMINI;
   public static readonly DEFAULT_SEARCH_LLM_MODEL = 'gemini-2.5-pro';
+  public static readonly DEFAULT_SEARCH_LLM_THINKING = true;
   public static readonly LLM_MAX_TOKENS = 4096;
   public static readonly LLM_MAX_THINKING_TOKENS = 2048;
   public static readonly DEFAULT_MAX_SEARCH_RESULT_LENGTH = 2000;
@@ -158,6 +159,8 @@ You are tasked with performing a web search based on the user's query and then p
     llmSearchOptions.platform ??=
       GimmickWebSearchCore.DEFAULT_SEARCH_LLM_PLATFORM;
     llmSearchOptions.model ??= GimmickWebSearchCore.DEFAULT_SEARCH_LLM_MODEL;
+    llmSearchOptions.thinking ??=
+      GimmickWebSearchCore.DEFAULT_SEARCH_LLM_THINKING;
     llmSearchOptions.apiKey ??=
       entity.location.apiKeys[llmSearchOptions.platform]?.key;
     const maxTokens = Number(
