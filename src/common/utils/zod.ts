@@ -57,6 +57,13 @@ function isSchemaObject(
   return typeof def === 'object' && def !== null;
 }
 
+/** true if schema has no meaningful keywords (≒ undefined) */
+function isTrulyEmpty(schema: MCPJsonSchema): boolean {
+  return Object.keys(schema).every(
+    (k) => !CORE_KEYS.has(k as keyof JSONSchema7)
+  );
+}
+
 /* ------------------------------------------------------------------
  * Nullability helpers
  * ----------------------------------------------------------------*/
@@ -191,6 +198,11 @@ function buildUnion(parts: ZodTypeAny[]): ZodTypeAny {
 
 function toZod(schema: MCPJsonSchema, depth = MAX_DEPTH): ZodTypeAny {
   if (depth <= 0) return z.never();
+
+  /* --- handle completely empty branch --------------------- */
+  if (isTrulyEmpty(schema)) {
+    return z.undefined();
+  }
 
   /* ----------------------------------------------------------------
    * 0. If the `type` itself is an array treat it as a union
