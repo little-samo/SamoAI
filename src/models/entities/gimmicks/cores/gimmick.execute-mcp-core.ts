@@ -479,7 +479,7 @@ export class GimmickExecuteMcpCore extends GimmickCore {
         originalToolSchema = originalToolSchema.strip();
       }
 
-      const originalToolParseResult = originalTool.schema.safeParse({
+      const originalToolParseResult = originalToolSchema.safeParse({
         ...cleanedArgs,
         ...gimmickArguments,
       });
