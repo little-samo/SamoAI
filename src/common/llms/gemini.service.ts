@@ -166,6 +166,10 @@ export class GeminiService extends LlmService {
         thinkingBudget,
       };
       request.config!.maxOutputTokens = maxOutputTokens;
+    } else {
+      request.config!.thinkingConfig = {
+        thinkingBudget: 0,
+      };
     }
     if (options?.webSearch) {
       request.config!.tools = [
@@ -296,6 +300,10 @@ Response can only be in JSON format and must strictly follow the following forma
         thinkingBudget,
       };
       request.config!.maxOutputTokens = maxOutputTokens;
+    } else {
+      request.config!.thinkingConfig = {
+        thinkingBudget: 0,
+      };
     }
     if (options?.webSearch) {
       request.config!.tools = [
