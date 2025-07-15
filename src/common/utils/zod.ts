@@ -39,6 +39,14 @@ function isSchemaObject(
   return typeof def === 'object' && def !== null;
 }
 
+// --- helper to append .nullable() when needed -----------------
+function applyNullable(
+  schema: MCPJsonSchema,
+  zodSchema: ZodTypeAny
+): ZodTypeAny {
+  return schema.nullable ? zodSchema.nullable() : zodSchema;
+}
+
 /* ---------- 1. Zod → LLM friendly String -------------------- */
 
 /**
@@ -106,28 +114,45 @@ export function zodSchemaToLlmFriendlyString(schema: ZodTypeAny): string {
 export type MCPJsonSchema = JSONSchema7 & {
   nullable?: boolean;
   discriminator?: unknown; // Not handled in this implementation
+  // Extended properties for better bigint support
+  isBigInt?: boolean;
+  coerceType?: 'bigint' | 'number' | 'string' | 'boolean';
 };
 
 /**
  * Converts MCP JSON Schema to Zod schema with recursion safety
  */
 function toZod(schema: MCPJsonSchema, depth: number = MAX_DEPTH): ZodTypeAny {
-  if (depth <= 0) return z.any();
+  if (depth <= 0) return applyNullable(schema, z.any());
+
+  // Handle bigint coercion early
+  if (schema.coerceType === 'bigint' || schema.isBigInt === true) {
+    return applyNullable(schema, z.coerce.bigint());
+  }
 
   // Handle const values
   if ('const' in schema) {
-    return z.literal(schema.const as string | number | boolean | null);
+    return applyNullable(
+      schema,
+      z.literal(schema.const as string | number | boolean | null)
+    );
   }
 
   // Handle enum values
   if (schema.enum) {
     if (schema.enum.length === 1) {
-      return z.literal(schema.enum[0] as string | number | boolean | null);
+      return applyNullable(
+        schema,
+        z.literal(schema.enum[0] as string | number | boolean | null)
+      );
     }
 
     // Handle string enums with z.enum for better type safety
     if (schema.enum.every((e) => typeof e === 'string')) {
-      return z.enum(schema.enum as [string, ...string[]]);
+      return applyNullable(
+        schema,
+        z.enum(schema.enum as [string, ...string[]])
+      );
     }
 
     // Handle mixed enums with union of literals
@@ -142,9 +167,12 @@ function toZod(schema: MCPJsonSchema, depth: number = MAX_DEPTH): ZodTypeAny {
       .map((e) => z.literal(e));
 
     if (literals.length >= 2) {
-      return z.union([literals[0], literals[1], ...literals.slice(2)]);
+      return applyNullable(
+        schema,
+        z.union([literals[0], literals[1], ...literals.slice(2)])
+      );
     } else if (literals.length === 1) {
-      return literals[0];
+      return applyNullable(schema, literals[0]);
     }
   }
 
@@ -152,22 +180,50 @@ function toZod(schema: MCPJsonSchema, depth: number = MAX_DEPTH): ZodTypeAny {
   if (schema.anyOf) {
     const schemas = schema.anyOf
       .filter(isSchemaObject)
+      .filter((s) => {
+        // Filter out {"not": {}} schemas which represent undefined/null in optional fields
+        return !(
+          s.not &&
+          typeof s.not === 'object' &&
+          Object.keys(s.not).length === 0
+        );
+      })
       .map((s) => toZod(s, depth - 1));
+    if (schemas.length === 0) {
+      return applyNullable(schema, z.any());
+    }
     if (schemas.length >= 2) {
-      return z.union([schemas[0], schemas[1], ...schemas.slice(2)]);
+      return applyNullable(
+        schema,
+        z.union([schemas[0], schemas[1], ...schemas.slice(2)])
+      );
     } else if (schemas.length === 1) {
-      return schemas[0];
+      return applyNullable(schema, schemas[0]);
     }
   }
 
   if (schema.oneOf) {
     const schemas = schema.oneOf
       .filter(isSchemaObject)
+      .filter((s) => {
+        // Filter out {"not": {}} schemas which represent undefined/null in optional fields
+        return !(
+          s.not &&
+          typeof s.not === 'object' &&
+          Object.keys(s.not).length === 0
+        );
+      })
       .map((s) => toZod(s, depth - 1));
+    if (schemas.length === 0) {
+      return applyNullable(schema, z.any());
+    }
     if (schemas.length >= 2) {
-      return z.union([schemas[0], schemas[1], ...schemas.slice(2)]);
+      return applyNullable(
+        schema,
+        z.union([schemas[0], schemas[1], ...schemas.slice(2)])
+      );
     } else if (schemas.length === 1) {
-      return schemas[0];
+      return applyNullable(schema, schemas[0]);
     }
   }
 
@@ -175,13 +231,21 @@ function toZod(schema: MCPJsonSchema, depth: number = MAX_DEPTH): ZodTypeAny {
     const schemas = schema.allOf
       .filter(isSchemaObject)
       .map((s) => toZod(s, depth - 1));
-    if (schemas.length === 0) return z.any();
-    return schemas.reduce((acc, cur) => acc.and(cur));
+    if (schemas.length === 0) return applyNullable(schema, z.any());
+    return applyNullable(
+      schema,
+      schemas.reduce((acc, cur) => acc.and(cur))
+    );
   }
 
   // Handle primitive and complex types
   switch (schema.type) {
     case 'string': {
+      // Check if this is a bigint type represented as string
+      if (schema.format === 'bigint' || schema.isBigInt) {
+        return applyNullable(schema, z.coerce.bigint());
+      }
+
       let stringSchema = z.string();
       if (schema.minLength !== undefined)
         stringSchema = stringSchema.min(schema.minLength);
@@ -194,25 +258,34 @@ function toZod(schema: MCPJsonSchema, depth: number = MAX_DEPTH): ZodTypeAny {
           // Ignore invalid regex patterns
         }
       }
-      return stringSchema;
+      return applyNullable(schema, stringSchema);
     }
 
     case 'number':
     case 'integer': {
+      // Check if this is a bigint type by looking at format or custom properties
+      if (
+        schema.format === 'bigint' ||
+        schema.format === 'int64' ||
+        schema.isBigInt
+      ) {
+        return applyNullable(schema, z.coerce.bigint());
+      }
+
       let numberSchema = z.number();
       if (schema.type === 'integer') numberSchema = numberSchema.int();
       if (schema.minimum !== undefined)
         numberSchema = numberSchema.min(schema.minimum);
       if (schema.maximum !== undefined)
         numberSchema = numberSchema.max(schema.maximum);
-      return numberSchema;
+      return applyNullable(schema, numberSchema);
     }
 
     case 'boolean':
-      return z.boolean();
+      return applyNullable(schema, z.boolean());
 
     case 'null':
-      return z.null();
+      return applyNullable(schema, z.null());
 
     case 'array': {
       // Handle tuple arrays (items is an array)
@@ -221,9 +294,12 @@ function toZod(schema: MCPJsonSchema, depth: number = MAX_DEPTH): ZodTypeAny {
           isSchemaObject(el) ? toZod(el, depth - 1) : z.any()
         );
         if (itemSchemas.length >= 1) {
-          return z.tuple([itemSchemas[0], ...itemSchemas.slice(1)]);
+          return applyNullable(
+            schema,
+            z.tuple([itemSchemas[0], ...itemSchemas.slice(1)])
+          );
         }
-        return z.tuple([]);
+        return applyNullable(schema, z.tuple([]));
       }
 
       // Handle regular arrays
@@ -237,7 +313,7 @@ function toZod(schema: MCPJsonSchema, depth: number = MAX_DEPTH): ZodTypeAny {
       if (schema.maxItems !== undefined)
         arraySchema = arraySchema.max(schema.maxItems);
 
-      return arraySchema;
+      return applyNullable(schema, arraySchema);
     }
 
     case 'object':
@@ -268,7 +344,7 @@ function toZod(schema: MCPJsonSchema, depth: number = MAX_DEPTH): ZodTypeAny {
         return objectSchema.strict();
       }
 
-      return objectSchema;
+      return applyNullable(schema, objectSchema);
     }
 
     default:
@@ -280,8 +356,7 @@ function toZod(schema: MCPJsonSchema, depth: number = MAX_DEPTH): ZodTypeAny {
  * Converts an MCP JSON Schema to a Zod schema, with optional nullable support
  */
 export function mcpSchemaToZod(schema: MCPJsonSchema): ZodTypeAny {
-  const baseSchema = toZod(schema);
-  return schema.nullable ? baseSchema.nullable() : baseSchema;
+  return toZod(schema);
 }
 
 /**
