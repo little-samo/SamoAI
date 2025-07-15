@@ -99,9 +99,9 @@ You are tasked with performing a web search based on the user's query and then p
         error.llmResponse.logType = LlmUsageType.GIMMICK;
         await entity.location.emitAsync(
           'llmGenerate',
-          this.gimmick,
+          entity,
           error.llmResponse,
-          entity
+          this.gimmick
         );
       }
       throw error;
@@ -110,9 +110,9 @@ You are tasked with performing a web search based on the user's query and then p
     searchSummaryResponse.logType = LlmUsageType.GIMMICK;
     await entity.location.emitAsync(
       'llmGenerate',
-      this.gimmick,
+      entity,
       searchSummaryResponse,
-      entity
+      this.gimmick
     );
 
     const searchSummaryResult = searchSummaryResponse.content;
