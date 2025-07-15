@@ -468,7 +468,27 @@ export class GimmickExecuteMcpCore extends GimmickCore {
 
     // Merge with gimmick and entity arguments
     if (gimmickArguments) {
-      cleanedArgs = { ...cleanedArgs, ...gimmickArguments };
+      const originalTool = McpToolsCache.getTool(this.serverUrl, toolName);
+      if (!originalTool) {
+        return `Cache error occurred. Try again in a little while.`;
+      }
+
+      let originalToolSchema = originalTool.schema;
+      if (originalToolSchema instanceof z.ZodObject) {
+        originalToolSchema = originalToolSchema.strip();
+      }
+
+      const originalToolParseResult = originalTool.schema.safeParse({
+        ...cleanedArgs,
+        ...gimmickArguments,
+      });
+      if (!originalToolParseResult.success) {
+        const errorMessage = formatZodErrorMessage(
+          originalToolParseResult.error
+        );
+        return `Invalid gimmick arguments for tool ${toolName} - ${errorMessage}`;
+      }
+      cleanedArgs = originalToolParseResult.data;
     }
 
     const promise = this.callMcpServer(entity, toolName, cleanedArgs);
