@@ -762,25 +762,34 @@ export class WorldManager extends AsyncEventEmitter {
         _error: string | undefined
       ) => {
         void options.handleSave!(gimmick.release());
-        void options.handleSave!(
-          this.locationRepository.updateLocationStatePauseUpdateUntil(
-            locationId,
-            new Date(),
-            LocationPauseReason.GIMMICK_EXECUTION_FAILED,
-            entity.id as AgentId
-          )
-        );
+        if (entity.type === EntityType.Agent) {
+          if (ENV.DEBUG) {
+            console.log(
+              `Force updating location ${locationId} with agent ${entity.id} for gimmick ${gimmick.id}`
+            );
+          }
+          location.pauseUpdated = true;
+          void options.handleSave!(
+            this.locationRepository.updateLocationStatePauseUpdateUntil(
+              locationId,
+              new Date(),
+              LocationPauseReason.GIMMICK_EXECUTION_FAILED,
+              entity.id as AgentId
+            )
+          );
+        }
       }
     );
 
     location.on('gimmickExecuted', async (gimmick: Gimmick, entity: Entity) => {
-      await gimmick.release();
+      void options.handleSave!(gimmick.release());
       if (entity.type === EntityType.Agent) {
         if (ENV.DEBUG) {
           console.log(
             `Force updating location ${locationId} with agent ${entity.id} for gimmick ${gimmick.id}`
           );
         }
+        location.pauseUpdated = true;
         void options.handleSave!(
           this.locationRepository.updateLocationStatePauseUpdateUntil(
             locationId,
@@ -904,27 +913,30 @@ export class WorldManager extends AsyncEventEmitter {
       );
       throw error;
     }
-    if (pauseUpdateDuration) {
-      const pauseUpdateUntil = new Date(Date.now() + pauseUpdateDuration);
-      if (ENV.DEBUG) {
-        console.log(
-          `Setting location ${location.model.name} pause update until ${pauseUpdateUntil}`
+
+    if (!location.pauseUpdated) {
+      if (pauseUpdateDuration) {
+        const pauseUpdateUntil = new Date(Date.now() + pauseUpdateDuration);
+        if (ENV.DEBUG) {
+          console.log(
+            `Setting location ${location.model.name} pause update until ${pauseUpdateUntil}`
+          );
+        }
+        await this.locationRepository.updateLocationStatePauseUpdateUntil(
+          locationId,
+          pauseUpdateUntil,
+          LocationPauseReason.SCHEDULED_PAUSE
+        );
+      } else {
+        if (ENV.DEBUG) {
+          console.log(`Location ${location.model.name} paused update`);
+        }
+        await this.locationRepository.updateLocationStatePauseUpdateUntil(
+          locationId,
+          null,
+          LocationPauseReason.UPDATE_COMPLETED
         );
       }
-      await this.locationRepository.updateLocationStatePauseUpdateUntil(
-        locationId,
-        pauseUpdateUntil,
-        LocationPauseReason.SCHEDULED_PAUSE
-      );
-    } else {
-      if (ENV.DEBUG) {
-        console.log(`Location ${location.model.name} paused update`);
-      }
-      await this.locationRepository.updateLocationStatePauseUpdateUntil(
-        locationId,
-        null,
-        LocationPauseReason.UPDATE_COMPLETED
-      );
     }
 
     if (options.postAction) {
