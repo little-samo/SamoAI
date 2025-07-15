@@ -3,10 +3,19 @@ import { zodToJsonSchema } from 'zod-to-json-schema';
 
 import type { JSONSchema7, JSONSchema7Definition } from 'json-schema';
 
-/* ---------- 0. Constants & Helpers ------------------------ */
+/* ------------------------------------------------------------------
+ * 0. Constants & helper utilities
+ * ----------------------------------------------------------------*/
 
-// Core JSON Schema keys that we preserve during pruning
-const CORE_KEYS = new Set<keyof JSONSchema7>([
+/** Extended JSONSchema7 type with custom properties */
+type ExtendedJSONSchema7 = JSONSchema7 & {
+  nullable?: boolean;
+  isBigInt?: boolean;
+  coerceType?: 'bigint' | 'number' | 'string' | 'boolean';
+};
+
+/** JSON-Schema keywords to keep when pruning */
+const CORE_KEYS = new Set<keyof ExtendedJSONSchema7>([
   'type',
   'description',
   'pattern',
@@ -21,44 +30,94 @@ const CORE_KEYS = new Set<keyof JSONSchema7>([
   'maxLength',
   'minimum',
   'maximum',
+  'exclusiveMinimum',
+  'exclusiveMaximum',
+  'multipleOf',
   'anyOf',
   'oneOf',
   'allOf',
+  'format',
+  'nullable',
+  'isBigInt',
+  'coerceType',
 ]);
 
-// Recursion safety limit
-const MAX_DEPTH = 5;
+/** Recursion guard – once depth is exhausted we fall back to never() */
+const MAX_DEPTH = 8;
 
+/** Exhaustiveness checker */
 function assertNever(x: never): never {
-  throw new Error(`Unexpected value: ${x as string}`);
+  throw new Error(`Unexpected value: ${String(x)}`);
 }
 
+/** Type guard for schema objects */
 function isSchemaObject(
   def: JSONSchema7Definition | MCPJsonSchema | undefined
 ): def is MCPJsonSchema {
   return typeof def === 'object' && def !== null;
 }
 
-// --- helper to append .nullable() when needed -----------------
-function applyNullable(
+/* ------------------------------------------------------------------
+ * Nullability helpers
+ * ----------------------------------------------------------------*/
+function withNullability<T extends ZodTypeAny>(
   schema: MCPJsonSchema,
-  zodSchema: ZodTypeAny
+  base: T,
+  addNullable = false
 ): ZodTypeAny {
-  return schema.nullable ? zodSchema.nullable() : zodSchema;
+  let out: ZodTypeAny = base;
+  if (schema.nullable || addNullable) out = out.nullable();
+  // optional() handled later when we know if property is required
+  return out;
 }
 
-/* ---------- 1. Zod → LLM friendly String -------------------- */
+/* ------------------------------------------------------------------
+ * 1. Zod  →  (pruned) JSON-Schema string for LLMs
+ * ----------------------------------------------------------------*/
 
 /**
- * Converts a Zod schema to an LLM-friendly JSON string by pruning non-essential properties
+ * zod-to-json-schema prints `bigint()` as `{ type:'integer', format:'int64' }`.
+ * We inject a custom flag so the inverse converter can rebuild z.coerce.bigint().
  */
-function prune(schema: JSONSchema7, depth: number = MAX_DEPTH): unknown {
+function annotateBigInts(node: Record<string, unknown>): void {
+  if (typeof node !== 'object' || node === null) return;
+
+  if (
+    (node.type === 'integer' && node.format === 'int64') ||
+    (node.type === 'string' && node.format === 'bigint')
+  ) {
+    node.isBigInt = true;
+  }
+
+  const recurse = (v: unknown): void => {
+    if (typeof v === 'object' && v !== null)
+      annotateBigInts(v as Record<string, unknown>);
+  };
+
+  if (node.properties && typeof node.properties === 'object') {
+    Object.values(node.properties).forEach(recurse);
+  }
+  if (node.items) {
+    if (Array.isArray(node.items)) {
+      node.items.forEach(recurse);
+    } else {
+      recurse(node.items);
+    }
+  }
+  ['anyOf', 'oneOf', 'allOf'].forEach((k) => {
+    const value = node[k];
+    if (Array.isArray(value)) value.forEach(recurse);
+  });
+}
+
+/** Remove noisy metadata and keep only CORE_KEYS recursively */
+function prune(schema: JSONSchema7, depth = MAX_DEPTH): JSONSchema7 {
   if (depth <= 0 || typeof schema !== 'object' || schema === null)
     return schema;
-  const dst: Record<string, unknown> = {};
 
+  const dst: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(schema)) {
-    if (!CORE_KEYS.has(k as keyof JSONSchema7)) continue;
+    if (!CORE_KEYS.has(k as keyof ExtendedJSONSchema7)) continue;
 
     switch (k) {
       case 'properties': {
@@ -88,294 +147,317 @@ function prune(schema: JSONSchema7, depth: number = MAX_DEPTH): unknown {
     }
   }
 
-  // Remove empty required array
   if (Array.isArray(dst.required) && dst.required.length === 0)
     delete dst.required;
 
-  return dst;
+  // preserve bigint flag et al.
+  if ('isBigInt' in schema) dst.isBigInt = true;
+  if ('nullable' in schema) dst.nullable = schema.nullable;
+  if ('coerceType' in schema) dst.coerceType = schema.coerceType;
+
+  return dst as JSONSchema7;
 }
 
 export function zodSchemaToLlmFriendlyString(schema: ZodTypeAny): string {
   const draft = zodToJsonSchema(schema) as JSONSchema7;
-
-  // Remove metadata that's not useful for LLMs
+  annotateBigInts(draft as Record<string, unknown>);
   delete draft.$schema;
   delete draft.$id;
   delete draft.title;
   delete draft.default;
   delete draft.examples;
-
   return JSON.stringify(prune(draft));
 }
 
-/* ---------- 2. MCP Draft-07 subset  →  Zod ------------------ */
+/* ------------------------------------------------------------------
+ * 2. Draft-07 subset (+extensions)  →  Zod
+ * ----------------------------------------------------------------*/
 
-// MCP JSON Schema type (Draft-07 subset with extensions)
 export type MCPJsonSchema = JSONSchema7 & {
+  /** OpenAPI-style nullability flag */
   nullable?: boolean;
-  discriminator?: unknown; // Not handled in this implementation
-  // Extended properties for better bigint support
+  /** Added by annotateBigInts for round-tripping */
   isBigInt?: boolean;
+  /** Explicit coercion intention coming from upstream application */
   coerceType?: 'bigint' | 'number' | 'string' | 'boolean';
 };
 
-/**
- * Converts MCP JSON Schema to Zod schema with recursion safety
- */
-function toZod(schema: MCPJsonSchema, depth: number = MAX_DEPTH): ZodTypeAny {
-  if (depth <= 0) return applyNullable(schema, z.any());
+/** Build a z.union(), collapsing size 0 → never, size 1 → identity */
+function buildUnion(parts: ZodTypeAny[]): ZodTypeAny {
+  if (parts.length === 0) return z.never();
+  if (parts.length === 1) return parts[0];
+  return z.union(parts as [ZodTypeAny, ZodTypeAny, ...ZodTypeAny[]]);
+}
 
-  // Handle bigint coercion early
-  if (schema.coerceType === 'bigint' || schema.isBigInt === true) {
-    return applyNullable(schema, z.coerce.bigint());
+function toZod(schema: MCPJsonSchema, depth = MAX_DEPTH): ZodTypeAny {
+  if (depth <= 0) return z.never();
+
+  /* ----------------------------------------------------------------
+   * 0. If the `type` itself is an array treat it as a union
+   * --------------------------------------------------------------*/
+  if (Array.isArray(schema.type)) {
+    const hasNull = schema.type.includes('null');
+    const variants = schema.type
+      .filter((t): t is NonNullable<typeof t> => t !== 'null')
+      .map((t) => toZod({ ...schema, type: t }, depth - 1));
+
+    return withNullability(schema, buildUnion(variants), hasNull);
   }
 
-  // Handle const values
+  /* ----------------------------------------------------------------
+   * 1. BigInt coercion – highest priority so it short-circuits early
+   * --------------------------------------------------------------*/
+  if (schema.coerceType === 'bigint' || schema.isBigInt) {
+    return withNullability(schema, z.coerce.bigint());
+  }
+
+  /* ----------------------------------------------------------------
+   * 2. const / enum handling
+   * --------------------------------------------------------------*/
   if ('const' in schema) {
-    return applyNullable(
-      schema,
-      z.literal(schema.const as string | number | boolean | null)
-    );
+    const constValue = schema.const;
+    if (
+      typeof constValue === 'string' ||
+      typeof constValue === 'number' ||
+      typeof constValue === 'boolean' ||
+      constValue === null
+    ) {
+      return withNullability(schema, z.literal(constValue));
+    }
+    return z.never();
   }
-
-  // Handle enum values
   if (schema.enum) {
-    if (schema.enum.length === 1) {
-      return applyNullable(
-        schema,
-        z.literal(schema.enum[0] as string | number | boolean | null)
-      );
-    }
-
-    // Handle string enums with z.enum for better type safety
-    if (schema.enum.every((e) => typeof e === 'string')) {
-      return applyNullable(
-        schema,
-        z.enum(schema.enum as [string, ...string[]])
-      );
-    }
-
-    // Handle mixed enums with union of literals
-    const literals = schema.enum
-      .filter(
-        (e): e is string | number | boolean | null =>
-          typeof e === 'string' ||
-          typeof e === 'number' ||
-          typeof e === 'boolean' ||
-          e === null
-      )
-      .map((e) => z.literal(e));
-
-    if (literals.length >= 2) {
-      return applyNullable(
-        schema,
-        z.union([literals[0], literals[1], ...literals.slice(2)])
-      );
-    } else if (literals.length === 1) {
-      return applyNullable(schema, literals[0]);
-    }
+    const literals = schema.enum.map((e) => {
+      if (
+        typeof e === 'string' ||
+        typeof e === 'number' ||
+        typeof e === 'boolean' ||
+        e === null
+      ) {
+        return z.literal(e);
+      }
+      return z.never();
+    });
+    return withNullability(schema, buildUnion(literals));
   }
 
-  // Handle composition schemas
-  if (schema.anyOf) {
-    const schemas = schema.anyOf
-      .filter(isSchemaObject)
-      .filter((s) => {
-        // Filter out {"not": {}} schemas which represent undefined/null in optional fields
-        return !(
-          s.not &&
-          typeof s.not === 'object' &&
-          Object.keys(s.not).length === 0
-        );
-      })
-      // Also filter out null type schemas from anyOf since they should be handled by nullable
+  /* ----------------------------------------------------------------
+   * 3. anyOf / oneOf / allOf  (compose recursively)
+   * --------------------------------------------------------------*/
+  const compose = (
+    key: 'anyOf' | 'oneOf' | 'allOf'
+  ): ZodTypeAny | undefined => {
+    if (!schema[key]) return undefined;
+    const arr = (schema[key] as MCPJsonSchema[]).filter(isSchemaObject);
+
+    const hasNull = arr.some((s) => s.type === 'null');
+    const variants = arr
       .filter((s) => s.type !== 'null')
       .map((s) => toZod(s, depth - 1));
 
-    if (schemas.length === 0) {
-      return applyNullable(schema, z.any());
+    if (key === 'allOf') {
+      if (variants.length === 0) return z.never();
+      if (variants.length === 1)
+        return withNullability(schema, variants[0], hasNull);
+      const intersection = variants
+        .slice(1)
+        .reduce<ZodTypeAny>((a, b) => z.intersection(a, b), variants[0]);
+      return withNullability(schema, intersection, hasNull);
     }
-    if (schemas.length >= 2) {
-      return applyNullable(
-        schema,
-        z.union([schemas[0], schemas[1], ...schemas.slice(2)])
-      );
-    } else if (schemas.length === 1) {
-      // For single schema in anyOf, check if original anyOf had null type
-      const hasNullType = schema.anyOf.some(
-        (s) => isSchemaObject(s) && s.type === 'null'
-      );
-      // Apply optional if there was a null type in the original anyOf
-      const resultSchema = hasNullType ? schemas[0].optional() : schemas[0];
-      return applyNullable(schema, resultSchema);
-    }
-  }
 
-  if (schema.oneOf) {
-    const schemas = schema.oneOf
-      .filter(isSchemaObject)
-      .filter((s) => {
-        // Filter out {"not": {}} schemas which represent undefined/null in optional fields
-        return !(
-          s.not &&
-          typeof s.not === 'object' &&
-          Object.keys(s.not).length === 0
-        );
-      })
-      // Also filter out null type schemas from oneOf since they should be handled by nullable
-      .filter((s) => s.type !== 'null')
-      .map((s) => toZod(s, depth - 1));
-
-    if (schemas.length === 0) {
-      return applyNullable(schema, z.any());
+    // anyOf  → simple union
+    if (key === 'anyOf') {
+      return withNullability(schema, buildUnion(variants), hasNull);
     }
-    if (schemas.length >= 2) {
-      return applyNullable(
-        schema,
-        z.union([schemas[0], schemas[1], ...schemas.slice(2)])
-      );
-    } else if (schemas.length === 1) {
-      // For single schema in oneOf, check if original oneOf had null type
-      const hasNullType = schema.oneOf.some(
-        (s) => isSchemaObject(s) && s.type === 'null'
-      );
-      // Apply optional if there was a null type in the original oneOf
-      const resultSchema = hasNullType ? schemas[0].optional() : schemas[0];
-      return applyNullable(schema, resultSchema);
-    }
-  }
 
-  if (schema.allOf) {
-    const schemas = schema.allOf
-      .filter(isSchemaObject)
-      .map((s) => toZod(s, depth - 1));
-    if (schemas.length === 0) return applyNullable(schema, z.any());
-    return applyNullable(
-      schema,
-      schemas.reduce((acc, cur) => acc.and(cur))
+    // oneOf → union + mutual-exclusion refine
+    const union = buildUnion(variants);
+    const exclusive = union.refine(
+      (val) => variants.filter((v) => v.safeParse(val).success).length === 1,
+      { message: 'Must match exactly one schema' }
     );
-  }
+    return withNullability(schema, exclusive, hasNull);
+  };
 
-  // Handle primitive and complex types
+  const composite = compose('anyOf') ?? compose('oneOf') ?? compose('allOf');
+  if (composite) return composite;
+
+  /* ----------------------------------------------------------------
+   * 4. Primitive & complex types
+   * --------------------------------------------------------------*/
   switch (schema.type) {
+    /* --------------------------- string -------------------------*/
     case 'string': {
-      // Check if this is a bigint type represented as string
-      if (schema.format === 'bigint' || schema.isBigInt) {
-        return applyNullable(schema, z.coerce.bigint());
+      let s = z.string();
+
+      switch (schema.format) {
+        case 'email':
+          s = s.email();
+          break;
+        case 'uri':
+        case 'url':
+          s = s.url();
+          break;
+        case 'uuid':
+          s = s.uuid();
+          break;
+        case 'date':
+          s = s.regex(/^\d{4}-\d{2}-\d{2}$/); // YYYY-MM-DD
+          break;
+        case 'date-time':
+          s = s.datetime();
+          break;
+        case 'bigint':
+          return withNullability(schema, z.coerce.bigint());
       }
 
-      let stringSchema = z.string();
-      if (schema.minLength !== undefined)
-        stringSchema = stringSchema.min(schema.minLength);
-      if (schema.maxLength !== undefined)
-        stringSchema = stringSchema.max(schema.maxLength);
+      if (schema.minLength !== undefined) s = s.min(schema.minLength);
+      if (schema.maxLength !== undefined) s = s.max(schema.maxLength);
       if (schema.pattern) {
         try {
-          stringSchema = stringSchema.regex(new RegExp(schema.pattern));
+          s = s.regex(new RegExp(schema.pattern));
         } catch {
-          // Ignore invalid regex patterns
+          /* ignore invalid regex */
         }
       }
-      return applyNullable(schema, stringSchema);
+      return withNullability(schema, s);
     }
 
+    /* --------------------------- number / integer --------------*/
     case 'number':
     case 'integer': {
-      // Check if this is a bigint type by looking at format or custom properties
       if (
         schema.format === 'bigint' ||
         schema.format === 'int64' ||
         schema.isBigInt
       ) {
-        return applyNullable(schema, z.coerce.bigint());
+        return withNullability(schema, z.coerce.bigint());
       }
 
-      let numberSchema = z.number();
-      if (schema.type === 'integer') numberSchema = numberSchema.int();
-      if (schema.minimum !== undefined)
-        numberSchema = numberSchema.min(schema.minimum);
-      if (schema.maximum !== undefined)
-        numberSchema = numberSchema.max(schema.maximum);
-      return applyNullable(schema, numberSchema);
+      let n = z.number();
+      if (schema.type === 'integer') n = n.int();
+
+      if (schema.minimum !== undefined) n = n.min(schema.minimum);
+      if (schema.maximum !== undefined) n = n.max(schema.maximum);
+      if (schema.exclusiveMinimum !== undefined)
+        n = n.gt(schema.exclusiveMinimum);
+      if (schema.exclusiveMaximum !== undefined)
+        n = n.lt(schema.exclusiveMaximum);
+
+      if (schema.multipleOf !== undefined) {
+        const m = schema.multipleOf;
+        const refined = n.refine(
+          (v) => {
+            const eps = Number.EPSILON * Math.max(1, Math.abs(v), Math.abs(m));
+            const mod = Math.abs(v % m);
+            return mod < eps || Math.abs(mod - m) < eps;
+          },
+          { message: `Must be a multiple of ${m}` }
+        );
+        return withNullability(schema, refined);
+      }
+      return withNullability(schema, n);
     }
 
+    /* --------------------------- boolean -----------------------*/
     case 'boolean':
-      return applyNullable(schema, z.boolean());
+      return withNullability(schema, z.boolean());
 
+    /* --------------------------- null --------------------------*/
     case 'null':
-      return applyNullable(schema, z.null());
+      return withNullability(schema, z.null(), true);
 
+    /* --------------------------- array -------------------------*/
     case 'array': {
-      // Handle tuple arrays (items is an array)
       if (Array.isArray(schema.items)) {
-        const itemSchemas = schema.items.map((el) =>
-          isSchemaObject(el) ? toZod(el, depth - 1) : z.any()
+        const items = schema.items.map((el) =>
+          isSchemaObject(el) ? toZod(el, depth - 1) : z.never()
         );
-        if (itemSchemas.length >= 1) {
-          return applyNullable(
-            schema,
-            z.tuple([itemSchemas[0], ...itemSchemas.slice(1)])
+
+        // tuple
+        const tuple = z.tuple(items as [ZodTypeAny, ...ZodTypeAny[]]);
+
+        // apply minItems / maxItems to tuple where relevant
+        if (schema.minItems !== undefined) {
+          const minItemsRefined = tuple.refine(
+            (v) => v.length >= schema.minItems!,
+            {
+              message: `Tuple must have at least ${schema.minItems} items`,
+            }
           );
+          if (schema.maxItems !== undefined) {
+            return withNullability(
+              schema,
+              minItemsRefined.refine((v) => v.length <= schema.maxItems!, {
+                message: `Tuple must have at most ${schema.maxItems} items`,
+              })
+            );
+          }
+          return withNullability(schema, minItemsRefined);
         }
-        return applyNullable(schema, z.tuple([]));
+        if (schema.maxItems !== undefined) {
+          const maxItemsRefined = tuple.refine(
+            (v) => v.length <= schema.maxItems!,
+            {
+              message: `Tuple must have at most ${schema.maxItems} items`,
+            }
+          );
+          return withNullability(schema, maxItemsRefined);
+        }
+
+        return withNullability(schema, tuple);
       }
 
-      // Handle regular arrays
       const itemSchema = isSchemaObject(schema.items)
         ? toZod(schema.items, depth - 1)
-        : z.any();
-      let arraySchema = z.array(itemSchema);
-
-      if (schema.minItems !== undefined)
-        arraySchema = arraySchema.min(schema.minItems);
-      if (schema.maxItems !== undefined)
-        arraySchema = arraySchema.max(schema.maxItems);
-
-      return applyNullable(schema, arraySchema);
+        : z.never();
+      let arr = z.array(itemSchema);
+      if (schema.minItems !== undefined) arr = arr.min(schema.minItems);
+      if (schema.maxItems !== undefined) arr = arr.max(schema.maxItems);
+      return withNullability(schema, arr);
     }
 
+    /* --------------------------- object ------------------------*/
     case 'object':
     case undefined: {
-      // Handle object schemas (undefined type is treated as object)
-      const shape: Record<string, ZodTypeAny> = {};
       const props = schema.properties ?? {};
-
-      for (const [key, child] of Object.entries(props)) {
-        if (isSchemaObject(child)) {
-          // Check if this child schema should be optional based on anyOf/oneOf patterns
-          const childSchema = toZod(child, depth - 1);
-          shape[key] = childSchema;
-        } else {
-          shape[key] = z.any();
-        }
+      const shape: Record<string, ZodTypeAny> = {};
+      for (const [k, v] of Object.entries(props)) {
+        shape[k] = isSchemaObject(v) ? toZod(v, depth - 1) : z.never();
       }
 
-      let objectSchema = z.object(shape);
+      // start with all required, we'll relax later if needed
+      const required = schema.required ?? [];
+      let obj: ZodTypeAny;
 
-      // Handle required fields
-      if (schema.required && schema.required.length > 0) {
-        const refinedShape: Record<string, ZodTypeAny> = {};
+      if (required.length > 0) {
+        const refined: Record<string, ZodTypeAny> = {};
         for (const [k, v] of Object.entries(shape)) {
-          // Only make non-required fields optional if they aren't already optional
-          if (schema.required.includes(k)) {
-            refinedShape[k] = v;
-          } else {
-            // Check if the field is already optional to avoid double-wrapping
-            refinedShape[k] =
-              v._def?.typeName === 'ZodOptional' ? v : v.optional();
-          }
+          refined[k] = required.includes(k) ? v : v.optional();
         }
-        objectSchema = z.object(refinedShape);
+        obj = z.object(refined);
       } else {
-        objectSchema = objectSchema.partial();
+        obj = z.object(shape).partial();
       }
 
-      // Handle additionalProperties
       if (schema.additionalProperties === false) {
-        return objectSchema.strict();
+        // Type guard to ensure obj is ZodObject
+        if (obj instanceof z.ZodObject) {
+          obj = obj.strict();
+        }
+      } else if (
+        typeof schema.additionalProperties === 'object' &&
+        schema.additionalProperties !== null
+      ) {
+        // Type guard to ensure obj is ZodObject
+        if (obj instanceof z.ZodObject) {
+          obj = obj.catchall(
+            toZod(schema.additionalProperties as MCPJsonSchema, depth - 1)
+          );
+        }
       }
 
-      return applyNullable(schema, objectSchema);
+      return withNullability(schema, obj);
     }
 
     default:
@@ -383,18 +465,13 @@ function toZod(schema: MCPJsonSchema, depth: number = MAX_DEPTH): ZodTypeAny {
   }
 }
 
-/**
- * Converts an MCP JSON Schema to a Zod schema, with optional nullable support
- */
 export function mcpSchemaToZod(schema: MCPJsonSchema): ZodTypeAny {
   return toZod(schema);
 }
 
-/**
- * Formats Zod validation errors into a readable error message string
- */
+/** Nicely format a ZodError for humans */
 export function formatZodErrorMessage(error: z.ZodError): string {
   return error.errors
-    .map((e) => `${e.path.join('.')}: ${e.message}`)
+    .map((e) => `${e.path.length ? e.path.join('.') : '(root)'}: ${e.message}`)
     .join(', ');
 }
