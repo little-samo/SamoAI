@@ -448,13 +448,19 @@ export class Agent extends Entity {
         useToolsResponse.toolCalls
       );
     } catch (error) {
+      let errorMessage;
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else {
+        errorMessage = 'Unknown error';
+      }
       await this.location.addSystemMessage(
-        `Agent ${this.model.name} failed to execute next actions: ${error}`
+        `Agent ${this.model.name} failed to execute next actions: ${errorMessage}`
       );
       await this.location.emitAsync(
         'agentExecuteNextActionsFailed',
         this,
-        error
+        errorMessage
       );
       throw error;
     }
