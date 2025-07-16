@@ -771,12 +771,14 @@ export class WorldManager extends AsyncEventEmitter {
           }
           location.pauseUpdated = true;
           void options.handleSave!(
-            this.locationRepository.updateLocationStatePauseUpdateUntil(
-              locationId,
-              new Date(),
-              LocationPauseReason.GIMMICK_EXECUTION_FAILED,
-              entity.id as AgentId
-            )
+            this.withLocationUpdateLock(locationId, async () => {
+              await this.locationRepository.updateLocationStatePauseUpdateUntil(
+                locationId,
+                new Date(),
+                LocationPauseReason.GIMMICK_EXECUTION_FAILED,
+                entity.id as AgentId
+              );
+            })
           );
         }
       }
@@ -792,12 +794,14 @@ export class WorldManager extends AsyncEventEmitter {
         }
         location.pauseUpdated = true;
         void options.handleSave!(
-          this.locationRepository.updateLocationStatePauseUpdateUntil(
-            locationId,
-            new Date(),
-            LocationPauseReason.GIMMICK_EXECUTED,
-            entity.id as AgentId
-          )
+          this.withLocationUpdateLock(locationId, async () => {
+            await this.locationRepository.updateLocationStatePauseUpdateUntil(
+              locationId,
+              new Date(),
+              LocationPauseReason.GIMMICK_EXECUTED,
+              entity.id as AgentId
+            );
+          })
         );
       }
     });
