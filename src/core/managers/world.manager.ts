@@ -760,7 +760,7 @@ export class WorldManager extends AsyncEventEmitter {
         gimmick: Gimmick,
         entity: Entity,
         _parameters: GimmickParameters,
-        _error: string | undefined
+        _errorMessage: string | undefined
       ) => {
         void options.handleSave!(gimmick.release());
         if (entity.type === EntityType.Agent) {
