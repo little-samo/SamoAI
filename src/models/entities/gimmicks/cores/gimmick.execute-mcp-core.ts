@@ -35,6 +35,8 @@ export const GimmickExecuteMcpCoreOptionsSchema = z.object({
   clientVersion: z.string().optional(),
 
   useEntityAuthorization: z.boolean().optional(),
+
+  tools: z.array(z.string()).optional(),
 });
 
 export type GimmickExecuteMcpCoreOptions = z.infer<
@@ -62,7 +64,8 @@ class McpToolsCache {
 
   public static async cacheTools(
     serverUrl: string,
-    createMcpClient: () => Promise<Client>
+    createMcpClient: () => Promise<Client>,
+    options?: GimmickExecuteMcpCoreOptions
   ): Promise<void> {
     const cachedTools = this.cachedToolsByServerUrl[serverUrl];
     if (cachedTools && cachedTools.expiresAt > new Date()) {
@@ -80,7 +83,12 @@ class McpToolsCache {
       }
 
       const tools: Record<string, McpToolDefinition> = {};
+      const toolsToInclude = new Set(options?.tools ?? []);
       for (const tool of toolsList.tools) {
+        if (toolsToInclude.size > 0 && !toolsToInclude.has(tool.name)) {
+          continue;
+        }
+
         let schema = mcpSchemaToZod(tool.inputSchema as MCPJsonSchema);
         if (schema instanceof z.ZodObject) {
           schema = schema.strict();
@@ -310,7 +318,8 @@ export class GimmickExecuteMcpCore extends GimmickCore {
     try {
       await McpToolsCache.cacheTools(
         this.serverUrl,
-        async () => await this.createMcpClient()
+        async () => await this.createMcpClient(),
+        this.options
       );
     } catch (error) {
       console.error(
