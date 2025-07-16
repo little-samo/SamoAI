@@ -402,50 +402,59 @@ export class Agent extends Entity {
     inputIndex: number = Agent.ACTION_INPUT_INDEX,
     llmIndex: number = Agent.ACTION_LLM_INDEX
   ): Promise<void> {
-    await this.location.emitAsync('agentExecuteNextActions', this);
-
-    const input = this.inputs[inputIndex];
-    if (!input) {
-      throw new Error('No input found');
-    }
-    const messages = input.build();
-    const llm = this.llms.at(llmIndex) ?? this.llms.at(Agent.MAIN_LLM_INDEX);
-    if (!llm) {
-      throw new Error('No LlmService found');
-    }
-    let useToolsResponse: LlmToolsResponse;
     try {
-      useToolsResponse = await llm.useTools(
-        messages,
-        Object.values(this.actions),
-        {
-          maxTokens: this.meta.maxTokens,
-          temperature: this.meta.temperature,
-          maxThinkingTokens: this.meta.maxThinkingTokens,
-          verbose: ENV.VERBOSE_LLM,
+      await this.location.emitAsync('agentExecuteNextActions', this);
+
+      const input = this.inputs[inputIndex];
+      if (!input) {
+        throw new Error('No input found');
+      }
+      const messages = input.build();
+      const llm = this.llms.at(llmIndex) ?? this.llms.at(Agent.MAIN_LLM_INDEX);
+      if (!llm) {
+        throw new Error('No LlmService found');
+      }
+      let useToolsResponse: LlmToolsResponse;
+      try {
+        useToolsResponse = await llm.useTools(
+          messages,
+          Object.values(this.actions),
+          {
+            maxTokens: this.meta.maxTokens,
+            temperature: this.meta.temperature,
+            maxThinkingTokens: this.meta.maxThinkingTokens,
+            verbose: ENV.VERBOSE_LLM,
+          }
+        );
+      } catch (error) {
+        if (error instanceof LlmInvalidContentError && error.llmResponse) {
+          error.llmResponse.logType = LlmUsageType.EXECUTION;
+          await this.location.emitAsync('llmUseTools', this, error.llmResponse);
         }
+        throw error;
+      }
+
+      useToolsResponse.logType = LlmUsageType.EXECUTION;
+      await this.location.emitAsync('llmUseTools', this, useToolsResponse);
+
+      for (const toolCall of useToolsResponse.toolCalls) {
+        await this.executeToolCall(toolCall);
+      }
+
+      await this.location.emitAsync(
+        'agentExecutedNextActions',
+        this,
+        messages,
+        useToolsResponse.toolCalls
       );
     } catch (error) {
-      if (error instanceof LlmInvalidContentError && error.llmResponse) {
-        error.llmResponse.logType = LlmUsageType.EXECUTION;
-        await this.location.emitAsync('llmUseTools', this, error.llmResponse);
-      }
+      void this.location.emitAsync(
+        'agentExecuteNextActionsFailed',
+        this,
+        error
+      );
       throw error;
     }
-
-    useToolsResponse.logType = LlmUsageType.EXECUTION;
-    await this.location.emitAsync('llmUseTools', this, useToolsResponse);
-
-    for (const toolCall of useToolsResponse.toolCalls) {
-      await this.executeToolCall(toolCall);
-    }
-
-    await this.location.emitAsync(
-      'agentExecutedNextActions',
-      this,
-      messages,
-      useToolsResponse.toolCalls
-    );
   }
 
   public async evaluateActionCondition(
