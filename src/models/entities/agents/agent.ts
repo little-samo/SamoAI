@@ -448,7 +448,10 @@ export class Agent extends Entity {
         useToolsResponse.toolCalls
       );
     } catch (error) {
-      void this.location.emitAsync(
+      await this.location.addSystemMessage(
+        `Agent ${this.model.name} failed to execute next actions: ${error}`
+      );
+      await this.location.emitAsync(
         'agentExecuteNextActionsFailed',
         this,
         error
