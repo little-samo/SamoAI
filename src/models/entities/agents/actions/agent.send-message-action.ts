@@ -15,7 +15,7 @@ export class AgentSendMessageAction extends AgentAction {
     switch (this.version) {
       case 1:
       default:
-        return 'Sends a message to the location. Focus on clear communication. **Ensure the response is concise and strictly adheres to length limits.** If a message is too long to be summarized effectively, you MAY send multiple messages in sequence using this tool multiple times within a single turn.';
+        return 'Sends a standard, direct message to the current location. Messages must be clear, concise, in-character, and adhere to your specified language rules. Avoid repetition by reviewing conversation history. All messages are subject to a strict length limit and will be truncated if they exceed it.';
     }
   }
 
@@ -31,14 +31,14 @@ export class AgentSendMessageAction extends AgentAction {
             .string()
             .max(messageLengthLimit)
             .describe(
-              `The message to send. **Strictly adhere to the ${messageLengthLimit} character limit, but consider leaving some buffer space as character count estimation can be inaccurate.** Text exceeding this limit **WILL BE TRUNCATED** upon execution. **Summarize or rephrase if your natural response is too long.** If summarization significantly harms the message clarity, you MAY break the response into multiple shorter messages by calling this tool multiple times in sequence within the same turn.`
+              `The content of your message. CRITICAL: Your message must be very concise and adhere strictly to a ${messageLengthLimit} character limit. Any text over this limit WILL BE TRUNCATED. To avoid this, summarize your points or rephrase to be shorter. If a message cannot be shortened without losing its meaning, you may send multiple smaller messages in sequence. Before writing, review the message history to ensure you are not repeating yourself and that your contribution is new and relevant.`
             ),
           expression: z
             .string()
             .max(messageLengthLimit)
             .nullable()
             .describe(
-              `Your outward expressions, such as facial expressions and gestures. Visible to others. Can be null to indicate no expression. Max length: ${messageLengthLimit} characters include whitespace, but consider leaving some buffer space as character count estimation can be inaccurate. Text exceeding this limit **WILL BE TRUNCATED** upon execution.`
+              `Your character's physical expression (e.g., facial expressions, gestures) that accompanies the message. This is visible to others. Keep it brief and under the ${messageLengthLimit} character limit. Can be null if no specific expression is needed.`
             ),
         });
     }
