@@ -23,6 +23,8 @@ export abstract class Entity {
 
   public authorizationHeader: string | undefined;
 
+  public updateStartedAt: Date | undefined;
+
   protected constructor(
     public readonly location: Location,
     public readonly name: string,
@@ -293,6 +295,7 @@ export abstract class Entity {
 
   public async update(): Promise<boolean> {
     this.location.updatingEntity = this;
+    this.updateStartedAt = new Date();
     return false;
   }
 

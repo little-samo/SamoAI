@@ -37,6 +37,7 @@ import { LockService, InMemoryLockService } from '../services';
 interface UpdateLocationOptions {
   ignorePauseUpdateUntil?: boolean;
   executeSpecificAgentId?: AgentId;
+  useAgentStartTimeForMessages?: boolean;
   preLoadLocation?: (locationModel: LocationModel) => Promise<void>;
   preAction?: (location: Location) => Promise<void>;
   postAction?: (location: Location) => Promise<void>;
@@ -555,6 +556,9 @@ export class WorldManager extends AsyncEventEmitter {
       }
       return location;
     }
+
+    location.useAgentStartTimeForMessages =
+      options.useAgentStartTimeForMessages ?? false;
 
     if (options.preAction) {
       await options.preAction(location);

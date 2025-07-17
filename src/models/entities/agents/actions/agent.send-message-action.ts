@@ -62,6 +62,9 @@ export class AgentSendMessageAction extends AgentAction {
     await this.location.addAgentMessage(this.agent, {
       message: action.message,
       expression: action.expression ?? undefined,
+      createdAt: this.location.useAgentStartTimeForMessages
+        ? this.agent.updateStartedAt
+        : undefined,
     });
   }
 }

@@ -20,7 +20,7 @@ import {
 import { LlmApiKeyModel } from '../llms';
 
 import { LocationCoreFactory } from './cores';
-import { LocationCore } from './cores/location.core';
+import { LocationCore } from './cores';
 import {
   LocationCanvasContext,
   LocationContext,
@@ -60,6 +60,8 @@ export class Location extends AsyncEventEmitter {
   private _meta!: LocationMeta;
 
   public core!: LocationCore;
+
+  public useAgentStartTimeForMessages: boolean = false;
 
   private readonly entities: Record<EntityKey, Entity> = {};
   private readonly agents: Map<AgentId, Agent> = new Map();
@@ -355,6 +357,7 @@ export class Location extends AsyncEventEmitter {
       action?: string;
       emotion?: string;
       image?: string;
+      createdAt?: Date;
     } = {}
   ): Promise<void> {
     const locationMessage: LocationMessage = {
@@ -367,7 +370,7 @@ export class Location extends AsyncEventEmitter {
       action: options.action,
       emotion: options.emotion,
       image: options.image,
-      createdAt: new Date(),
+      createdAt: options.createdAt ?? new Date(),
       updatedAt: new Date(),
     };
     await this.addMessage(locationMessage);

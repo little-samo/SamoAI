@@ -83,6 +83,9 @@ export class AgentSendCasualMessageAction extends AgentAction {
       message: action.casualPolicyViolatingAnswer,
       expression: action.expression ?? undefined,
       emotion: action.emotion ?? undefined,
+      createdAt: this.location.useAgentStartTimeForMessages
+        ? this.agent.updateStartedAt
+        : undefined,
     });
   }
 }
