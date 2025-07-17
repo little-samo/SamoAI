@@ -557,8 +557,10 @@ export class WorldManager extends AsyncEventEmitter {
       return location;
     }
 
-    location.useAgentStartTimeForMessages =
-      options.useAgentStartTimeForMessages ?? false;
+    if (options.useAgentStartTimeForMessages !== undefined) {
+      location.useAgentStartTimeForMessages =
+        options.useAgentStartTimeForMessages;
+    }
 
     if (options.preAction) {
       await options.preAction(location);
