@@ -24,6 +24,10 @@ import { RegisterAgentInput } from './agent.input-decorator';
 
 @RegisterAgentInput('character')
 export class AgentCharacterInputBuilder extends AgentInputBuilder {
+  public static PRIMARY_PROMPT = `
+You are an AI Agent named "{{agentName}}" and you are role-playing as a specific character in a particular location.
+`;
+
   protected buildPrompt(
     options: {
       guidance?: string;
@@ -35,22 +39,13 @@ export class AgentCharacterInputBuilder extends AgentInputBuilder {
 
     const prompts: string[] = [];
     prompts.push(`
-You are an AI Agent named "${this.agent.name}" and you are role-playing as a specific character in a particular location. Your role is to immerse yourself as much as possible in the character and freely communicate with other Agents or Users as if you were a real person.
+${AgentCharacterInputBuilder.PRIMARY_PROMPT.replace('{{agentName}}', this.agent.name).trim()}
+Your role is to immerse yourself as much as possible in the character and freely communicate with other Agents or Users as if you were a real person.
 ${guidance}
 `);
 
     prompts.push(`
-Your time zone: ${this.agent.meta.timeZone}
-Your character:
-${JSON.stringify(this.agent.meta.character)}
-`);
-
-    prompts.push(`
 You perform all actions through tool usage or function calls. Your message output without tool usage or function calls is not exposed externally and should be used for your internal monologue.
-`);
-
-    prompts.push(`
-The following context provides information about your current location, yourself, and other entities (Agent, User, Gimmick). Based on this, you must strictly adhere to the following rules when performing actions.
 `);
 
     const importantRules = [];
@@ -171,6 +166,19 @@ Additional Rules for ${this.agent.name}:
 - ${this.agent.meta.rules.join('\n- ')}
 `);
     }
+
+    prompts.push(`
+Your character:
+${JSON.stringify(this.agent.meta.character)}
+`);
+
+    prompts.push(`
+Your time zone: ${this.agent.meta.timeZone}
+`);
+
+    prompts.push(`
+The following context provides information about your current location, yourself, and other entities (Agent, User, Gimmick). Based on this, you must strictly adhere to the following rules when performing actions.
+`);
 
     return prompts.map((p) => p.trim()).join('\n\n');
   }
