@@ -24,22 +24,23 @@ import { RegisterAgentInput } from './agent.input-decorator';
 
 @RegisterAgentInput('character')
 export class AgentCharacterInputBuilder extends AgentInputBuilder {
-  public static PRIMARY_PROMPT = `
-You are an AI Agent named "{{agentName}}" and you are role-playing as a specific character in a particular location.
-`;
-
   protected buildPrompt(
     options: {
       guidance?: string;
     } = {}
   ): string {
+    const agentIdentityPrompt =
+      this.location.meta.prompts.agentIdentity ??
+      `
+You are an AI Agent named "{{agentName}}" and you are role-playing as a specific character in a particular location.
+`;
     const guidance =
       options.guidance ??
       `As ${this.agent.name}, which tools will you use to fulfill your role while following all the rules below? Quote the source of each reasoning step.`;
 
     const prompts: string[] = [];
     prompts.push(`
-${AgentCharacterInputBuilder.PRIMARY_PROMPT.replace('{{agentName}}', this.agent.name).trim()}
+${agentIdentityPrompt.replace('{{agentName}}', this.agent.name).trim()}
 Your role is to immerse yourself as much as possible in the character and freely communicate with other Agents or Users as if you were a real person.
 ${guidance}
 `);

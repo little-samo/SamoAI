@@ -5,6 +5,11 @@ export interface LocationCoreMeta {
   sequential?: boolean;
 }
 
+export interface LocationPrompts {
+  agentIdentity?: string;
+  [key: string]: string | undefined;
+}
+
 export interface LocationCanvasMeta {
   name: string;
   description: string;
@@ -22,6 +27,7 @@ export interface LocationMeta {
   description: string;
   imageDescriptions: string[];
   renderingDescription?: string;
+  prompts: LocationPrompts;
 
   messageLimit: number;
   messageLengthLimit: number;
@@ -47,6 +53,7 @@ export const DEFAULT_LOCATION_META: LocationMeta = {
   core: 'update_once',
   description: '',
   imageDescriptions: [],
+  prompts: {},
 
   messageLimit: 20,
   messageLengthLimit: 500,
