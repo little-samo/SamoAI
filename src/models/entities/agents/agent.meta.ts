@@ -2,6 +2,11 @@ import { LlmPlatform, LlmServiceOptions } from '@little-samo/samo-ai/common';
 
 import { EntityMeta } from '../entity.meta';
 
+export interface AgentPrompts {
+  agentIdentity?: string;
+  [key: string]: string | undefined;
+}
+
 export type AgentLlmMeta = {
   platform: LlmPlatform;
   model: string;
@@ -9,6 +14,7 @@ export type AgentLlmMeta = {
 
 export interface AgentMeta extends EntityMeta {
   core: string;
+  prompts: AgentPrompts;
 
   temperature: number;
   maxTokens: number;
@@ -80,6 +86,7 @@ export interface AgentMeta extends EntityMeta {
 
 export const DEFAULT_AGENT_META: AgentMeta = {
   core: 'execute_actions',
+  prompts: {},
 
   temperature: 0.5,
   maxTokens: 2048,

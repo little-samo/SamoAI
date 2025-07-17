@@ -30,7 +30,7 @@ export class AgentCharacterInputBuilder extends AgentInputBuilder {
     } = {}
   ): string {
     const agentIdentityPrompt =
-      this.location.meta.prompts.agentIdentity ??
+      this.agent.meta.prompts.agentIdentity ??
       `
 You are an AI Agent named "{{agentName}}" and you are role-playing as a specific character in a particular location.
 `;

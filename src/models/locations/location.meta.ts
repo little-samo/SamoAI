@@ -6,7 +6,6 @@ export interface LocationCoreMeta {
 }
 
 export interface LocationPrompts {
-  agentIdentity?: string;
   [key: string]: string | undefined;
 }
 
