@@ -93,7 +93,7 @@ export class WorldManager extends AsyncEventEmitter {
     this.itemRepository = options.itemRepository;
   }
 
-  private async withLocationUpdateLock<T>(
+  public async withLocationUpdateLock<T>(
     locationId: LocationId,
     operation: () => Promise<T>
   ): Promise<T> {
@@ -112,7 +112,7 @@ export class WorldManager extends AsyncEventEmitter {
     }
   }
 
-  private async withLocationUpdateLockNoRetry<T>(
+  public async withLocationUpdateLockNoRetry<T>(
     locationId: LocationId,
     operation: () => Promise<T>
   ): Promise<T | null> {
@@ -134,7 +134,7 @@ export class WorldManager extends AsyncEventEmitter {
     }
   }
 
-  private async withAgentSummaryUpdateLock<T>(
+  public async withAgentSummaryUpdateLock<T>(
     agentId: AgentId,
     operation: () => Promise<T>
   ): Promise<T> {
@@ -153,7 +153,7 @@ export class WorldManager extends AsyncEventEmitter {
     }
   }
 
-  private async withAgentMemoryUpdateLock<T>(
+  public async withAgentMemoryUpdateLock<T>(
     agentId: AgentId,
     operation: () => Promise<T>
   ): Promise<T> {
