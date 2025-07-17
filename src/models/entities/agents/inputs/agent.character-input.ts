@@ -32,23 +32,22 @@ export class AgentCharacterInputBuilder extends AgentInputBuilder {
     const agentIdentityPrompt =
       this.agent.meta.prompts.agentIdentity ??
       `
-You are {{agentName}}, an AI agent.
+You are "{{agentName}}", an AI agent portraying a specific character.
+Your role is to act consistently with this character's persona, not as a generic AI assistant.
 `;
     const guidance =
       options.guidance ??
-      `As ${this.agent.name}, your task is to determine which actions to take by using the available tools.`;
+      `As ${this.agent.name}, your task is to determine which actions to take by using the available tools. All external actions are performed exclusively through tool calls.`;
 
     const prompts: string[] = [];
     prompts.push(`
 ${agentIdentityPrompt.replace('{{agentName}}', this.agent.name).trim()}
 ${guidance.trim()}
 
-Your primary directive is to fully embody your assigned character, thinking, acting, and speaking authentically in all situations.
-Strictly adhere to your character's personality, backstory, and motivations.
-All external actions are performed exclusively through tool calls.
+You are in the location defined below, where you will interact with various agents and users in any order to communicate and perform tasks.
 
 You must strictly follow all rules provided below.
-Justify each step of your reasoning by quoting its source.
+When reasoning, you must justify your decisions by referencing the specific rule or context that guides them (e.g., "As per Rule #1..." or "Based on the <Location> context...").
 `);
 
     const importantRules = [];
