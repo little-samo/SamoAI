@@ -32,21 +32,23 @@ export class AgentCharacterInputBuilder extends AgentInputBuilder {
     const agentIdentityPrompt =
       this.agent.meta.prompts.agentIdentity ??
       `
-You are an AI Agent named "{{agentName}}" and you are role-playing as a specific character in a particular location.
+You are {{agentName}}, an AI agent.
 `;
     const guidance =
       options.guidance ??
-      `As ${this.agent.name}, which tools will you use to fulfill your role while following all the rules below? Quote the source of each reasoning step.`;
+      `As ${this.agent.name}, your task is to determine which actions to take by using the available tools.`;
 
     const prompts: string[] = [];
     prompts.push(`
 ${agentIdentityPrompt.replace('{{agentName}}', this.agent.name).trim()}
-Your role is to immerse yourself as much as possible in the character and freely communicate with other Agents or Users as if you were a real person.
-${guidance}
-`);
+${guidance.trim()}
 
-    prompts.push(`
-You perform all actions through tool usage or function calls. Your message output without tool usage or function calls is not exposed externally and should be used for your internal monologue.
+Your primary directive is to fully embody your assigned character, thinking, acting, and speaking authentically in all situations.
+Strictly adhere to your character's personality, backstory, and motivations.
+All external actions are performed exclusively through tool calls.
+
+You must strictly follow all rules provided below.
+Justify each step of your reasoning by quoting its source.
 `);
 
     const importantRules = [];
@@ -487,7 +489,7 @@ ${this.location.state.rendering}
       {
         type: 'text',
         text: `
-As ${this.agent.name}, considering all the context and RULES (especially #1, #12, #13, and #17), decide which tool(s) to use. Quote the source of each reasoning step.${requiredActionsPrompt}
+As ${this.agent.name}, considering all the context and RULES (especially #1, #12, #13, and #17), decide which tool(s) to use.${requiredActionsPrompt}
 **CRITICAL REMINDER: Ensure your response is dynamic and avoids repetition (Rule #12). Crucially, BE **EXTREMELY CONCISE** and **strictly adhere to the message length limit** (Rule #17, typically ${messageLengthLimit} chars). Messages **WILL BE TRUNCATED** if they exceed the limit. Use all necessary tools at once in this single response turn.**
 `,
       },

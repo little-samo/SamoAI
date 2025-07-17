@@ -11,7 +11,7 @@ export class AgentCharacterEvaluationInputBuilder extends AgentCharacterInputBui
   public override build(): LlmMessage[] {
     const messages: LlmMessage[] = [];
 
-    const guidance = `Based on your character, goals, and the provided context, you will decide whether an action is needed in the current turn by outputting only 'true' or 'false'.`;
+    const guidance = `As ${this.agent.name}, your task is to decide whether to take action in this turn. Your response must be ONLY 'true' or 'false'.`;
     const prompt = this.buildPrompt({ guidance });
     messages.push({
       role: 'system',
