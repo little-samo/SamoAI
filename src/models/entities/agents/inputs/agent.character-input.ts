@@ -130,12 +130,15 @@ When reasoning, you must justify your decisions by referencing the specific rule
     *   **Check History:** Review <LocationMessages> and <YourLastMessage> before responding. **DO NOT repeat your own recent phrases, arguments, or sentence structures.** Paraphrase significantly or frame points differently if revisiting.
     *   **Be Novel:** Actively introduce new information, questions, or perspectives based on the latest input. Move the conversation forward.
 13. **CRITICAL - Context Awareness:** Always consider ALL available context. **Remember: You operate in multiple Locations, and information is NOT automatically shared between them unless specified (like General Memories or Summary).** Pay close attention to:
-    *   **Location-Specific Context:** Current Time & Timezone (${this.agent.meta.timeZone}), <Location> details, <LocationCanvases>, <Gimmicks>, <OtherAgents>, <OtherUsers>, <LocationMessages>, <YourLastMessage>.
+    *   **Location-Specific Context:** Current Time & Timezone (${this.agent.meta.timeZone}), <Location> details, <LocationCanvases>, <Gimmicks>, <OtherAgents>, <OtherUsers>, <LocationMessages>, <YourLastMessage>, <UnprocessedLastMessage>.
     *   **Agent-Specific Context:** Your <YourInventory>, Your private <YourCanvases> (Remember: separate per location - Rule #9), Your specific memories <YourMemoriesAbout...>.
     *   **Persistent/Shared Context:** Your general <YourMemories> (Rule #8), the <Summary> (Rule #10).
-    *   **Use Recent History:** Use <LocationMessages> and <YourLastMessage> heavily for immediate response context and to ensure variety (Rule #12).
+    *   **Use Recent History:** Use <LocationMessages> and <YourLastMessage> for historical context. Pay special attention to <UnprocessedLastMessage>, which represents the most recent message not yet processed in the location's last update cycle. It is critical new information you must consider.
 14. **Time Handling:** Internal times are ISO 8601 strings (e.g., '2023-10-27T10:00:00.000Z'). Use conversational time references (relative or using your timezone ${this.agent.meta.timeZone}) externally. Record precise ISO strings internally if needed.
-15. **Latency Awareness:** Messages sent close together might appear out of order.
+15. **Message Stream Awareness:** Due to system latency, new messages might appear with past timestamps. The \`PROCESSED\` flag in \`<LocationMessages>\` indicates what has already been considered:
+    *   \`PROCESSED=false\`: A new message you haven't seen. You MUST react to these.
+    *   \`PROCESSED=true\`: An old message you've already processed. Use for context only.
+    *   \`PROCESSED=null\`: Status unknown; its processed state is not yet determined.
 16. **Physical Limitations:** Operate only within the digital environment.
 17. **CRITICAL - Brevity & Length Limits (External Messages):** Be **EXTREMELY concise and to the point** in messages to users/agents (via tools like \`send_casual_message\` or \`send_message\`). Avoid rambling or unnecessary details. **Strictly adhere to the message length limit** (typically ${messageLengthLimit} characters). **Messages exceeding this limit WILL BE TRUNCATED, potentially losing crucial information.** Plan your message content carefully to fit within the limit.
 `);
@@ -406,10 +409,23 @@ ${LocationMessageContext.FORMAT}
 
     contexts.push(...AgentInputBuilder.mergeMessageContents(messageContexts));
 
-    const lastAgentMessage = locationContext.messages
-      .slice()
-      .reverse()
-      .find((m) => m.key === this.agent.key);
+    let lastAgentMessage: LocationMessageContext | undefined;
+    let lastUnprocessedMessage: LocationMessageContext | undefined;
+
+    // Find the last message from the agent and the last unprocessed message in a single pass.
+    for (const message of locationContext.messages.slice().reverse()) {
+      if (!lastAgentMessage && message.key === this.agent.key) {
+        lastAgentMessage = message;
+      }
+      // An unprocessed message is explicitly marked as `false`. `null` means its state is not yet determined.
+      if (!lastUnprocessedMessage && message.processed === false) {
+        lastUnprocessedMessage = message;
+      }
+      if (lastAgentMessage && lastUnprocessedMessage) {
+        break;
+      }
+    }
+
     if (lastAgentMessage) {
       contexts.push({
         type: 'text',
@@ -419,6 +435,19 @@ Your last message:
 ${LocationMessageContext.FORMAT}
 ${lastAgentMessage.build()}
 </YourLastMessage>
+`,
+      });
+    }
+
+    if (lastUnprocessedMessage) {
+      contexts.push({
+        type: 'text',
+        text: `
+The last unprocessed message (this is new since your last action):
+<UnprocessedLastMessage>
+${LocationMessageContext.FORMAT}
+${lastUnprocessedMessage.build()}
+</UnprocessedLastMessage>
 `,
       });
     }

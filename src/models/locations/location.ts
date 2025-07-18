@@ -50,6 +50,7 @@ export class Location extends AsyncEventEmitter {
       expression: message.expression,
       action: message.action,
       image: message.image,
+      processed: message.processed,
       created: message.createdAt,
     });
   }

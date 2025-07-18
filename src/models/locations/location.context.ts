@@ -10,12 +10,13 @@ export interface LocationMessageContextOptions {
   expression?: string;
   action?: string;
   image?: string;
+  processed?: boolean;
   created: string | Date;
 }
 
 export class LocationMessageContext extends Context {
   public static readonly FORMAT =
-    'CREATED\tENTITY_KEY\tTARGET_KEY\tNAME\tMESSAGE\tEXPRESSION\tACTION';
+    'CREATED\tPROCESSED\tENTITY_KEY\tTARGET_KEY\tNAME\tMESSAGE\tEXPRESSION\tACTION';
 
   public readonly key: EntityKey;
   public readonly targetKey?: EntityKey;
@@ -24,6 +25,7 @@ export class LocationMessageContext extends Context {
   public readonly expression?: string;
   public readonly action?: string;
   public readonly image?: string;
+  public readonly processed?: boolean;
   public readonly created: Date;
 
   public constructor(options: LocationMessageContextOptions) {
@@ -36,6 +38,7 @@ export class LocationMessageContext extends Context {
     this.expression = options.expression;
     this.action = options.action;
     this.image = options.image;
+    this.processed = options.processed;
     this.created = new Date(options.created);
   }
 
@@ -49,7 +52,9 @@ export class LocationMessageContext extends Context {
     if (this.image) {
       action = `UPLOAD_IMAGE`;
     }
-    return `${this.created.toISOString()}\t${this.key}\t${targetKey}\t${JSON.stringify(this.name)}\t${message}\t${expression}\t${action}`;
+    const processed =
+      this.processed === undefined ? 'null' : this.processed ? 'true' : 'false';
+    return `${this.created.toISOString()}\t${processed}\t${this.key}\t${targetKey}\t${JSON.stringify(this.name)}\t${message}\t${expression}\t${action}`;
   }
 }
 

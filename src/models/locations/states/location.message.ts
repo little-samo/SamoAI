@@ -19,6 +19,9 @@ export interface LocationMessage {
 
   image?: string;
 
+  // Flag to indicate if this message has been processed in location update
+  processed?: boolean;
+
   updatedAt: Date;
   createdAt: Date;
 }
