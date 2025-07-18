@@ -530,385 +530,390 @@ export class WorldManager extends AsyncEventEmitter {
       await save;
     };
 
-    const location = await this.getLocation(locationId, {
-      llmApiKeyUserId,
-      preLoadLocation: options.preLoadLocation,
-    });
-    if (location.getAgentCount() === 0) {
-      console.log(`No agents in location ${locationId}, pausing update`);
-      await this.locationRepository.updateLocationStatePauseUpdateUntil(
-        locationId,
-        null,
-        LocationPauseReason.NO_AGENTS
+    try {
+      const location = await this.getLocation(locationId, {
+        llmApiKeyUserId,
+        preLoadLocation: options.preLoadLocation,
+      });
+      if (location.getAgentCount() === 0) {
+        console.log(`No agents in location ${locationId}, pausing update`);
+        await this.locationRepository.updateLocationStatePauseUpdateUntil(
+          locationId,
+          null,
+          LocationPauseReason.NO_AGENTS
+        );
+        return location;
+      }
+
+      if (
+        !options.ignorePauseUpdateUntil &&
+        location.state.pauseUpdateUntil &&
+        new Date(location.state.pauseUpdateUntil).getTime() > Date.now()
+      ) {
+        if (ENV.DEBUG) {
+          console.log(
+            `Location ${locationId} paused update until ${location.state.pauseUpdateUntil}`
+          );
+        }
+        return location;
+      }
+
+      if (options.useAgentStartTimeForMessages !== undefined) {
+        location.useAgentStartTimeForMessages =
+          options.useAgentStartTimeForMessages;
+      }
+
+      if (options.preAction) {
+        await options.preAction(location);
+      }
+
+      location.on(
+        'messageAdded',
+        (location: Location, message: LocationMessage) => {
+          void options.handleSave!(
+            this.addLocationMessage(location.id, message)
+          );
+        }
       );
-      return location;
-    }
 
-    if (
-      !options.ignorePauseUpdateUntil &&
-      location.state.pauseUpdateUntil &&
-      new Date(location.state.pauseUpdateUntil).getTime() > Date.now()
-    ) {
-      if (ENV.DEBUG) {
-        console.log(
-          `Location ${locationId} paused update until ${location.state.pauseUpdateUntil}`
-        );
-      }
-      return location;
-    }
+      location.on(
+        'canvasUpdated',
+        (
+          location: Location,
+          modifierEntityType: EntityType,
+          modifierEntityId: EntityId,
+          canvasName: string,
+          text: string
+        ) => {
+          void options.handleSave!(
+            this.locationRepository.updateLocationStateCanvas(
+              location.id,
+              canvasName,
+              modifierEntityType,
+              modifierEntityId,
+              text
+            )
+          );
+        }
+      );
 
-    if (options.useAgentStartTimeForMessages !== undefined) {
-      location.useAgentStartTimeForMessages =
-        options.useAgentStartTimeForMessages;
-    }
+      location.on(
+        'canvasEdited',
+        (
+          location: Location,
+          modifierEntityType: EntityType,
+          modifierEntityId: EntityId,
+          canvasName: string,
+          existingContent: string,
+          newContent: string,
+          text: string
+        ) => {
+          void options.handleSave!(
+            this.locationRepository.updateLocationStateCanvas(
+              location.id,
+              canvasName,
+              modifierEntityType,
+              modifierEntityId,
+              text
+            )
+          );
+        }
+      );
 
-    if (options.preAction) {
-      await options.preAction(location);
-    }
+      location.on(
+        'agentUpdateMemory',
+        (agent: Agent, state: AgentState, index: number, memory: string) => {
+          void options.handleSave!(
+            this.agentRepository.updateAgentStateMemory(
+              agent.model.id as AgentId,
+              index,
+              memory
+            )
+          );
+        }
+      );
 
-    location.on(
-      'messageAdded',
-      (location: Location, message: LocationMessage) => {
-        void options.handleSave!(this.addLocationMessage(location.id, message));
-      }
-    );
+      location.on(
+        'agentUpdateEntityMemory',
+        (
+          agent: Agent,
+          state: AgentEntityState,
+          index: number,
+          memory: string
+        ) => {
+          void options.handleSave!(
+            this.agentRepository.updateAgentEntityStateMemory(
+              agent.model.id as AgentId,
+              state.targetType,
+              state.targetId,
+              index,
+              memory
+            )
+          );
+        }
+      );
 
-    location.on(
-      'canvasUpdated',
-      (
-        location: Location,
-        modifierEntityType: EntityType,
-        modifierEntityId: EntityId,
-        canvasName: string,
-        text: string
-      ) => {
-        void options.handleSave!(
-          this.locationRepository.updateLocationStateCanvas(
-            location.id,
-            canvasName,
-            modifierEntityType,
-            modifierEntityId,
-            text
-          )
-        );
-      }
-    );
+      location.on(
+        'agentUpdateExpression',
+        (agent: Agent, state: LocationEntityState, expression: string) => {
+          void options.handleSave!(
+            this.locationRepository.updateLocationEntityStateExpression(
+              locationId,
+              state.targetType,
+              state.targetId,
+              expression
+            )
+          );
+        }
+      );
 
-    location.on(
-      'canvasEdited',
-      (
-        location: Location,
-        modifierEntityType: EntityType,
-        modifierEntityId: EntityId,
-        canvasName: string,
-        existingContent: string,
-        newContent: string,
-        text: string
-      ) => {
-        void options.handleSave!(
-          this.locationRepository.updateLocationStateCanvas(
-            location.id,
-            canvasName,
-            modifierEntityType,
-            modifierEntityId,
-            text
-          )
-        );
-      }
-    );
+      location.on(
+        'agentUpdateActive',
+        (agent: Agent, state: LocationEntityState, isActive: boolean) => {
+          void options.handleSave!(
+            this.locationRepository.updateLocationEntityStateIsActive(
+              locationId,
+              state.targetType,
+              state.targetId,
+              isActive
+            )
+          );
+        }
+      );
 
-    location.on(
-      'agentUpdateMemory',
-      (agent: Agent, state: AgentState, index: number, memory: string) => {
-        void options.handleSave!(
-          this.agentRepository.updateAgentStateMemory(
-            agent.model.id as AgentId,
-            index,
-            memory
-          )
-        );
-      }
-    );
+      location.on(
+        'agentExecutedNextActions',
+        (agent: Agent, messages: LlmMessage[], toolCalls: LlmToolCall[]) => {
+          void options.handleSave!(
+            Promise.all([
+              this.updateAgentSummary(agent, messages, toolCalls),
+              this.updateAgentMemory(agent, messages, toolCalls),
+            ])
+          );
+        }
+      );
 
-    location.on(
-      'agentUpdateEntityMemory',
-      (
-        agent: Agent,
-        state: AgentEntityState,
-        index: number,
-        memory: string
-      ) => {
-        void options.handleSave!(
-          this.agentRepository.updateAgentEntityStateMemory(
-            agent.model.id as AgentId,
-            state.targetType,
-            state.targetId,
-            index,
-            memory
-          )
-        );
-      }
-    );
+      location.on(
+        'gimmickOccupied',
+        (gimmick: Gimmick, entity: Entity, occupationUntil?: Date) => {
+          void options.handleSave!(
+            this.gimmickRepository.updateGimmickStateOccupier(
+              locationId,
+              gimmick.id,
+              entity.type,
+              entity.id,
+              occupationUntil
+            )
+          );
+        }
+      );
 
-    location.on(
-      'agentUpdateExpression',
-      (agent: Agent, state: LocationEntityState, expression: string) => {
-        void options.handleSave!(
-          this.locationRepository.updateLocationEntityStateExpression(
-            locationId,
-            state.targetType,
-            state.targetId,
-            expression
-          )
-        );
-      }
-    );
-
-    location.on(
-      'agentUpdateActive',
-      (agent: Agent, state: LocationEntityState, isActive: boolean) => {
-        void options.handleSave!(
-          this.locationRepository.updateLocationEntityStateIsActive(
-            locationId,
-            state.targetType,
-            state.targetId,
-            isActive
-          )
-        );
-      }
-    );
-
-    location.on(
-      'agentExecutedNextActions',
-      (agent: Agent, messages: LlmMessage[], toolCalls: LlmToolCall[]) => {
-        void options.handleSave!(
-          Promise.all([
-            this.updateAgentSummary(agent, messages, toolCalls),
-            this.updateAgentMemory(agent, messages, toolCalls),
-          ])
-        );
-      }
-    );
-
-    location.on(
-      'gimmickOccupied',
-      (gimmick: Gimmick, entity: Entity, occupationUntil?: Date) => {
+      location.on('gimmickReleased', (gimmick: Gimmick) => {
         void options.handleSave!(
           this.gimmickRepository.updateGimmickStateOccupier(
             locationId,
-            gimmick.id,
-            entity.type,
-            entity.id,
-            occupationUntil
+            gimmick.id
           )
         );
-      }
-    );
+      });
 
-    location.on('gimmickReleased', (gimmick: Gimmick) => {
-      void options.handleSave!(
-        this.gimmickRepository.updateGimmickStateOccupier(
-          locationId,
-          gimmick.id
-        )
-      );
-    });
-
-    async function handleGimmickExecuting(
-      gimmick: Gimmick,
-      entity: Entity,
-      parameters: GimmickParameters,
-      promise: Promise<boolean>
-    ): Promise<void> {
-      try {
-        await options.handleSave!(promise);
-      } catch (error) {
-        console.error(error);
-
-        let errorMessage;
-        if (error instanceof Error) {
-          errorMessage = error.message;
-        } else {
-          errorMessage = 'Unknown error';
-        }
-
-        await gimmick.location.addSystemMessage(
-          `${entity.type} ${entity.name} failed to execute ${gimmick.key}: ${errorMessage}`
-        );
-
-        await gimmick.location.emitAsync(
-          'gimmickExecutionFailed',
-          gimmick,
-          entity,
-          parameters,
-          errorMessage
-        );
-      }
-    }
-
-    location.on(
-      'gimmickExecuting',
-      (
+      async function handleGimmickExecuting(
         gimmick: Gimmick,
         entity: Entity,
         parameters: GimmickParameters,
         promise: Promise<boolean>
-      ) => {
-        void options.handleSave!(
-          handleGimmickExecuting(gimmick, entity, parameters, promise)
-        );
-      }
-    );
+      ): Promise<void> {
+        try {
+          await options.handleSave!(promise);
+        } catch (error) {
+          console.error(error);
 
-    location.on(
-      'gimmickExecutionFailed',
-      (
-        gimmick: Gimmick,
-        entity: Entity,
-        _parameters: GimmickParameters,
-        _errorMessage: string
-      ) => {
-        void options.handleSave!(gimmick.release());
-        if (entity.type === EntityType.Agent) {
-          if (ENV.DEBUG) {
-            console.log(
-              `Force updating location ${locationId} with agent ${entity.id} for gimmick ${gimmick.id}`
+          let errorMessage;
+          if (error instanceof Error) {
+            errorMessage = error.message;
+          } else {
+            errorMessage = 'Unknown error';
+          }
+
+          await gimmick.location.addSystemMessage(
+            `${entity.type} ${entity.name} failed to execute ${gimmick.key}: ${errorMessage}`
+          );
+
+          await gimmick.location.emitAsync(
+            'gimmickExecutionFailed',
+            gimmick,
+            entity,
+            parameters,
+            errorMessage
+          );
+        }
+      }
+
+      location.on(
+        'gimmickExecuting',
+        (
+          gimmick: Gimmick,
+          entity: Entity,
+          parameters: GimmickParameters,
+          promise: Promise<boolean>
+        ) => {
+          void options.handleSave!(
+            handleGimmickExecuting(gimmick, entity, parameters, promise)
+          );
+        }
+      );
+
+      location.on(
+        'gimmickExecutionFailed',
+        (
+          gimmick: Gimmick,
+          entity: Entity,
+          _parameters: GimmickParameters,
+          _errorMessage: string
+        ) => {
+          void options.handleSave!(gimmick.release());
+          if (entity.type === EntityType.Agent) {
+            if (ENV.DEBUG) {
+              console.log(
+                `Force updating location ${locationId} with agent ${entity.id} for gimmick ${gimmick.id}`
+              );
+            }
+            location.pauseUpdated = true;
+            void options.handleSave!(
+              this.withLocationUpdateLock(locationId, async () => {
+                await this.locationRepository.updateLocationStatePauseUpdateUntil(
+                  locationId,
+                  new Date(),
+                  LocationPauseReason.GIMMICK_EXECUTION_FAILED,
+                  entity.id as AgentId
+                );
+              })
             );
           }
-          location.pauseUpdated = true;
-          void options.handleSave!(
-            this.withLocationUpdateLock(locationId, async () => {
-              await this.locationRepository.updateLocationStatePauseUpdateUntil(
-                locationId,
-                new Date(),
-                LocationPauseReason.GIMMICK_EXECUTION_FAILED,
-                entity.id as AgentId
+        }
+      );
+
+      location.on(
+        'gimmickExecuted',
+        async (gimmick: Gimmick, entity: Entity) => {
+          void options.handleSave!(gimmick.release());
+          if (entity.type === EntityType.Agent) {
+            if (ENV.DEBUG) {
+              console.log(
+                `Force updating location ${locationId} with agent ${entity.id} for gimmick ${gimmick.id}`
               );
+            }
+            location.pauseUpdated = true;
+            void options.handleSave!(
+              this.withLocationUpdateLock(locationId, async () => {
+                await this.locationRepository.updateLocationStatePauseUpdateUntil(
+                  locationId,
+                  new Date(),
+                  LocationPauseReason.GIMMICK_EXECUTED,
+                  entity.id as AgentId
+                );
+              })
+            );
+          }
+        }
+      );
+
+      location.on(
+        'entityAddItem',
+        async (
+          entity: Entity,
+          dataId: ItemDataId,
+          count: number,
+          stackable: boolean,
+          reason?: string
+        ) => {
+          if (stackable) {
+            await options.handleSave!(
+              this.itemRepository.addOrCreateItemModel(
+                entity.key,
+                dataId,
+                count,
+                {
+                  reason,
+                }
+              )
+            );
+          } else {
+            await Promise.all(
+              Array.from({ length: count }, async () => {
+                await options.handleSave!(
+                  this.itemRepository.addOrCreateItemModel(
+                    entity.key,
+                    dataId,
+                    1,
+                    {
+                      reason,
+                    }
+                  )
+                );
+              })
+            );
+          }
+        }
+      );
+
+      location.on(
+        'entityRemoveItem',
+        async (
+          entity: Entity,
+          item: ItemModel,
+          count: number,
+          reason?: string
+        ) => {
+          await options.handleSave!(
+            this.itemRepository.removeItemModel(entity.key, item, count, {
+              reason,
             })
           );
         }
-      }
-    );
+      );
 
-    location.on('gimmickExecuted', async (gimmick: Gimmick, entity: Entity) => {
-      void options.handleSave!(gimmick.release());
-      if (entity.type === EntityType.Agent) {
-        if (ENV.DEBUG) {
-          console.log(
-            `Force updating location ${locationId} with agent ${entity.id} for gimmick ${gimmick.id}`
-          );
-        }
-        location.pauseUpdated = true;
-        void options.handleSave!(
-          this.withLocationUpdateLock(locationId, async () => {
-            await this.locationRepository.updateLocationStatePauseUpdateUntil(
-              locationId,
-              new Date(),
-              LocationPauseReason.GIMMICK_EXECUTED,
-              entity.id as AgentId
-            );
-          })
-        );
-      }
-    });
-
-    location.on(
-      'entityAddItem',
-      async (
-        entity: Entity,
-        dataId: ItemDataId,
-        count: number,
-        stackable: boolean,
-        reason?: string
-      ) => {
-        if (stackable) {
+      location.on(
+        'entityTransferItem',
+        async (
+          entity: Entity,
+          item: ItemModel,
+          count: number,
+          targetEntityKey: EntityKey,
+          reason?: string
+        ) => {
           await options.handleSave!(
-            this.itemRepository.addOrCreateItemModel(
+            this.itemRepository.transferItemModel(
               entity.key,
-              dataId,
+              item,
+              targetEntityKey,
               count,
               {
                 reason,
               }
             )
           );
-        } else {
-          await Promise.all(
-            Array.from({ length: count }, async () => {
-              await options.handleSave!(
-                this.itemRepository.addOrCreateItemModel(
-                  entity.key,
-                  dataId,
-                  1,
-                  {
-                    reason,
-                  }
-                )
-              );
-            })
+        }
+      );
+
+      location.on(
+        'entityUpdateCanvas',
+        (entity: Entity, canvasName: string, text: string) => {
+          void options.handleSave!(
+            this.locationRepository.updateLocationEntityStateCanvas(
+              locationId,
+              entity.type,
+              entity.id,
+              canvasName,
+              text
+            )
           );
         }
-      }
-    );
+      );
 
-    location.on(
-      'entityRemoveItem',
-      async (
-        entity: Entity,
-        item: ItemModel,
-        count: number,
-        reason?: string
-      ) => {
-        await options.handleSave!(
-          this.itemRepository.removeItemModel(entity.key, item, count, {
-            reason,
-          })
-        );
-      }
-    );
-
-    location.on(
-      'entityTransferItem',
-      async (
-        entity: Entity,
-        item: ItemModel,
-        count: number,
-        targetEntityKey: EntityKey,
-        reason?: string
-      ) => {
-        await options.handleSave!(
-          this.itemRepository.transferItemModel(
-            entity.key,
-            item,
-            targetEntityKey,
-            count,
-            {
-              reason,
-            }
-          )
-        );
-      }
-    );
-
-    location.on(
-      'entityUpdateCanvas',
-      (entity: Entity, canvasName: string, text: string) => {
-        void options.handleSave!(
-          this.locationRepository.updateLocationEntityStateCanvas(
-            locationId,
-            entity.type,
-            entity.id,
-            canvasName,
-            text
-          )
-        );
-      }
-    );
-
-    let pauseUpdateDuration;
-    const nextAgentId =
-      options.executeSpecificAgentId ?? location.state.pauseUpdateNextAgentId;
-    try {
+      let pauseUpdateDuration;
+      const nextAgentId =
+        options.executeSpecificAgentId ?? location.state.pauseUpdateNextAgentId;
       if (nextAgentId) {
         await location.init();
         await location.getAgent(nextAgentId)!.executeNextActions();
@@ -916,6 +921,37 @@ export class WorldManager extends AsyncEventEmitter {
       } else {
         pauseUpdateDuration = await location.update();
       }
+
+      if (!location.pauseUpdated) {
+        if (pauseUpdateDuration) {
+          const pauseUpdateUntil = new Date(Date.now() + pauseUpdateDuration);
+          if (ENV.DEBUG) {
+            console.log(
+              `Setting location ${location.model.name} pause update until ${pauseUpdateUntil}`
+            );
+          }
+          await this.locationRepository.updateLocationStatePauseUpdateUntil(
+            locationId,
+            pauseUpdateUntil,
+            LocationPauseReason.SCHEDULED_PAUSE
+          );
+        } else {
+          if (ENV.DEBUG) {
+            console.log(`Location ${location.model.name} paused update`);
+          }
+          await this.locationRepository.updateLocationStatePauseUpdateUntil(
+            locationId,
+            null,
+            LocationPauseReason.UPDATE_COMPLETED
+          );
+        }
+      }
+
+      if (options.postAction) {
+        await options.postAction(location);
+      }
+
+      return location;
     } catch (error) {
       await this.locationRepository.updateLocationStatePauseUpdateUntil(
         locationId,
@@ -924,37 +960,6 @@ export class WorldManager extends AsyncEventEmitter {
       );
       throw error;
     }
-
-    if (!location.pauseUpdated) {
-      if (pauseUpdateDuration) {
-        const pauseUpdateUntil = new Date(Date.now() + pauseUpdateDuration);
-        if (ENV.DEBUG) {
-          console.log(
-            `Setting location ${location.model.name} pause update until ${pauseUpdateUntil}`
-          );
-        }
-        await this.locationRepository.updateLocationStatePauseUpdateUntil(
-          locationId,
-          pauseUpdateUntil,
-          LocationPauseReason.SCHEDULED_PAUSE
-        );
-      } else {
-        if (ENV.DEBUG) {
-          console.log(`Location ${location.model.name} paused update`);
-        }
-        await this.locationRepository.updateLocationStatePauseUpdateUntil(
-          locationId,
-          null,
-          LocationPauseReason.UPDATE_COMPLETED
-        );
-      }
-    }
-
-    if (options.postAction) {
-      await options.postAction(location);
-    }
-
-    return location;
   }
 
   public async updateLocation(
