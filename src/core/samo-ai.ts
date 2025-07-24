@@ -31,8 +31,8 @@ import {
   ItemRepository,
   LocationRepository,
   UserRepository,
-} from '../repositories';
-import { LockService, InMemoryLockService } from '../services';
+} from './repositories';
+import { LockService, InMemoryLockService } from './services';
 
 interface UpdateLocationOptions {
   ignorePauseUpdateUntil?: boolean;
@@ -44,7 +44,7 @@ interface UpdateLocationOptions {
   handleSave?: <T = void>(save: Promise<T>) => Promise<void>;
 }
 
-export interface WorldManagerOptions {
+export interface SamoAIOptions {
   lockService?: LockService;
   locationRepository: LocationRepository;
   agentRepository: AgentRepository;
@@ -53,7 +53,7 @@ export interface WorldManagerOptions {
   itemRepository: ItemRepository;
 }
 
-export class WorldManager extends AsyncEventEmitter {
+export class SamoAI extends AsyncEventEmitter {
   private static readonly LOCATION_UPDATE_LOCK_TTL = 30000; // 30 seconds
   private static readonly LOCATION_UPDATE_LOCK_PREFIX = 'lock:location-update:';
   private static readonly AGENT_SUMMARY_UPDATE_LOCK_TTL = 15000; // 15 seconds
@@ -63,15 +63,15 @@ export class WorldManager extends AsyncEventEmitter {
   private static readonly AGENT_MEMORY_UPDATE_LOCK_PREFIX =
     'lock:agent-memory-update:';
 
-  private static _instance: WorldManager;
+  private static _instance: SamoAI;
 
-  public static initialize(options: WorldManagerOptions) {
-    WorldManager._instance = new WorldManager(options);
+  public static initialize(options: SamoAIOptions) {
+    SamoAI._instance = new SamoAI(options);
   }
 
   public static get instance() {
     if (!this._instance) {
-      throw new Error('WorldManager not initialized');
+      throw new Error('SamoAI not initialized');
     }
     return this._instance;
   }
@@ -83,7 +83,7 @@ export class WorldManager extends AsyncEventEmitter {
   public readonly gimmickRepository: GimmickRepository;
   public readonly itemRepository: ItemRepository;
 
-  private constructor(options: WorldManagerOptions) {
+  private constructor(options: SamoAIOptions) {
     super();
     this.lockService = options.lockService || new InMemoryLockService();
     this.locationRepository = options.locationRepository;
@@ -97,10 +97,10 @@ export class WorldManager extends AsyncEventEmitter {
     locationId: LocationId,
     operation: () => Promise<T>
   ): Promise<T> {
-    const lockKey = `${WorldManager.LOCATION_UPDATE_LOCK_PREFIX}${locationId}`;
+    const lockKey = `${SamoAI.LOCATION_UPDATE_LOCK_PREFIX}${locationId}`;
     const lock = await this.lockService.acquireLock(
       lockKey,
-      WorldManager.LOCATION_UPDATE_LOCK_TTL
+      SamoAI.LOCATION_UPDATE_LOCK_TTL
     );
     if (!lock) {
       throw new Error(`Failed to lock location ${locationId}`);
@@ -116,10 +116,10 @@ export class WorldManager extends AsyncEventEmitter {
     locationId: LocationId,
     operation: () => Promise<T>
   ): Promise<T | null> {
-    const lockKey = `${WorldManager.LOCATION_UPDATE_LOCK_PREFIX}${locationId}`;
+    const lockKey = `${SamoAI.LOCATION_UPDATE_LOCK_PREFIX}${locationId}`;
     const lock = await this.lockService.acquireLockNoRetry(
       lockKey,
-      WorldManager.LOCATION_UPDATE_LOCK_TTL
+      SamoAI.LOCATION_UPDATE_LOCK_TTL
     );
     if (!lock) {
       if (ENV.DEBUG) {
@@ -138,10 +138,10 @@ export class WorldManager extends AsyncEventEmitter {
     agentId: AgentId,
     operation: () => Promise<T>
   ): Promise<T> {
-    const lockKey = `${WorldManager.AGENT_SUMMARY_UPDATE_LOCK_PREFIX}${agentId}`;
+    const lockKey = `${SamoAI.AGENT_SUMMARY_UPDATE_LOCK_PREFIX}${agentId}`;
     const lock = await this.lockService.acquireLock(
       lockKey,
-      WorldManager.AGENT_SUMMARY_UPDATE_LOCK_TTL
+      SamoAI.AGENT_SUMMARY_UPDATE_LOCK_TTL
     );
     if (!lock) {
       throw new Error(`Failed to lock agent summary update for ${agentId}`);
@@ -157,10 +157,10 @@ export class WorldManager extends AsyncEventEmitter {
     agentId: AgentId,
     operation: () => Promise<T>
   ): Promise<T> {
-    const lockKey = `${WorldManager.AGENT_MEMORY_UPDATE_LOCK_PREFIX}${agentId}`;
+    const lockKey = `${SamoAI.AGENT_MEMORY_UPDATE_LOCK_PREFIX}${agentId}`;
     const lock = await this.lockService.acquireLock(
       lockKey,
-      WorldManager.AGENT_MEMORY_UPDATE_LOCK_TTL
+      SamoAI.AGENT_MEMORY_UPDATE_LOCK_TTL
     );
     if (!lock) {
       throw new Error(`Failed to lock agent memory update for ${agentId}`);
