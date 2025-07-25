@@ -27,12 +27,12 @@ SamoAI is a multi-agent orchestrator that enables you to compose modular AI agen
 Our agents are built using a modular approach where LLMs, prompts, tools, and other components can be assembled like building blocks. This modularity allows for flexible agent creation tailored to specific needs and use cases.
 
 ### Non-blocking Multi-Agent Collaboration
-Unlike traditional AI interactions where you send a message and wait for a response (blocking), SamoAI enables agents and users to engage in natural, non-blocking conversations. This means you can chat freely with multiple agents simultaneously, just like in any regular chat application, without waiting for responses.
 
 <div align="center">
   <img src="https://media.githubusercontent.com/media/little-samo/CI/master/assets/services/minimo/team_browser.png" alt="Non-blocking Chat Example" width="300" />
-  <p><em>Example of non-blocking conversation between users and agents in Minimo</em></p>
 </div>
+
+Unlike traditional AI interactions where you send a message and wait for a response (blocking), SamoAI enables agents and users to engage in natural, non-blocking conversations. This means you can chat freely with multiple agents simultaneously, just like in any regular chat application, without waiting for responses.
 
 ### Memory-Driven Agents
 Agents maintain memory both within teams (called Locations in our codebase) and across different teams. This memory system enables agents to understand context, build relationships, and maintain consistency in their interactions.
@@ -69,7 +69,7 @@ Check out our example CLI application:
   <img src="https://media.githubusercontent.com/media/little-samo/CI/master/assets/projects/samo-ai/examples/web.gif" alt="SamoAI Example CLI Demo" width="600" />
 </div>
 
-### Minimo
+### [Minimo](https://minimo.team/)
 
 <div align="center">
   <img src="https://media.githubusercontent.com/media/little-samo/CI/master/assets/services/minimo/frame.png" alt="Minimo - Meet your personalized Instant Workforce" width="600" />
@@ -78,8 +78,6 @@ Check out our example CLI application:
 **The easiest way to use our framework in all aspects**
 
 Minimo demonstrates SamoAI's capabilities through a user-friendly platform where you can create and interact with teams of AI agents, each with unique personalities and different underlying models, enabling natural non-blocking collaboration between humans and AI.
-
-Visit [minimo.team](https://minimo.team/) for more information.
 
 ## Contact
 
