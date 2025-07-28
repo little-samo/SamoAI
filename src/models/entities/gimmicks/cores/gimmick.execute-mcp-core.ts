@@ -271,7 +271,8 @@ export class GimmickExecuteMcpCore extends GimmickCore {
   }
 
   private getGimmickArguments(entity?: Entity): GimmickArguments | undefined {
-    let gimmickArguments: GimmickArguments = {};
+    let gimmickArguments: GimmickArguments =
+      this.gimmick.location.meta.gimmickArguments;
     if (this.meta.arguments) {
       gimmickArguments = this.meta.arguments;
     }
