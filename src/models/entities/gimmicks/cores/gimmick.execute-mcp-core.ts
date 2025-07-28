@@ -12,9 +12,7 @@ import {
 import { z } from 'zod';
 
 import packageJson from '../../../../../package.json';
-import { type Agent } from '../../agents';
 import { type Entity } from '../../entity';
-import { EntityType } from '../../entity.types';
 import { type Gimmick } from '../gimmick';
 import { type GimmickArguments, type GimmickCoreMeta } from '../gimmick.meta';
 import { GimmickParameters } from '../gimmick.types';
@@ -271,34 +269,25 @@ export class GimmickExecuteMcpCore extends GimmickCore {
   }
 
   private getGimmickArguments(entity?: Entity): GimmickArguments | undefined {
-    let gimmickArguments: GimmickArguments = {};
+    let gimmickArguments: GimmickArguments | undefined = undefined;
     if (this.meta.arguments) {
       gimmickArguments = this.meta.arguments;
     }
 
     // Use the provided entity or fall back to updatingEntity
     const targetEntity = entity ?? this.gimmick.location.updatingEntity;
-
-    if (targetEntity?.type === EntityType.Agent) {
-      const targetAgent = targetEntity as Agent;
-      gimmickArguments = {
-        ...gimmickArguments,
-        ...targetAgent.meta.gimmickArguments,
-      };
-    }
-
     if (this.meta.entityArguments && targetEntity) {
       const entityArguments = this.meta.entityArguments[targetEntity.key];
       if (entityArguments) {
-        gimmickArguments = {
-          ...gimmickArguments,
-          ...entityArguments,
-        };
+        if (gimmickArguments) {
+          gimmickArguments = {
+            ...gimmickArguments,
+            ...entityArguments,
+          };
+        } else {
+          gimmickArguments = entityArguments;
+        }
       }
-    }
-
-    if (Object.keys(gimmickArguments).length === 0) {
-      return undefined;
     }
 
     return gimmickArguments;
