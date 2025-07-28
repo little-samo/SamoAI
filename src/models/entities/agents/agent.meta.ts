@@ -1,6 +1,7 @@
 import { LlmPlatform, LlmServiceOptions } from '@little-samo/samo-ai/common';
 
 import { EntityMeta } from '../entity.meta';
+import { type GimmickArguments } from '../gimmicks';
 
 export interface AgentPrompts {
   agentIdentity?: string;
@@ -24,6 +25,7 @@ export interface AgentMeta extends EntityMeta {
   maxMemoryThinkingTokens: number;
   llms: AgentLlmMeta[];
   inputs: string[];
+
   languages: string[];
   timeZone: string;
   greeting?: string;
@@ -39,6 +41,8 @@ export interface AgentMeta extends EntityMeta {
   entityMemoryLengthLimit: number;
 
   summaryLengthLimit: number;
+
+  gimmickArguments: GimmickArguments;
 
   // Agent's characteristics and personality traits
   character: {
@@ -112,6 +116,7 @@ export const DEFAULT_AGENT_META: AgentMeta = {
     'summary:latest',
     'memory:latest',
   ],
+
   languages: ['English'],
   timeZone: 'UTC',
 
@@ -132,6 +137,8 @@ export const DEFAULT_AGENT_META: AgentMeta = {
   entityMemoryLengthLimit: 250,
 
   summaryLengthLimit: 2000,
+
+  gimmickArguments: {},
 
   appearance: 'Typical human (but AI Agent)',
   character: {},
