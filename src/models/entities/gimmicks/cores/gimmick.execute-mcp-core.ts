@@ -37,6 +37,7 @@ export const GimmickExecuteMcpCoreOptionsSchema = z.object({
   useEntityAuthorization: z.boolean().optional(),
 
   tools: z.array(z.string()).optional(),
+  additionalArguments: z.array(z.string()).optional(),
 });
 
 export type GimmickExecuteMcpCoreOptions = z.infer<
@@ -84,6 +85,7 @@ class McpToolsCache {
 
       const tools: Record<string, McpToolDefinition> = {};
       const toolsToInclude = new Set(options?.tools ?? []);
+      const additionalArguments = options?.additionalArguments ?? [];
       for (const tool of toolsList.tools) {
         if (toolsToInclude.size > 0 && !toolsToInclude.has(tool.name)) {
           continue;
@@ -91,7 +93,12 @@ class McpToolsCache {
 
         let schema = mcpSchemaToZod(tool.inputSchema as MCPJsonSchema);
         if (schema instanceof z.ZodObject) {
-          schema = schema.strict();
+          for (const argument of additionalArguments) {
+            schema = (schema as z.AnyZodObject).extend({
+              [argument]: z.any(),
+            });
+          }
+          schema = (schema as z.AnyZodObject).strict();
         }
         tools[tool.name] = {
           name: tool.name,
