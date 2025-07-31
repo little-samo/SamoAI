@@ -8,6 +8,7 @@ import {
   LlmService,
   LlmServiceOptions,
   LlmUsageType,
+  truncateString,
 } from '@little-samo/samo-ai/common';
 import { z } from 'zod';
 
@@ -21,11 +22,12 @@ import { RegisterGimmickCore } from './gimmick.core-decorator';
 @RegisterGimmickCore('web_search')
 export class GimmickWebSearchCore extends GimmickCore {
   public static readonly DEFAULT_SEARCH_LLM_PLATFORM = LlmPlatform.GEMINI;
-  public static readonly DEFAULT_SEARCH_LLM_MODEL = 'gemini-2.5-pro';
+  public static readonly DEFAULT_SEARCH_LLM_MODEL = 'gemini-2.5-flash';
   public static readonly DEFAULT_SEARCH_LLM_THINKING = true;
-  public static readonly LLM_MAX_TOKENS = 4096;
+  public static readonly LLM_MAX_TOKENS = 1024;
   public static readonly LLM_MAX_THINKING_TOKENS = 2048;
   public static readonly DEFAULT_MAX_SEARCH_RESULT_LENGTH = 2000;
+  public static readonly DEFAULT_MAX_SEARCH_SOURCES_LENGTH = 1000;
 
   public override get description(): string {
     return 'Searches the web for up-to-date or missing information using an LLM, providing both a summary and detailed results. Execution takes approximately 30 seconds. IMPORTANT: This gimmick does NOT have access to your conversation context, so provide complete, self-contained search queries with all necessary details, keywords, and context as if searching independently on Google.';
@@ -40,11 +42,19 @@ export class GimmickWebSearchCore extends GimmickCore {
   }
 
   public override get canvas(): LocationEntityCanvasMeta {
+    const maxSearchResultLength = Number(
+      this.meta.options?.maxResultLength ??
+        GimmickWebSearchCore.DEFAULT_MAX_SEARCH_RESULT_LENGTH
+    );
+    const maxSearchSourcesLength = Number(
+      this.meta.options?.maxSourcesLength ??
+        GimmickWebSearchCore.DEFAULT_MAX_SEARCH_SOURCES_LENGTH
+    );
     return (
       super.canvas ?? {
         name: 'web_search',
         description: 'Displays the detailed results of the web search.',
-        maxLength: GimmickWebSearchCore.DEFAULT_MAX_SEARCH_RESULT_LENGTH,
+        maxLength: maxSearchResultLength + maxSearchSourcesLength,
       }
     );
   }
@@ -57,6 +67,7 @@ export class GimmickWebSearchCore extends GimmickCore {
     maxLlmSummaryLength: number,
     maxResultLength: number,
     maxSummaryLength: number,
+    maxSourcesLength: number,
     maxTokens: number,
     maxThinkingTokens: number
   ): Promise<void> {
@@ -77,6 +88,7 @@ A concise paragraph that summarizes the main discoveries from the search. This s
 
 # Critical Guidelines
 - Validate source credibility by cross-referencing information with multiple reliable websites whenever search results permit.
+- Do not manually add source citations like [1], [2], etc. The system will automatically handle source attribution.
 - Strictly follow the character limits for content within the <SearchBody> (${maxLlmResultLength} characters) and <SearchSummary> (${maxLlmSummaryLength} characters) tags. Content might be cut off if it goes over these limits, so plan for a buffer.
 - Your entire response must be only the XML structure shown. Make sure all tags are correctly closed.
 `.trim(),
@@ -115,7 +127,17 @@ A concise paragraph that summarizes the main discoveries from the search. This s
       this.gimmick
     );
 
-    const llmOutput = searchSummaryResponse.content;
+    let llmOutput = searchSummaryResponse.content;
+    if (searchSummaryResponse.sources) {
+      // Sort sources by endIndex descending to avoid shifting issues
+      searchSummaryResponse.sources.sort((a, b) => b.endIndex - a.endIndex);
+      for (const [index, source] of searchSummaryResponse.sources.entries()) {
+        llmOutput =
+          llmOutput.slice(0, source.startIndex) +
+          `[${index + 1}]` +
+          llmOutput.slice(source.endIndex);
+      }
+    }
 
     let summary: string;
     let result: string;
@@ -132,6 +154,22 @@ A concise paragraph that summarizes the main discoveries from the search. This s
       const strippedOutput = llmOutput.replace(/<[^>]*>/g, '').trim();
       result = strippedOutput;
       summary = strippedOutput.substring(0, maxLlmSummaryLength);
+    }
+
+    result = truncateString(result, maxResultLength).text;
+
+    if (
+      searchSummaryResponse.sources &&
+      searchSummaryResponse.sources.length > 0
+    ) {
+      let sources = `\n\n[Sources]\n`;
+      sources += searchSummaryResponse.sources
+        .map(
+          (source, index) => `[${index + 1}] ${source.title} (${source.url})`
+        )
+        .join('\n');
+      sources = truncateString(sources, maxSourcesLength).text;
+      result += sources;
     }
 
     if (ENV.DEBUG) {
@@ -194,6 +232,11 @@ A concise paragraph that summarizes the main discoveries from the search. This s
     const maxLlmResultLength = maxResultLength; // Use full length, let LLM consider buffer
     const maxSummaryLength = this.gimmick.location.meta.messageLengthLimit;
     const maxLlmSummaryLength = maxSummaryLength - 20; // Reserve for "Web Search Result: " prefix
+    const maxSourcesLength =
+      Number(
+        this.meta.options?.maxSourcesLength ??
+          GimmickWebSearchCore.DEFAULT_MAX_SEARCH_SOURCES_LENGTH
+      ) - 10; // Reserve for "[Sources]" prefix
 
     const promise = this.searchWeb(
       entity,
@@ -203,6 +246,7 @@ A concise paragraph that summarizes the main discoveries from the search. This s
       maxLlmSummaryLength,
       maxResultLength,
       maxSummaryLength,
+      maxSourcesLength,
       maxTokens,
       maxThinkingTokens
     );
