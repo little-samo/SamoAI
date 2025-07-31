@@ -129,13 +129,14 @@ A concise paragraph that summarizes the main discoveries from the search. This s
 
     let llmOutput = searchSummaryResponse.content;
     if (searchSummaryResponse.sources) {
-      // Sort sources by endIndex descending to avoid shifting issues
-      searchSummaryResponse.sources.sort((a, b) => b.endIndex - a.endIndex);
-      for (const [index, source] of searchSummaryResponse.sources.entries()) {
-        llmOutput =
-          llmOutput.slice(0, source.endIndex) +
-          `[${index + 1}]` +
-          llmOutput.slice(source.endIndex);
+      // Process sources in reverse order to avoid numbering conflicts
+      for (let i = searchSummaryResponse.sources.length - 1; i >= 0; i--) {
+        const source = searchSummaryResponse.sources[i];
+        // Note: The index values may be in bytes, not characters, so we use replace instead of slice.
+        llmOutput = llmOutput.replace(
+          source.content,
+          `${source.content}[${i + 1}]`
+        );
       }
     }
 
@@ -164,9 +165,7 @@ A concise paragraph that summarizes the main discoveries from the search. This s
     ) {
       let sources = `\n\n[Sources]\n`;
       sources += searchSummaryResponse.sources
-        .map(
-          (source, index) => `[${index + 1}] ${source.title} (${source.url})`
-        )
+        .map((source, index) => `[${index + 1}] ${source.title}`)
         .join('\n');
       sources = truncateString(sources, maxSourcesLength).text;
       result += sources;
@@ -225,10 +224,11 @@ A concise paragraph that summarizes the main discoveries from the search. This s
 
     const searchLlm = LlmFactory.create(llmSearchOptions as LlmServiceOptions);
 
-    const maxResultLength = Number(
-      this.meta.options?.maxResultLength ??
-        GimmickWebSearchCore.DEFAULT_MAX_SEARCH_RESULT_LENGTH
-    );
+    const maxResultLength =
+      Number(
+        this.meta.options?.maxResultLength ??
+          GimmickWebSearchCore.DEFAULT_MAX_SEARCH_RESULT_LENGTH
+      ) - 200; // Reserve for source citations
     const maxLlmResultLength = maxResultLength; // Use full length, let LLM consider buffer
     const maxSummaryLength = this.gimmick.location.meta.messageLengthLimit;
     const maxLlmSummaryLength = maxSummaryLength - 20; // Reserve for "Web Search Result: " prefix
