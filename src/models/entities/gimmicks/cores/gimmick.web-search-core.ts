@@ -64,20 +64,21 @@ export class GimmickWebSearchCore extends GimmickCore {
     messages.push({
       role: 'system',
       content: `
-You are tasked with performing a web search based on the user's query and then processing the results. Generate two outputs in a STRICTLY VALID JSON format:
-1.  'result': A detailed compilation of the most important information found in the search results. Aim to be comprehensive and informative within the character limit of ${maxLlmResultLength}, but consider leaving some buffer space as character count estimation can be inaccurate. Include key facts, data points, or direct quotes where relevant. Prioritize official sources, expert opinions, and well-established publications. Pay attention to the publication date to ensure the information is up-to-date.
-2.  'summary': A concise paragraph summarizing the key findings from the search results. This summary must not exceed ${maxLlmSummaryLength} characters and should reflect the essence of the detailed result. Consider leaving some buffer space as character count estimation can be inaccurate.
+You are a web research expert. Your mission is to conduct a web search based on the user's query, then organize the results into a detailed body and a brief summary.
 
-# Constraints
-- Verify the credibility of sources by cross-referencing information with multiple trusted websites if possible based on search results.
-- Ensure the output is ONLY a valid JSON object with no extra text, markdown, or formatting outside the JSON structure.
-- Adhere strictly to the character limits for 'result' (${maxLlmResultLength}) and 'summary' (${maxLlmSummaryLength}), but consider leaving buffer space as character count estimation can be inaccurate. Truncation will occur if limits are exceeded.
+Format your response exclusively as the following XML structure. Do not add any text, explanations, or markdown outside of this format.
 
-# Output Format
-{
-  "result": "Detailed information compilation...",
-  "summary": "Concise summary paragraph..."
-}
+<SearchBody>
+A thorough compilation of the most critical information discovered during the web search. Aim for comprehensiveness and clarity within a ${maxLlmResultLength} character limit. It is wise to leave a small margin, as character counting is not always precise. Include essential facts, data points, and direct quotations when appropriate. Give priority to official sources, expert analyses, and recent, reputable publications.
+</SearchBody>
+<SearchSummary>
+A concise paragraph that summarizes the main discoveries from the search. This summary should not be more than ${maxLlmSummaryLength} characters and must distill the core message of the detailed body.
+</SearchSummary>
+
+# Critical Guidelines
+- Validate source credibility by cross-referencing information with multiple reliable websites whenever search results permit.
+- Strictly follow the character limits for content within the <SearchBody> (${maxLlmResultLength} characters) and <SearchSummary> (${maxLlmSummaryLength} characters) tags. Content might be cut off if it goes over these limits, so plan for a buffer.
+- Your entire response must be only the XML structure shown. Make sure all tags are correctly closed.
 `.trim(),
     });
     messages.push({
@@ -85,13 +86,12 @@ You are tasked with performing a web search based on the user's query and then p
       content: query,
     });
 
-    let searchSummaryResponse: LlmGenerateResponse<true>;
+    let searchSummaryResponse: LlmGenerateResponse<false>;
     try {
       searchSummaryResponse = await searchLlm.generate(messages, {
         maxTokens: maxTokens,
         maxThinkingTokens: maxThinkingTokens,
         webSearch: true,
-        jsonOutput: true,
         verbose: ENV.VERBOSE_LLM,
       });
     } catch (error) {
@@ -115,15 +115,24 @@ You are tasked with performing a web search based on the user's query and then p
       this.gimmick
     );
 
-    const searchSummaryResult = searchSummaryResponse.content;
-    const summary =
-      typeof searchSummaryResult?.summary === 'string'
-        ? searchSummaryResult.summary
-        : '';
-    const result =
-      typeof searchSummaryResult?.result === 'string'
-        ? searchSummaryResult.result
-        : '';
+    const llmOutput = searchSummaryResponse.content;
+
+    let summary: string;
+    let result: string;
+
+    const bodyMatch = llmOutput.match(/<SearchBody>([\s\S]*?)<\/SearchBody>/);
+    const summaryMatch = llmOutput.match(
+      /<SearchSummary>([\s\S]*?)<\/SearchSummary>/
+    );
+
+    if (bodyMatch?.[1] && summaryMatch?.[1]) {
+      result = bodyMatch[1].trim();
+      summary = summaryMatch[1].trim();
+    } else {
+      const strippedOutput = llmOutput.replace(/<[^>]*>/g, '').trim();
+      result = strippedOutput;
+      summary = strippedOutput.substring(0, maxLlmSummaryLength);
+    }
 
     if (ENV.DEBUG) {
       console.log(`Gimmick ${this.gimmick.name} executed: ${query}`);
