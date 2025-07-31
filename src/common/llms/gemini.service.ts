@@ -19,6 +19,7 @@ import {
   LlmToolsResponse,
   LlmPlatform,
   LlmResponseBase,
+  LlmGenerateResponseWebSearchSource,
 } from './llm.types';
 
 export class GeminiService extends LlmService {
@@ -234,11 +235,44 @@ export class GeminiService extends LlmService {
         );
       }
     }
+
+    let sources: LlmGenerateResponseWebSearchSource[] | undefined;
+    if (options?.webSearch && response.candidates?.[0]?.groundingMetadata) {
+      const groundingMetadata = response.candidates[0].groundingMetadata;
+      if (
+        groundingMetadata.groundingChunks &&
+        groundingMetadata.groundingSupports
+      ) {
+        sources = [];
+        for (const groundingSupport of groundingMetadata.groundingSupports) {
+          const segment = groundingSupport.segment;
+          if (!groundingSupport.groundingChunkIndices || !segment) {
+            continue;
+          }
+          for (const groundingChunkIndex of groundingSupport.groundingChunkIndices) {
+            const groundingChunk =
+              groundingMetadata.groundingChunks[groundingChunkIndex];
+            if (!groundingChunk.web) {
+              continue;
+            }
+            sources.push({
+              url: groundingChunk.web.uri!,
+              title: groundingChunk.web.title!,
+              startIndex: segment.startIndex!,
+              endIndex: segment.endIndex!,
+              content: segment.text!,
+            });
+          }
+        }
+      }
+    }
+
     return {
       ...result,
       content: responseText as T extends true
         ? Record<string, unknown>
         : string,
+      sources,
     };
   }
 

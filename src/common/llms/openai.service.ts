@@ -18,6 +18,7 @@ import { LlmService } from './llm.service';
 import { LlmTool, LlmToolCall } from './llm.tool';
 import {
   LlmGenerateResponse,
+  LlmGenerateResponseWebSearchSource,
   LlmMessage,
   LlmOptions,
   LlmResponseBase,
@@ -233,11 +234,36 @@ export class OpenAIService extends LlmService {
           );
         }
       }
+
+      let sources: LlmGenerateResponseWebSearchSource[] | undefined;
+      if (options?.webSearch) {
+        sources = [];
+        const annotations = response.choices[0].message.annotations;
+        if (annotations) {
+          for (const annotation of annotations) {
+            if (annotation.type === 'url_citation') {
+              const urlCitation = annotation.url_citation;
+              sources.push({
+                url: urlCitation.url,
+                title: urlCitation.title,
+                startIndex: urlCitation.start_index,
+                endIndex: urlCitation.end_index,
+                content: responseText.substring(
+                  urlCitation.start_index,
+                  urlCitation.end_index
+                ),
+              });
+            }
+          }
+        }
+      }
+
       return {
         ...result,
         content: responseText as T extends true
           ? Record<string, unknown>
           : string,
+        sources,
       };
     } catch (error) {
       if (error instanceof OpenAI.APIError) {

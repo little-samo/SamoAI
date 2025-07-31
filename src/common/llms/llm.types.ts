@@ -100,9 +100,19 @@ export interface LlmResponseBase {
   responseTime: number; // Response time in milliseconds
 }
 
+export interface LlmGenerateResponseWebSearchSource {
+  url: string;
+  title: string;
+
+  startIndex: number;
+  endIndex: number;
+  content: string;
+}
+
 export interface LlmGenerateResponse<T extends boolean = false>
   extends LlmResponseBase {
   content: T extends true ? Record<string, unknown> : string;
+  sources?: LlmGenerateResponseWebSearchSource[];
 }
 
 export interface LlmToolsResponse extends LlmResponseBase {
