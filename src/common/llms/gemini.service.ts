@@ -255,12 +255,21 @@ export class GeminiService extends LlmService {
             if (!groundingChunk.web) {
               continue;
             }
+            if (
+              !groundingChunk.web.uri ||
+              !groundingChunk.web.title ||
+              !segment.startIndex ||
+              !segment.endIndex ||
+              !segment.text
+            ) {
+              continue;
+            }
             sources.push({
-              url: groundingChunk.web.uri!,
-              title: groundingChunk.web.title!,
-              startIndex: segment.startIndex!,
-              endIndex: segment.endIndex!,
-              content: segment.text!,
+              url: groundingChunk.web.uri,
+              title: groundingChunk.web.title,
+              startIndex: segment.startIndex,
+              endIndex: segment.endIndex,
+              content: segment.text,
             });
           }
         }
