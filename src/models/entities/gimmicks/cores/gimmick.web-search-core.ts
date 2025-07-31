@@ -133,7 +133,7 @@ A concise paragraph that summarizes the main discoveries from the search. This s
       searchSummaryResponse.sources.sort((a, b) => b.endIndex - a.endIndex);
       for (const [index, source] of searchSummaryResponse.sources.entries()) {
         llmOutput =
-          llmOutput.slice(0, source.startIndex) +
+          llmOutput.slice(0, source.endIndex) +
           `[${index + 1}]` +
           llmOutput.slice(source.endIndex);
       }
