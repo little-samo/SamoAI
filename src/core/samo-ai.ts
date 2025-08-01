@@ -736,7 +736,7 @@ export class SamoAI extends AsyncEventEmitter {
           }
 
           await gimmick.location.addSystemMessage(
-            `${entity.type} ${entity.name} failed to execute ${gimmick.key}: ${errorMessage}`
+            `${entity.key} ${entity.name} failed to execute ${gimmick.key}: ${errorMessage}`
           );
 
           await gimmick.location.emitAsync(
