@@ -16,7 +16,7 @@ export interface AgentNavigateWebActionParameters {
   destination?: string;
 }
 
-@RegisterAgentAction('navigate_web')
+@RegisterAgentAction('control_navigation_web')
 export class AgentNavigateWebAction extends AgentAction {
   public override get description(): string {
     switch (this.version) {
@@ -63,7 +63,7 @@ export class AgentNavigateWebAction extends AgentAction {
       );
     }
 
-    let actionStr = `navigate_web --type ${action.type}`;
+    let actionStr = `control_navigation_web --type ${action.type}`;
 
     if (action.destination) {
       actionStr += ` --destination "${action.destination}"`;

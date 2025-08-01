@@ -17,7 +17,7 @@ export interface AgentTabWebActionParameters {
   url?: string;
 }
 
-@RegisterAgentAction('tab_web')
+@RegisterAgentAction('control_tab_web')
 export class AgentTabWebAction extends AgentAction {
   public override get description(): string {
     switch (this.version) {
@@ -64,7 +64,7 @@ export class AgentTabWebAction extends AgentAction {
       );
     }
 
-    let actionStr = `tab_web --type ${action.type}`;
+    let actionStr = `control_tab_web --type ${action.type}`;
 
     if (action.index !== undefined) {
       actionStr += ` --index ${action.index}`;

@@ -14,7 +14,7 @@ export interface AgentDialogWebActionParameters {
   text?: string;
 }
 
-@RegisterAgentAction('dialog_web')
+@RegisterAgentAction('control_dialog_web')
 export class AgentDialogWebAction extends AgentAction {
   public override get description(): string {
     switch (this.version) {
@@ -47,7 +47,7 @@ export class AgentDialogWebAction extends AgentAction {
       );
     }
 
-    let actionStr = `dialog_web --type ${action.type}`;
+    let actionStr = `control_dialog_web --type ${action.type}`;
 
     if (action.text) {
       actionStr += ` --text "${action.text}"`;

@@ -39,7 +39,7 @@ export interface AgentMouseWebActionParameters {
   waitAfter?: number;
 }
 
-@RegisterAgentAction('mouse_web')
+@RegisterAgentAction('control_mouse_web')
 export class AgentMouseWebAction extends AgentAction {
   public override get description(): string {
     switch (this.version) {
@@ -128,7 +128,7 @@ export class AgentMouseWebAction extends AgentAction {
       );
     }
 
-    let actionStr = `mouse_web --type ${action.type}`;
+    let actionStr = `control_mouse_web --type ${action.type}`;
 
     if (action.coordinates) {
       actionStr += ` --coordinates "${action.coordinates}"`;

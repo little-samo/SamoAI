@@ -26,7 +26,7 @@ export interface AgentKeyboardWebActionParameters {
   waitAfter?: number;
 }
 
-@RegisterAgentAction('keyboard_web')
+@RegisterAgentAction('control_keyboard_web')
 export class AgentKeyboardWebAction extends AgentAction {
   public override get description(): string {
     switch (this.version) {
@@ -114,7 +114,7 @@ export class AgentKeyboardWebAction extends AgentAction {
       );
     }
 
-    let actionStr = `keyboard_web --type ${action.type}`;
+    let actionStr = `control_keyboard_web --type ${action.type}`;
 
     if (action.key) {
       actionStr += ` --key "${action.key}"`;
