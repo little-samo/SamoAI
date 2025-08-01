@@ -63,6 +63,9 @@ export class SamoAI extends AsyncEventEmitter {
   private static readonly AGENT_MEMORY_UPDATE_LOCK_PREFIX =
     'lock:agent-memory-update:';
 
+  private static readonly GIMMICK_EXECUTION_FAILED_RESUME_UPDATE_DELAY = 1000; // 1 second
+  private static readonly GIMMICK_EXECUTED_RESUME_UPDATE_DELAY = 1000; // 1 second
+
   private static _instance: SamoAI;
 
   public static initialize(options: SamoAIOptions) {
@@ -783,7 +786,10 @@ export class SamoAI extends AsyncEventEmitter {
               this.withLocationUpdateLock(locationId, async () => {
                 await this.locationRepository.updateLocationStatePauseUpdateUntil(
                   locationId,
-                  new Date(),
+                  new Date(
+                    Date.now() +
+                      SamoAI.GIMMICK_EXECUTION_FAILED_RESUME_UPDATE_DELAY
+                  ),
                   LocationPauseReason.GIMMICK_EXECUTION_FAILED,
                   entity.id as AgentId
                 );
@@ -808,7 +814,9 @@ export class SamoAI extends AsyncEventEmitter {
               this.withLocationUpdateLock(locationId, async () => {
                 await this.locationRepository.updateLocationStatePauseUpdateUntil(
                   locationId,
-                  new Date(),
+                  new Date(
+                    Date.now() + SamoAI.GIMMICK_EXECUTED_RESUME_UPDATE_DELAY
+                  ),
                   LocationPauseReason.GIMMICK_EXECUTED,
                   entity.id as AgentId
                 );
