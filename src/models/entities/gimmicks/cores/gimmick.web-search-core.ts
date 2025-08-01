@@ -178,7 +178,7 @@ A concise paragraph that summarizes the main discoveries from the search. This s
 
     await entity.updateCanvas(this.canvas.name, result);
     await entity.location.addGimmickMessage(this.gimmick, {
-      message: summary,
+      message: `Web Search Result: ${summary}`,
     });
     await entity.location.emitAsync(
       'gimmickExecuted',
@@ -231,6 +231,7 @@ A concise paragraph that summarizes the main discoveries from the search. This s
       ) - 200; // Reserve for source citations
     const maxLlmResultLength = maxResultLength; // Use full length, let LLM consider buffer
     const maxSummaryLength = this.gimmick.location.meta.messageLengthLimit;
+    const maxLlmSummaryLength = maxSummaryLength - 20; // Reserve for "Web Search Result: " prefix
     const maxSourcesLength =
       Number(
         this.meta.options?.maxSourcesLength ??
@@ -242,7 +243,7 @@ A concise paragraph that summarizes the main discoveries from the search. This s
       searchLlm,
       query,
       maxLlmResultLength,
-      maxSummaryLength,
+      maxLlmSummaryLength,
       maxResultLength,
       maxSummaryLength,
       maxSourcesLength,
