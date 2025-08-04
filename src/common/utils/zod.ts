@@ -11,8 +11,51 @@ import type { JSONSchema7, JSONSchema7Definition } from 'json-schema';
 type ExtendedJSONSchema7 = JSONSchema7 & {
   nullable?: boolean;
   isBigInt?: boolean;
+  regexMessage?: string;
   coerceType?: 'bigint' | 'number' | 'string' | 'boolean';
 };
+
+/** Type definitions for Zod internal structures */
+interface ZodStringDef {
+  checks?: Array<{
+    kind: string;
+    message?: string;
+  }>;
+}
+
+interface ZodObjectDef {
+  shape?: () => Record<string, ZodTypeAny>;
+}
+
+interface ZodInternalDef {
+  checks?: ZodStringDef['checks'];
+  shape?: ZodObjectDef['shape'];
+  type?: ZodTypeAny;
+  items?: ZodTypeAny[];
+}
+
+interface ZodWithInternalDef {
+  _def?: ZodInternalDef;
+}
+
+/** Type guards for Zod internal structures */
+function hasZodDef(
+  schema: ZodTypeAny
+): schema is ZodTypeAny & ZodWithInternalDef {
+  return typeof schema === 'object' && schema !== null && '_def' in schema;
+}
+
+function hasChecks(
+  def: ZodInternalDef
+): def is ZodInternalDef & { checks: NonNullable<ZodInternalDef['checks']> } {
+  return Array.isArray(def.checks);
+}
+
+function hasShape(
+  def: ZodInternalDef
+): def is ZodInternalDef & { shape: NonNullable<ZodInternalDef['shape']> } {
+  return typeof def.shape === 'function';
+}
 
 /** JSON-Schema keywords to keep when pruning */
 const CORE_KEYS = new Set<keyof ExtendedJSONSchema7>([
@@ -39,6 +82,7 @@ const CORE_KEYS = new Set<keyof ExtendedJSONSchema7>([
   'format',
   'nullable',
   'isBigInt',
+  'regexMessage',
   'coerceType',
 ]);
 
@@ -132,6 +176,109 @@ function annotateBigInts(node: Record<string, unknown>): void {
   });
 }
 
+/** Extract regex custom messages from Zod schema and annotate JSON schema */
+function annotateRegexMessages(
+  zodSchema: ZodTypeAny,
+  jsonSchema: Record<string, unknown>,
+  path: string[] = []
+): void {
+  if (typeof jsonSchema !== 'object' || jsonSchema === null) return;
+
+  try {
+    // Check if this is a string schema with pattern and get the zod schema
+    if (
+      jsonSchema.type === 'string' &&
+      jsonSchema.pattern &&
+      typeof jsonSchema.pattern === 'string'
+    ) {
+      // Try to extract custom error message from zod schema
+      if (hasZodDef(zodSchema)) {
+        const zodDef = zodSchema._def;
+        if (zodDef && hasChecks(zodDef)) {
+          const regexCheck = zodDef.checks.find(
+            (check: { kind: string; message?: string }) =>
+              check.kind === 'regex'
+          );
+          if (regexCheck && regexCheck.message) {
+            jsonSchema.regexMessage = regexCheck.message;
+          }
+        }
+      }
+    }
+
+    // Recursively process object properties
+    if (jsonSchema.properties && typeof jsonSchema.properties === 'object') {
+      if (hasZodDef(zodSchema)) {
+        const zodDef = zodSchema._def;
+        if (zodDef && hasShape(zodDef)) {
+          const shape = zodDef.shape();
+          Object.entries(jsonSchema.properties).forEach(([key, value]) => {
+            if (shape[key] && typeof value === 'object' && value !== null) {
+              annotateRegexMessages(
+                shape[key],
+                value as Record<string, unknown>,
+                [...path, key]
+              );
+            }
+          });
+        }
+      }
+    }
+
+    // Recursively process array items
+    if (jsonSchema.items) {
+      if (hasZodDef(zodSchema)) {
+        const zodDef = zodSchema._def;
+        if (Array.isArray(jsonSchema.items)) {
+          jsonSchema.items.forEach((item, index) => {
+            if (
+              typeof item === 'object' &&
+              item !== null &&
+              zodDef?.items?.[index]
+            ) {
+              annotateRegexMessages(
+                zodDef.items[index],
+                item as Record<string, unknown>,
+                [...path, index.toString()]
+              );
+            }
+          });
+        } else if (
+          typeof jsonSchema.items === 'object' &&
+          jsonSchema.items !== null &&
+          zodDef?.type
+        ) {
+          annotateRegexMessages(
+            zodDef.type,
+            jsonSchema.items as Record<string, unknown>,
+            [...path, 'items']
+          );
+        }
+      }
+    }
+
+    // Process anyOf, oneOf, allOf
+    ['anyOf', 'oneOf', 'allOf'].forEach((key) => {
+      const value = jsonSchema[key];
+      if (Array.isArray(value)) {
+        value.forEach((subSchema, index) => {
+          if (typeof subSchema === 'object' && subSchema !== null) {
+            // This is more complex for unions, but we'll handle simple cases
+            annotateRegexMessages(
+              zodSchema,
+              subSchema as Record<string, unknown>,
+              [...path, key, index.toString()]
+            );
+          }
+        });
+      }
+    });
+  } catch (error) {
+    // Ignore errors in regex message extraction
+    console.warn('Error extracting regex message:', error);
+  }
+}
+
 /** Remove noisy metadata and keep only CORE_KEYS recursively */
 function prune(schema: JSONSchema7, depth = MAX_DEPTH): JSONSchema7 {
   if (depth <= 0 || typeof schema !== 'object' || schema === null)
@@ -175,14 +322,19 @@ function prune(schema: JSONSchema7, depth = MAX_DEPTH): JSONSchema7 {
   // preserve bigint flag et al.
   if ('isBigInt' in schema) dst.isBigInt = true;
   if ('nullable' in schema) dst.nullable = schema.nullable;
+  if ('regexMessage' in schema) dst.regexMessage = schema.regexMessage;
   if ('coerceType' in schema) dst.coerceType = schema.coerceType;
 
   return dst as JSONSchema7;
 }
 
 export function zodSchemaToLlmFriendlyString(schema: ZodTypeAny): string {
-  const draft = zodToJsonSchema(schema) as JSONSchema7;
+  // Disable deduplication to prevent empty object items in arrays
+  const draft = zodToJsonSchema(schema, {
+    $refStrategy: 'none', // Disable $ref usage to prevent deduplication
+  }) as JSONSchema7;
   annotateBigInts(draft as Record<string, unknown>);
+  annotateRegexMessages(schema, draft as Record<string, unknown>);
   delete draft.$schema;
   delete draft.$id;
   delete draft.title;
@@ -200,6 +352,8 @@ export type MCPJsonSchema = JSONSchema7 & {
   nullable?: boolean;
   /** Added by annotateBigInts for round-tripping */
   isBigInt?: boolean;
+  /** Added for preserving regex custom error messages */
+  regexMessage?: string;
   /** Explicit coercion intention coming from upstream application */
   coerceType?: 'bigint' | 'number' | 'string' | 'boolean';
 };
@@ -342,7 +496,12 @@ function toZod(schema: MCPJsonSchema, depth = MAX_DEPTH): ZodTypeAny {
       if (schema.maxLength !== undefined) s = s.max(schema.maxLength);
       if (schema.pattern) {
         try {
-          s = s.regex(new RegExp(schema.pattern));
+          const regexPattern = new RegExp(schema.pattern);
+          if (schema.regexMessage) {
+            s = s.regex(regexPattern, schema.regexMessage);
+          } else {
+            s = s.regex(regexPattern);
+          }
         } catch {
           /* ignore invalid regex */
         }
@@ -435,9 +594,19 @@ function toZod(schema: MCPJsonSchema, depth = MAX_DEPTH): ZodTypeAny {
         return withNullability(schema, tuple);
       }
 
-      const itemSchema = isSchemaObject(schema.items)
-        ? toZod(schema.items, depth - 1)
-        : z.never();
+      let itemSchema: ZodTypeAny;
+      if (isSchemaObject(schema.items)) {
+        // Check if items is truly empty (likely from zod-to-json-schema deduplication)
+        if (isTrulyEmpty(schema.items)) {
+          // For empty object items in arrays, use z.unknown() instead of z.undefined()
+          // This allows any object structure and prevents validation errors
+          itemSchema = z.unknown();
+        } else {
+          itemSchema = toZod(schema.items, depth - 1);
+        }
+      } else {
+        itemSchema = z.never();
+      }
       let arr = z.array(itemSchema);
       if (schema.minItems !== undefined) arr = arr.min(schema.minItems);
       if (schema.maxItems !== undefined) arr = arr.max(schema.maxItems);
