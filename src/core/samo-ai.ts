@@ -768,7 +768,7 @@ export class SamoAI extends AsyncEventEmitter {
 
       location.on(
         'gimmickExecutionFailed',
-        (
+        async (
           gimmick: Gimmick,
           entity: Entity,
           _parameters: GimmickParameters,
