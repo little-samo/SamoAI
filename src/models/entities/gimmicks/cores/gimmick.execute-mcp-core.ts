@@ -57,6 +57,7 @@ interface CachedMcpTools {
 
 class McpToolsCache {
   private static readonly CACHE_EXPIRATION_TIME = 5 * 60 * 1000; // 5 minutes
+  private static readonly CACHE_REFRESH_BUFFER = 30 * 1000; // 30 seconds buffer before expiration
 
   private static readonly cachedToolsByServerUrl: Record<
     string,
@@ -69,7 +70,10 @@ class McpToolsCache {
     options?: GimmickExecuteMcpCoreOptions
   ): Promise<void> {
     const cachedTools = this.cachedToolsByServerUrl[serverUrl];
-    if (cachedTools && cachedTools.expiresAt > new Date()) {
+    if (
+      cachedTools &&
+      cachedTools.expiresAt.getTime() - this.CACHE_REFRESH_BUFFER > Date.now()
+    ) {
       return;
     }
 
