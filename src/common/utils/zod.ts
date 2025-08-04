@@ -59,9 +59,24 @@ function isSchemaObject(
 
 /** true if schema has no meaningful keywords (≒ undefined) */
 function isTrulyEmpty(schema: MCPJsonSchema): boolean {
-  return Object.keys(schema).every(
+  // A schema is only truly empty if it has no keys at all or only non-core keys
+  // AND no type-defining properties
+  const hasNoCoreKeys = Object.keys(schema).every(
     (k) => !CORE_KEYS.has(k as keyof JSONSchema7)
   );
+
+  // Even if it has no core keys, if it has type, properties, items, etc., it's not empty
+  const hasTypeDefinition =
+    schema.type ||
+    schema.properties ||
+    schema.items ||
+    schema.anyOf ||
+    schema.oneOf ||
+    schema.allOf ||
+    schema.enum ||
+    schema.const;
+
+  return hasNoCoreKeys && !hasTypeDefinition;
 }
 
 /* ------------------------------------------------------------------
