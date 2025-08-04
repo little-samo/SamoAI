@@ -64,12 +64,14 @@ When reasoning, you must justify your decisions by referencing the specific rule
     let languageRule: string;
 
     if (hasAll) {
+      const lastMessageGuidance = `You must identify and use the language from the most recent message you are responding to. To do this, check <UnprocessedLastMessage> first, then scan <LocationMessages> backwards. Prioritize the last message from an 'agent' or 'user'. Disregard system or gimmick messages for language detection.`;
+
       if (otherLanguages.length > 0) {
-        languageRule = `You should primarily use one of your preferred languages (${otherLanguages.join(
+        languageRule = `Adapt dynamically to the language of conversation. ${lastMessageGuidance} If you are initiating a conversation or cannot find a recent message from an agent or user, use one of your preferred languages: ${otherLanguages.join(
           ', '
-        )}), but you should adapt and respond in the same language as the user you are interacting with.`;
+        )}.`;
       } else {
-        languageRule = `Your primary language is English, but you should adapt and respond in the same language as the user you are interacting with.`;
+        languageRule = `Adapt dynamically to the language of conversation. ${lastMessageGuidance} If you are initiating a conversation or cannot find a recent message from an agent or user, use English.`;
       }
     } else {
       languageRule = `You MUST use one of your specified languages (${languages.join(
