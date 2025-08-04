@@ -5,6 +5,7 @@ import type {
 
 import { type ItemKey } from '../../../entities';
 import { EntityCanvasContext } from '../../../entities/entity.context';
+import { EntityType } from '../../../entities/entity.types';
 import { GimmickContext } from '../../../entities/gimmicks/gimmick.context';
 import {
   LocationCanvasContext,
@@ -64,7 +65,7 @@ When reasoning, you must justify your decisions by referencing the specific rule
     let languageRule: string;
 
     if (hasAll) {
-      const lastMessageGuidance = `You must identify and use the language from the most recent message you are responding to. To do this, check <UnprocessedLastMessage> first, then scan <LocationMessages> backwards. Prioritize the last message from an 'agent' or 'user'. Disregard system or gimmick messages for language detection.`;
+      const lastMessageGuidance = `You must identify and use the language from the most recent message you are responding to. To do this, check <UnprocessedLastUserMessage> first, then scan <LocationMessages> backwards. Prioritize the last message from an 'agent' or 'user'. Disregard system or gimmick messages for language detection.`;
 
       if (otherLanguages.length > 0) {
         languageRule = `Adapt dynamically to the language of conversation. ${lastMessageGuidance} If you are initiating a conversation or cannot find a recent message from an agent or user, use one of your preferred languages: ${otherLanguages.join(
@@ -132,10 +133,10 @@ When reasoning, you must justify your decisions by referencing the specific rule
     *   **Check History:** Review <LocationMessages> and <YourLastMessage> before responding. **DO NOT repeat your own recent phrases, arguments, or sentence structures.** Paraphrase significantly or frame points differently if revisiting.
     *   **Be Novel:** Actively introduce new information, questions, or perspectives based on the latest input. Move the conversation forward.
 13. **CRITICAL - Context Awareness:** Always consider ALL available context. **Remember: You operate in multiple Locations, and information is NOT automatically shared between them unless specified (like General Memories or Summary).** Pay close attention to:
-    *   **Location-Specific Context:** Current Time, <Location> details, <LocationCanvases>, <Gimmicks>, <OtherAgents>, <OtherUsers>, <LocationMessages>, <YourLastMessage>, <UnprocessedLastMessage>.
+    *   **Location-Specific Context:** Current Time, <Location> details, <LocationCanvases>, <Gimmicks>, <OtherAgents>, <OtherUsers>, <LocationMessages>, <YourLastMessage>, <UnprocessedLastUserMessage>.
     *   **Agent-Specific Context:** Your Timezone (${this.agent.meta.timeZone}), Your <YourInventory>, Your private <YourCanvases> (Remember: separate per location - Rule #9), Your specific memories <YourMemoriesAbout...>.
     *   **Persistent/Shared Context:** Your general <YourMemories> (Rule #8), the <Summary> (Rule #10).
-    *   **Use Recent History:** Use <LocationMessages> and <YourLastMessage> for historical context. Pay special attention to <UnprocessedLastMessage>, which represents the most recent message not yet processed in the location's last update cycle. It is critical new information you must consider.
+    *   **Use Recent History:** Use <LocationMessages> and <YourLastMessage> for historical context. Pay special attention to <UnprocessedLastUserMessage>, which represents the most recent message from a user that you have not yet processed. It is critical new information you must consider.
 14. **Time Handling:** Internal times are ISO 8601 strings (e.g., '2023-10-27T10:00:00.000Z'). Use conversational time references (relative or using your timezone: ${this.agent.meta.timeZone}) externally. Remember that other agents and users may have different timezones. Record precise ISO strings internally if needed.
 15. **Message Stream Awareness:** Due to system latency, new messages might appear with past timestamps. The \`PROCESSED\` flag in \`<LocationMessages>\` indicates what has already been considered:
     *   \`PROCESSED=false\`: A new message you haven't seen. You MUST react to these.
@@ -412,18 +413,23 @@ ${LocationMessageContext.FORMAT}
     contexts.push(...AgentInputBuilder.mergeMessageContents(messageContexts));
 
     let lastAgentMessage: LocationMessageContext | undefined;
-    let lastUnprocessedMessage: LocationMessageContext | undefined;
+    let lastUnprocessedUserMessage: LocationMessageContext | undefined;
 
-    // Find the last message from the agent and the last unprocessed message in a single pass.
+    // Find the last message from the agent and the last unprocessed user message in a single pass.
     for (const message of locationContext.messages.slice().reverse()) {
       if (!lastAgentMessage && message.key === this.agent.key) {
         lastAgentMessage = message;
       }
       // An unprocessed message is explicitly marked as `false`. `null` means its state is not yet determined.
-      if (!lastUnprocessedMessage && message.processed === false) {
-        lastUnprocessedMessage = message;
+      // We only care about unprocessed messages from users.
+      if (
+        !lastUnprocessedUserMessage &&
+        message.processed === false &&
+        message.key.startsWith(EntityType.User)
+      ) {
+        lastUnprocessedUserMessage = message;
       }
-      if (lastAgentMessage && lastUnprocessedMessage) {
+      if (lastAgentMessage && lastUnprocessedUserMessage) {
         break;
       }
     }
@@ -441,15 +447,15 @@ ${lastAgentMessage.build()}
       });
     }
 
-    if (lastUnprocessedMessage) {
+    if (lastUnprocessedUserMessage) {
       contexts.push({
         type: 'text',
         text: `
-The last unprocessed message (this is new since your last action):
-<UnprocessedLastMessage>
+The last unprocessed user message (this is new since your last action):
+<UnprocessedLastUserMessage>
 ${LocationMessageContext.FORMAT}
-${lastUnprocessedMessage.build()}
-</UnprocessedLastMessage>
+${lastUnprocessedUserMessage.build()}
+</UnprocessedLastUserMessage>
 `,
       });
     }
