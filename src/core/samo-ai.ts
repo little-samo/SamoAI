@@ -1026,6 +1026,10 @@ export class SamoAI extends AsyncEventEmitter {
     messages: LlmMessage[],
     toolCalls: LlmToolCall[]
   ): Promise<void> {
+    if (!agent.meta.memoryPostActions) {
+      return;
+    }
+
     return await this.withAgentMemoryUpdateLock(agent.id, async () => {
       const agentState = await this.agentRepository.getOrCreateAgentState(
         agent.id

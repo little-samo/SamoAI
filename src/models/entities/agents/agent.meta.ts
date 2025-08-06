@@ -30,8 +30,10 @@ export interface AgentMeta extends EntityMeta {
 
   actions: string[];
   addActions?: string[];
+  canvasActions?: string[];
+  memoryActions?: string[];
+  memoryPostActions?: string[];
   requiredActions: string[];
-  memoryActions: string[];
 
   memoryLimit: number;
   memoryLengthLimit: number;
@@ -115,16 +117,11 @@ export const DEFAULT_AGENT_META: AgentMeta = {
   languages: ['English'],
   timeZone: 'UTC',
 
-  actions: [
-    'update_agent_canvas:latest',
-    'edit_agent_canvas:latest',
-    'add_memory:latest',
-    'add_entity_memory:latest',
-    'transfer_item:latest',
-    'execute_gimmick:latest',
-  ],
+  actions: ['transfer_item:latest', 'execute_gimmick:latest'],
+  canvasActions: ['update_agent_canvas:latest', 'edit_agent_canvas:latest'],
+  memoryActions: ['add_memory:latest', 'add_entity_memory:latest'],
+  memoryPostActions: ['update_memory:latest', 'update_entity_memory:latest'],
   requiredActions: [],
-  memoryActions: ['update_memory:latest', 'update_entity_memory:latest'],
 
   memoryLimit: 24,
   memoryLengthLimit: 250,

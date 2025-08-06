@@ -34,9 +34,10 @@ export interface LocationMeta {
   userContextLimit: number;
   agentUserContextLimit: number;
 
-  messageAction: string;
   actions: string[];
   addActions?: string[];
+  messageAction: string;
+  canvasActions?: string[];
   requiredActions: string[];
   rules: string[];
 
@@ -58,8 +59,9 @@ export const DEFAULT_LOCATION_META: LocationMeta = {
   messageLengthLimit: 500,
   userContextLimit: 8,
   agentUserContextLimit: 4,
+  actions: [],
   messageAction: 'send_casual_message:latest',
-  actions: ['update_canvas:latest', 'edit_canvas:latest'],
+  canvasActions: ['update_canvas:latest', 'edit_canvas:latest'],
   requiredActions: [],
   rules: [],
 

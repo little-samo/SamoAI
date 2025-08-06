@@ -120,11 +120,14 @@ export class Agent extends Entity {
       this.llms.at(Agent.MAIN_LLM_INDEX);
     const actions = [
       ...(actionLlm?.thinking ? [] : ['reasoning:latest']),
-      ...[location.meta.messageAction],
       ...location.meta.actions,
       ...(location.meta.addActions ?? []),
+      ...[location.meta.messageAction],
+      ...(location.meta.canvasActions ?? []),
       ...meta.actions,
       ...(meta.addActions ?? []),
+      ...(meta.canvasActions ?? []),
+      ...(meta.memoryActions ?? []),
     ];
     this.actions = Object.fromEntries(
       actions.map((actionWithVersion) => {
@@ -566,7 +569,7 @@ export class Agent extends Entity {
 
     const memoryActions = [
       ...(llm.thinking ? [] : ['reasoning:latest']),
-      ...this.meta.memoryActions,
+      ...this.meta.memoryPostActions!,
     ];
     const actions = Object.fromEntries(
       memoryActions.map((actionWithVersion) => {
