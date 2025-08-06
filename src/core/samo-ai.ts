@@ -23,6 +23,7 @@ import {
   User,
   UserId,
   LocationPauseReason,
+  LocationState,
 } from '@little-samo/samo-ai/models';
 
 import {
@@ -179,7 +180,10 @@ export class SamoAI extends AsyncEventEmitter {
     locationId: LocationId,
     options: {
       llmApiKeyUserId?: UserId;
-      preLoadLocation?: (locationModel: LocationModel) => Promise<void>;
+      preLoadLocation?: (
+        locationModel: LocationModel,
+        locationState: LocationState
+      ) => Promise<void>;
     } = {}
   ): Promise<Location> {
     const apiKeys =
@@ -198,7 +202,7 @@ export class SamoAI extends AsyncEventEmitter {
     );
 
     if (options.preLoadLocation) {
-      await options.preLoadLocation(locationModel);
+      await options.preLoadLocation(locationModel, locationState);
     }
 
     const location = new Location(locationModel, {
