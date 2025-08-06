@@ -39,7 +39,10 @@ interface UpdateLocationOptions {
   ignorePauseUpdateUntil?: boolean;
   executeSpecificAgentId?: AgentId;
   useAgentStartTimeForMessages?: boolean;
-  preLoadLocation?: (locationModel: LocationModel) => Promise<void>;
+  preLoadLocation?: (
+    locationModel: LocationModel,
+    locationState: LocationState
+  ) => Promise<void>;
   preAction?: (location: Location) => Promise<void>;
   postAction?: (location: Location) => Promise<void>;
   handleSave?: <T = void>(save: Promise<T>) => Promise<void>;
