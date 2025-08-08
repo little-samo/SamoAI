@@ -1,4 +1,9 @@
-import { ENV, LlmMessage, LlmToolCall } from '@little-samo/samo-ai/common';
+import {
+  ENV,
+  LlmMessage,
+  LlmToolCall,
+  truncateString,
+} from '@little-samo/samo-ai/common';
 import { AsyncEventEmitter } from '@little-samo/samo-ai/common';
 import {
   Agent,
@@ -1016,10 +1021,14 @@ export class SamoAI extends AsyncEventEmitter {
       );
       agent.state = agentState;
       const summary = await agent.generateSummary(messages, toolCalls);
+      const { text: truncatedSummary } = truncateString(
+        summary,
+        agent.meta.summaryLengthLimit
+      );
 
       await this.agentRepository.updateAgentStateSummary(
         agent.id,
-        summary.slice(0, agent.meta.summaryLengthLimit)
+        truncatedSummary
       );
 
       if (ENV.DEBUG) {
