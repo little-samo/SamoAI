@@ -183,7 +183,7 @@ export class OpenAIService extends LlmService {
         temperature = options?.temperature ?? LlmService.DEFAULT_TEMPERATURE;
         request.temperature = temperature;
       }
-      if (options?.thinkingLevel) {
+      if (this.thinking && options?.thinkingLevel) {
         request.reasoning_effort = options.thinkingLevel;
       }
       if (options?.verbose) {
@@ -330,7 +330,7 @@ Response can only be in JSON format and must strictly follow the following forma
         temperature = options?.temperature ?? LlmService.DEFAULT_TEMPERATURE;
         request.temperature = temperature;
       }
-      if (options?.thinkingLevel) {
+      if (this.thinking && options?.thinkingLevel) {
         request.reasoning_effort = options.thinkingLevel;
       }
       if (options?.verbose) {
