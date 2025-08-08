@@ -176,7 +176,7 @@ export class OpenAIService extends LlmService {
       const request: ChatCompletionCreateParamsNonStreaming = {
         model: this.model,
         messages: [...systemMessages, ...userAssistantMessages],
-        max_tokens: maxOutputTokens,
+        max_completion_tokens: maxOutputTokens,
         response_format: responseFormat,
       };
       if (!options?.webSearch) {
@@ -323,7 +323,7 @@ Response can only be in JSON format and must strictly follow the following forma
       const request: ChatCompletionCreateParamsNonStreaming = {
         model: this.model,
         messages: [...systemMessages, ...userAssistantMessages],
-        max_tokens: maxOutputTokens,
+        max_completion_tokens: maxOutputTokens,
         response_format: { type: 'text' },
       };
       if (!options?.webSearch) {
