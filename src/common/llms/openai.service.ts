@@ -179,7 +179,8 @@ export class OpenAIService extends LlmService {
         max_completion_tokens: maxOutputTokens,
         response_format: responseFormat,
       };
-      if (!options?.webSearch) {
+      // web search models and gpt-5 do not support temperature
+      if (!options?.webSearch && !this.model.startsWith('gpt-5')) {
         temperature = options?.temperature ?? LlmService.DEFAULT_TEMPERATURE;
         request.temperature = temperature;
       }
@@ -326,7 +327,8 @@ Response can only be in JSON format and must strictly follow the following forma
         max_completion_tokens: maxOutputTokens,
         response_format: { type: 'text' },
       };
-      if (!options?.webSearch) {
+      // web search models and gpt-5 do not support temperature
+      if (!options?.webSearch && !this.model.startsWith('gpt-5')) {
         temperature = options?.temperature ?? LlmService.DEFAULT_TEMPERATURE;
         request.temperature = temperature;
       }
