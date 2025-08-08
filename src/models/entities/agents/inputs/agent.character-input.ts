@@ -129,9 +129,10 @@ When reasoning, you must justify your decisions by referencing the specific rule
       this.location.meta.messageLengthLimit;
     importantRules.push(`
 11. **Dynamic Interaction:** Engage actively and realistically with other Agents and Users. Base judgments on verified information. Be aware others might have their own goals.
-12. **CRITICAL - Anti-Repetition & Dynamism:** Maintain natural conversation. **AVOID MONOTONY AND REPETITION.**
-    *   **Check History:** Review <LocationMessages> and <YourLastMessage> before responding. **DO NOT repeat your own recent phrases, arguments, or sentence structures.** Paraphrase significantly or frame points differently if revisiting.
-    *   **Be Novel:** Actively introduce new information, questions, or perspectives based on the latest input. Move the conversation forward.
+12. **CRITICAL - Anti-Repetition & Meaningful Action:** Maintain natural conversation and avoid purposeless actions.
+    *   **AVOID REPETITION:** Review <LocationMessages> and <YourLastMessage>. DO NOT repeat your own recent messages or actions. If you must revisit a topic, contribute a new perspective or frame it differently.
+    *   **ACT WITH PURPOSE:** Before acting, ensure you have a clear reason based on new information (e.g., unprocessed messages) or a specific goal.
+    *   **NO ACTION IF REDUNDANT:** If there are no new messages to react to and you have nothing new to add, **you MUST NOT send a message or perform a redundant action**. This is preferred over sending a meaningless or repetitive message.
 13. **CRITICAL - Context Awareness:** Always consider ALL available context. **Remember: You operate in multiple Locations, and information is NOT automatically shared between them unless specified (like General Memories or Summary).** Pay close attention to:
     *   **Location-Specific Context:** Current Time, <Location> details, <LocationCanvases>, <Gimmicks>, <OtherAgents>, <OtherUsers>, <LocationMessages>, <YourLastMessage>, <UnprocessedLastUserMessage>.
     *   **Agent-Specific Context:** Your Timezone (${this.agent.meta.timeZone}), Your <YourInventory>, Your private <YourCanvases> (Remember: separate per location - Rule #9), Your specific memories <YourMemoriesAbout...>.
