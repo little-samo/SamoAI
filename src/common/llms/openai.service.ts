@@ -170,8 +170,7 @@ export class OpenAIService extends LlmService {
       } else {
         responseFormat = { type: 'text' };
       }
-      const maxOutputTokens =
-        options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS;
+      let maxOutputTokens = options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS;
       let temperature: number | undefined;
       const request: ChatCompletionCreateParamsNonStreaming = {
         model: this.model,
@@ -186,6 +185,9 @@ export class OpenAIService extends LlmService {
       }
       if (this.thinking && options?.thinkingLevel) {
         request.reasoning_effort = options.thinkingLevel;
+        // add thinking tokens to max output tokens until thinking budget is supported
+        maxOutputTokens +=
+          options?.maxThinkingTokens ?? LlmService.DEFAULT_MAX_THINKING_TOKENS;
       }
       if (options?.verbose) {
         console.log(request);
@@ -334,6 +336,9 @@ Response can only be in JSON format and must strictly follow the following forma
       }
       if (this.thinking && options?.thinkingLevel) {
         request.reasoning_effort = options.thinkingLevel;
+        // add thinking tokens to max output tokens until thinking budget is supported
+        maxOutputTokens +=
+          options?.maxThinkingTokens ?? LlmService.DEFAULT_MAX_THINKING_TOKENS;
       }
       if (options?.verbose) {
         console.log(request);

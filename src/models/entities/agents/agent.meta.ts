@@ -104,10 +104,10 @@ export const DEFAULT_AGENT_META: AgentMeta = {
   maxEvaluatationThinkingTokens: 512,
   maxSummaryThinkingTokens: 512,
   maxMemoryThinkingTokens: 512,
-  thinkingLevel: LlmThinkingLevel.medium,
-  evaluationThinkingLevel: LlmThinkingLevel.low,
-  summaryThinkingLevel: LlmThinkingLevel.low,
-  memoryThinkingLevel: LlmThinkingLevel.low,
+  thinkingLevel: LlmThinkingLevel.low,
+  evaluationThinkingLevel: LlmThinkingLevel.minimal,
+  summaryThinkingLevel: LlmThinkingLevel.minimal,
+  memoryThinkingLevel: LlmThinkingLevel.minimal,
   llms: [
     {
       platform: LlmPlatform.GEMINI,
