@@ -44,8 +44,8 @@ export class AgentSummaryInputBuilder extends AgentInputBuilder {
   `.trim(),
     });
 
-    const contents: LlmMessageContent[] = [];
-    contents.push({
+    const contextContents: LlmMessageContent[] = [];
+    contextContents.push({
       type: 'text',
       text: `
 The system prompt used in the previous call, which defines the agent's role, rules, and behavior:
@@ -55,11 +55,11 @@ The system prompt used in the previous call, which defines the agent's role, rul
 
     for (const message of inputMessages) {
       if (message.role === 'assistant') {
-        contents.push({ type: 'text', text: message.content });
+        contextContents.push({ type: 'text', text: message.content });
       }
     }
 
-    contents.push({
+    contextContents.push({
       type: 'text',
       text: `
 </Prompt>
@@ -72,14 +72,14 @@ The context the agent received:
     for (const message of inputMessages) {
       if (message.role === 'user') {
         if (typeof message.content === 'string') {
-          contents.push({ type: 'text', text: message.content });
+          contextContents.push({ type: 'text', text: message.content });
         } else {
-          contents.push(...message.content);
+          contextContents.push(...message.content);
         }
       }
     }
 
-    contents.push({
+    contextContents.push({
       type: 'text',
       text: `
 </Input>
@@ -95,9 +95,29 @@ ${prevSummary}
   `,
     });
 
+    const userContents: LlmMessageContent[] = [
+      {
+        type: 'text',
+        text: `Follow the rules in the system prompt. Analyze the following context and generate an updated, concise summary of the agent's turn.`,
+      },
+      ...AgentInputBuilder.mergeMessageContents(contextContents, '\n'),
+      {
+        type: 'text',
+        text: `
+Now, provide the new summary, strictly following all rules.
+
+**Reminder of Critical Rules:**
+1.  **Length Limit:** ABSOLUTELY NO MORE than ${this.agent.meta.summaryLengthLimit} characters.
+2.  **Location Tagging:** Prefix all new information with \`LOCATION_NAME (LOCATION_KEY)\`.
+3.  **Timestamps:** Include relevant ISO 8601 date strings for key events.
+4.  **Output Format:** Provide ONLY the raw summary text. No other text or markdown.
+`,
+      },
+    ];
+
     messages.push({
       role: 'user',
-      content: AgentInputBuilder.mergeMessageContents(contents, '\n'),
+      content: userContents,
     });
 
     return messages;

@@ -46,8 +46,8 @@ export class AgentMemoryInputBuilder extends AgentInputBuilder {
   `.trim(),
     });
 
-    const contents: LlmMessageContent[] = [];
-    contents.push({
+    const contextContents: LlmMessageContent[] = [];
+    contextContents.push({
       type: 'text',
       text: `
 The system prompt used in the previous call, which defines the agent's role, rules, and behavior:
@@ -57,11 +57,11 @@ The system prompt used in the previous call, which defines the agent's role, rul
 
     for (const message of inputMessages) {
       if (message.role === 'assistant') {
-        contents.push({ type: 'text', text: message.content });
+        contextContents.push({ type: 'text', text: message.content });
       }
     }
 
-    contents.push({
+    contextContents.push({
       type: 'text',
       text: `
 </Prompt>
@@ -74,14 +74,14 @@ The context the agent received (including current memory state *before* this upd
     for (const message of inputMessages) {
       if (message.role === 'user') {
         if (typeof message.content === 'string') {
-          contents.push({ type: 'text', text: message.content });
+          contextContents.push({ type: 'text', text: message.content });
         } else {
-          contents.push(...message.content);
+          contextContents.push(...message.content);
         }
       }
     }
 
-    contents.push({
+    contextContents.push({
       type: 'text',
       text: `
 </Input>
@@ -93,9 +93,29 @@ ${JSON.stringify(toolCalls, null, 2)}
   `,
     });
 
+    const userContents: LlmMessageContent[] = [
+      {
+        type: 'text',
+        text: `Following the rules in the system prompt, analyze the agent's last turn to determine what memory updates are needed.`,
+      },
+      ...contextContents,
+      {
+        type: 'text',
+        text: `
+Now, based on your analysis, use the 'update_memory' and/or 'update_entity_memory' tools to perform the necessary changes.
+
+**Reminder of Critical Rules:**
+1.  **Justify Overwrites:** If you overwrite an existing memory, you must justify your choice.
+2.  **Indexing:** Indices are zero-based (0 to limit-1). Using an index outside this range will fail.
+3.  **Clearing Memory:** To clear an invalid or outdated memory slot, update it with an empty string ("").
+4.  **No Redundancy:** Do not add information that is already present or is unimportant.
+`,
+      },
+    ];
+
     messages.push({
       role: 'user',
-      content: AgentInputBuilder.mergeMessageContents(contents, '\n'),
+      content: AgentInputBuilder.mergeMessageContents(userContents, '\n'),
     });
 
     return messages;

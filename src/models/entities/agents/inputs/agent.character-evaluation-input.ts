@@ -11,7 +11,7 @@ export class AgentCharacterEvaluationInputBuilder extends AgentCharacterInputBui
   public override build(): LlmMessage[] {
     const messages: LlmMessage[] = [];
 
-    const guidance = `As ${this.agent.name}, your task is to decide whether to take action in this turn. Your response must be ONLY 'true' or 'false'.`;
+    const guidance = `As ${this.agent.name}, your task is to decide whether to perform any action in this turn. An 'action' refers to using any available tool, such as sending a message, updating memory, or executing a gimmick. Your response must be ONLY 'true' or 'false'.`;
     const prompt = this.buildPrompt({ guidance });
     messages.push({
       role: 'system',
@@ -23,20 +23,38 @@ export class AgentCharacterEvaluationInputBuilder extends AgentCharacterInputBui
       {
         type: 'text',
         text: `
-Based on the rules, your character, your goals, the current context, and recent messages (especially those from others), decide if you (${this.agent.name}) should take any action *in this turn*.
-  
-Consider these factors:
-*   **Task Continuity & Obligations:** Review your rules and obligations. Also, check your private canvases (<YourCanvases>) for any ongoing plans, multi-step tasks, or unfinished drafts. If a task is incomplete or an obligation is unmet, you should generally act to continue it unless interrupted by a higher-priority trigger (like a direct question to you).
-*   **Direct Triggers:** Is there a direct question, request, or event that requires an immediate response or reaction from you?
-*   **Proactive Opportunities:** Based on the conversation flow, your character's personality/goals, or changes in the environment (new entities, gimmick status), is there a relevant observation you should share, a question you should ask, or an action you should initiate?
-*   **Implicit Expectations:** Is it reasonably your turn to contribute to the conversation or activity?
-  
-Weigh these factors carefully. Your goal is to be a helpful and proactive participant. This means continuing your tasks and contributing when appropriate, but also knowing when to wait for others or for a better opportunity. Do not act if there is no clear reason to do so.
-  
-Based on the above factors, output your final decision ONLY as the literal string 'true' or 'false', with no surrounding text, markdown, or JSON formatting.
+You must decide whether to act in this turn by following a strict evaluation process. First, analyze the context for "triggers" that demand an action. If no triggers are found, evaluate if a proactive action is appropriate. Your final output must be ONLY 'true' or 'false'.
+
+**Step 1: Analyze for Action Triggers (Is an action REQUIRED?)**
+
+Review the context for the following high-priority triggers. If ANY of these are true, you should act.
+
+1.  **Unprocessed Messages:** Are there any messages in \`<LocationMessages>\` with \`PROCESSED=false\`? These are new messages you haven't seen and MUST be addressed.
+2.  **New User Message:** Is the \`<UnprocessedLastUserMessage>\` block present? This is a critical new message from a user that requires your attention.
+3.  **Direct Mention/Question:** Scan recent messages. Are you mentioned by name, addressed directly, or asked a question?
+4.  **Task Continuation:** Check your private canvases in \`<YourCanvases>\`. Is there an incomplete plan, draft, or multi-step task that you should be working on now? (e.g., a plan to "search for information then send a message").
+5.  **Mandatory Actions:** Do your \`Location Rules\` or \`Additional Rules for ${this.agent.name}\` specify a required action that you haven't completed yet?
+
+**Step 2: Evaluate for Proactive Action (Is an action OPPORTUNE?)**
+
+If no triggers from Step 1 were found, consider if a proactive action is justified. Do NOT act just for the sake of acting. Act only if it adds value.
+
+1.  **Character-Driven Action:** Does your character description, personality, or goals strongly suggest an action in the current situation? (e.g., your character is a detective and a new clue has appeared).
+2.  **Meaningful Contribution:** Has the conversation stalled? Can you move it forward with a relevant question, insight, or by using a Gimmick?
+3.  **Environmental Change:** Has something significant changed in the \`<Location>\`, \`<OtherAgents>\`, or \`<Gimmicks>\` context that warrants a comment or action from you?
+
+**Step 3: Final Decision**
+
+*   If you identified any trigger in **Step 1**, you MUST act.
+*   If you found a strong justification in **Step 2**, you SHOULD act.
+*   Otherwise, you should **wait**. It is better to remain silent than to send a repetitive, low-value, or irrelevant message. Review Rule #12 on Anti-Repetition.
 `.trim(),
       },
       ...contextContents,
+      {
+        type: 'text',
+        text: `Based on your analysis of the context and the rules, should you (${this.agent.name}) take action now? Your final answer must be ONLY the literal string 'true' or 'false'.`,
+      },
     ];
 
     messages.push({

@@ -524,12 +524,19 @@ ${this.location.state.rendering}
     const userContents: LlmMessageContent[] = [
       {
         type: 'text',
-        text: `
-As ${this.agent.name}, considering all the context and RULES (especially #1, #12, #13, and #17), decide which tool(s) to use.${requiredActionsPrompt}
-**CRITICAL REMINDER: Ensure your response is dynamic and avoids repetition (Rule #12). Crucially, BE **EXTREMELY CONCISE** and **strictly adhere to the message length limit** (Rule #17, typically ${messageLengthLimit} chars). Messages **WILL BE TRUNCATED** if they exceed the limit. Use all necessary tools at once in this single response turn.**
-`,
+        text: `As ${this.agent.name}, analyze the following context to decide on the best course of action.`,
       },
       ...contextContents,
+      {
+        type: 'text',
+        text: `
+Based on all the provided context and rules, what action(s) will you take now?${requiredActionsPrompt}
+**CRITICAL REMINDERS:**
+*   **Rules:** Pay close attention to all rules, especially #1 (Character), #12 (Anti-Repetition), #13 (Context Awareness), and #17 (Brevity).
+*   **Conciseness:** Your messages MUST be concise and under the length limit of ${messageLengthLimit} characters.
+*   **Efficiency:** Use all necessary tools in a single turn.
+`,
+      },
     ];
 
     messages.push({
