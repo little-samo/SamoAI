@@ -183,6 +183,9 @@ export class OpenAIService extends LlmService {
         temperature = options?.temperature ?? LlmService.DEFAULT_TEMPERATURE;
         request.temperature = temperature;
       }
+      if (options?.thinkingLevel) {
+        request.reasoning_effort = options.thinkingLevel;
+      }
       if (options?.verbose) {
         console.log(request);
       }
@@ -326,6 +329,9 @@ Response can only be in JSON format and must strictly follow the following forma
       if (!options?.webSearch) {
         temperature = options?.temperature ?? LlmService.DEFAULT_TEMPERATURE;
         request.temperature = temperature;
+      }
+      if (options?.thinkingLevel) {
+        request.reasoning_effort = options.thinkingLevel;
       }
       if (options?.verbose) {
         console.log(request);

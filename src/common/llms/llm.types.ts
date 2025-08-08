@@ -9,6 +9,16 @@ export const LlmPlatform = {
 
 export type LlmPlatform = (typeof LlmPlatform)[keyof typeof LlmPlatform];
 
+export const LlmThinkingLevel = {
+  minimal: 'minimal',
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+} as const;
+
+export type LlmThinkingLevel =
+  (typeof LlmThinkingLevel)[keyof typeof LlmThinkingLevel];
+
 export interface LlmServiceOptions {
   model: string;
   platform: LlmPlatform;
@@ -21,6 +31,7 @@ export interface LlmOptions {
   temperature?: number;
   maxTokens?: number;
   maxThinkingTokens?: number;
+  thinkingLevel?: LlmThinkingLevel;
   maxTries?: number;
   retryDelay?: number;
   jsonOutput?: boolean;
@@ -82,6 +93,7 @@ export interface LlmResponseBase {
   // Request Configuration
   maxOutputTokens?: number;
   thinkingBudget?: number;
+  thinkingLevel?: LlmThinkingLevel;
   temperature?: number;
 
   // Token Usage
