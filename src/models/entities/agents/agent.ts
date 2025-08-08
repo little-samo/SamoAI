@@ -426,6 +426,7 @@ export class Agent extends Entity {
             maxTokens: this.meta.maxTokens,
             temperature: this.meta.temperature,
             maxThinkingTokens: this.meta.maxThinkingTokens,
+            thinkingLevel: this.meta.thinkingLevel,
             verbose: ENV.VERBOSE_LLM,
           }
         );
@@ -488,6 +489,7 @@ export class Agent extends Entity {
         maxTokens: this.meta.maxTokens,
         temperature: this.meta.temperature,
         maxThinkingTokens: this.meta.maxEvaluatationThinkingTokens,
+        thinkingLevel: this.meta.evaluationThinkingLevel,
         verbose: ENV.VERBOSE_LLM,
       });
     } catch (error) {
@@ -534,6 +536,7 @@ export class Agent extends Entity {
         maxTokens: this.meta.maxTokens,
         temperature: this.meta.temperature,
         maxThinkingTokens: this.meta.maxSummaryThinkingTokens,
+        thinkingLevel: this.meta.summaryThinkingLevel,
         verbose: ENV.VERBOSE_LLM,
       });
     } catch (error) {
@@ -588,6 +591,7 @@ export class Agent extends Entity {
         maxTokens: this.meta.maxTokens,
         temperature: this.meta.temperature,
         maxThinkingTokens: this.meta.maxMemoryThinkingTokens,
+        thinkingLevel: this.meta.memoryThinkingLevel,
         verbose: ENV.VERBOSE_LLM,
       });
     } catch (error) {
