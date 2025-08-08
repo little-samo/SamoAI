@@ -320,8 +320,7 @@ Response can only be in JSON format and must strictly follow the following forma
 ]`,
       });
 
-      const maxOutputTokens =
-        options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS;
+      let maxOutputTokens = options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS;
       let temperature: number | undefined;
       const request: ChatCompletionCreateParamsNonStreaming = {
         model: this.model,
