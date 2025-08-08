@@ -104,14 +104,14 @@ export const DEFAULT_AGENT_META: AgentMeta = {
   maxEvaluatationThinkingTokens: 512,
   maxSummaryThinkingTokens: 512,
   maxMemoryThinkingTokens: 512,
-  thinkingLevel: LlmThinkingLevel.low,
-  evaluationThinkingLevel: LlmThinkingLevel.minimal,
-  summaryThinkingLevel: LlmThinkingLevel.minimal,
-  memoryThinkingLevel: LlmThinkingLevel.minimal,
+  thinkingLevel: LlmThinkingLevel.medium,
+  evaluationThinkingLevel: LlmThinkingLevel.low,
+  summaryThinkingLevel: LlmThinkingLevel.low,
+  memoryThinkingLevel: LlmThinkingLevel.low,
   llms: [
     {
       platform: LlmPlatform.GEMINI,
-      model: 'gemini-2.5-flash-lite',
+      model: 'gemini-2.5-flash',
       thinking: true,
     },
     {
