@@ -786,7 +786,7 @@ export class SamoAI extends AsyncEventEmitter {
           _parameters: GimmickParameters,
           _errorMessage: string
         ) => {
-          void options.handleSave!(gimmick.release());
+          await gimmick.release();
           if (entity.type === EntityType.Agent) {
             if (ENV.DEBUG) {
               console.log(
@@ -814,7 +814,7 @@ export class SamoAI extends AsyncEventEmitter {
       location.on(
         'gimmickExecuted',
         async (gimmick: Gimmick, entity: Entity) => {
-          void options.handleSave!(gimmick.release());
+          await gimmick.release();
           if (entity.type === EntityType.Agent) {
             if (ENV.DEBUG) {
               console.log(
