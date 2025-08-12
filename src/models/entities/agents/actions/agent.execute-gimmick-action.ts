@@ -62,8 +62,15 @@ export class AgentExecuteGimmickAction extends AgentAction {
     }
 
     if (!(await gimmick.occupy(this.agent, undefined, action.reason))) {
+      const occupierKey = `${gimmick.state.occupierType}:${gimmick.state.occupierId}`;
+      const occupationReason = gimmick.state.occupationReason
+        ? ` for "${gimmick.state.occupationReason}"`
+        : '';
+      const occupationUntil = gimmick.state.occupationUntil!.toISOString();
+
       await this.location.addSystemMessage(
-        `${action.gimmickKey} is not currently available.`
+        `${action.gimmickKey} is currently occupied by ${occupierKey}${occupationReason} until ${occupationUntil}. ` +
+          `This gimmick cannot be used while it is occupied. Please wait until the occupation expires or the current user completes their task, then try again.`
       );
       return;
     }
