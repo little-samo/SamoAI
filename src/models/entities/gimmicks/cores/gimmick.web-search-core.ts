@@ -198,7 +198,7 @@ A concise paragraph that summarizes the main discoveries from the search. This s
     parameters: GimmickParameters
   ): Promise<string | undefined> {
     if (!parameters || typeof parameters !== 'string') {
-      return 'Invalid query provided';
+      return 'Invalid search query provided. Please provide a raw string query, not a JSON object or other data type.';
     }
     const query = parameters as string;
 
