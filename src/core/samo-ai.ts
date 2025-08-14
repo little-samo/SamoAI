@@ -514,6 +514,25 @@ export class SamoAI extends AsyncEventEmitter {
     await this.addLocationMessage(locationId, locationMessage);
   }
 
+  public async addLocationUserAction(
+    locationId: LocationId,
+    userId: UserId,
+    name: string,
+    action: string,
+    createdAt?: Date
+  ): Promise<void> {
+    const locationMessage: LocationMessage = {
+      locationId,
+      entityType: EntityType.User,
+      entityId: userId,
+      name,
+      action,
+      createdAt: createdAt ?? new Date(),
+      updatedAt: new Date(),
+    };
+    await this.addLocationMessage(locationId, locationMessage);
+  }
+
   public async addLocationSystemMessage(
     locationId: LocationId,
     message: string,
