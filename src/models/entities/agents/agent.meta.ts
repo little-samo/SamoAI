@@ -2,6 +2,7 @@ import {
   LlmPlatform,
   LlmServiceOptions,
   LlmThinkingLevel,
+  LlmVerbosity,
 } from '@little-samo/samo-ai/common';
 
 import { EntityMeta } from '../entity.meta';
@@ -23,13 +24,18 @@ export interface AgentMeta extends EntityMeta {
   temperature: number;
   maxTokens: number;
   maxThinkingTokens: number;
-  maxEvaluatationThinkingTokens: number;
-  maxSummaryThinkingTokens: number;
-  maxMemoryThinkingTokens: number;
   thinkingLevel: LlmThinkingLevel;
+  thinkingVerbosity: LlmVerbosity;
+  maxEvaluatationThinkingTokens: number;
   evaluationThinkingLevel: LlmThinkingLevel;
+  evaluationThinkingVerbosity: LlmVerbosity;
+  maxSummaryThinkingTokens: number;
   summaryThinkingLevel: LlmThinkingLevel;
+  summaryThinkingVerbosity: LlmVerbosity;
+  maxMemoryThinkingTokens: number;
   memoryThinkingLevel: LlmThinkingLevel;
+  memoryThinkingVerbosity: LlmVerbosity;
+
   llms: AgentLlmMeta[];
   inputs: string[];
   languages: string[];
@@ -100,14 +106,19 @@ export const DEFAULT_AGENT_META: AgentMeta = {
 
   temperature: 0.5,
   maxTokens: 2048,
-  maxThinkingTokens: 1024,
-  maxEvaluatationThinkingTokens: 512,
-  maxSummaryThinkingTokens: 512,
-  maxMemoryThinkingTokens: 512,
   thinkingLevel: LlmThinkingLevel.low,
+  maxThinkingTokens: 1024,
+  thinkingVerbosity: LlmVerbosity.low,
+  maxEvaluatationThinkingTokens: 512,
   evaluationThinkingLevel: LlmThinkingLevel.minimal,
+  evaluationThinkingVerbosity: LlmVerbosity.low,
+  maxSummaryThinkingTokens: 512,
   summaryThinkingLevel: LlmThinkingLevel.minimal,
+  summaryThinkingVerbosity: LlmVerbosity.low,
+  maxMemoryThinkingTokens: 512,
   memoryThinkingLevel: LlmThinkingLevel.minimal,
+  memoryThinkingVerbosity: LlmVerbosity.low,
+
   llms: [
     {
       platform: LlmPlatform.GEMINI,

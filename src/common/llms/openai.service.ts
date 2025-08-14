@@ -184,10 +184,15 @@ export class OpenAIService extends LlmService {
         request.temperature = temperature;
       }
       if (this.thinking && options?.thinkingLevel) {
-        request.reasoning_effort = options.thinkingLevel;
         // add thinking tokens to max output tokens until thinking budget is supported
         maxOutputTokens +=
           options?.maxThinkingTokens ?? LlmService.DEFAULT_MAX_THINKING_TOKENS;
+        if (options?.thinkingLevel) {
+          request.reasoning_effort = options.thinkingLevel;
+        }
+        if (options?.thinkingVerbosity) {
+          request.verbosity = options.thinkingVerbosity;
+        }
       }
       if (options?.verbose) {
         console.log(request);
@@ -333,11 +338,16 @@ Response can only be in JSON format and must strictly follow the following forma
         temperature = options?.temperature ?? LlmService.DEFAULT_TEMPERATURE;
         request.temperature = temperature;
       }
-      if (this.thinking && options?.thinkingLevel) {
-        request.reasoning_effort = options.thinkingLevel;
+      if (this.thinking) {
         // add thinking tokens to max output tokens until thinking budget is supported
         maxOutputTokens +=
           options?.maxThinkingTokens ?? LlmService.DEFAULT_MAX_THINKING_TOKENS;
+        if (options?.thinkingLevel) {
+          request.reasoning_effort = options.thinkingLevel;
+        }
+        if (options?.thinkingVerbosity) {
+          request.verbosity = options.thinkingVerbosity;
+        }
       }
       if (options?.verbose) {
         console.log(request);
