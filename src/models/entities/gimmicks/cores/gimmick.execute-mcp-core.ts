@@ -66,8 +66,7 @@ class McpToolsCache {
 
   public static async cacheTools(
     serverUrl: string,
-    createMcpClient: () => Promise<Client>,
-    options?: GimmickExecuteMcpCoreOptions
+    createMcpClient: () => Promise<Client>
   ): Promise<void> {
     const cachedTools = this.cachedToolsByServerUrl[serverUrl];
     if (
@@ -84,30 +83,15 @@ class McpToolsCache {
       const toolsList = await client.listTools();
 
       if (ENV.DEBUG) {
-        console.log('McpToolsCache update');
+        console.log(`McpToolsCache update: ${serverUrl}`);
       }
 
       const tools: Record<string, McpToolDefinition> = {};
-      const toolsToInclude = new Set(options?.tools ?? []);
-      const additionalArguments = options?.additionalArguments ?? [];
       for (const tool of toolsList.tools) {
-        if (toolsToInclude.size > 0 && !toolsToInclude.has(tool.name)) {
-          continue;
-        }
-
-        let schema = mcpSchemaToZod(tool.inputSchema as MCPJsonSchema);
-        if (schema instanceof z.ZodObject) {
-          for (const argument of additionalArguments) {
-            schema = (schema as z.AnyZodObject).extend({
-              [argument]: z.any(),
-            });
-          }
-          schema = (schema as z.AnyZodObject).strict();
-        }
         tools[tool.name] = {
           name: tool.name,
           description: tool.description,
-          schema,
+          schema: mcpSchemaToZod(tool.inputSchema as MCPJsonSchema),
         };
 
         if (ENV.DEBUG) {
@@ -127,23 +111,69 @@ class McpToolsCache {
     }
   }
 
-  public static getInstructions(serverUrl: string): string | undefined {
+  private static getCachedTools(
+    serverUrl: string,
+    options?: GimmickExecuteMcpCoreOptions
+  ): CachedMcpTools {
     const cachedTools = this.cachedToolsByServerUrl[serverUrl];
     if (!cachedTools || cachedTools.expiresAt < new Date()) {
       throw new Error(`McpToolsCache expired for server ${serverUrl}`);
     }
+
+    if (!options) {
+      return cachedTools;
+    }
+
+    const toolsToInclude = new Set(options?.tools ?? []);
+    const additionalArguments = options?.additionalArguments ?? [];
+    if (toolsToInclude.size === 0 && additionalArguments.length === 0) {
+      return cachedTools;
+    }
+
+    const tools: Record<string, McpToolDefinition> = {};
+    for (const tool of Object.values(cachedTools.tools)) {
+      if (toolsToInclude.size > 0 && !toolsToInclude.has(tool.name)) {
+        continue;
+      }
+
+      let schema = tool.schema;
+      if (schema instanceof z.ZodObject) {
+        for (const argument of additionalArguments) {
+          schema = (schema as z.AnyZodObject).extend({
+            [argument]: z.any(),
+          });
+        }
+        schema = (schema as z.AnyZodObject).strict();
+      }
+      tools[tool.name] = {
+        name: tool.name,
+        description: tool.description,
+        schema,
+      };
+
+      if (ENV.DEBUG) {
+        console.log(`Tool ${tool.name} - ${tool.description}`);
+      }
+    }
+
+    return {
+      instructions: cachedTools.instructions,
+      tools: tools,
+      expiresAt: cachedTools.expiresAt,
+    };
+  }
+
+  public static getInstructions(serverUrl: string): string | undefined {
+    const cachedTools = this.getCachedTools(serverUrl);
     return cachedTools.instructions;
   }
 
   public static getTools(
     serverUrl: string,
+    options?: GimmickExecuteMcpCoreOptions,
     gimmickArguments?: GimmickArguments
   ): Record<string, McpToolDefinition> {
-    const cachedTools = this.cachedToolsByServerUrl[serverUrl];
-    if (!cachedTools || cachedTools.expiresAt < new Date()) {
-      throw new Error(`McpToolsCache expired for server ${serverUrl}`);
-    }
-
+    const cachedTools = this.getCachedTools(serverUrl, options);
     if (!gimmickArguments) {
       return cachedTools.tools;
     }
@@ -171,13 +201,10 @@ class McpToolsCache {
   public static getTool(
     serverUrl: string,
     toolName: string,
+    options?: GimmickExecuteMcpCoreOptions,
     gimmickArguments?: GimmickArguments
   ): McpToolDefinition | undefined {
-    const cachedTools = this.cachedToolsByServerUrl[serverUrl];
-    if (!cachedTools || cachedTools.expiresAt < new Date()) {
-      throw new Error(`McpToolsCache expired for server ${serverUrl}`);
-    }
-
+    const cachedTools = this.getCachedTools(serverUrl, options);
     const tool = cachedTools.tools[toolName];
     if (!tool || !gimmickArguments || !(tool.schema instanceof z.ZodObject)) {
       return tool;
@@ -238,7 +265,11 @@ export class GimmickExecuteMcpCore extends GimmickCore {
 
   public override get parameters(): z.ZodSchema {
     const gimmickArguments = this.getGimmickArguments();
-    const tools = McpToolsCache.getTools(this.serverUrl, gimmickArguments);
+    const tools = McpToolsCache.getTools(
+      this.serverUrl,
+      this.options,
+      gimmickArguments
+    );
 
     const toolSchemas = Object.entries(tools).map(([name, tool]) => {
       const description = tool.description || `Arguments for the ${name} tool.`;
@@ -329,8 +360,7 @@ export class GimmickExecuteMcpCore extends GimmickCore {
     try {
       await McpToolsCache.cacheTools(
         this.serverUrl,
-        async () => await this.createMcpClient(),
-        this.options
+        async () => await this.createMcpClient()
       );
     } catch (error) {
       console.error(
@@ -439,6 +469,7 @@ export class GimmickExecuteMcpCore extends GimmickCore {
     const tool = McpToolsCache.getTool(
       this.serverUrl,
       toolName,
+      this.options,
       gimmickArguments
     );
     if (!tool) {
@@ -489,7 +520,11 @@ export class GimmickExecuteMcpCore extends GimmickCore {
 
     // Merge with gimmick and entity arguments
     if (gimmickArguments) {
-      const originalTool = McpToolsCache.getTool(this.serverUrl, toolName);
+      const originalTool = McpToolsCache.getTool(
+        this.serverUrl,
+        toolName,
+        this.options
+      );
       if (!originalTool) {
         return `Cache error occurred. Try again in a little while.`;
       }
