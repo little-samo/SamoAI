@@ -105,7 +105,7 @@ export const DEFAULT_AGENT_META: AgentMeta = {
   prompts: {},
 
   temperature: 0.5,
-  maxTokens: 2048,
+  maxTokens: 4096,
   thinkingLevel: LlmThinkingLevel.low,
   maxThinkingTokens: 1024,
   thinkingVerbosity: LlmVerbosity.low,
