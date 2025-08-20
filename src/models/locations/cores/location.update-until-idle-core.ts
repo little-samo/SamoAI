@@ -3,13 +3,12 @@ import { ENV, shuffle } from '@little-samo/samo-ai/common';
 import { LocationCore } from './location.core';
 import { RegisterLocationCore } from './location.core-decorator';
 
-@RegisterLocationCore('update_forever')
-export class LocationUpdateForeverCore extends LocationCore {
+@RegisterLocationCore('update_until_idle')
+export class LocationUpdateUntilIdleCore extends LocationCore {
   public static readonly UPDATE_INTERVAL = 2000; // 2 seconds
-  public static readonly SLEEP_INTERVAL = 5000; // 5 seconds
 
   public override get defaultPauseUpdateDuration(): number {
-    return LocationUpdateForeverCore.UPDATE_INTERVAL;
+    return LocationUpdateUntilIdleCore.UPDATE_INTERVAL;
   }
 
   public async update(): Promise<number> {
@@ -22,12 +21,12 @@ export class LocationUpdateForeverCore extends LocationCore {
         if (ENV.DEBUG) {
           console.log(`[${entity.key}] ${entity.name} executed`);
         }
-        return LocationUpdateForeverCore.UPDATE_INTERVAL;
+        return LocationUpdateUntilIdleCore.UPDATE_INTERVAL;
       }
     }
     if (ENV.DEBUG) {
-      console.log('No entities executed');
+      console.log('No entities executed - stopping update loop');
     }
-    return LocationUpdateForeverCore.SLEEP_INTERVAL;
+    return 0; // Stop updating when no actions are available
   }
 }
