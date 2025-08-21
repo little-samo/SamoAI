@@ -16,7 +16,7 @@ export interface LocationMessageContextOptions {
 
 export class LocationMessageContext extends Context {
   public static readonly FORMAT =
-    'CREATED\tPROCESSED\tENTITY_KEY\tTARGET_KEY\tNAME\tMESSAGE\tEXPRESSION\tACTION';
+    'CREATED\tPROCESSED\tENTITY_KEY\tTARGET_KEY\tNAME\tMESSAGE\tEXPRESSION\tACTION\tIMAGE';
 
   public readonly key: EntityKey;
   public readonly targetKey?: EntityKey;
@@ -49,12 +49,16 @@ export class LocationMessageContext extends Context {
       ? JSON.stringify(this.expression)
       : 'null';
     let action = this.action ? JSON.stringify(this.action) : 'null';
+    let image = 'null';
     if (this.image) {
       action = `UPLOAD_IMAGE`;
+      image = 'attached';
     }
     const processed =
       this.processed === undefined ? 'null' : this.processed ? 'true' : 'false';
-    return `${this.created.toISOString()}\t${processed}\t${this.key}\t${targetKey}\t${JSON.stringify(this.name)}\t${message}\t${expression}\t${action}`;
+    return `${this.created.toISOString()}\t${processed}\t${this.key}\t${targetKey}\t${JSON.stringify(
+      this.name
+    )}\t${message}\t${expression}\t${action}\t${image}`;
   }
 }
 

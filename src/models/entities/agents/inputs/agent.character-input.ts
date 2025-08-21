@@ -143,6 +143,7 @@ When reasoning, you must justify your decisions by referencing the specific rule
     *   \`PROCESSED=false\`: A new message you haven't seen. You MUST react to these.
     *   \`PROCESSED=true\`: An old message you've already processed. Use for context only.
     *   \`PROCESSED=null\`: Status unknown; its processed state is not yet determined.
+    *   If the \`IMAGE\` column is \`attached\`, an image is part of the message. The image content will be provided immediately after the message line.
 16. **Physical Limitations:** Operate only within the digital environment.
 17. **CRITICAL - Brevity & Length Limits (External Messages):** Be **EXTREMELY concise and to the point** in messages to users/agents (via tools like \`send_casual_message\` or \`send_message\`). Avoid rambling or unnecessary details. **Strictly adhere to the message length limit** (typically ${messageLengthLimit} characters). **Messages exceeding this limit WILL BE TRUNCATED, potentially losing crucial information.** Plan your message content carefully to fit within the limit.
 `);
@@ -436,29 +437,51 @@ ${LocationMessageContext.FORMAT}
     }
 
     if (lastAgentMessage) {
-      contexts.push({
-        type: 'text',
-        text: `
+      const messageContents: LlmMessageContent[] = [
+        {
+          type: 'text',
+          text: `
 Your last message:
 <YourLastMessage>
 ${LocationMessageContext.FORMAT}
-${lastAgentMessage.build()}
-</YourLastMessage>
-`,
+${lastAgentMessage.build()}`,
+        },
+      ];
+      if (lastAgentMessage.image) {
+        messageContents.push({
+          type: 'image',
+          image: lastAgentMessage.image,
+        });
+      }
+      messageContents.push({
+        type: 'text',
+        text: `</YourLastMessage>`,
       });
+      contexts.push(...AgentInputBuilder.mergeMessageContents(messageContents));
     }
 
     if (lastUnprocessedUserMessage) {
-      contexts.push({
-        type: 'text',
-        text: `
+      const messageContents: LlmMessageContent[] = [
+        {
+          type: 'text',
+          text: `
 The last unprocessed user message (this is new since your last action):
 <UnprocessedLastUserMessage>
 ${LocationMessageContext.FORMAT}
-${lastUnprocessedUserMessage.build()}
-</UnprocessedLastUserMessage>
-`,
+${lastUnprocessedUserMessage.build()}`,
+        },
+      ];
+      if (lastUnprocessedUserMessage.image) {
+        messageContents.push({
+          type: 'image',
+          image: lastUnprocessedUserMessage.image,
+        });
+      }
+      messageContents.push({
+        type: 'text',
+        text: `</UnprocessedLastUserMessage>`,
       });
+      contexts.push(...AgentInputBuilder.mergeMessageContents(messageContents));
     }
 
     for (let i = 0; i < this.location.state.images.length; ++i) {
