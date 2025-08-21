@@ -143,7 +143,7 @@ When reasoning, you must justify your decisions by referencing the specific rule
     *   \`PROCESSED=false\`: A new message you haven't seen. You MUST react to these.
     *   \`PROCESSED=true\`: An old message you've already processed. Use for context only.
     *   \`PROCESSED=null\`: Status unknown; its processed state is not yet determined.
-    *   If the \`IMAGE\` column is \`attached\`, an image is part of the message. The image content will be provided immediately after the message line.
+    *   If the \`ACTION\` column is \`"upload_image"\` or \`"upload_image --image-key [key]"\`, an image is part of the message. The image content will be provided immediately after the message line.
 16. **Physical Limitations:** Operate only within the digital environment.
 17. **CRITICAL - Brevity & Length Limits (External Messages):** Be **EXTREMELY concise and to the point** in messages to users/agents (via tools like \`send_casual_message\` or \`send_message\`). Avoid rambling or unnecessary details. **Strictly adhere to the message length limit** (typically ${messageLengthLimit} characters). **Messages exceeding this limit WILL BE TRUNCATED, potentially losing crucial information.** Plan your message content carefully to fit within the limit.
 `);

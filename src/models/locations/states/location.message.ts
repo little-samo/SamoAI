@@ -18,6 +18,7 @@ export interface LocationMessage {
   emotion?: string;
 
   image?: string;
+  imageKey?: string;
 
   // Flag to indicate if this message has been processed in location update
   processed?: boolean;
