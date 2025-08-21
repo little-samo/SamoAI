@@ -651,6 +651,28 @@ function toZod(schema: MCPJsonSchema, depth = MAX_DEPTH): ZodTypeAny {
             toZod(schema.additionalProperties as MCPJsonSchema, depth - 1)
           );
         }
+      } else if (
+        schema.additionalProperties === true ||
+        (schema.additionalProperties === undefined &&
+          Object.keys(props).length === 0)
+      ) {
+        // When additionalProperties is true or undefined with no defined properties,
+        // this indicates a z.record() schema that should accept any key-value pairs
+        if (
+          typeof schema.additionalProperties === 'object' &&
+          schema.additionalProperties !== null
+        ) {
+          // If additionalProperties has a specific schema, use it
+          return withNullability(
+            schema,
+            z.record(
+              toZod(schema.additionalProperties as MCPJsonSchema, depth - 1)
+            )
+          );
+        } else {
+          // Default to z.record(z.unknown()) for flexible objects
+          return withNullability(schema, z.record(z.unknown()));
+        }
       }
 
       return withNullability(schema, obj);
