@@ -124,10 +124,16 @@ class McpToolsCache {
       return cachedTools;
     }
 
-    const toolsToInclude = new Set(options?.tools ?? []);
-    const additionalArguments = options?.additionalArguments ?? [];
+    const toolsToInclude = new Set(options.tools ?? []);
+    const additionalArguments = options.additionalArguments ?? [];
     if (toolsToInclude.size === 0 && additionalArguments.length === 0) {
       return cachedTools;
+    }
+
+    if (ENV.DEBUG) {
+      console.log(`McpToolsCache getTools: ${serverUrl}`);
+      console.log(`toolsToInclude: ${Array.from(toolsToInclude).join(', ')}`);
+      console.log(`additionalArguments: ${additionalArguments.join(', ')}`);
     }
 
     const tools: Record<string, McpToolDefinition> = {};
