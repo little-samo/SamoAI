@@ -80,6 +80,7 @@ const CORE_KEYS = new Set<keyof ExtendedJSONSchema7>([
   'oneOf',
   'allOf',
   'format',
+  'additionalProperties',
   'nullable',
   'isBigInt',
   'regexMessage',
@@ -309,6 +310,14 @@ function prune(schema: JSONSchema7, depth = MAX_DEPTH): JSONSchema7 {
       case 'oneOf':
       case 'allOf': {
         dst[k] = (v as JSONSchema7[]).map((s) => prune(s, depth - 1));
+        break;
+      }
+      case 'additionalProperties': {
+        if (typeof v === 'object' && v !== null) {
+          dst.additionalProperties = prune(v as JSONSchema7, depth - 1);
+        } else {
+          dst.additionalProperties = v;
+        }
         break;
       }
       default:
@@ -645,10 +654,37 @@ function toZod(schema: MCPJsonSchema, depth = MAX_DEPTH): ZodTypeAny {
         typeof schema.additionalProperties === 'object' &&
         schema.additionalProperties !== null
       ) {
-        // Type guard to ensure obj is ZodObject
+        const additionalSchema = schema.additionalProperties as MCPJsonSchema;
+
+        // Check if this is a nested record structure (additionalProperties with additionalProperties)
+        if (
+          additionalSchema.type === 'object' &&
+          typeof additionalSchema.additionalProperties === 'object' &&
+          additionalSchema.additionalProperties !== null &&
+          Object.keys(props).length === 0
+        ) {
+          // This is a nested record like z.record(z.record(z.string()))
+          return withNullability(
+            schema,
+            z.record(
+              z.record(
+                toZod(
+                  additionalSchema.additionalProperties as MCPJsonSchema,
+                  depth - 2
+                )
+              )
+            )
+          );
+        }
+
+        // Regular additionalProperties - use catchall if we have an object
         if (obj instanceof z.ZodObject) {
-          obj = obj.catchall(
-            toZod(schema.additionalProperties as MCPJsonSchema, depth - 1)
+          obj = obj.catchall(toZod(additionalSchema, depth - 1));
+        } else {
+          // If no defined properties, use z.record
+          return withNullability(
+            schema,
+            z.record(toZod(additionalSchema, depth - 1))
           );
         }
       } else if (
@@ -658,21 +694,7 @@ function toZod(schema: MCPJsonSchema, depth = MAX_DEPTH): ZodTypeAny {
       ) {
         // When additionalProperties is true or undefined with no defined properties,
         // this indicates a z.record() schema that should accept any key-value pairs
-        if (
-          typeof schema.additionalProperties === 'object' &&
-          schema.additionalProperties !== null
-        ) {
-          // If additionalProperties has a specific schema, use it
-          return withNullability(
-            schema,
-            z.record(
-              toZod(schema.additionalProperties as MCPJsonSchema, depth - 1)
-            )
-          );
-        } else {
-          // Default to z.record(z.unknown()) for flexible objects
-          return withNullability(schema, z.record(z.unknown()));
-        }
+        return withNullability(schema, z.record(z.unknown()));
       }
 
       return withNullability(schema, obj);
