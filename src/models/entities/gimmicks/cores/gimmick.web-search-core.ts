@@ -24,7 +24,7 @@ export class GimmickWebSearchCore extends GimmickCore {
   public static readonly DEFAULT_SEARCH_LLM_PLATFORM = LlmPlatform.GEMINI;
   public static readonly DEFAULT_SEARCH_LLM_MODEL = 'gemini-2.5-flash';
   public static readonly DEFAULT_SEARCH_LLM_THINKING = true;
-  public static readonly LLM_MAX_TOKENS = 1024;
+  public static readonly LLM_MAX_TOKENS = 4096;
   public static readonly LLM_MAX_THINKING_TOKENS = 2048;
   public static readonly DEFAULT_MAX_SEARCH_RESULT_LENGTH = 2000;
   public static readonly DEFAULT_MAX_SEARCH_SOURCES_LENGTH = 1000;
@@ -36,6 +36,7 @@ export class GimmickWebSearchCore extends GimmickCore {
   public override get parameters(): z.ZodSchema {
     return z
       .string()
+      .max(500)
       .describe(
         'A detailed, comprehensive search query that includes all relevant context, specific terms, dates, locations, or other important details. Since this gimmick has no access to conversation context, write complete queries as you would on Google. Avoid vague terms like "this", "that", or references to previous conversation.'
       );
