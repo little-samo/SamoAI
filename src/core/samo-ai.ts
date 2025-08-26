@@ -742,11 +742,18 @@ export class SamoAI extends AsyncEventEmitter {
         }
       );
 
-      location.on('gimmickReleased', (gimmick: Gimmick) => {
+      location.on('gimmickReleased', (gimmick: Gimmick, entity: Entity) => {
         void options.handleSave!(
           this.gimmickRepository.updateGimmickStateOccupier(
             locationId,
-            gimmick.id
+            gimmick.id,
+            undefined,
+            undefined,
+            undefined,
+            {
+              currentOccupierType: entity.type,
+              currentOccupierId: entity.id,
+            }
           )
         );
       });
@@ -805,7 +812,7 @@ export class SamoAI extends AsyncEventEmitter {
           _parameters: GimmickParameters,
           _errorMessage: string
         ) => {
-          await gimmick.release();
+          await gimmick.release(entity);
           if (entity.type === EntityType.Agent) {
             if (ENV.DEBUG) {
               console.log(
@@ -833,7 +840,7 @@ export class SamoAI extends AsyncEventEmitter {
       location.on(
         'gimmickExecuted',
         async (gimmick: Gimmick, entity: Entity) => {
-          await gimmick.release();
+          await gimmick.release(entity);
           if (entity.type === EntityType.Agent) {
             if (ENV.DEBUG) {
               console.log(

@@ -136,16 +136,21 @@ export class Gimmick extends Entity {
     return true;
   }
 
-  public async release(): Promise<boolean> {
-    if (!this.state.occupierType) {
+  public async release(entity: Entity): Promise<boolean> {
+    if (
+      this.state.occupierType &&
+      (this.state.occupierId !== entity.id ||
+        this.state.occupierType !== entity.type)
+    ) {
       return false;
     }
+
     this.state.occupierType = undefined;
     this.state.occupierId = undefined;
     this.state.occupationUntil = undefined;
     this.state.occupationReason = undefined;
 
-    await this.location.emitAsync('gimmickReleased', this);
+    await this.location.emitAsync('gimmickReleased', this, entity);
 
     return true;
   }

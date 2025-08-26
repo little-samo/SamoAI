@@ -21,6 +21,10 @@ export interface GimmickRepository {
     gimmickId: GimmickId,
     occupierType?: EntityType,
     occupierId?: EntityId,
-    occupationUntil?: Date
+    occupationUntil?: Date,
+    options?: {
+      currentOccupierType?: EntityType;
+      currentOccupierId?: EntityId;
+    }
   ): Promise<void>;
 }
