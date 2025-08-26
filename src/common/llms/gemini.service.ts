@@ -216,6 +216,16 @@ export class GeminiService extends LlmService {
     };
 
     if (!responseText) {
+      if (response.promptFeedback?.blockReasonMessage) {
+        let blockReasonMessage = response.promptFeedback.blockReasonMessage;
+        if (!blockReasonMessage.endsWith('.')) {
+          blockReasonMessage += '.';
+        }
+        throw new LlmInvalidContentError(
+          `Gemini refused to generate content: ${blockReasonMessage} Try again with a different request.`,
+          result
+        );
+      }
       throw new LlmInvalidContentError(
         'Gemini returned no content. Try again with a different request.',
         result
@@ -394,6 +404,16 @@ Response can only be in JSON format and must strictly follow the following forma
       responseTime,
     };
     if (!responseText) {
+      if (response.promptFeedback?.blockReasonMessage) {
+        let blockReasonMessage = response.promptFeedback.blockReasonMessage;
+        if (!blockReasonMessage.endsWith('.')) {
+          blockReasonMessage += '.';
+        }
+        throw new LlmInvalidContentError(
+          `Gemini refused to generate content: ${blockReasonMessage} Try again with a different request.`,
+          result
+        );
+      }
       throw new LlmInvalidContentError(
         'Gemini returned no content. Try again with a different request.',
         result

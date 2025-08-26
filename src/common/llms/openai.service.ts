@@ -221,6 +221,12 @@ export class OpenAIService extends LlmService {
 
       const responseText = response.choices.at(0)?.message.content;
       if (!responseText) {
+        if (response.choices.at(0)?.finish_reason === 'content_filter') {
+          throw new LlmInvalidContentError(
+            `${this.serviceName} refused to generate content. Try again with a different request.`,
+            result
+          );
+        }
         throw new LlmInvalidContentError(
           `${this.serviceName} returned no content. Try again with a different request.`,
           result
@@ -376,6 +382,12 @@ Response can only be in JSON format and must strictly follow the following forma
 
       const responseText = response.choices.at(0)?.message.content;
       if (!responseText) {
+        if (response.choices.at(0)?.finish_reason === 'content_filter') {
+          throw new LlmInvalidContentError(
+            `${this.serviceName} refused to generate content. Try again with a different request.`,
+            result
+          );
+        }
         throw new LlmInvalidContentError(
           `${this.serviceName} returned no content. Try again with a different request.`,
           result

@@ -210,6 +210,12 @@ export class AnthropicService extends LlmService {
           .at(0) as TextBlock
       )?.text;
       if (!responseText) {
+        if (response.stop_reason === 'refusal') {
+          throw new LlmInvalidContentError(
+            'Anthropic refused to generate content. Try again with a different request.',
+            result
+          );
+        }
         throw new LlmInvalidContentError(
           'Anthropic returned no content. Try again with a different request.',
           result
@@ -364,6 +370,12 @@ Response can only be in JSON format and must strictly follow the following forma
           .at(0) as TextBlock
       )?.text;
       if (!responseText) {
+        if (response.stop_reason === 'refusal') {
+          throw new LlmInvalidContentError(
+            'Anthropic refused to generate content. Try again with a different request.',
+            result
+          );
+        }
         throw new LlmInvalidContentError(
           'Anthropic returned no content. Try again with a different request.',
           result
