@@ -222,7 +222,7 @@ export class OpenAIService extends LlmService {
       const responseText = response.choices.at(0)?.message.content;
       if (!responseText) {
         throw new LlmInvalidContentError(
-          `${this.serviceName} returned no content`,
+          `${this.serviceName} returned no content. Try again with a different request.`,
           result
         );
       }
@@ -377,7 +377,7 @@ Response can only be in JSON format and must strictly follow the following forma
       const responseText = response.choices.at(0)?.message.content;
       if (!responseText) {
         throw new LlmInvalidContentError(
-          `${this.serviceName} returned no content`,
+          `${this.serviceName} returned no content. Try again with a different request.`,
           result
         );
       }

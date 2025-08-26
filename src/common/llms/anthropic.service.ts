@@ -211,7 +211,7 @@ export class AnthropicService extends LlmService {
       )?.text;
       if (!responseText) {
         throw new LlmInvalidContentError(
-          'Anthropic returned no content',
+          'Anthropic returned no content. Try again with a different request.',
           result
         );
       }
@@ -365,7 +365,7 @@ Response can only be in JSON format and must strictly follow the following forma
       )?.text;
       if (!responseText) {
         throw new LlmInvalidContentError(
-          'Anthropic returned no content',
+          'Anthropic returned no content. Try again with a different request.',
           result
         );
       }

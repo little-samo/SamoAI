@@ -216,7 +216,10 @@ export class GeminiService extends LlmService {
     };
 
     if (!responseText) {
-      throw new LlmInvalidContentError('Gemini returned no content', result);
+      throw new LlmInvalidContentError(
+        'Gemini returned no content. Try again with a different request.',
+        result
+      );
     }
 
     if (options?.jsonOutput) {
@@ -391,7 +394,10 @@ Response can only be in JSON format and must strictly follow the following forma
       responseTime,
     };
     if (!responseText) {
-      throw new LlmInvalidContentError('Gemini returned no content', result);
+      throw new LlmInvalidContentError(
+        'Gemini returned no content. Try again with a different request.',
+        result
+      );
     }
     try {
       return {
