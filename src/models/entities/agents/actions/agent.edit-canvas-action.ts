@@ -58,22 +58,6 @@ export class AgentEditCanvasAction extends AgentAction {
       );
     }
 
-    const success = await this.location.editCanvas(
-      this.agent.type,
-      this.agent.id,
-      name,
-      existing_content,
-      new_content,
-      reason
-    );
-
-    if (!success) {
-      await this.location.addSystemMessage(
-        `Agent ${this.agent.name} failed to edit canvas "${name}": existing content not found`
-      );
-      return;
-    }
-
     // Create detailed action message showing the edit
     const existingContentDisplay =
       existing_content === ''
@@ -103,5 +87,20 @@ export class AgentEditCanvasAction extends AgentAction {
     await this.location.addAgentMessage(this.agent, {
       action: actionMessage,
     });
+
+    const success = await this.location.editCanvas(
+      this.agent.type,
+      this.agent.id,
+      name,
+      existing_content,
+      new_content,
+      reason
+    );
+
+    if (!success) {
+      await this.location.addSystemMessage(
+        `Agent ${this.agent.name} failed to edit canvas "${name}": existing content not found`
+      );
+    }
   }
 }
