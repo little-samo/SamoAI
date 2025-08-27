@@ -963,9 +963,17 @@ export class SamoAI extends AsyncEventEmitter {
       let pauseUpdateDuration;
       const nextAgentId =
         options.executeSpecificAgentId ?? location.state.pauseUpdateNextAgentId;
-      if (nextAgentId) {
+      const nextAgent = nextAgentId ? location.getAgent(nextAgentId) : null;
+
+      if (ENV.DEBUG && nextAgentId && !nextAgent) {
+        console.log(
+          `Next agent ${nextAgentId} not found in location ${location.model.name}`
+        );
+      }
+
+      if (nextAgent) {
         await location.init();
-        await location.getAgent(nextAgentId)!.executeNextActions();
+        await nextAgent.executeNextActions();
         pauseUpdateDuration = location.core.defaultPauseUpdateDuration;
       } else {
         pauseUpdateDuration = await location.update();
