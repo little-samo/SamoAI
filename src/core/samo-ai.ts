@@ -729,8 +729,8 @@ export class SamoAI extends AsyncEventEmitter {
 
       location.on(
         'gimmickOccupied',
-        (gimmick: Gimmick, entity: Entity, occupationUntil?: Date) => {
-          void options.handleSave!(
+        async (gimmick: Gimmick, entity: Entity, occupationUntil?: Date) => {
+          await options.handleSave!(
             this.gimmickRepository.updateGimmickStateOccupier(
               locationId,
               gimmick.id,
@@ -742,21 +742,24 @@ export class SamoAI extends AsyncEventEmitter {
         }
       );
 
-      location.on('gimmickReleased', (gimmick: Gimmick, entity: Entity) => {
-        void options.handleSave!(
-          this.gimmickRepository.updateGimmickStateOccupier(
-            locationId,
-            gimmick.id,
-            undefined,
-            undefined,
-            undefined,
-            {
-              currentOccupierType: entity.type,
-              currentOccupierId: entity.id,
-            }
-          )
-        );
-      });
+      location.on(
+        'gimmickReleased',
+        async (gimmick: Gimmick, entity: Entity) => {
+          await options.handleSave!(
+            this.gimmickRepository.updateGimmickStateOccupier(
+              locationId,
+              gimmick.id,
+              undefined,
+              undefined,
+              undefined,
+              {
+                currentOccupierType: entity.type,
+                currentOccupierId: entity.id,
+              }
+            )
+          );
+        }
+      );
 
       async function handleGimmickExecuting(
         gimmick: Gimmick,
