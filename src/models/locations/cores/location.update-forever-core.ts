@@ -5,7 +5,7 @@ import { RegisterLocationCore } from './location.core-decorator';
 
 @RegisterLocationCore('update_forever')
 export class LocationUpdateForeverCore extends LocationCore {
-  public static readonly UPDATE_INTERVAL = 2000; // 2 seconds
+  public static readonly UPDATE_INTERVAL = 1000; // 1 second
   public static readonly SLEEP_INTERVAL = 5000; // 5 seconds
 
   public override get defaultPauseUpdateDuration(): number {

@@ -5,7 +5,7 @@ import { RegisterLocationCore } from './location.core-decorator';
 
 @RegisterLocationCore('update_until_idle')
 export class LocationUpdateUntilIdleCore extends LocationCore {
-  public static readonly UPDATE_INTERVAL = 2000; // 2 seconds
+  public static readonly UPDATE_INTERVAL = 1000; // 1 second
 
   public override get defaultPauseUpdateDuration(): number {
     return LocationUpdateUntilIdleCore.UPDATE_INTERVAL;
