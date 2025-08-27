@@ -263,23 +263,12 @@ export class AnthropicService extends LlmService {
     options?: LlmOptions
   ): Promise<LlmToolsResponse> {
     try {
-      const assistantMessage = messages.find(
-        (message) => message.role === 'assistant'
-      );
       messages = messages.filter((message) => message.role !== 'assistant');
 
-      let prefill: string = '';
-      if (!this.thinking) {
-        prefill = `[
-    {
-      "name": "reasoning",
-      "arguments": {
-        "reasoning": "${assistantMessage?.content?.replace(/\n/g, '\\n') ?? ''}`;
-        messages.push({
-          role: 'assistant',
-          content: prefill,
-        });
-      }
+      const prefill: string = `
+[
+  {
+`.trim();
 
       const [systemMessages, userAssistantMessages] =
         this.llmMessagesToAnthropicMessages(messages);

@@ -44,9 +44,9 @@ export interface AgentMeta extends EntityMeta {
 
   actions: string[];
   addActions?: string[];
-  canvasActions?: string[];
-  memoryActions?: string[];
-  memoryPostActions?: string[];
+  canvasActions: string[];
+  memoryActions: string[];
+  memoryPostActions: string[];
   requiredActions: string[];
 
   memoryLimit: number;

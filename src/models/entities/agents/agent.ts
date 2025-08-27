@@ -115,11 +115,7 @@ export class Agent extends Entity {
     for (const input of meta.inputs) {
       this.inputs.push(AgentInputFactory.createInput(input, location, this));
     }
-    const actionLlm =
-      this.llms.at(Agent.ACTION_LLM_INDEX) ??
-      this.llms.at(Agent.MAIN_LLM_INDEX);
     const actions = [
-      ...(actionLlm?.thinking ? [] : ['reasoning:latest']),
       ...location.meta.actions,
       ...(location.meta.addActions ?? []),
       ...[location.meta.messageAction],
@@ -573,12 +569,8 @@ export class Agent extends Entity {
       throw new Error('No LlmService found');
     }
 
-    const memoryActions = [
-      ...(llm.thinking ? [] : ['reasoning:latest']),
-      ...this.meta.memoryPostActions!,
-    ];
     const actions = Object.fromEntries(
-      memoryActions.map((actionWithVersion) => {
+      this.meta.memoryPostActions.map((actionWithVersion) => {
         const action = AgentActionFactory.createAction(
           actionWithVersion,
           this.location,
