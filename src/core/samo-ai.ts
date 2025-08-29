@@ -134,9 +134,9 @@ export class SamoAI extends AsyncEventEmitter {
       SamoAI.LOCATION_UPDATE_LOCK_TTL
     );
     if (!lock) {
-      if (ENV.DEBUG) {
-        console.log(`Failed to lock location ${locationId} (no retry)`);
-      }
+      // if (ENV.DEBUG) {
+      //   console.log(`Failed to lock location ${locationId} (no retry)`);
+      // }
       return null;
     }
     try {
