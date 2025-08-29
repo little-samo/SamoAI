@@ -38,7 +38,7 @@ export class GimmickImageGenerationCore extends GimmickCore {
       .string()
       .max(GimmickImageGenerationCore.DEFAULT_MAX_IMAGE_DESCRIPTION_LENGTH)
       .describe(
-        'A detailed, descriptive prompt for image generation. Include specific details about subject, style, composition, colors, lighting, and artistic elements. Be creative and specific to get the best results.'
+        'Image generation prompt. The gimmick can see the full location context, so you can reference previous messages or provide a simple description.'
       );
   }
 
