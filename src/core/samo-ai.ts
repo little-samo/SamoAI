@@ -603,8 +603,8 @@ export class SamoAI extends AsyncEventEmitter {
 
       location.on(
         'messageAdded',
-        (location: Location, message: LocationMessage) => {
-          void options.handleSave!(
+        async (location: Location, message: LocationMessage) => {
+          await options.handleSave!(
             this.addLocationMessage(location.id, message)
           );
         }
@@ -765,7 +765,7 @@ export class SamoAI extends AsyncEventEmitter {
         gimmick: Gimmick,
         entity: Entity,
         parameters: GimmickParameters,
-        promise: Promise<boolean>
+        promise: Promise<void>
       ): Promise<void> {
         try {
           await options.handleSave!(promise);
@@ -799,7 +799,7 @@ export class SamoAI extends AsyncEventEmitter {
           gimmick: Gimmick,
           entity: Entity,
           parameters: GimmickParameters,
-          promise: Promise<boolean>
+          promise: Promise<void>
         ) => {
           void options.handleSave!(
             handleGimmickExecuting(gimmick, entity, parameters, promise)

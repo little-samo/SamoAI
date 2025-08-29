@@ -85,6 +85,12 @@ export class GimmickImageGenerationCore extends GimmickCore {
     );
 
     const imageData = imageGenerationResponse.content;
+    if (!imageData.match(/^data:image\/\w+;base64,/)) {
+      console.error(
+        `No image data received from the LLM: ${imageData.slice(0, 32)}`
+      );
+      throw new Error('No image data received from the LLM');
+    }
 
     const maxDescriptionLength = Number(
       this.meta.options?.maxDescriptionLength ??

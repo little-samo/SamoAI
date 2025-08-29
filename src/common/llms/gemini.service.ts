@@ -209,7 +209,9 @@ export class GeminiService extends LlmService {
     const responseTime = Date.now() - startTime;
 
     let responseText: string | undefined;
-    const imageData = response.candidates?.[0]?.content?.parts?.[0]?.inlineData;
+    const imageData = response.candidates?.[0]?.content?.parts?.find(
+      (part) => part.inlineData
+    )?.inlineData;
     if (imageData) {
       responseText = `data:${imageData.mimeType};base64,${imageData.data}`;
     } else {
