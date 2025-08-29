@@ -91,10 +91,7 @@ export class GimmickImageGenerationCore extends GimmickCore {
         GimmickImageGenerationCore.DEFAULT_MAX_IMAGE_DESCRIPTION_LENGTH
     );
 
-    const description = truncateString(
-      `Generated image: ${prompt}`,
-      maxDescriptionLength
-    ).text;
+    prompt = truncateString(prompt, maxDescriptionLength).text;
 
     if (ENV.DEBUG) {
       console.log(`Gimmick ${this.gimmick.name} executed: ${prompt}`);
@@ -104,7 +101,7 @@ export class GimmickImageGenerationCore extends GimmickCore {
     }
 
     await entity.location.addGimmickMessage(this.gimmick, {
-      message: `Image Generated: ${description}`,
+      message: `Image Generated: ${prompt}`,
       image: imageData,
     });
     await entity.location.emitAsync(
@@ -112,7 +109,7 @@ export class GimmickImageGenerationCore extends GimmickCore {
       this.gimmick,
       entity,
       imageData,
-      description
+      prompt
     );
   }
 
