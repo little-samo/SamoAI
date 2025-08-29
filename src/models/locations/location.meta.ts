@@ -3,6 +3,7 @@ import { AgentMeta, GimmickMeta } from '../entities';
 export interface LocationCoreMeta {
   name: string;
   sequential?: boolean;
+  interval?: number;
 }
 
 export interface LocationPrompts {

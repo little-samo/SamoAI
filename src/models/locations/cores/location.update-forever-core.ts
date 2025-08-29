@@ -5,11 +5,13 @@ import { RegisterLocationCore } from './location.core-decorator';
 
 @RegisterLocationCore('update_forever')
 export class LocationUpdateForeverCore extends LocationCore {
-  public static readonly UPDATE_INTERVAL = 1000; // 1 second
-  public static readonly SLEEP_INTERVAL = 5000; // 5 seconds
+  public static readonly DEFAULT_UPDATE_INTERVAL = 1000; // 1 second
+  public static readonly SLEEP_INTERVAL = 9000; // 9 seconds
 
   public override get defaultPauseUpdateDuration(): number {
-    return LocationUpdateForeverCore.UPDATE_INTERVAL;
+    return (
+      this.meta.interval ?? LocationUpdateForeverCore.DEFAULT_UPDATE_INTERVAL
+    );
   }
 
   public async update(): Promise<number> {
@@ -22,12 +24,14 @@ export class LocationUpdateForeverCore extends LocationCore {
         if (ENV.DEBUG) {
           console.log(`[${entity.key}] ${entity.name} executed`);
         }
-        return LocationUpdateForeverCore.UPDATE_INTERVAL;
+        return this.defaultPauseUpdateDuration;
       }
     }
     if (ENV.DEBUG) {
       console.log('No entities executed');
     }
-    return LocationUpdateForeverCore.SLEEP_INTERVAL;
+    return (
+      this.defaultPauseUpdateDuration + LocationUpdateForeverCore.SLEEP_INTERVAL
+    );
   }
 }

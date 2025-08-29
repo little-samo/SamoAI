@@ -9,11 +9,10 @@ import { RegisterLocationCore } from './location.core-decorator';
 
 @RegisterLocationCore('round_robin')
 export class LocationRoundRobinCore extends LocationCore {
-  public static readonly LOCATION_UPDATE_COOLDOWN_ON_MESSAGE = 1000; // 1 second
-  public static readonly LOCATION_UPDATE_LONG_COOLDOWN_ON_NO_MESSAGE = 0; // pause
+  public static readonly DEFAULT_UPDATE_INTERVAL = 1000; // 1 second
 
   public override get defaultPauseUpdateDuration(): number {
-    return LocationRoundRobinCore.LOCATION_UPDATE_COOLDOWN_ON_MESSAGE;
+    return this.meta.interval ?? LocationRoundRobinCore.DEFAULT_UPDATE_INTERVAL;
   }
 
   private get lastMessage(): LocationMessage | undefined {
@@ -72,7 +71,7 @@ export class LocationRoundRobinCore extends LocationCore {
         continue;
       }
 
-      return LocationRoundRobinCore.LOCATION_UPDATE_COOLDOWN_ON_MESSAGE;
+      return this.defaultPauseUpdateDuration;
     }
 
     for (const agent of agents) {
@@ -86,9 +85,9 @@ export class LocationRoundRobinCore extends LocationCore {
         continue;
       }
 
-      return LocationRoundRobinCore.LOCATION_UPDATE_COOLDOWN_ON_MESSAGE;
+      return this.defaultPauseUpdateDuration;
     }
 
-    return LocationRoundRobinCore.LOCATION_UPDATE_LONG_COOLDOWN_ON_NO_MESSAGE;
+    return 0; // stop updating when no actions are available
   }
 }
