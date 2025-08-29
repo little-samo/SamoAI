@@ -27,6 +27,15 @@ export const LlmVerbosity = {
 
 export type LlmVerbosity = (typeof LlmVerbosity)[keyof typeof LlmVerbosity];
 
+export const LlmResponseType = {
+  text: 'text',
+  image: 'image',
+  audio: 'audio',
+} as const;
+
+export type LlmResponseType =
+  (typeof LlmResponseType)[keyof typeof LlmResponseType];
+
 export interface LlmServiceOptions {
   model: string;
   platform: LlmPlatform;
@@ -43,6 +52,7 @@ export interface LlmOptions {
   thinkingVerbosity?: LlmVerbosity;
   maxTries?: number;
   retryDelay?: number;
+  responseTypes?: LlmResponseType[];
   jsonOutput?: boolean;
   jsonSchema?: z.ZodSchema;
   webSearch?: boolean;

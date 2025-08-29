@@ -20,6 +20,7 @@ import {
   LlmPlatform,
   LlmResponseBase,
   LlmGenerateResponseWebSearchSource,
+  LlmResponseType,
 } from './llm.types';
 
 export class GeminiService extends LlmService {
@@ -178,6 +179,19 @@ export class GeminiService extends LlmService {
           googleSearch: {},
         },
       ];
+    }
+    if (options?.responseTypes) {
+      const responseModalities: string[] = [];
+      if (options?.responseTypes.includes(LlmResponseType.text)) {
+        responseModalities.push('TEXT');
+      }
+      if (options?.responseTypes.includes(LlmResponseType.image)) {
+        responseModalities.push('IMAGE');
+      }
+      if (options?.responseTypes.includes(LlmResponseType.audio)) {
+        responseModalities.push('AUDIO');
+      }
+      request.config!.responseModalities = responseModalities;
     }
     if (options?.jsonOutput && !options?.webSearch) {
       request.config!.responseMimeType = 'application/json';
