@@ -1,4 +1,5 @@
 export * from './cores';
+export * from './inputs';
 export * from './states';
 export * from './gimmick.context';
 export * from './gimmick.meta';
