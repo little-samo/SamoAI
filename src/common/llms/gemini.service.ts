@@ -204,7 +204,14 @@ export class GeminiService extends LlmService {
     const response = await this.generateContentWithRetry(request, options);
     const responseTime = Date.now() - startTime;
 
-    const responseText = response.text;
+    let responseText: string | undefined;
+    const imageData = response.candidates?.[0]?.content?.parts?.[0]?.inlineData;
+    if (imageData) {
+      responseText = `data:${imageData.mimeType};base64,${imageData.data}`;
+    } else {
+      responseText = response.text;
+    }
+
     let outputTokens = response.usageMetadata?.candidatesTokenCount ?? 0;
     const thinkingTokens =
       response.usageMetadata?.thoughtsTokenCount ?? undefined;
