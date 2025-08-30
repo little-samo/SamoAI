@@ -15,6 +15,20 @@ export interface AgentEditCanvasParameters {
 export class AgentEditCanvasAction extends AgentAction {
   public static readonly ACTION_TEXT_DISPLAY_MAX_LENGTH = 50;
 
+  private static formatContentForDisplay(content: string): string {
+    if (
+      content.length <= AgentEditCanvasAction.ACTION_TEXT_DISPLAY_MAX_LENGTH
+    ) {
+      return JSON.stringify(content);
+    }
+    const truncated =
+      content.substring(
+        0,
+        AgentEditCanvasAction.ACTION_TEXT_DISPLAY_MAX_LENGTH - 3
+      ) + '...';
+    return JSON.stringify(truncated);
+  }
+
   public override get description(): string {
     return `Edits a specific portion of a **public Location Canvas** (found in '<LocationCanvases>') by replacing existing content with new content, or by appending new content. This is useful for making targeted changes or additions without overwriting the entire canvas. Use this for minor edits. For major revisions, use \`update_canvas\`. Be mindful that anyone in the location can see and modify these canvases.`;
   }
@@ -59,30 +73,19 @@ export class AgentEditCanvasAction extends AgentAction {
     }
 
     // Create detailed action message showing the edit
-    const existingContentDisplay =
-      existing_content === ''
-        ? '[APPEND]'
-        : existing_content.length >
-            AgentEditCanvasAction.ACTION_TEXT_DISPLAY_MAX_LENGTH
-          ? JSON.stringify(
-              existing_content.substring(
-                0,
-                AgentEditCanvasAction.ACTION_TEXT_DISPLAY_MAX_LENGTH - 3
-              ) + '...'
-            )
-          : JSON.stringify(existing_content);
-
     const newContentDisplay =
-      new_content.length > AgentEditCanvasAction.ACTION_TEXT_DISPLAY_MAX_LENGTH
-        ? JSON.stringify(
-            new_content.substring(
-              0,
-              AgentEditCanvasAction.ACTION_TEXT_DISPLAY_MAX_LENGTH - 3
-            ) + '...'
-          )
-        : JSON.stringify(new_content);
+      AgentEditCanvasAction.formatContentForDisplay(new_content);
+    const reasonJson = JSON.stringify(reason);
 
-    const actionMessage = `edit_canvas --name ${name} --from ${existingContentDisplay} --to ${newContentDisplay} --reason ${JSON.stringify(reason)}`;
+    // Build action message based on whether we're appending or replacing
+    let actionMessage: string;
+    if (!existing_content) {
+      actionMessage = `edit_canvas --name ${name} --append ${newContentDisplay} --reason ${reasonJson}`;
+    } else {
+      const existingContentDisplay =
+        AgentEditCanvasAction.formatContentForDisplay(existing_content);
+      actionMessage = `edit_canvas --name ${name} --from ${existingContentDisplay} --to ${newContentDisplay} --reason ${reasonJson}`;
+    }
 
     await this.location.addAgentMessage(this.agent, {
       action: actionMessage,

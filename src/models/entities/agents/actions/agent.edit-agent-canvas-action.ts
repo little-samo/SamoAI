@@ -71,18 +71,17 @@ export class AgentEditAgentCanvasAction extends AgentAction {
 
     if (ENV.DEBUG) {
       // Create detailed action message showing the edit for debugging
-      const existingContentDisplay =
-        existing_content === ''
-          ? '[APPEND]'
-          : existing_content.length >
-              AgentEditAgentCanvasAction.ACTION_TEXT_DISPLAY_MAX_LENGTH
-            ? JSON.stringify(
-                existing_content.substring(
-                  0,
-                  AgentEditAgentCanvasAction.ACTION_TEXT_DISPLAY_MAX_LENGTH - 3
-                ) + '...'
-              )
-            : JSON.stringify(existing_content);
+      const existingContentDisplay = !existing_content
+        ? '[APPEND]'
+        : existing_content.length >
+            AgentEditAgentCanvasAction.ACTION_TEXT_DISPLAY_MAX_LENGTH
+          ? JSON.stringify(
+              existing_content.substring(
+                0,
+                AgentEditAgentCanvasAction.ACTION_TEXT_DISPLAY_MAX_LENGTH - 3
+              ) + '...'
+            )
+          : JSON.stringify(existing_content);
 
       const newContentDisplay =
         new_content.length >

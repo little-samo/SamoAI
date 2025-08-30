@@ -245,7 +245,7 @@ export abstract class Entity {
 
     let updatedText: string;
 
-    if (existingContent === '') {
+    if (!existingContent) {
       // If existing_content is empty, append new content
       updatedText = canvas.text + newContent;
     } else {
