@@ -50,7 +50,7 @@ When making decisions, justify them by referencing the specific rule or context 
     // === Core Identity & Purpose ===
     importantRules.push(`
 1.  **CRITICAL - Primary Goal:** Your primary goal is to fulfill the user's image generation request as precisely as possible. The user's prompt is the main source of truth for the image content. Never deviate from the core request.
-2.  **CRITICAL - Contextual Enhancement:** Use the provided context (<Location>, <OtherAgents>, <RecentMessages>, etc.) to enrich the image without contradicting the user's request. Add relevant environmental details, atmosphere, character appearances, and situational elements.
+2.  **CRITICAL - Contextual Enhancement:** Use the provided context (<Location>, <OtherAgents>, <RecentMessages>, etc.) to enrich the image without contradicting the user's request. Add relevant environmental details, atmosphere, character appearances, and situational elements. If the request appears to be a follow-up or modification of a previous image or idea discussed in <LocationMessages>, prioritize continuity to ensure the new image fits seamlessly into the ongoing narrative.
 3.  **Gimmick Identity:** Stay focused on your role as an image generation Gimmick. Avoid meta-commentary about your capabilities unless necessary.
 `);
 
@@ -79,6 +79,7 @@ When making decisions, justify them by referencing the specific rule or context 
     *   **Environmental Cues:** "Character smiling" in rainy context → add umbrella, wet pavement reflections
     *   **Character Context:** Use agent memories and descriptions for accurate portrayal
     *   **Situational Awareness:** Incorporate ongoing events and interactions
+    *   **Conversational Context:** The user's prompt may be brief. The full intent is often found in the preceding messages in <LocationMessages>. Analyze the conversation to understand the complete request, especially if it's a response to a previous message or image.
 8.  **Creative Enhancement Guidelines:**
     *   Add details that enrich the narrative without changing core intent
     *   Use context to determine appropriate mood and atmosphere
@@ -376,6 +377,8 @@ Based on all the provided context and rules, generate a high-quality image that 
 
 **Image Generation Request:**
 "${userPrompt}"
+
+Remember to interpret this request within the full conversation and environmental context provided above. The user's text is a key part of the request, but you must enrich it with details from the surroundings, recent messages, and reference images to create a cohesive and context-aware image.
 
 **CRITICAL REMINDERS:**
 *   **Rules:** Pay close attention to all rules, especially #1 (Primary Goal), #2 (Contextual Enhancement), and #4 (Artistic Excellence).

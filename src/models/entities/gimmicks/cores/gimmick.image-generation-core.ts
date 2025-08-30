@@ -30,7 +30,7 @@ export class GimmickImageGenerationCore extends GimmickCore {
   public static readonly DEFAULT_MAX_IMAGE_DESCRIPTION_LENGTH = 500;
 
   public override get description(): string {
-    return 'Generates high-quality images based on detailed text descriptions using an advanced AI model. Execution takes approximately 15-30 seconds. Provide clear, descriptive prompts for best results, including style, composition, colors, and other visual details.';
+    return 'Generates high-quality images based on detailed text descriptions. The gimmick can see the full location context including conversation history and reference images. Execution takes approximately 15-30 seconds.';
   }
 
   public override get parameters(): z.ZodSchema {
@@ -38,7 +38,7 @@ export class GimmickImageGenerationCore extends GimmickCore {
       .string()
       .max(GimmickImageGenerationCore.DEFAULT_MAX_IMAGE_DESCRIPTION_LENGTH)
       .describe(
-        'Image generation prompt. The gimmick can see the full location context, so you can reference previous messages or provide a simple description.'
+        'Detailed image generation prompt. Use conversation context and reference images to create contextually appropriate descriptions.'
       );
   }
 
