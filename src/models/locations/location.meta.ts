@@ -56,7 +56,7 @@ export const DEFAULT_LOCATION_META: LocationMeta = {
   imageDescriptions: [],
   prompts: {},
 
-  messageLimit: 20,
+  messageLimit: 30,
   messageLengthLimit: 500,
   userContextLimit: 8,
   agentUserContextLimit: 4,
