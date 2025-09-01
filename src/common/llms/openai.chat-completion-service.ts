@@ -190,8 +190,8 @@ export class OpenAIChatCompletionService extends LlmService {
         if (options?.thinkingLevel) {
           request.reasoning_effort = options.thinkingLevel;
         }
-        if (options?.thinkingVerbosity) {
-          request.verbosity = options.thinkingVerbosity;
+        if (options?.outputVerbosity) {
+          request.verbosity = options.outputVerbosity;
         }
       }
       if (options?.verbose) {
@@ -351,8 +351,8 @@ Response can only be in JSON format and must strictly follow the following forma
         if (options?.thinkingLevel) {
           request.reasoning_effort = options.thinkingLevel;
         }
-        if (options?.thinkingVerbosity) {
-          request.verbosity = options.thinkingVerbosity;
+        if (options?.outputVerbosity) {
+          request.verbosity = options.outputVerbosity;
         }
       }
       if (options?.verbose) {

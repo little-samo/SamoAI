@@ -223,8 +223,8 @@ export class OpenAIService extends LlmService {
           request.reasoning ??= {};
           request.reasoning.effort = options.thinkingLevel;
         }
-        if (options?.thinkingVerbosity) {
-          request.text!.verbosity = options.thinkingVerbosity;
+        if (options?.outputVerbosity) {
+          request.text!.verbosity = options.outputVerbosity;
         }
       }
       if (options?.verbose) {
@@ -400,8 +400,8 @@ Response can only be in JSON format and must strictly follow the following forma
           request.reasoning ??= {};
           request.reasoning.effort = options.thinkingLevel;
         }
-        if (options?.thinkingVerbosity) {
-          request.text!.verbosity = options.thinkingVerbosity;
+        if (options?.outputVerbosity) {
+          request.text!.verbosity = options.outputVerbosity;
         }
       }
       if (options?.verbose) {

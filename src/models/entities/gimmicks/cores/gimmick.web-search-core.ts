@@ -8,6 +8,7 @@ import {
   LlmServiceOptions,
   LlmThinkingLevel,
   LlmUsageType,
+  LlmOutputVerbosity,
   truncateString,
 } from '@little-samo/samo-ai/common';
 import { z } from 'zod';
@@ -27,13 +28,15 @@ export class GimmickWebSearchCore extends GimmickCore {
   public static readonly DEFAULT_SEARCH_LLM_THINKING = true;
   public static readonly DEFAULT_SEARCH_LLM_THINKING_LEVEL =
     LlmThinkingLevel.medium;
-  public static readonly LLM_MAX_TOKENS = 4096;
+  public static readonly DEFAULT_SEARCH_LLM_OUTPUT_VERBOSITY =
+    LlmOutputVerbosity.low;
+  public static readonly LLM_MAX_TOKENS = 8192;
   public static readonly LLM_MAX_THINKING_TOKENS = 2048;
   public static readonly DEFAULT_MAX_SEARCH_RESULT_LENGTH = 3000;
   public static readonly DEFAULT_MAX_SEARCH_SOURCES_LENGTH = 2000;
 
   public override get description(): string {
-    return 'Searches the web for up-to-date or missing information using an LLM, providing both a summary and detailed results. The gimmick can see the full location context including conversation history and agent information to conduct more targeted and relevant searches. Execution takes approximately 60 seconds.';
+    return 'Searches the web for up-to-date or missing information using an LLM, providing both a summary and detailed results with original source links. The gimmick can see the full location context including conversation history and agent information to conduct more targeted and relevant searches. Execution takes approximately 60 seconds.';
   }
 
   public override get parameters(): z.ZodSchema {
@@ -74,7 +77,8 @@ export class GimmickWebSearchCore extends GimmickCore {
     maxSourcesLength: number,
     maxTokens: number,
     maxThinkingTokens: number,
-    thinkingLevel: LlmThinkingLevel
+    thinkingLevel: LlmThinkingLevel,
+    outputVerbosity: LlmOutputVerbosity
   ): Promise<void> {
     // Use the new input system to build rich contextual messages
     const inputBuilder = GimmickInputFactory.createInput(
@@ -93,9 +97,10 @@ export class GimmickWebSearchCore extends GimmickCore {
     let searchSummaryResponse: LlmGenerateResponse<false>;
     try {
       searchSummaryResponse = await searchLlm.generate(messages, {
-        maxTokens: maxTokens,
-        maxThinkingTokens: maxThinkingTokens,
+        maxTokens,
+        maxThinkingTokens,
         thinkingLevel,
+        outputVerbosity,
         webSearch: true,
         verbose: ENV.VERBOSE_LLM,
       });
@@ -234,6 +239,8 @@ export class GimmickWebSearchCore extends GimmickCore {
     );
     const thinkingLevel = (this.meta.options?.thinkingLevel ??
       GimmickWebSearchCore.DEFAULT_SEARCH_LLM_THINKING_LEVEL) as LlmThinkingLevel;
+    const outputVerbosity = (this.meta.options?.outputVerbosity ??
+      GimmickWebSearchCore.DEFAULT_SEARCH_LLM_OUTPUT_VERBOSITY) as LlmOutputVerbosity;
     if (!llmSearchOptions.apiKey) {
       return 'No API key found';
     }
@@ -265,7 +272,8 @@ export class GimmickWebSearchCore extends GimmickCore {
       maxSourcesLength,
       maxTokens,
       maxThinkingTokens,
-      thinkingLevel
+      thinkingLevel,
+      outputVerbosity
     );
 
     await this.gimmick.location.emitAsync(

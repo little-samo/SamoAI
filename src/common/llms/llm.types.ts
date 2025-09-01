@@ -19,13 +19,14 @@ export const LlmThinkingLevel = {
 export type LlmThinkingLevel =
   (typeof LlmThinkingLevel)[keyof typeof LlmThinkingLevel];
 
-export const LlmVerbosity = {
+export const LlmOutputVerbosity = {
   low: 'low',
   medium: 'medium',
   high: 'high',
 } as const;
 
-export type LlmVerbosity = (typeof LlmVerbosity)[keyof typeof LlmVerbosity];
+export type LlmOutputVerbosity =
+  (typeof LlmOutputVerbosity)[keyof typeof LlmOutputVerbosity];
 
 export const LlmResponseType = {
   text: 'text',
@@ -49,7 +50,7 @@ export interface LlmOptions {
   maxTokens?: number;
   maxThinkingTokens?: number;
   thinkingLevel?: LlmThinkingLevel;
-  thinkingVerbosity?: LlmVerbosity;
+  outputVerbosity?: LlmOutputVerbosity;
   maxTries?: number;
   retryDelay?: number;
   responseTypes?: LlmResponseType[];
