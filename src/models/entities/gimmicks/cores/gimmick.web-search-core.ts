@@ -6,6 +6,7 @@ import {
   LlmPlatform,
   LlmService,
   LlmServiceOptions,
+  LlmThinkingLevel,
   LlmUsageType,
   truncateString,
 } from '@little-samo/samo-ai/common';
@@ -21,9 +22,11 @@ import { RegisterGimmickCore } from './gimmick.core-decorator';
 
 @RegisterGimmickCore('web_search')
 export class GimmickWebSearchCore extends GimmickCore {
-  public static readonly DEFAULT_SEARCH_LLM_PLATFORM = LlmPlatform.GEMINI;
-  public static readonly DEFAULT_SEARCH_LLM_MODEL = 'gemini-2.5-flash';
+  public static readonly DEFAULT_SEARCH_LLM_PLATFORM = LlmPlatform.OPENAI;
+  public static readonly DEFAULT_SEARCH_LLM_MODEL = 'gpt-5-mini';
   public static readonly DEFAULT_SEARCH_LLM_THINKING = true;
+  public static readonly DEFAULT_SEARCH_LLM_THINKING_LEVEL =
+    LlmThinkingLevel.medium;
   public static readonly LLM_MAX_TOKENS = 4096;
   public static readonly LLM_MAX_THINKING_TOKENS = 2048;
   public static readonly DEFAULT_MAX_SEARCH_RESULT_LENGTH = 2000;
@@ -70,7 +73,8 @@ export class GimmickWebSearchCore extends GimmickCore {
     maxSummaryLength: number,
     maxSourcesLength: number,
     maxTokens: number,
-    maxThinkingTokens: number
+    maxThinkingTokens: number,
+    thinkingLevel: LlmThinkingLevel
   ): Promise<void> {
     // Use the new input system to build rich contextual messages
     const inputBuilder = GimmickInputFactory.createInput(
@@ -91,6 +95,7 @@ export class GimmickWebSearchCore extends GimmickCore {
       searchSummaryResponse = await searchLlm.generate(messages, {
         maxTokens: maxTokens,
         maxThinkingTokens: maxThinkingTokens,
+        thinkingLevel,
         webSearch: true,
         verbose: ENV.VERBOSE_LLM,
       });
@@ -206,6 +211,8 @@ export class GimmickWebSearchCore extends GimmickCore {
       this.meta.options?.maxThinkingTokens ??
         GimmickWebSearchCore.LLM_MAX_THINKING_TOKENS
     );
+    const thinkingLevel = (this.meta.options?.thinkingLevel ??
+      GimmickWebSearchCore.DEFAULT_SEARCH_LLM_THINKING_LEVEL) as LlmThinkingLevel;
     if (!llmSearchOptions.apiKey) {
       return 'No API key found';
     }
@@ -236,7 +243,8 @@ export class GimmickWebSearchCore extends GimmickCore {
       maxSummaryLength,
       maxSourcesLength,
       maxTokens,
-      maxThinkingTokens
+      maxThinkingTokens,
+      thinkingLevel
     );
 
     await this.gimmick.location.emitAsync(
