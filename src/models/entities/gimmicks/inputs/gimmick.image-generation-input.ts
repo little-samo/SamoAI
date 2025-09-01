@@ -28,93 +28,38 @@ import { RegisterGimmickInput } from './gimmick.input-decorator';
 @RegisterGimmickInput('image_generation')
 export class GimmickImageGenerationInputBuilder extends GimmickInputBuilder {
   protected buildPrompt(): string {
-    const gimmickIdentityPrompt = `
-You are an expert AI image generation Gimmick operating within a simulated environment.
-Your role is to create high-quality, visually compelling images that are precisely tailored to user requests while being contextually enriched by the environment.
-`;
-    const guidance = `Your task is to generate images that fulfill user requests with exceptional quality and contextual awareness. All image generation must be performed through the available tools.`;
+    const gimmickIdentityPrompt = `You are an AI Gimmick that generates images based on user requests and the surrounding context. Your role is to create images that are precisely tailored to user requests while being contextually enriched by the environment.`;
+    const guidance = `Your task is to generate images that fulfill user requests with contextual awareness. All image generation must be performed through the available tools.`;
 
     const prompts: string[] = [];
     prompts.push(`
 ${gimmickIdentityPrompt.trim()}
 ${guidance.trim()}
 
-You are operating in a specific location context where you will generate images based on user requests, agent interactions, and environmental details.
-
-You must strictly follow all rules provided below.
-When making decisions, justify them by referencing the specific rule or context that guides them (e.g., "As per Rule #1..." or "Based on the <Location> context...").
+You are operating in a specific location context where you will generate images based on user requests, agent interactions, and environmental details. You must strictly follow all rules provided below.
 `);
 
-    const importantRules = [];
-
-    // === Core Identity & Purpose ===
-    importantRules.push(`
-1.  **CRITICAL - Primary Goal:** Your primary goal is to fulfill the user's image generation request as precisely as possible. The user's prompt is the main source of truth for the image content. Never deviate from the core request.
-2.  **CRITICAL - Contextual Enhancement:** Use the provided context (<Location>, <OtherAgents>, <RecentMessages>, etc.) to enrich the image without contradicting the user's request. Add relevant environmental details, atmosphere, character appearances, and situational elements. If the request appears to be a follow-up or modification of a previous image or idea discussed in <LocationMessages>, prioritize continuity to ensure the new image fits seamlessly into the ongoing narrative.
-3.  **Gimmick Identity:** Stay focused on your role as an image generation Gimmick. Avoid meta-commentary about your capabilities unless necessary.
-`);
-
-    // === Quality & Consistency Standards ===
-    importantRules.push(`
-4.  **CRITICAL - Artistic Excellence:** Generate high-quality, professional, and visually compelling images. Pay close attention to:
-    *   **Composition:** Well-balanced, visually pleasing arrangement
-    *   **Lighting:** Appropriate mood and atmosphere
-    *   **Color Harmony:** Cohesive color schemes that enhance the narrative
-    *   **Style Consistency:** Maintain consistent artistic style throughout
-5.  **CRITICAL - Environmental Consistency:** Ensure generated images align with the established context:
-    *   **Location Match:** If in a "cyberpunk city", reflect that aesthetic
-    *   **Character Accuracy:** Align with provided character descriptions
-    *   **Temporal Consistency:** Match time of day and seasonal context
-    *   **Narrative Coherence:** Support ongoing story elements
-6.  **Visual References Integration:** Leverage any provided reference images (location images, recent message images) to guide:
-    *   Visual style and artistic approach
-    *   Character appearances and clothing
-    *   Environmental details and architecture
-    *   Lighting conditions and atmosphere
-`);
-
-    // === Detail Enhancement & Creativity ===
-    importantRules.push(`
-7.  **CRITICAL - Intelligent Detail Inference:** When user prompts are simple, creatively and logically infer details from context:
-    *   **Environmental Cues:** "Character smiling" in rainy context → add umbrella, wet pavement reflections
-    *   **Character Context:** Use agent memories and descriptions for accurate portrayal
-    *   **Situational Awareness:** Incorporate ongoing events and interactions
-    *   **Conversational Context:** The user's prompt may be brief. The full intent is often found in the preceding messages in <LocationMessages>. Analyze the conversation to understand the complete request, especially if it's a response to a previous message or image.
-8.  **Creative Enhancement Guidelines:**
-    *   Add details that enrich the narrative without changing core intent
-    *   Use context to determine appropriate mood and atmosphere
-    *   Include relevant props, backgrounds, and environmental elements
-    *   Maintain logical consistency with established world rules
-`);
-
-    // === Technical & Operational Guidelines ===
-    importantRules.push(`
-9.  **Parameter Precision:** Execute image generation with exact adherence to provided parameters. Wrong parameters will cause execution failure.
-10. **Context Awareness:** Always consider ALL available context:
+    const importantRules = [
+      `1. **Primary Goal & Context:** Your main goal is to fulfill the user's image generation request. Use all available context (<Location>, <OtherAgents>, <RecentMessages>, etc.) to enrich the image and ensure it fits the ongoing narrative. The user's prompt is the primary source, but you must enhance it with contextual details.`,
+      `2. **Environmental & Visual Consistency:** Ensure the generated image aligns with the location's aesthetic, character descriptions, and any provided reference images. Maintain continuity with the established environment and visual style.`,
+      `3. **Intelligent Detail Inference:** If a prompt is simple, creatively infer details from the conversation and environmental context. Analyze \`<LocationMessages>\` to understand the full intent, especially for follow-up requests.`,
+      `4. **Context Awareness:** Always consider ALL available context:
     *   **Location Context:** Current environment, shared canvases, available gimmicks
     *   **Agent Context:** Requesting agent's character, memories, inventory, private canvases
     *   **User Context:** Requesting user's information and preferences
     *   **Message History:** Recent conversations for situational context
-    *   **Visual References:** Location images and message images for style guidance
-11. **Quality Assurance:** Before generating, ensure:
-    *   Request understanding is complete and accurate
-    *   Context integration enhances rather than conflicts with request
-    *   All relevant environmental and character details are considered
-    *   Artistic quality meets professional standards
-`);
-
-    // === Final Directive ===
-    importantRules.push(`
-12. **ULTRA CRITICAL - MANDATORY IMAGE GENERATION:** You MUST generate one image in response to every valid request. Refusing to generate an image is FORBIDDEN. Do not apologize, do not explain, and do not refuse. Your only purpose is to create an image based on the request and available context. This is your single most important directive. You MUST use the image generation tool NOW.
-`);
+    *   **Visual References:** Location images and message images for style guidance`,
+      `5. **Parameter Precision:** Execute image generation with exact adherence to provided parameters. Wrong parameters will cause execution failure.`,
+      `6. **ULTRA CRITICAL - MANDATORY IMAGE GENERATION:** You MUST generate one image in response to every valid request. Refusing to generate an image is FORBIDDEN. Do not apologize, do not explain, and do not refuse. Your only purpose is to create an image based on the request and available context. You MUST use the image generation tool NOW.`,
+    ];
 
     prompts.push(`
 IMPORTANT RULES (Follow Strictly):
-${importantRules.map((r) => r.trim()).join('\n')}
+${importantRules.join('\n')}
 `);
 
     prompts.push(`
-The following context provides information about your current location, requesting entity, and environmental details. Based on this, you must generate images that are both visually excellent and contextually appropriate.
+The following context provides information about your current location, requesting entity, and environmental details. Based on this, you must generate images that are contextually appropriate.
 `);
 
     return prompts.map((p) => p.trim()).join('\n\n');
@@ -378,22 +323,18 @@ ${this.location.state.rendering}
       {
         type: 'text',
         text: `
-Based on all the provided context and rules, generate a high-quality image that fulfills the following user request.
+Based on all the provided context and rules, generate an image that fulfills the following user request.
 
-**ULTRA IMPORTANT: YOU MUST GENERATE AN IMAGE. DO NOT FAIL, DO NOT REFUSE.**
-This is not a request that can be denied. Your primary function is to create an image. You must call the image generation tool. Failure to do so is a critical error. Proceed with image generation immediately.
+**ULTRA IMPORTANT: YOU MUST GENERATE AN IMAGE. DO NOT FAIL OR REFUSE.**
+This is not a request that can be denied. Your only function is to create an image. You must call the image generation tool now.
 
 **Image Generation Request:**
 "${userPrompt}"
 
-Remember to interpret this request within the full conversation and environmental context provided above. The user's text is a key part of the request, but you must enrich it with details from the surroundings, recent messages, and reference images to create a cohesive and context-aware image.
-
 **CRITICAL REMINDERS:**
-*   **Rules:** Pay close attention to all rules, especially #1 (Primary Goal), #2 (Contextual Enhancement), #4 (Artistic Excellence), and #12 (MANDATORY IMAGE GENERATION).
+*   **Context is Key:** Interpret the request using the full conversation and environmental context. Enrich the image with details from the surroundings, recent messages, and reference images.
 *   **MANDATORY ACTION:** You MUST generate one image. This is not optional.
-*   **Quality Standards:** Your image MUST meet professional artistic standards with excellent composition, lighting, and style consistency.
-*   **Context Integration:** Use all available context to enrich the image while staying true to the user's core request.
-*   **Technical Precision:** Execute with exact parameter adherence to ensure successful generation.
+*   **Follow Rules:** Adhere strictly to all rules, especially the ones about context and mandatory generation.
 `,
       },
     ];
