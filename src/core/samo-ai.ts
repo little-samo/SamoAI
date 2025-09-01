@@ -2,6 +2,7 @@ import {
   ENV,
   LlmMessage,
   LlmToolCall,
+  sleep,
   truncateString,
 } from '@little-samo/samo-ai/common';
 import { AsyncEventEmitter } from '@little-samo/samo-ai/common';
@@ -767,8 +768,35 @@ export class SamoAI extends AsyncEventEmitter {
         parameters: GimmickParameters,
         promise: Promise<void>
       ): Promise<void> {
+        let reOccupationInterval: NodeJS.Timeout | null = null;
+
         try {
-          await options.handleSave!(promise);
+          // Set up periodic re-occupation every 10 seconds
+          reOccupationInterval = setInterval(async () => {
+            try {
+              await gimmick.occupy(
+                entity,
+                Gimmick.DEFAULT_OCCUPATION_DURATION,
+                `Re-occupying during execution: ${gimmick.key}`
+              );
+            } catch (error) {
+              console.warn(
+                'Failed to re-occupy gimmick during execution:',
+                error
+              );
+            }
+          }, Gimmick.RE_OCCUPATION_INTERVAL);
+
+          // Create timeout promise
+          const timeoutPromise = (async () => {
+            await sleep(Gimmick.MAX_EXECUTION_TIMEOUT);
+            throw new Error(
+              `Gimmick execution timeout after ${Gimmick.MAX_EXECUTION_TIMEOUT / 1000} seconds`
+            );
+          })();
+
+          // Race between the actual promise and timeout
+          await Promise.race([options.handleSave!(promise), timeoutPromise]);
         } catch (error) {
           console.error(error);
 
@@ -790,6 +818,11 @@ export class SamoAI extends AsyncEventEmitter {
             parameters,
             errorMessage
           );
+        } finally {
+          // Clean up the re-occupation interval
+          if (reOccupationInterval) {
+            clearInterval(reOccupationInterval);
+          }
         }
       }
 

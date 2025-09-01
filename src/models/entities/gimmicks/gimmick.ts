@@ -15,6 +15,8 @@ import { GimmickState } from './states/gimmick.state';
 
 export class Gimmick extends Entity {
   public static readonly DEFAULT_OCCUPATION_DURATION: number = 60 * 1000; // 1 minute
+  public static readonly MAX_EXECUTION_TIMEOUT: number = 300 * 1000; // 5 minutes (300 seconds)
+  public static readonly RE_OCCUPATION_INTERVAL: number = 10 * 1000; // 10 seconds
 
   private static _createEmptyState(
     locationId: LocationId,
@@ -115,7 +117,11 @@ export class Gimmick extends Entity {
     duration?: number,
     reason?: string
   ): Promise<boolean> {
-    if (this.state.occupierType) {
+    if (
+      this.state.occupierType &&
+      (this.state.occupierId !== entity.id ||
+        this.state.occupierType !== entity.type)
+    ) {
       return false;
     }
     this.state.occupierType = entity.type;
