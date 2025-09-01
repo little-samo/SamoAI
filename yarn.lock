@@ -884,7 +884,7 @@ __metadata:
     globals: "npm:^15.11.0"
     jest: "npm:^29.5.0"
     lodash: "npm:^4.17.21"
-    openai: "npm:^5.12.1"
+    openai: "npm:^5.16.0"
     prettier: "npm:^3.0.0"
     reflect-metadata: "npm:^0.2.2"
     rimraf: "npm:^6.0.1"
@@ -4920,9 +4920,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"openai@npm:^5.12.1":
-  version: 5.12.1
-  resolution: "openai@npm:5.12.1"
+"openai@npm:^5.16.0":
+  version: 5.16.0
+  resolution: "openai@npm:5.16.0"
   peerDependencies:
     ws: ^8.18.0
     zod: ^3.23.8
@@ -4933,7 +4933,7 @@ __metadata:
       optional: true
   bin:
     openai: bin/cli
-  checksum: 10c0/d6b786493b4e61f50d4ef458aa2d895db0c85b5bccd31253d51c8a2ecdab0ce7ecda20327ddc523cfb81a79672f26469be6a19f8a6c9a35fdc1bb56543ef531d
+  checksum: 10c0/4ddd3292ed9ff5991de9f12b765c977efdfe9fdb6f3f7c01eef13ef927d0300b2c6cf0c9379a36c522353a7bacf07e8bdf5ff9ab7a3e5a5f839e0b741e9a86cf
   languageName: node
   linkType: hard
 

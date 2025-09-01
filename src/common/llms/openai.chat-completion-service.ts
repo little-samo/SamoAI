@@ -1,13 +1,14 @@
 import { OpenAI } from 'openai';
-import { zodTextFormat } from 'openai/helpers/zod';
-import { ResponseFormatJSONObject, ResponseFormatText } from 'openai/resources';
 import {
-  Response,
-  ResponseCreateParamsNonStreaming,
-  ResponseFormatTextJSONSchemaConfig,
-  ResponseInput,
-  ResponseOutputText,
-} from 'openai/resources/responses/responses';
+  ResponseFormatJSONObject,
+  ResponseFormatJSONSchema,
+  ResponseFormatText,
+} from 'openai/resources';
+import {
+  ChatCompletionCreateParamsNonStreaming,
+  ChatCompletionMessageParam,
+} from 'openai/resources/chat/completions';
+import zodToJsonSchema from 'zod-to-json-schema';
 
 import { sleep, zodSchemaToLlmFriendlyString, parseAndFixJson } from '../utils';
 
@@ -25,7 +26,7 @@ import {
   LlmToolsResponse,
 } from './llm.types';
 
-export class OpenAIService extends LlmService {
+export class OpenAIChatCompletionService extends LlmService {
   private client: OpenAI;
   protected readonly serviceName: string = 'OpenAI';
 
@@ -37,17 +38,17 @@ export class OpenAIService extends LlmService {
     });
   }
 
-  private async createResponsesWithRetry(
-    request: ResponseCreateParamsNonStreaming,
+  private async createCompletionWithRetry(
+    request: ChatCompletionCreateParamsNonStreaming,
     options: { maxTries?: number; retryDelay?: number; verbose?: boolean } = {}
-  ): Promise<Response> {
+  ) {
     const maxTries = options.maxTries ?? LlmService.DEFAULT_MAX_TRIES;
     const retryDelay = options.retryDelay ?? LlmService.DEFAULT_RETRY_DELAY;
     const startTime = Date.now();
 
     for (let attempt = 1; attempt <= maxTries; attempt++) {
       try {
-        const response = await this.client.responses.create(request);
+        const response = await this.client.chat.completions.create(request);
         if (options.verbose) {
           console.log(JSON.stringify(response, null, 2));
           console.log(
@@ -78,14 +79,14 @@ export class OpenAIService extends LlmService {
 
   private llmMessagesToOpenAiMessages(
     messages: LlmMessage[]
-  ): [string[], ResponseInput] {
-    const systemMessages: string[] = [];
-    const userAssistantMessages: ResponseInput = [];
+  ): [ChatCompletionMessageParam[], ChatCompletionMessageParam[]] {
+    const systemMessages: ChatCompletionMessageParam[] = [];
+    const userAssistantMessages: ChatCompletionMessageParam[] = [];
 
     for (const message of messages) {
       switch (message.role) {
         case 'system':
-          systemMessages.push(message.content);
+          systemMessages.push(message);
           break;
         case 'assistant':
           userAssistantMessages.push(message);
@@ -98,7 +99,7 @@ export class OpenAIService extends LlmService {
                 switch (content.type) {
                   case 'text':
                     return {
-                      type: 'input_text',
+                      type: 'text',
                       text: content.text,
                     };
                   case 'image':
@@ -116,9 +117,10 @@ export class OpenAIService extends LlmService {
                     }
 
                     return {
-                      type: 'input_image',
-                      detail: 'auto',
-                      image_url: `data:${mediaType};base64,${imageData}`,
+                      type: 'image_url',
+                      image_url: {
+                        url: `data:${mediaType};base64,${imageData}`,
+                      },
                     };
                 }
               }),
@@ -137,39 +139,6 @@ export class OpenAIService extends LlmService {
     return [systemMessages, userAssistantMessages];
   }
 
-  private findRefusal(response: Response): string | undefined {
-    for (const output of response.output) {
-      if (output.type === 'message') {
-        for (const content of output.content) {
-          if (content.type === 'refusal') {
-            return content.refusal;
-          }
-        }
-      }
-    }
-  }
-
-  private findAnnotations(
-    response: Response
-  ):
-    | Array<
-        | ResponseOutputText.FileCitation
-        | ResponseOutputText.URLCitation
-        | ResponseOutputText.ContainerFileCitation
-        | ResponseOutputText.FilePath
-      >
-    | undefined {
-    for (const output of response.output) {
-      if (output.type === 'message') {
-        for (const content of output.content) {
-          if (content.type === 'output_text') {
-            return content.annotations;
-          }
-        }
-      }
-    }
-  }
-
   public async generate<T extends boolean = false>(
     messages: LlmMessage[],
     options?: LlmOptions & { jsonOutput?: T }
@@ -183,10 +152,19 @@ export class OpenAIService extends LlmService {
 
       let responseFormat:
         | ResponseFormatText
-        | ResponseFormatTextJSONSchemaConfig
-        | ResponseFormatJSONObject;
+        | ResponseFormatJSONObject
+        | ResponseFormatJSONSchema;
       if (options?.jsonSchema) {
-        responseFormat = zodTextFormat(options.jsonSchema, 'response');
+        responseFormat = {
+          type: 'json_schema',
+          json_schema: {
+            name: 'response',
+            strict: true,
+            schema: zodToJsonSchema(options.jsonSchema, {
+              target: 'openAi',
+            }),
+          },
+        };
       } else if (options?.jsonOutput) {
         responseFormat = { type: 'json_object' };
       } else {
@@ -194,22 +172,12 @@ export class OpenAIService extends LlmService {
       }
       let maxOutputTokens = options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS;
       let temperature: number | undefined;
-      const request: ResponseCreateParamsNonStreaming = {
+      const request: ChatCompletionCreateParamsNonStreaming = {
         model: this.model,
-        instructions: systemMessages.join('\n\n'),
-        input: userAssistantMessages,
-        max_output_tokens: maxOutputTokens,
-        text: {
-          format: responseFormat,
-        },
-        store: false,
+        messages: [...systemMessages, ...userAssistantMessages],
+        max_completion_tokens: maxOutputTokens,
+        response_format: responseFormat,
       };
-      if (options?.webSearch) {
-        request.tools ??= [];
-        request.tools.push({
-          type: 'web_search',
-        });
-      }
       // web search models and gpt-5 do not support temperature
       if (!options?.webSearch && !this.model.startsWith('gpt-5')) {
         temperature = options?.temperature ?? LlmService.DEFAULT_TEMPERATURE;
@@ -220,11 +188,10 @@ export class OpenAIService extends LlmService {
         maxOutputTokens +=
           options?.maxThinkingTokens ?? LlmService.DEFAULT_MAX_THINKING_TOKENS;
         if (options?.thinkingLevel) {
-          request.reasoning ??= {};
-          request.reasoning.effort = options.thinkingLevel;
+          request.reasoning_effort = options.thinkingLevel;
         }
         if (options?.thinkingVerbosity) {
-          request.text!.verbosity = options.thinkingVerbosity;
+          request.verbosity = options.thinkingVerbosity;
         }
       }
       if (options?.verbose) {
@@ -232,7 +199,7 @@ export class OpenAIService extends LlmService {
       }
 
       const startTime = Date.now();
-      const response = await this.createResponsesWithRetry(request, options);
+      const response = await this.createCompletionWithRetry(request, options);
       const responseTime = Date.now() - startTime;
 
       const result: LlmResponseBase = {
@@ -241,35 +208,25 @@ export class OpenAIService extends LlmService {
         thinking: this.thinking,
         maxOutputTokens,
         temperature,
-        inputTokens: response.usage?.input_tokens ?? 0,
-        outputTokens: response.usage?.output_tokens ?? 0,
+        inputTokens: response.usage?.prompt_tokens ?? 0,
+        outputTokens: response.usage?.completion_tokens ?? 0,
         thinkingTokens:
-          response.usage?.output_tokens_details?.reasoning_tokens ?? 0,
+          response.usage?.completion_tokens_details?.reasoning_tokens ?? 0,
         cachedInputTokens:
-          response.usage?.input_tokens_details?.cached_tokens ?? 0,
+          response.usage?.prompt_tokens_details?.cached_tokens ?? 0,
         request,
         response,
         responseTime,
       };
 
-      if (response.incomplete_details?.reason === 'content_filter') {
-        let refusal = this.findRefusal(response);
-        if (refusal) {
-          refusal = `: ${refusal}`;
-        } else {
-          refusal = '';
-        }
-        if (!refusal.endsWith('.')) {
-          refusal += '.';
-        }
-        throw new LlmInvalidContentError(
-          `${this.serviceName} refused to generate content${refusal} Try again with a different request.`,
-          result
-        );
-      }
-
-      const responseText = response.output_text;
+      const responseText = response.choices.at(0)?.message.content;
       if (!responseText) {
+        if (response.choices.at(0)?.finish_reason === 'content_filter') {
+          throw new LlmInvalidContentError(
+            `${this.serviceName} refused to generate content. Try again with a different request.`,
+            result
+          );
+        }
         throw new LlmInvalidContentError(
           `${this.serviceName} returned no content. Try again with a different request.`,
           result
@@ -298,18 +255,19 @@ export class OpenAIService extends LlmService {
       let sources: LlmGenerateResponseWebSearchSource[] | undefined;
       if (options?.webSearch) {
         sources = [];
-        const annotations = this.findAnnotations(response);
+        const annotations = response.choices[0].message.annotations;
         if (annotations) {
           for (const annotation of annotations) {
             if (annotation.type === 'url_citation') {
+              const urlCitation = annotation.url_citation;
               sources.push({
-                url: annotation.url,
-                title: annotation.title,
-                startIndex: annotation.start_index,
-                endIndex: annotation.end_index,
+                url: urlCitation.url,
+                title: urlCitation.title,
+                startIndex: urlCitation.start_index,
+                endIndex: urlCitation.end_index,
                 content: responseText.substring(
-                  annotation.start_index,
-                  annotation.end_index
+                  urlCitation.start_index,
+                  urlCitation.end_index
                 ),
               });
             }
@@ -344,21 +302,24 @@ export class OpenAIService extends LlmService {
       const [systemMessages, userAssistantMessages] =
         this.llmMessagesToOpenAiMessages(messages);
 
-      systemMessages.push(
-        `The definition of the tools you have can be organized as a JSON Schema as follows. Clearly understand the definition and purpose of each tool.`
-      );
+      systemMessages.push({
+        role: 'system',
+        content: `The definition of the tools you have can be organized as a JSON Schema as follows. Clearly understand the definition and purpose of each tool.`,
+      });
 
       for (const tool of tools) {
         const parameters = zodSchemaToLlmFriendlyString(tool.parameters);
-        systemMessages.push(
-          `name: ${tool.name}
+        systemMessages.push({
+          role: 'system',
+          content: `name: ${tool.name}
 description: ${tool.description}
-parameters: ${parameters}`
-        );
+parameters: ${parameters}`,
+        });
       }
 
-      systemMessages.push(
-        `Refer to the definitions of the available tools above, and output the tools you plan to use in JSON format. Based on that analysis, select and use the necessary tools from the rest—following the guidance provided in the previous prompt.
+      systemMessages.push({
+        role: 'system',
+        content: `Refer to the definitions of the available tools above, and output the tools you plan to use in JSON format. Based on that analysis, select and use the necessary tools from the rest—following the guidance provided in the previous prompt.
 
 Response can only be in JSON format and must strictly follow the following format, with no surrounding text or markdown:
 [
@@ -367,26 +328,17 @@ Response can only be in JSON format and must strictly follow the following forma
     "arguments": { ... }
   },
   ... // (Include additional tool calls as needed)
-]`
-      );
+]`,
+      });
 
       let maxOutputTokens = options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS;
       let temperature: number | undefined;
-      const request: ResponseCreateParamsNonStreaming = {
+      const request: ChatCompletionCreateParamsNonStreaming = {
         model: this.model,
-        instructions: systemMessages.join('\n\n'),
-        input: userAssistantMessages,
-        max_output_tokens: maxOutputTokens,
-        text: {
-          format: { type: 'text' },
-        },
+        messages: [...systemMessages, ...userAssistantMessages],
+        max_completion_tokens: maxOutputTokens,
+        response_format: { type: 'text' },
       };
-      if (options?.webSearch) {
-        request.tools ??= [];
-        request.tools.push({
-          type: 'web_search',
-        });
-      }
       // web search models and gpt-5 do not support temperature
       if (!options?.webSearch && !this.model.startsWith('gpt-5')) {
         temperature = options?.temperature ?? LlmService.DEFAULT_TEMPERATURE;
@@ -397,11 +349,10 @@ Response can only be in JSON format and must strictly follow the following forma
         maxOutputTokens +=
           options?.maxThinkingTokens ?? LlmService.DEFAULT_MAX_THINKING_TOKENS;
         if (options?.thinkingLevel) {
-          request.reasoning ??= {};
-          request.reasoning.effort = options.thinkingLevel;
+          request.reasoning_effort = options.thinkingLevel;
         }
         if (options?.thinkingVerbosity) {
-          request.text!.verbosity = options.thinkingVerbosity;
+          request.verbosity = options.thinkingVerbosity;
         }
       }
       if (options?.verbose) {
@@ -409,7 +360,7 @@ Response can only be in JSON format and must strictly follow the following forma
       }
 
       const startTime = Date.now();
-      const response = await this.createResponsesWithRetry(request, options);
+      const response = await this.createCompletionWithRetry(request, options);
       const responseTime = Date.now() - startTime;
 
       const result: LlmResponseBase = {
@@ -418,35 +369,25 @@ Response can only be in JSON format and must strictly follow the following forma
         thinking: this.thinking,
         maxOutputTokens,
         temperature,
-        inputTokens: response.usage?.input_tokens ?? 0,
-        outputTokens: response.usage?.output_tokens ?? 0,
+        inputTokens: response.usage?.prompt_tokens ?? 0,
+        outputTokens: response.usage?.completion_tokens ?? 0,
         thinkingTokens:
-          response.usage?.output_tokens_details?.reasoning_tokens ?? 0,
+          response.usage?.completion_tokens_details?.reasoning_tokens ?? 0,
         cachedInputTokens:
-          response.usage?.input_tokens_details?.cached_tokens ?? 0,
+          response.usage?.prompt_tokens_details?.cached_tokens ?? 0,
         request,
         response,
         responseTime,
       };
 
-      if (response.incomplete_details?.reason === 'content_filter') {
-        let refusal = this.findRefusal(response);
-        if (refusal) {
-          refusal = `: ${refusal}`;
-        } else {
-          refusal = '';
-        }
-        if (!refusal.endsWith('.')) {
-          refusal += '.';
-        }
-        throw new LlmInvalidContentError(
-          `${this.serviceName} refused to generate content${refusal} Try again with a different request.`,
-          result
-        );
-      }
-
-      const responseText = response.output_text;
+      const responseText = response.choices.at(0)?.message.content;
       if (!responseText) {
+        if (response.choices.at(0)?.finish_reason === 'content_filter') {
+          throw new LlmInvalidContentError(
+            `${this.serviceName} refused to generate content. Try again with a different request.`,
+            result
+          );
+        }
         throw new LlmInvalidContentError(
           `${this.serviceName} returned no content. Try again with a different request.`,
           result

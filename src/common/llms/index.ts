@@ -6,4 +6,5 @@ export * from './llm.factory';
 export * from './llm.service';
 export * from './llm.tool';
 export * from './llm.types';
+export * from './openai.chat-completion-service';
 export * from './openai.service';

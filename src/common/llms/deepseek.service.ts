@@ -1,7 +1,7 @@
 import { LlmPlatform, LlmServiceOptions } from './llm.types';
-import { OpenAIService } from './openai.service';
+import { OpenAIChatCompletionService } from './openai.chat-completion-service';
 
-export class DeepSeekService extends OpenAIService {
+export class DeepSeekService extends OpenAIChatCompletionService {
   protected readonly serviceName: string = 'DeepSeek';
 
   public constructor(options: LlmServiceOptions) {
