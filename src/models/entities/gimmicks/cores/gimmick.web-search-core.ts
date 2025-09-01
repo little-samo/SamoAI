@@ -3,7 +3,6 @@ import {
   LlmFactory,
   LlmGenerateResponse,
   LlmInvalidContentError,
-  LlmMessage,
   LlmPlatform,
   LlmService,
   LlmServiceOptions,
@@ -15,6 +14,7 @@ import { z } from 'zod';
 import { type LocationEntityCanvasMeta } from '../../../locations/location.meta';
 import { type Entity } from '../../entity';
 import { GimmickParameters } from '../gimmick.types';
+import { GimmickInputFactory } from '../inputs';
 
 import { GimmickCore } from './gimmick.core';
 import { RegisterGimmickCore } from './gimmick.core-decorator';
@@ -30,7 +30,7 @@ export class GimmickWebSearchCore extends GimmickCore {
   public static readonly DEFAULT_MAX_SEARCH_SOURCES_LENGTH = 1000;
 
   public override get description(): string {
-    return 'Searches the web for up-to-date or missing information using an LLM, providing both a summary and detailed results. Execution takes approximately 30 seconds. IMPORTANT: This gimmick does NOT have access to your conversation context, so provide complete, self-contained search queries with all necessary details, keywords, and context as if searching independently on Google.';
+    return 'Searches the web for up-to-date or missing information using an LLM, providing both a summary and detailed results. The gimmick can see the full location context including conversation history and agent information to conduct more targeted and relevant searches. Execution takes approximately 30 seconds.';
   }
 
   public override get parameters(): z.ZodSchema {
@@ -38,7 +38,7 @@ export class GimmickWebSearchCore extends GimmickCore {
       .string()
       .max(500)
       .describe(
-        'A detailed, comprehensive search query that includes all relevant context, specific terms, dates, locations, or other important details. Since this gimmick has no access to conversation context, write complete queries as you would on Google. Avoid vague terms like "this", "that", or references to previous conversation.'
+        'Search query or topic. The gimmick will automatically enhance your query using conversation context, location details, and agent information to conduct more targeted searches. You can use natural language and reference previous conversations.'
       );
   }
 
@@ -72,31 +72,18 @@ export class GimmickWebSearchCore extends GimmickCore {
     maxTokens: number,
     maxThinkingTokens: number
   ): Promise<void> {
-    const messages: LlmMessage[] = [];
-    messages.push({
-      role: 'system',
-      content: `
-You are a web research expert. Your mission is to conduct a web search based on the user's query, then organize the results into a detailed body and a brief summary.
-
-Format your response exclusively as the following XML structure. Do not add any text, explanations, or markdown outside of this format.
-
-<SearchBody>
-A thorough compilation of the most critical information discovered during the web search. Aim for comprehensiveness and clarity within a ${maxLlmResultLength} character limit. It is wise to leave a small margin, as character counting is not always precise. Include essential facts, data points, and direct quotations when appropriate. Give priority to official sources, expert analyses, and recent, reputable publications.
-</SearchBody>
-<SearchSummary>
-A concise paragraph that summarizes the main discoveries from the search. This summary should not be more than ${maxLlmSummaryLength} characters and must distill the core message of the detailed body.
-</SearchSummary>
-
-# Critical Guidelines
-- Validate source credibility by cross-referencing information with multiple reliable websites whenever search results permit.
-- Do not manually add source citations like [1], [2], etc. The system will automatically handle source attribution.
-- Strictly follow the character limits for content within the <SearchBody> (${maxLlmResultLength} characters) and <SearchSummary> (${maxLlmSummaryLength} characters) tags. Content might be cut off if it goes over these limits, so plan for a buffer.
-- Your entire response must be only the XML structure shown. Make sure all tags are correctly closed.
-`.trim(),
-    });
-    messages.push({
-      role: 'user',
-      content: query,
+    // Use the new input system to build rich contextual messages
+    const inputBuilder = GimmickInputFactory.createInput(
+      'web_search',
+      entity.location,
+      this.gimmick,
+      entity,
+      query
+    );
+    const messages = inputBuilder.build({
+      parameters: query,
+      maxLlmResultLength,
+      maxLlmSummaryLength,
     });
 
     let searchSummaryResponse: LlmGenerateResponse<false>;
