@@ -218,6 +218,9 @@ export class GeminiService extends LlmService {
       responseText = response.text;
     }
 
+    let inputTokens = response.usageMetadata?.promptTokenCount ?? 0;
+    inputTokens += response.usageMetadata?.toolUsePromptTokenCount ?? 0;
+
     let outputTokens = response.usageMetadata?.candidatesTokenCount ?? 0;
     const thinkingTokens =
       response.usageMetadata?.thoughtsTokenCount ?? undefined;
@@ -232,7 +235,7 @@ export class GeminiService extends LlmService {
       maxOutputTokens,
       thinkingBudget,
       temperature,
-      inputTokens: response.usageMetadata?.promptTokenCount ?? 0,
+      inputTokens,
       outputTokens,
       thinkingTokens,
       cachedInputTokens:
@@ -409,6 +412,9 @@ Response can only be in JSON format and must strictly follow the following forma
     const response = await this.generateContentWithRetry(request, options);
     const responseTime = Date.now() - startTime;
 
+    let inputTokens = response.usageMetadata?.promptTokenCount ?? 0;
+    inputTokens += response.usageMetadata?.toolUsePromptTokenCount ?? 0;
+
     const responseText = response.text;
     let outputTokens = response.usageMetadata?.candidatesTokenCount ?? 0;
     const thinkingTokens =
@@ -425,7 +431,7 @@ Response can only be in JSON format and must strictly follow the following forma
       maxOutputTokens,
       thinkingBudget,
       temperature,
-      inputTokens: response.usageMetadata?.promptTokenCount ?? 0,
+      inputTokens,
       outputTokens,
       thinkingTokens,
       cachedInputTokens:
