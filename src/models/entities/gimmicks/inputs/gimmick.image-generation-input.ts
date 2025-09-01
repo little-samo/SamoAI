@@ -103,6 +103,11 @@ When making decisions, justify them by referencing the specific rule or context 
     *   Artistic quality meets professional standards
 `);
 
+    // === Final Directive ===
+    importantRules.push(`
+12. **ULTRA CRITICAL - MANDATORY IMAGE GENERATION:** You MUST generate one image in response to every valid request. Refusing to generate an image is FORBIDDEN. Do not apologize, do not explain, and do not refuse. Your only purpose is to create an image based on the request and available context. This is your single most important directive. You MUST use the image generation tool NOW.
+`);
+
     prompts.push(`
 IMPORTANT RULES (Follow Strictly):
 ${importantRules.map((r) => r.trim()).join('\n')}
@@ -375,13 +380,17 @@ ${this.location.state.rendering}
         text: `
 Based on all the provided context and rules, generate a high-quality image that fulfills the following user request.
 
+**ULTRA IMPORTANT: YOU MUST GENERATE AN IMAGE. DO NOT FAIL, DO NOT REFUSE.**
+This is not a request that can be denied. Your primary function is to create an image. You must call the image generation tool. Failure to do so is a critical error. Proceed with image generation immediately.
+
 **Image Generation Request:**
 "${userPrompt}"
 
 Remember to interpret this request within the full conversation and environmental context provided above. The user's text is a key part of the request, but you must enrich it with details from the surroundings, recent messages, and reference images to create a cohesive and context-aware image.
 
 **CRITICAL REMINDERS:**
-*   **Rules:** Pay close attention to all rules, especially #1 (Primary Goal), #2 (Contextual Enhancement), and #4 (Artistic Excellence).
+*   **Rules:** Pay close attention to all rules, especially #1 (Primary Goal), #2 (Contextual Enhancement), #4 (Artistic Excellence), and #12 (MANDATORY IMAGE GENERATION).
+*   **MANDATORY ACTION:** You MUST generate one image. This is not optional.
 *   **Quality Standards:** Your image MUST meet professional artistic standards with excellent composition, lighting, and style consistency.
 *   **Context Integration:** Use all available context to enrich the image while staying true to the user's core request.
 *   **Technical Precision:** Execute with exact parameter adherence to ensure successful generation.
