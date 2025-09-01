@@ -365,10 +365,10 @@ Response can only be in JSON format and must strictly follow the following forma
             result
           );
         }
-        throw new LlmInvalidContentError(
-          'Anthropic returned no content. Try again with a different request.',
-          result
-        );
+        return {
+          ...result,
+          toolCalls: [],
+        };
       }
       responseText = prefill + responseText;
 
