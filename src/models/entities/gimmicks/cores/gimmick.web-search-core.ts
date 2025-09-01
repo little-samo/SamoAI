@@ -136,8 +136,27 @@ export class GimmickWebSearchCore extends GimmickCore {
     let summary: string;
     let result: string;
 
-    const bodyMatch = llmOutput.match(/<SearchBody>([\s\S]*?)<\/SearchBody>/);
-    const summaryMatch = llmOutput.match(
+    // First handle cases where tags are opened but not closed
+    let processedOutput = llmOutput;
+
+    // Handle <SearchBody>: if opening tag exists but closing tag is missing
+    const bodyOpenIndex = processedOutput.indexOf('<SearchBody>');
+    const bodyCloseIndex = processedOutput.indexOf('</SearchBody>');
+    if (bodyOpenIndex !== -1 && bodyCloseIndex === -1) {
+      processedOutput = processedOutput + '</SearchBody>';
+    }
+
+    // Handle <SearchSummary>: if opening tag exists but closing tag is missing
+    const summaryOpenIndex = processedOutput.indexOf('<SearchSummary>');
+    const summaryCloseIndex = processedOutput.indexOf('</SearchSummary>');
+    if (summaryOpenIndex !== -1 && summaryCloseIndex === -1) {
+      processedOutput = processedOutput + '</SearchSummary>';
+    }
+
+    const bodyMatch = processedOutput.match(
+      /<SearchBody>([\s\S]*?)<\/SearchBody>/
+    );
+    const summaryMatch = processedOutput.match(
       /<SearchSummary>([\s\S]*?)<\/SearchSummary>/
     );
 
@@ -145,7 +164,7 @@ export class GimmickWebSearchCore extends GimmickCore {
       result = bodyMatch[1].trim();
       summary = summaryMatch[1].trim();
     } else {
-      const strippedOutput = llmOutput.replace(/<[^>]*>/g, '').trim();
+      const strippedOutput = processedOutput.replace(/<[^>]*>/g, '').trim();
       result = strippedOutput;
       summary = strippedOutput.substring(0, maxLlmSummaryLength);
     }
