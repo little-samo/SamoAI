@@ -76,7 +76,12 @@ A concise paragraph that summarizes the main discoveries from the search. This s
 </SearchSummary>
 
 8.  **CRITICAL - Character Limits:** Strictly follow the character limits for content within the <SearchBody> (${options.maxLlmResultLength} characters) and <SearchSummary> (${options.maxLlmSummaryLength} characters) tags. Content might be cut off if it goes over these limits, so plan for a buffer. It is wise to leave a small margin, as character counting is not always precise.
-9.  **Source Citation:** Do not manually add source citations like [1], [2], etc. The system will automatically handle source attribution.
+9.  **CRITICAL - Source Citation:** Do not manually add any form of source references in the output content. This includes:
+    *   Numbered citations like [1], [2], (1), (2), etc.
+    *   Markdown links like [example.com](https://example.com/example)
+    *   Direct URLs or website references within the content
+    *   Any form of manual source attribution or references
+    The system will automatically handle all source attribution and citations. Focus only on the content itself without any reference indicators, unless specifically requested by the user to include such information.
 `);
 
     // === Context Integration Guidelines ===

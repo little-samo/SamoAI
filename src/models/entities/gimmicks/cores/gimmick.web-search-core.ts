@@ -29,8 +29,8 @@ export class GimmickWebSearchCore extends GimmickCore {
     LlmThinkingLevel.medium;
   public static readonly LLM_MAX_TOKENS = 4096;
   public static readonly LLM_MAX_THINKING_TOKENS = 2048;
-  public static readonly DEFAULT_MAX_SEARCH_RESULT_LENGTH = 2000;
-  public static readonly DEFAULT_MAX_SEARCH_SOURCES_LENGTH = 1000;
+  public static readonly DEFAULT_MAX_SEARCH_RESULT_LENGTH = 3000;
+  public static readonly DEFAULT_MAX_SEARCH_SOURCES_LENGTH = 2000;
 
   public override get description(): string {
     return 'Searches the web for up-to-date or missing information using an LLM, providing both a summary and detailed results. The gimmick can see the full location context including conversation history and agent information to conduct more targeted and relevant searches. Execution takes approximately 30 seconds.';
@@ -158,7 +158,9 @@ export class GimmickWebSearchCore extends GimmickCore {
     ) {
       let sources = `\n\n[Sources]\n`;
       sources += searchSummaryResponse.sources
-        .map((source, index) => `[${index + 1}] ${source.title}`)
+        .map(
+          (source, index) => `[${index + 1}] ${source.title} (${source.url})`
+        )
         .join('\n');
       sources = truncateString(sources, maxSourcesLength).text;
       result += sources;
