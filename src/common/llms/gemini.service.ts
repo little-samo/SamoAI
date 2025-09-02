@@ -5,7 +5,12 @@ import {
   GoogleGenAI,
 } from '@google/genai';
 
-import { sleep, zodSchemaToLlmFriendlyString, parseAndFixJson } from '../utils';
+import {
+  sleep,
+  zodSchemaToLlmFriendlyString,
+  parseAndFixJson,
+  getImageBase64,
+} from '../utils';
 
 import { LlmApiError, LlmInvalidContentError } from './llm.errors';
 import { LlmService } from './llm.service';
@@ -72,9 +77,9 @@ export class GeminiService extends LlmService {
     throw new LlmApiError(500, 'Max retry attempts reached');
   }
 
-  private llmMessagesToGeminiMessages(
+  private async llmMessagesToGeminiMessages(
     messages: LlmMessage[]
-  ): [Content, Content[]] {
+  ): Promise<[Content, Content[]]> {
     const systemMessages: Content = { parts: [] };
     const userAssistantMessages: Content[] = [];
 
@@ -93,36 +98,51 @@ export class GeminiService extends LlmService {
           break;
         case 'user':
           if (Array.isArray(message.content)) {
-            userAssistantMessages.push({
-              role: message.role,
-              parts: message.content.map((content) => {
+            const parts = await Promise.all(
+              message.content.map(async (content) => {
                 switch (content.type) {
                   case 'text':
                     return {
                       text: content.text,
                     };
                   case 'image':
-                    let mediaType = 'image/png';
-                    let imageData = content.image;
-
                     if (content.image.startsWith('data:image/')) {
+                      let mediaType = 'image/png';
+                      let imageData = content.image;
                       const matches = content.image.match(
                         /^data:([^;]+);base64,(.+)$/
                       );
                       if (matches && matches.length === 3) {
-                        mediaType = matches[1];
+                        mediaType = matches[1] as
+                          | 'image/png'
+                          | 'image/jpeg'
+                          | 'image/gif'
+                          | 'image/webp';
                         imageData = matches[2];
                       }
-                    }
 
-                    return {
-                      inlineData: {
-                        data: imageData,
-                        mimeType: mediaType,
-                      },
-                    };
+                      return {
+                        inlineData: {
+                          data: imageData,
+                          mimeType: mediaType,
+                        },
+                      };
+                    } else {
+                      // URL image - use cache to get base64
+                      const imageEntry = await getImageBase64(content.image);
+                      return {
+                        inlineData: {
+                          data: imageEntry.base64,
+                          mimeType: imageEntry.mimeType,
+                        },
+                      };
+                    }
                 }
-              }),
+              })
+            );
+            userAssistantMessages.push({
+              role: message.role,
+              parts,
             });
           } else {
             userAssistantMessages.push({
@@ -145,7 +165,7 @@ export class GeminiService extends LlmService {
     messages = messages.filter((message) => message.role !== 'assistant');
 
     const [systemMessages, userAssistantMessages] =
-      this.llmMessagesToGeminiMessages(messages);
+      await this.llmMessagesToGeminiMessages(messages);
 
     let maxOutputTokens = options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS;
     let thinkingBudget: number | undefined;
@@ -337,7 +357,7 @@ export class GeminiService extends LlmService {
     messages = messages.filter((message) => message.role !== 'assistant');
 
     const [systemMessages, userAssistantMessages] =
-      this.llmMessagesToGeminiMessages(messages);
+      await this.llmMessagesToGeminiMessages(messages);
 
     systemMessages.parts!.push({
       text: `The definition of the tools you have can be organized as a JSON Schema as follows. Clearly understand the definition and purpose of each tool.`,

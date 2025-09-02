@@ -63,6 +63,7 @@ export interface LlmOptions {
 export interface LlmMessageImageContent {
   type: 'image';
   image: string;
+  mimeType?: 'image/png' | 'image/jpeg' | 'image/gif' | 'image/webp';
 }
 
 export interface LlmMessageTextContent {

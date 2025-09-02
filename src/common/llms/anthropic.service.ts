@@ -102,10 +102,9 @@ export class AnthropicService extends LlmService {
                       text: content.text,
                     };
                   case 'image':
-                    let mediaType = 'image/png';
-                    let imageData = content.image;
-
                     if (content.image.startsWith('data:image/')) {
+                      let mediaType = 'image/png';
+                      let imageData = content.image;
                       const matches = content.image.match(
                         /^data:([^;]+);base64,(.+)$/
                       );
@@ -113,20 +112,28 @@ export class AnthropicService extends LlmService {
                         mediaType = matches[1];
                         imageData = matches[2];
                       }
-                    }
 
-                    return {
-                      type: 'image',
-                      source: {
-                        type: 'base64',
-                        data: imageData,
-                        media_type: mediaType as
-                          | 'image/png'
-                          | 'image/jpeg'
-                          | 'image/gif'
-                          | 'image/webp',
-                      },
-                    };
+                      return {
+                        type: 'image',
+                        source: {
+                          type: 'base64',
+                          data: imageData,
+                          media_type: mediaType as
+                            | 'image/png'
+                            | 'image/jpeg'
+                            | 'image/gif'
+                            | 'image/webp',
+                        },
+                      };
+                    } else {
+                      return {
+                        type: 'image',
+                        source: {
+                          type: 'url',
+                          url: content.image,
+                        },
+                      };
+                    }
                 }
               }),
             });

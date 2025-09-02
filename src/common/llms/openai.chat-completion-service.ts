@@ -103,10 +103,9 @@ export class OpenAIChatCompletionService extends LlmService {
                       text: content.text,
                     };
                   case 'image':
-                    let mediaType = 'image/png';
-                    let imageData = content.image;
-
                     if (content.image.startsWith('data:image/')) {
+                      let mediaType = 'image/png';
+                      let imageData = content.image;
                       const matches = content.image.match(
                         /^data:([^;]+);base64,(.+)$/
                       );
@@ -114,14 +113,21 @@ export class OpenAIChatCompletionService extends LlmService {
                         mediaType = matches[1];
                         imageData = matches[2];
                       }
-                    }
 
-                    return {
-                      type: 'image_url',
-                      image_url: {
-                        url: `data:${mediaType};base64,${imageData}`,
-                      },
-                    };
+                      return {
+                        type: 'image_url',
+                        image_url: {
+                          url: `data:${mediaType};base64,${imageData}`,
+                        },
+                      };
+                    } else {
+                      return {
+                        type: 'image_url',
+                        image_url: {
+                          url: content.image,
+                        },
+                      };
+                    }
                 }
               }),
             });

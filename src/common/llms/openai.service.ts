@@ -102,10 +102,9 @@ export class OpenAIService extends LlmService {
                       text: content.text,
                     };
                   case 'image':
-                    let mediaType = 'image/png';
-                    let imageData = content.image;
-
                     if (content.image.startsWith('data:image/')) {
+                      let mediaType = 'image/png';
+                      let imageData = content.image;
                       const matches = content.image.match(
                         /^data:([^;]+);base64,(.+)$/
                       );
@@ -113,13 +112,19 @@ export class OpenAIService extends LlmService {
                         mediaType = matches[1];
                         imageData = matches[2];
                       }
-                    }
 
-                    return {
-                      type: 'input_image',
-                      detail: 'auto',
-                      image_url: `data:${mediaType};base64,${imageData}`,
-                    };
+                      return {
+                        type: 'input_image',
+                        detail: 'auto',
+                        image_url: `data:${mediaType};base64,${imageData}`,
+                      };
+                    } else {
+                      return {
+                        type: 'input_image',
+                        detail: 'auto',
+                        image_url: content.image,
+                      };
+                    }
                 }
               }),
             });
