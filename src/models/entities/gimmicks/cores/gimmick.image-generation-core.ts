@@ -1,5 +1,6 @@
 import {
   ENV,
+  formatZodErrorMessage,
   LlmFactory,
   LlmGenerateResponse,
   LlmInvalidContentError,
@@ -13,13 +14,23 @@ import {
 import { z } from 'zod';
 
 import { type Entity } from '../../entity';
+import { Gimmick } from '../gimmick';
+import { GimmickCoreMeta } from '../gimmick.meta';
 import { GimmickParameters } from '../gimmick.types';
-import { GimmickInputFactory } from '../inputs';
-// Import to register the input
-import '../inputs/gimmick.image-generation-input';
+import {
+  GimmickImageGenerationReferenceImageSchema,
+  GimmickInputFactory,
+} from '../inputs';
 
 import { GimmickCore } from './gimmick.core';
 import { RegisterGimmickCore } from './gimmick.core-decorator';
+
+export const GimmickImageGenerationCoreOptionsSchema = z.object({
+  images: z.array(GimmickImageGenerationReferenceImageSchema).optional(),
+});
+export type GimmickImageGenerationCoreOptions = z.infer<
+  typeof GimmickImageGenerationCoreOptionsSchema
+>;
 
 @RegisterGimmickCore('image_generation')
 export class GimmickImageGenerationCore extends GimmickCore {
@@ -29,6 +40,24 @@ export class GimmickImageGenerationCore extends GimmickCore {
     'gemini-2.5-flash-image-preview';
   public static readonly DEFAULT_IMAGE_GENERATION_LLM_MAX_TOKENS = 8192;
   public static readonly DEFAULT_MAX_IMAGE_DESCRIPTION_LENGTH = 500;
+
+  public constructor(gimmick: Gimmick, meta: GimmickCoreMeta) {
+    super(gimmick, meta);
+
+    const result = GimmickImageGenerationCoreOptionsSchema.safeParse(
+      this.options
+    );
+    if (!result.success) {
+      const errorMessage = formatZodErrorMessage(result.error);
+      throw new Error(
+        `[Gimmick ${this.gimmick.name}] Image generation configuration error: ${errorMessage}`
+      );
+    }
+  }
+
+  public override get options(): GimmickImageGenerationCoreOptions {
+    return this.meta.options as GimmickImageGenerationCoreOptions;
+  }
 
   public override get description(): string {
     return 'Generates high-quality images based on detailed text descriptions. The gimmick can see the full location context including conversation history and reference images. Execution takes approximately 15-30 seconds.';
@@ -56,7 +85,9 @@ export class GimmickImageGenerationCore extends GimmickCore {
       entity,
       prompt
     );
-    const messages = inputBuilder.build();
+    const messages = inputBuilder.build({
+      referenceImages: this.options.images,
+    });
 
     let imageGenerationResponse: LlmGenerateResponse<false>;
     try {

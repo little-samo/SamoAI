@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 import type {
   LlmMessage,
   LlmMessageContent,
@@ -24,6 +26,14 @@ import { GimmickContext } from '../gimmick.context';
 
 import { GimmickInputBuilder } from './gimmick.input';
 import { RegisterGimmickInput } from './gimmick.input-decorator';
+
+export const GimmickImageGenerationReferenceImageSchema = z.object({
+  url: z.string(),
+  description: z.string(),
+});
+export type GimmickImageGenerationReferenceImage = z.infer<
+  typeof GimmickImageGenerationReferenceImageSchema
+>;
 
 @RegisterGimmickInput('image_generation')
 export class GimmickImageGenerationInputBuilder extends GimmickInputBuilder {
@@ -302,7 +312,12 @@ ${this.location.state.rendering}
     return contexts;
   }
 
-  public override build(options: { parameters?: string } = {}): LlmMessage[] {
+  public override build(
+    options: {
+      parameters?: string;
+      referenceImages?: GimmickImageGenerationReferenceImage[];
+    } = {}
+  ): LlmMessage[] {
     const messages: LlmMessage[] = [];
 
     const prompt = this.buildPrompt();
@@ -320,10 +335,41 @@ ${this.location.state.rendering}
         text: `As an image generation Gimmick, analyze the following context to create the best possible image.`,
       },
       ...contextContents,
-      {
+    ];
+
+    if (options.referenceImages && options.referenceImages.length > 0) {
+      userContents.push({
         type: 'text',
-        text: `
-Based on all the provided context and rules, generate an image that fulfills the following user request.
+        text: `The following are reference images and their descriptions. Use them to maintain consistency in the generated images.`,
+      });
+
+      for (let i = 0; i < options.referenceImages.length; ++i) {
+        const referenceImage = options.referenceImages[i];
+        if (!referenceImage) {
+          continue;
+        }
+
+        userContents.push({
+          type: 'text',
+          text: `Reference image ${i + 1}: ${referenceImage.description}`,
+        });
+        userContents.push({
+          type: 'image',
+          image: referenceImage.url,
+        });
+      }
+    }
+
+    const referenceImageNotice =
+      options.referenceImages && options.referenceImages.length > 0
+        ? `
+Refer to the provided reference images and their descriptions as needed to create a better image. Using them is not mandatory.`
+        : '';
+
+    userContents.push({
+      type: 'text',
+      text: `
+Based on all the provided context and rules, generate an image that fulfills the following user request.${referenceImageNotice}
 
 **ULTRA IMPORTANT: YOU MUST GENERATE AN IMAGE. DO NOT FAIL OR REFUSE.**
 This is not a request that can be denied. Your only function is to create an image. You must call the image generation tool now.
@@ -336,8 +382,7 @@ This is not a request that can be denied. Your only function is to create an ima
 *   **MANDATORY ACTION:** You MUST generate one image. This is not optional.
 *   **Follow Rules:** Adhere strictly to all rules, especially the ones about context and mandatory generation.
 `,
-      },
-    ];
+    });
 
     messages.push({
       role: 'user',
