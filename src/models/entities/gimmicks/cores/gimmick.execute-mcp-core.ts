@@ -250,7 +250,7 @@ export class GimmickExecuteMcpCore extends GimmickCore {
   }
 
   public override get options(): GimmickExecuteMcpCoreOptions {
-    return this.meta.options as GimmickExecuteMcpCoreOptions;
+    return super.options as GimmickExecuteMcpCoreOptions;
   }
 
   public override get description(): string {

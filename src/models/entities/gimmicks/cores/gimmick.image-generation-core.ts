@@ -56,7 +56,7 @@ export class GimmickImageGenerationCore extends GimmickCore {
   }
 
   public override get options(): GimmickImageGenerationCoreOptions {
-    return this.meta.options as GimmickImageGenerationCoreOptions;
+    return super.options as GimmickImageGenerationCoreOptions;
   }
 
   public override get description(): string {
