@@ -80,20 +80,31 @@ export class GimmickImageGenerationCore extends GimmickCore {
     }
 
     imageGenerationResponse.logType = LlmUsageType.GIMMICK;
-    await entity.location.emitAsync(
-      'llmGenerate',
-      entity,
-      imageGenerationResponse,
-      this.gimmick
-    );
 
     const imageData = imageGenerationResponse.content;
     if (!imageData.match(/^data:image\/\w+;base64,/)) {
       console.error(
         `No image data received from the LLM: ${imageData.slice(0, 32)}`
       );
+      const imageGenerationResponseWithoutContent = {
+        ...imageGenerationResponse,
+        content: undefined,
+      };
+      await entity.location.emitAsync(
+        'llmGenerate',
+        entity,
+        imageGenerationResponseWithoutContent,
+        this.gimmick
+      );
       throw new Error('No image data received from the LLM');
     }
+
+    await entity.location.emitAsync(
+      'llmGenerate',
+      entity,
+      imageGenerationResponse,
+      this.gimmick
+    );
 
     const maxDescriptionLength = Number(
       this.meta.options?.maxDescriptionLength ??
