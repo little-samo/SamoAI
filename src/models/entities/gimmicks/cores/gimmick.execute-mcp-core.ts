@@ -240,19 +240,11 @@ export class GimmickExecuteMcpCore extends GimmickCore {
       throw new Error(`Gimmick ${this.gimmick.name} has no canvas`);
     }
 
-    try {
-      GimmickExecuteMcpCoreOptionsSchema.parse(this.options);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        const errorMessage = error.errors
-          .map((e) => `${e.path.join('.')}: ${e.message}`)
-          .join(', ');
-        throw new Error(
-          `[Gimmick ${this.gimmick.name}] MCP configuration error: ${errorMessage}`
-        );
-      }
+    const result = GimmickExecuteMcpCoreOptionsSchema.safeParse(this.options);
+    if (!result.success) {
+      const errorMessage = formatZodErrorMessage(result.error);
       throw new Error(
-        `[Gimmick ${this.gimmick.name}] Error validating MCP configuration`
+        `[Gimmick ${this.gimmick.name}] MCP configuration error: ${errorMessage}`
       );
     }
   }
