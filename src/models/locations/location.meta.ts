@@ -4,6 +4,7 @@ export interface LocationCoreMeta {
   name: string;
   sequential?: boolean;
   interval?: number;
+  fast?: boolean;
 }
 
 export interface LocationPrompts {

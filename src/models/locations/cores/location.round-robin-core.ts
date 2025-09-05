@@ -22,6 +22,15 @@ export class LocationRoundRobinCore extends LocationCore {
   public async update(): Promise<number> {
     const lastMessage = this.lastMessage;
     const agents = this.location.getAgents();
+
+    if (this.meta.fast && agents.length === 1) {
+      await agents[0].executeNextActions();
+      if (this.lastMessage === lastMessage) {
+        return this.defaultPauseUpdateDuration;
+      }
+      return 0;
+    }
+
     if (!this.meta.sequential) {
       shuffle(agents);
     } else {
