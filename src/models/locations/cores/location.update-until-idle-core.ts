@@ -14,20 +14,20 @@ export class LocationUpdateUntilIdleCore extends LocationCore {
   }
 
   public async update(): Promise<number> {
-    const entities = this.location.getEntities();
+    const agents = this.location.getAgents();
     if (!this.meta.sequential) {
-      shuffle(entities);
+      shuffle(agents);
     }
-    for (const entity of entities) {
-      if (await entity.update()) {
+    for (const agent of agents) {
+      if (await agent.update()) {
         if (ENV.DEBUG) {
-          console.log(`[${entity.key}] ${entity.name} executed`);
+          console.log(`[${agent.key}] ${agent.name} executed`);
         }
         return this.defaultPauseUpdateDuration;
       }
     }
     if (ENV.DEBUG) {
-      console.log('No entities executed - stopping update loop');
+      console.log('No agents executed - stopping update loop');
     }
     return 0; // Stop updating when no actions are available
   }

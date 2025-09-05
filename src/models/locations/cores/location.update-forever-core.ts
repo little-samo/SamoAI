@@ -15,20 +15,20 @@ export class LocationUpdateForeverCore extends LocationCore {
   }
 
   public async update(): Promise<number> {
-    const entities = this.location.getEntities();
+    const agents = this.location.getAgents();
     if (!this.meta.sequential) {
-      shuffle(entities);
+      shuffle(agents);
     }
-    for (const entity of entities) {
-      if (await entity.update()) {
+    for (const agent of agents) {
+      if (await agent.update()) {
         if (ENV.DEBUG) {
-          console.log(`[${entity.key}] ${entity.name} executed`);
+          console.log(`[${agent.key}] ${agent.name} executed`);
         }
         return this.defaultPauseUpdateDuration;
       }
     }
     if (ENV.DEBUG) {
-      console.log('No entities executed');
+      console.log('No agents executed');
     }
     return (
       this.defaultPauseUpdateDuration + LocationUpdateForeverCore.SLEEP_INTERVAL

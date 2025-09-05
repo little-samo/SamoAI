@@ -6,12 +6,18 @@ import { RegisterLocationCore } from './location.core-decorator';
 @RegisterLocationCore('update_once')
 export class LocationUpdateOnceCore extends LocationCore {
   public async update(): Promise<number> {
-    const entities = this.location.getEntities();
-    if (!this.meta.sequential) {
-      shuffle(entities);
+    const agents = this.location.getAgents();
+
+    if (this.meta.fast && agents.length === 1) {
+      await agents[0].executeNextActions();
+      return 0;
     }
-    for (const entity of entities) {
-      if (await entity.update()) {
+
+    if (!this.meta.sequential) {
+      shuffle(agents);
+    }
+    for (const agent of agents) {
+      if (await agent.update()) {
         break;
       }
     }
