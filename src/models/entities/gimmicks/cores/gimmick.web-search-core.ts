@@ -27,7 +27,7 @@ export class GimmickWebSearchCore extends GimmickCore {
   public static readonly DEFAULT_SEARCH_LLM_MODEL = 'gpt-5-mini';
   public static readonly DEFAULT_SEARCH_LLM_THINKING = true;
   public static readonly DEFAULT_SEARCH_LLM_THINKING_LEVEL =
-    LlmThinkingLevel.medium;
+    LlmThinkingLevel.low;
   public static readonly DEFAULT_SEARCH_LLM_OUTPUT_VERBOSITY =
     LlmOutputVerbosity.low;
   public static readonly LLM_MAX_TOKENS = 8192;
