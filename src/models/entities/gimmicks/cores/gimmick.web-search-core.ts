@@ -36,7 +36,7 @@ export class GimmickWebSearchCore extends GimmickCore {
   public static readonly DEFAULT_MAX_SEARCH_SOURCES_LENGTH = 2000;
 
   public override get description(): string {
-    return 'Searches the web for up-to-date or missing information using an LLM, providing both a summary and detailed results with original source links. The gimmick can see the full location context including conversation history and agent information to conduct more targeted and relevant searches. Execution takes approximately 60 seconds.';
+    return 'Searches the web for up-to-date or missing information using an LLM, providing both a summary and detailed results with original source links. The gimmick can see the full location context including conversation history and agent information to conduct more targeted and relevant searches. Execution takes approximately 30 seconds.';
   }
 
   public override get parameters(): z.ZodSchema {

@@ -60,7 +60,7 @@ export class GimmickImageGenerationCore extends GimmickCore {
   }
 
   public override get description(): string {
-    return 'Generates high-quality images based on detailed text descriptions. The gimmick can see the full location context including conversation history and reference images. Execution takes approximately 15-30 seconds.';
+    return 'Generates high-quality images based on detailed text descriptions. The gimmick can see the full location context including conversation history and reference images. Execution takes approximately 15 seconds.';
   }
 
   public override get parameters(): z.ZodSchema {
