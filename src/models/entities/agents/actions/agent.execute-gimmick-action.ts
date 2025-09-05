@@ -70,7 +70,7 @@ export class AgentExecuteGimmickAction extends AgentAction {
 
       await this.location.addSystemMessage(
         `${action.gimmickKey} is currently occupied by ${occupierKey}${occupationReason} until ${occupationUntil}. ` +
-          `This gimmick cannot be used while it is occupied. Please wait until the occupation expires or the current user completes their task, then try again.`
+          `This gimmick cannot be used while it is occupied. Please wait until the occupation expires or the current entity completes its task, then try again.`
       );
       return;
     }
