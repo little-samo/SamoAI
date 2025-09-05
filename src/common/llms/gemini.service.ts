@@ -276,6 +276,12 @@ export class GeminiService extends LlmService {
           result
         );
       }
+      if (response.candidates?.[0]?.finishReason === 'PROHIBITED_CONTENT') {
+        throw new LlmInvalidContentError(
+          'Gemini refused to generate content. Try again with a different request.',
+          result
+        );
+      }
       throw new LlmInvalidContentError(
         'Gemini returned no content. Try again with a different request.',
         result
@@ -468,6 +474,12 @@ Response can only be in JSON format and must strictly follow the following forma
         }
         throw new LlmInvalidContentError(
           `Gemini refused to generate content: ${blockReasonMessage} Try again with a different request.`,
+          result
+        );
+      }
+      if (response.candidates?.[0]?.finishReason === 'PROHIBITED_CONTENT') {
+        throw new LlmInvalidContentError(
+          'Gemini refused to generate content. Try again with a different request.',
           result
         );
       }
