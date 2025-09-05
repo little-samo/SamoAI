@@ -57,7 +57,7 @@ export class LocationRoundRobinCore extends LocationCore {
     const updatedAgentIds: Set<AgentId> = new Set();
     for (const agent of agents) {
       if (
-        lastMessage?.entityType == EntityType.Agent &&
+        lastMessage?.entityType === EntityType.Agent &&
         lastMessage.entityId === agent.model.id
       ) {
         continue;
