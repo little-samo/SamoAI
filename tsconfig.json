@@ -16,6 +16,7 @@
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
     "resolveJsonModule": true,
+    "noEmitOnError": true,
     "rootDir": "./src",
     "outDir": "./dist",
     "paths": {
