@@ -862,7 +862,8 @@ export class SamoAI extends AsyncEventEmitter {
                   locationId,
                   new Date(
                     Date.now() +
-                      SamoAI.GIMMICK_EXECUTION_FAILED_RESUME_UPDATE_DELAY
+                      (location.core.meta.interval ??
+                        SamoAI.GIMMICK_EXECUTION_FAILED_RESUME_UPDATE_DELAY)
                   ),
                   LocationPauseReason.GIMMICK_EXECUTION_FAILED,
                   entity.id as AgentId
@@ -889,7 +890,9 @@ export class SamoAI extends AsyncEventEmitter {
                 await this.locationRepository.updateLocationStatePauseUpdateUntil(
                   locationId,
                   new Date(
-                    Date.now() + SamoAI.GIMMICK_EXECUTED_RESUME_UPDATE_DELAY
+                    Date.now() +
+                      (location.core.meta.interval ??
+                        SamoAI.GIMMICK_EXECUTED_RESUME_UPDATE_DELAY)
                   ),
                   LocationPauseReason.GIMMICK_EXECUTED,
                   entity.id as AgentId
