@@ -1,6 +1,5 @@
 import { ENV, shuffle } from '@little-samo/samo-ai/common';
 
-import { type AgentId } from '../../entities';
 import { EntityType } from '../../entities/entity.types';
 import { LocationMessage } from '../states/location.message';
 
@@ -67,30 +66,7 @@ export class LocationRoundRobinCore extends LocationCore {
       });
     }
 
-    const updatedAgentIds: Set<AgentId> = new Set();
     for (const agent of agents) {
-      if (
-        lastMessage?.entityType === EntityType.Agent &&
-        lastMessage.entityId === agent.model.id
-      ) {
-        continue;
-      }
-
-      updatedAgentIds.add(agent.model.id as AgentId);
-      if (!(await agent.update()) || this.lastMessage === lastMessage) {
-        if (ENV.DEBUG) {
-          console.log(`Agent ${agent.name} did not execute next actions`);
-        }
-        continue;
-      }
-
-      return this.defaultPauseUpdateDuration;
-    }
-
-    for (const agent of agents) {
-      if (updatedAgentIds.has(agent.model.id as AgentId)) {
-        continue;
-      }
       if (!(await agent.update()) || this.lastMessage === lastMessage) {
         if (ENV.DEBUG) {
           console.log(`Agent ${agent.name} did not execute next actions`);
