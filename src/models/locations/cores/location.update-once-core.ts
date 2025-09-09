@@ -1,5 +1,7 @@
 import { shuffle } from '@little-samo/samo-ai/common';
 
+import { EntityType } from '../../entities';
+
 import { LocationCore } from './location.core';
 import { RegisterLocationCore } from './location.core-decorator';
 
@@ -7,8 +9,13 @@ import { RegisterLocationCore } from './location.core-decorator';
 export class LocationUpdateOnceCore extends LocationCore {
   public async update(): Promise<number> {
     const agents = this.location.getAgents();
+    const lastMessage = this.location.messages.at(-1);
 
-    if (this.meta.fast && agents.length === 1) {
+    if (
+      this.meta.fast &&
+      agents.length === 1 &&
+      lastMessage?.entityType === EntityType.User
+    ) {
       await agents[0].executeNextActions();
       return 0;
     }

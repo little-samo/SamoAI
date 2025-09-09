@@ -23,7 +23,11 @@ export class LocationRoundRobinCore extends LocationCore {
     const lastMessage = this.lastMessage;
     const agents = this.location.getAgents();
 
-    if (this.meta.fast && agents.length === 1) {
+    if (
+      this.meta.fast &&
+      agents.length === 1 &&
+      lastMessage?.entityType === EntityType.User
+    ) {
       await agents[0].executeNextActions();
       if (this.lastMessage === lastMessage) {
         return this.defaultPauseUpdateDuration;
