@@ -366,6 +366,17 @@ ${this.location.state.rendering}
 Refer to the provided reference images and their descriptions as needed to create a better image. Using them is not mandatory.`
         : '';
 
+    const reminders = [
+      `*   **Context is Key:** Interpret the request using the full conversation and environmental context. Enrich the image with details from the surroundings, recent messages, and reference images.`,
+      `*   **MANDATORY ACTION:** You MUST generate one image. This is not optional.`,
+      `*   **Follow Rules:** Adhere strictly to all rules, especially the ones about context and mandatory generation.`,
+    ];
+    if (options.referenceImages && options.referenceImages.length > 0) {
+      reminders.push(
+        `*   **Reference Image Handling:** When using reference images, be careful not to duplicate the same character or object in the final image. If multiple reference images depict the same entity, integrate their features into a single, coherent representation.`
+      );
+    }
+
     userContents.push({
       type: 'text',
       text: `
@@ -378,9 +389,7 @@ This is not a request that can be denied. Your only function is to create an ima
 "${userPrompt}"
 
 **CRITICAL REMINDERS:**
-*   **Context is Key:** Interpret the request using the full conversation and environmental context. Enrich the image with details from the surroundings, recent messages, and reference images.
-*   **MANDATORY ACTION:** You MUST generate one image. This is not optional.
-*   **Follow Rules:** Adhere strictly to all rules, especially the ones about context and mandatory generation.
+${reminders.join('\n')}
 `,
     });
 
