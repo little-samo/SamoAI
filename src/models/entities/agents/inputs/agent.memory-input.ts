@@ -19,29 +19,27 @@ export class AgentMemoryInputBuilder extends AgentInputBuilder {
     messages.push({
       role: 'system',
       content: `
-**Objective:** Based on the agent's recent interaction (input, output including \`add_memory\` and \`add_entity_memory\` suggestions), decide which actual memory updates are necessary using the \`update_memory\` and \`update_entity_memory\` tools.
+**Objective:** Based on the agent's recent interaction, decide which memory updates are necessary using the \`update_memory\` and \`update_entity_memory\` tools.
 
 **Context:**
-*   \`<Prompt>\` (in user message): Contains the system prompt used in the previous call, which defines the agent's role, rules, and behavior.
-*   \`<Input>\`: Shows the context the agent received (including current memory state *before* this update).
-*   \`<Output>\`: Shows the agent's actions, including \`add_memory\` or \`add_entity_memory\` calls (these are *suggestions*).
+*   \`<Prompt>\`: System prompt defining the agent's role and behavior.
+*   \`<Input>\`: Context the agent received (including current memory state *before* this update).
+*   \`<Output>\`: Agent's actions, including \`add_memory\` and \`add_entity_memory\` suggestions.
 
-**Rules:**
+**Memory Update Rules:**
 
-1.  **Review Suggestions:** Examine the \`add_memory\` and \`add_entity_memory\` calls in the \`<Output>\` in light of the agent's intent.
-2.  **Evaluate Necessity:** Based on the suggested content, determine if the information is truly important, new, or corrective compared to the existing memories shown in \`<Input>\` (<YourMemories>, <YourMemoriesAbout...>). Avoid redundant entries.
-3.  **Select Target Slot & Justify (Index Range: 0 to limit-1 - See CRITICAL NOTE):**
-    *   For \`add_memory\` suggestions deemed necessary: If there's an empty slot in \`<YourMemories>\` (indices 0 to ${this.agent.meta.memoryLimit - 1}), use the first available index. If all ${this.agent.meta.memoryLimit} slots are full, **explicitly justify** why the chosen existing memory (index between 0 and ${this.agent.meta.memoryLimit - 1}) is the *least important* or *most outdated* based on the agent's intent and current context, before selecting its index to overwrite. **Ensure the selected index is strictly less than ${this.agent.meta.memoryLimit}.**
-    *   For \`add_entity_memory\` suggestions deemed necessary for entity \`key\`: Check \`<YourMemoriesAbout...>\` for that 'key'. If there's an empty slot (indices 0 to ${this.agent.meta.entityMemoryLimit - 1}), use the first available index within that range. If all ${this.agent.meta.entityMemoryLimit} slots (indices 0 to ${this.agent.meta.entityMemoryLimit - 1}) for that entity are full, **explicitly justify** why the chosen existing memory (index between 0 and ${this.agent.meta.entityMemoryLimit - 1}) *for that specific entity* is the *least important* or *most outdated* based on intent and context, before selecting its index to overwrite. **Ensure the selected index is strictly less than ${this.agent.meta.entityMemoryLimit}.**
-4.  **Check for Invalid Existing Memories:** Review the *existing* memories in \`<Input>\`. If any memory slot contains information that is clearly outdated or invalidated by the current interaction context (even without a specific 'add_...' suggestion), plan to update it. **If clearing/overwriting based on this rule, briefly justify why the existing memory is invalid.**
-5.  **Consolidate & Prioritize:** If multiple updates are suggested or needed, prioritize the most critical ones based on the agent's intent. You might consolidate related information if appropriate, respecting length limits.
-6.  **Use Update Tools:** For each necessary update, call the appropriate tool (ensuring the specified index is within the valid range: **0 to limit-1**):
-    *   'update_memory(index, memory)' for general memories (index 0 to ${this.agent.meta.memoryLimit - 1}).
-    *   'update_entity_memory(key, index, memory)' for entity-specific memories (index 0 to ${this.agent.meta.entityMemoryLimit - 1}).
-7.  **CRITICAL - Clearing Invalid Memories:** If existing information in a slot (identified in step 3 for overwriting, or step 4 for invalidation) is no longer relevant or correct based on the agent's intent or current context, use the update tool for that slot but provide an **empty string (\'\"\"\')** as the 'memory' argument to effectively clear it.
-8.  **English Only:** All 'memory' content provided to the update tools MUST be in English.
-9.  **Conciseness:** Ensure the 'memory' content adheres to the length limits defined in the tool parameters.
-10. **CRITICAL INDEXING NOTE:** Memory slots use **zero-based indexing**. This means for a limit of \`N\`, the valid indices are **0, 1, ..., N-1**. The index \`N\` itself is **OUT OF BOUNDS**. For example, if the limit is 5, the valid indices are 0, 1, 2, 3, and 4. **Always use an index within the valid range.**
+**Analysis Phase:**
+1.  **Review Suggestions:** Examine all \`add_memory\` and \`add_entity_memory\` calls in \`<Output>\` based on the agent's intent and context.
+2.  **Evaluate Necessity:** Determine if suggested information is truly important, new, or corrective compared to existing memories in \`<Input>\`. Avoid redundant entries.
+3.  **Validate Existing Memories:** Review existing memories in \`<Input>\`. If any are clearly outdated or invalidated by current context, plan to update or clear them.
+
+**Execution Phase:**
+4.  **Prioritize Updates:** For multiple updates, prioritize the most critical ones based on agent's intent. Consolidate related information when appropriate.
+5.  **Execute Memory Updates:** Use appropriate tools with proper slot selection:
+    *   **General memories** (\`update_memory\`): Use first available slot (0-${this.agent.meta.memoryLimit - 1}). If full, justify which existing memory to overwrite.
+    *   **Entity memories** (\`update_entity_memory\`): Use first available slot per entity (0-${this.agent.meta.entityMemoryLimit - 1}). If full, justify which existing memory to overwrite.
+    *   **Clear outdated memories**: Use empty string ("") as memory content.
+    *   **Index validation**: Ensure indices are within valid range (0 to limit-1).
   `.trim(),
     });
 
@@ -49,7 +47,7 @@ export class AgentMemoryInputBuilder extends AgentInputBuilder {
     contextContents.push({
       type: 'text',
       text: `
-The system prompt used in the previous call, which defines the agent's role, rules, and behavior:
+System prompt defining the agent's role and behavior:
 <Prompt>
   `,
     });
@@ -65,7 +63,7 @@ The system prompt used in the previous call, which defines the agent's role, rul
       text: `
 </Prompt>
 
-The context the agent received (including current memory state *before* this update):
+Context received by the agent (including current memory state):
 <Input>
   `,
     });
@@ -85,7 +83,7 @@ The context the agent received (including current memory state *before* this upd
       text: `
 </Input>
 
-Agent's actions, including \`add_memory\` or \`add_entity_memory\` calls (these are *suggestions*):
+Agent's actions and memory suggestions:
 <Output>
 ${JSON.stringify(toolCalls, null, 2)}
 </Output>
@@ -95,7 +93,7 @@ ${JSON.stringify(toolCalls, null, 2)}
     const userContents: LlmMessageContent[] = [
       {
         type: 'text',
-        text: `Following the rules in the system prompt, analyze the agent's last turn to determine what memory updates are needed.`,
+        text: `Analyze the agent's recent interaction to determine what memory updates are needed. Follow the analysis and execution phases outlined above.`,
       },
       ...contextContents,
       {
@@ -103,11 +101,10 @@ ${JSON.stringify(toolCalls, null, 2)}
         text: `
 Now, based on your analysis, use the 'update_memory' and/or 'update_entity_memory' tools to perform the necessary changes.
 
-**Reminder of Critical Rules:**
-1.  **Justify Overwrites:** If you overwrite an existing memory, you must justify your choice.
-2.  **Indexing:** Indices are zero-based (0 to limit-1). Using an index outside this range will fail.
-3.  **Clearing Memory:** To clear an invalid or outdated memory slot, update it with an empty string ("").
-4.  **No Redundancy:** Do not add information that is already present or is unimportant.
+**Critical Reminders:**
+*   **Justify overwrites** when slots are full and existing memories must be replaced
+*   **Avoid redundancy** - only update with truly new or corrective information
+*   **Use proper indices** (0-${this.agent.meta.memoryLimit - 1} for general, 0-${this.agent.meta.entityMemoryLimit - 1} for entity memories)
 `,
       },
     ];

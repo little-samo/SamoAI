@@ -1,3 +1,8 @@
+import {
+  formatDateWithValidatedTimezone,
+  ValidatedTimezone,
+} from '@little-samo/samo-ai/common';
+
 import { Context } from '../../context';
 import { EntityContext, type EntityContextOptions } from '../entity.context';
 
@@ -7,6 +12,7 @@ export interface AgentMemoryContextOptions {
   index: number;
   memory: string;
   createdAt?: string | Date;
+  timezone?: ValidatedTimezone;
 }
 
 export class AgentMemoryContext extends Context {
@@ -15,6 +21,7 @@ export class AgentMemoryContext extends Context {
   public readonly index: number;
   public readonly memory: string;
   public readonly createdAt?: Date;
+  public readonly timezone?: ValidatedTimezone;
 
   public constructor(options: AgentMemoryContextOptions) {
     super();
@@ -23,10 +30,14 @@ export class AgentMemoryContext extends Context {
     this.createdAt = options.createdAt
       ? new Date(options.createdAt)
       : undefined;
+    this.timezone = options.timezone;
   }
 
   public build(): string {
-    return `${this.index}\t${this.createdAt?.toISOString() ?? 'null'}\t${JSON.stringify(this.memory)}`;
+    const formattedCreatedAt = this.createdAt
+      ? formatDateWithValidatedTimezone(this.createdAt, this.timezone)
+      : 'null';
+    return `${this.index}\t${formattedCreatedAt}\t${JSON.stringify(this.memory)}`;
   }
 }
 
@@ -34,6 +45,7 @@ export interface AgentEntityMemoryContextOptions {
   index: number;
   memory: string;
   createdAt?: string | Date;
+  timezone?: ValidatedTimezone;
 }
 
 export class AgentEntityMemoryContext extends Context {
@@ -42,6 +54,7 @@ export class AgentEntityMemoryContext extends Context {
   public readonly index: number;
   public readonly memory: string;
   public readonly createdAt?: Date;
+  public readonly timezone?: ValidatedTimezone;
 
   public constructor(options: AgentEntityMemoryContextOptions) {
     super();
@@ -50,10 +63,14 @@ export class AgentEntityMemoryContext extends Context {
     this.createdAt = options.createdAt
       ? new Date(options.createdAt)
       : undefined;
+    this.timezone = options.timezone;
   }
 
   public build(): string {
-    return `${this.index}\t${this.createdAt?.toISOString() ?? 'null'}\t${JSON.stringify(this.memory)}`;
+    const formattedCreatedAt = this.createdAt
+      ? formatDateWithValidatedTimezone(this.createdAt, this.timezone)
+      : 'null';
+    return `${this.index}\t${formattedCreatedAt}\t${JSON.stringify(this.memory)}`;
   }
 }
 

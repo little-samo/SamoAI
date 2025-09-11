@@ -1,3 +1,8 @@
+import {
+  formatDateWithValidatedTimezone,
+  ValidatedTimezone,
+} from '@little-samo/samo-ai/common';
+
 import { Context } from '../context';
 
 import type { ItemModel } from './entity.item-model';
@@ -9,6 +14,7 @@ export interface EntityCanvasContextOptions {
   maxLength: number;
   lastModifiedAt: string | Date;
   text: string;
+  timezone?: ValidatedTimezone;
 }
 
 export class EntityCanvasContext extends Context {
@@ -20,6 +26,7 @@ export class EntityCanvasContext extends Context {
   public readonly maxLength: number;
   public readonly lastModifiedAt: Date;
   public readonly text: string;
+  public readonly timezone?: ValidatedTimezone;
 
   public constructor(options: EntityCanvasContextOptions) {
     super();
@@ -28,10 +35,15 @@ export class EntityCanvasContext extends Context {
     this.maxLength = options.maxLength;
     this.lastModifiedAt = new Date(options.lastModifiedAt);
     this.text = options.text;
+    this.timezone = options.timezone;
   }
 
   public build(): string {
-    return `${this.name}\t${this.description}\t${this.maxLength}\t${this.lastModifiedAt.toISOString()}\t${this.text}`;
+    const formattedLastModifiedAt = formatDateWithValidatedTimezone(
+      this.lastModifiedAt,
+      this.timezone
+    );
+    return `${this.name}\t${this.description}\t${this.maxLength}\t${formattedLastModifiedAt}\t${this.text}`;
   }
 }
 

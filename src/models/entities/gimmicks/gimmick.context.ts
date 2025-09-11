@@ -1,4 +1,8 @@
-import { zodSchemaToLlmFriendlyString } from '@little-samo/samo-ai/common';
+import {
+  formatDateWithValidatedTimezone,
+  ValidatedTimezone,
+  zodSchemaToLlmFriendlyString,
+} from '@little-samo/samo-ai/common';
 import { z } from 'zod';
 
 import { EntityContext, EntityContextOptions } from '../entity.context';
@@ -42,11 +46,14 @@ export class GimmickContext
     this.canvas = options.canvas;
   }
 
-  public build(): string {
+  public build(options: { timezone?: ValidatedTimezone } = {}): string {
     const parameters = zodSchemaToLlmFriendlyString(this.parameters);
     const occupationReason = this.occupationReason
       ? JSON.stringify(this.occupationReason)
       : 'null';
-    return `${this.key}\t${this.name}\t${JSON.stringify(this.description)}\t${JSON.stringify(this.appearance)}\t${JSON.stringify(this.expression)}\t${this.occupierId ?? 'null'}\t${this.occupierType ?? 'null'}\t${this.occupationUntil?.toISOString() ?? 'null'}\t${occupationReason}\t${parameters}\t${this.canvas ?? 'null'}`;
+    const formattedOccupationUntil = this.occupationUntil
+      ? formatDateWithValidatedTimezone(this.occupationUntil, options.timezone)
+      : 'null';
+    return `${this.key}\t${this.name}\t${JSON.stringify(this.description)}\t${JSON.stringify(this.appearance)}\t${JSON.stringify(this.expression)}\t${this.occupierId ?? 'null'}\t${this.occupierType ?? 'null'}\t${formattedOccupationUntil}\t${occupationReason}\t${parameters}\t${this.canvas ?? 'null'}`;
   }
 }

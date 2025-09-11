@@ -1,4 +1,8 @@
-import { ENV, LlmToolCall } from '@little-samo/samo-ai/common';
+import {
+  ENV,
+  formatDateWithValidatedTimezone,
+  LlmToolCall,
+} from '@little-samo/samo-ai/common';
 import { z } from 'zod';
 
 import { EntityKey, EntityType } from '../../entity.types';
@@ -66,10 +70,12 @@ export class AgentExecuteGimmickAction extends AgentAction {
       const occupationReason = gimmick.state.occupationReason
         ? ` for "${gimmick.state.occupationReason}"`
         : '';
-      const occupationUntil = gimmick.state.occupationUntil!.toISOString();
-
+      const formattedOccupationUntil = formatDateWithValidatedTimezone(
+        gimmick.state.occupationUntil!,
+        this.agent.timezone
+      );
       await this.location.addSystemMessage(
-        `${action.gimmickKey} is currently occupied by ${occupierKey}${occupationReason} until ${occupationUntil}. ` +
+        `${action.gimmickKey} is currently occupied by ${occupierKey}${occupationReason} until ${formattedOccupationUntil}. ` +
           `This gimmick cannot be used while it is occupied. Please wait until the occupation expires or the current entity completes its task, then try again.`
       );
       return;

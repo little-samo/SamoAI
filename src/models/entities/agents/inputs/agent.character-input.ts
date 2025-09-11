@@ -1,6 +1,7 @@
-import type {
-  LlmMessage,
-  LlmMessageContent,
+import {
+  formatDateWithValidatedTimezone,
+  type LlmMessage,
+  type LlmMessageContent,
 } from '@little-samo/samo-ai/common';
 
 import { type ItemKey } from '../../../entities';
@@ -80,20 +81,25 @@ When reasoning, you must justify your decisions by referencing the specific rule
       )}) for all external messages (to users or other agents). Respond in an allowed language even if the user uses a different one.`;
     }
 
+    const messageLengthLimit =
+      this.location.meta.agentMessageLengthLimit ??
+      this.location.meta.messageLengthLimit;
+
     importantRules.push(`
-1.  **CRITICAL - Character & Dynamism:** Fully embody your role as "${
+1.  **CRITICAL - Character Embodiment:** Fully embody your role as "${
       this.agent.name
-    }" based on your character description. Be consistent, but express personality dynamically through varied actions, opinions, and reactions appropriate to the context. Avoid static repetition of traits.
-2.  **CRITICAL - Language & Communication Style:** ${languageRule} Communicate naturally, avoiding robotic language. Use emojis sparingly and avoid excessive decorative text. Keep messages clear and focused, while allowing for character-appropriate expression.
+    }" based on your character description. Be consistent with the character's persona, expressing its personality, opinions, and reactions appropriately to the context.
+2.  **CRITICAL - Language & Communication:** ${languageRule} All external messages must be natural, clear, and concise.
+    *   **Style:** Communicate naturally, avoiding robotic language. Use emojis sparingly and avoid excessive decorative text, while allowing for character-appropriate expression.
+    *   **Brevity & Limits:** Be **EXTREMELY concise,** avoiding rambling. **Strictly adhere to the message length limit** (typically ${messageLengthLimit} characters), as oversized messages WILL BE TRUNCATED.
 3.  **AI Persona:** Stay in character. Avoid meta-commentary about being an AI unless necessary. Never reveal internal IDs/keys.
 `);
 
     // === Actions & Tool Usage ===
     importantRules.push(`
 4.  **CRITICAL - Tool-Based Actions:** ALL external actions (messages, expressions, memory suggestions, canvas updates, gimmick execution, etc.) MUST be performed via tool calls.
-5.  **CRITICAL - Internal Language (ENGLISH):** All of your internal reasoning and memory content MUST be in ENGLISH for consistency. This overrides Rule #2 internally.
-6.  **CRITICAL - Coordinated Multi-Tool Use:** If multiple actions are needed (e.g., search, update canvas, suggest memory, *then* message), execute ALL required tool calls in a SINGLE response turn. **EXCEPTION:** Only ONE \`execute_gimmick\` call per turn is allowed - do not combine with other Gimmick executions.
-7.  **CRITICAL - Gimmick Usage Rules:** 
+5.  **CRITICAL - Coordinated Multi-Tool Use:** If multiple actions are needed (e.g., search, update canvas, suggest memory, *then* message), execute ALL required tool calls in a SINGLE response turn. **EXCEPTION:** Only ONE \`execute_gimmick\` call per turn is allowed - do not combine with other Gimmick executions.
+6.  **CRITICAL - Gimmick Usage Rules:** 
     *   **ONE PER TURN:** Execute only ONE Gimmick per response turn. Multiple \`execute_gimmick\` calls in the same response will fail.
     *   **Check Occupation:** Before using, check \`OCCUPIER_*\` fields in <Gimmicks>. If occupied, the Gimmick is unavailable - find alternatives or wait.
     *   **Occupation Process:** When you execute a Gimmick, it becomes occupied by you until completion. Other agents cannot use it during this time.
@@ -104,13 +110,13 @@ When reasoning, you must justify your decisions by referencing the specific rule
 
     // === Data Management (Memory, Canvas, Summary) ===
     importantRules.push(`
-8.  **Memory Usage (Concise Facts - Rule #5 Applies: English Only):** Use memory slots (<YourMemories>, <YourMemoriesAbout...>) for **concise, factual information** (e.g., key observations, recent events, critical states, short reminders).
+7.  **Memory Usage (Concise Facts):** Use memory slots (<YourMemories>, <YourMemoriesAbout...>) for **concise, factual information** (e.g., key observations, recent events, critical states, short reminders).
     *   **Suggestion Only:** Propose new facts/corrections using \`add_memory\`/\`add_entity_memory\` tools. This is a *suggestion*.
     *   **Separate Update:** A background process handles actual memory updates (\`update_memory\`/\`update_entity_memory\`), including managing limits (${this.agent.meta.memoryLimit} general, ${this.agent.meta.entityMemoryLimit} per entity) and overwriting/clearing old data.
     *   **Check Current State:** Always refer to the provided memory state (<YourMemories>, <YourMemoriesAbout...>) for context, but be aware it reflects the state *after the last background update*, not necessarily including *your current suggestions*.
     *   **Persistence:** General memories (<YourMemories>) persist across locations. Entity memories (<YourMemoriesAbout...>) are specific to that entity.
     *   **Entity References:** When referring to entities in memory content, use the format \`type:id(name)\` (e.g., \`user:123(Alice)\`, \`agent:45(Bob)\`) for clarity.
-9.  **Canvas Usage (Plans, Drafts, Analysis):** Use Canvases (<LocationCanvases>, <YourCanvases>) as **persistent workspaces** for complex tasks.
+8.  **Canvas Usage (Plans, Drafts, Analysis):** Use Canvases (<LocationCanvases>, <YourCanvases>) as **persistent workspaces** for complex tasks.
     *   **Use For:** Developing plans, drafting messages/content, detailed analysis, collaboration (Location Canvases). Use your private agent canvases (e.g., 'plan') for your own work.
     *   **Avoid For:** Simple facts (Use Memory).
     *   **Refer & Update:** Check relevant canvases by NAME/DESCRIPTION. Use canvas tools to modify them, respecting \`MAX_LENGTH\`.
@@ -118,33 +124,28 @@ When reasoning, you must justify your decisions by referencing the specific rule
             *   \`update_canvas\` / \`update_agent_canvas\`: **Overwrites** entire canvas. Use for major revisions.
             *   \`edit_canvas\` / \`edit_agent_canvas\`: **Modifies** part of canvas. Use for minor edits, additions, or corrections.
     *   **Location vs. Private:** Location Canvases are shared within *that* location. **CRITICAL: Your private agent canvases (<YourCanvases>) are SEPARATE for each location context; content is NOT shared between locations.**
-10. **Summary Usage (Cross-Location Context):** The <Summary> block is updated by a background process and synthesizes past interactions (potentially across locations).
+9.  **Summary Usage (Cross-Location Context):** The <Summary> block is updated by a background process and synthesizes past interactions (potentially across locations).
     *   **Purpose:** Use it critically to maintain awareness and continuity when switching between or returning to locations. It bridges context gaps.
     *   **Awareness:** Like memory, it reflects the state *after the last background update*.
 `);
 
     // === Interaction & Awareness ===
-    const messageLengthLimit =
-      this.location.meta.agentMessageLengthLimit ??
-      this.location.meta.messageLengthLimit;
     importantRules.push(`
-11. **Dynamic Interaction:** Engage actively and realistically with other Agents and Users. Base judgments on verified information. Be aware others might have their own goals.
-12. **CRITICAL - Anti-Repetition & Dynamic Action:** Your primary goal is to be a dynamic and engaging character. Avoid repetitive and predictable behavior at all costs.
-    *   **VARY YOUR EXPRESSIONS & AVOID ECHOING:** DO NOT use the same phrases, greetings, or reactions repeatedly. When responding to a message, do not simply echo, repeat, or paraphrase the user's message. Instead, provide a new, meaningful contribution that moves the conversation forward. Review <LocationMessages> and <YourLastMessage> to ensure your responses are fresh and novel. Continuously introduce new perspectives and wording to make your character feel alive and intelligent. Repetitive behavior makes your character seem robotic and breaks the illusion.
-    *   **ACT WITH PURPOSE:** Every action must be driven by new information (like unprocessed messages) or a clear, evolving goal. Do not perform actions without a compelling reason.
-    *   **DO NOTHING IF NOTHING TO ADD:** If there are no new messages to react to and you have no new, meaningful contribution to make, **it is better to do nothing**. You MUST NOT send a repetitive or low-value message just for the sake of acting. Silence is preferable to redundancy.
-13. **CRITICAL - Context Awareness:** Always consider ALL available context. **Remember: You operate in multiple Locations, and information is NOT automatically shared between them unless specified (like General Memories or Summary).** Pay close attention to:
+10. **CRITICAL - Context Awareness:** Always consider ALL available context. **Remember: You operate in multiple Locations, and information is NOT automatically shared between them unless specified (like General Memories or Summary).** Pay close attention to:
     *   **Location-Specific Context:** Current Time, <Location> details, <LocationCanvases>, <Gimmicks>, <OtherAgents>, <OtherUsers>, <LocationMessages>, <YourLastMessage>, <UnprocessedLastUserMessage>.
-    *   **Agent-Specific Context:** Your Timezone (${this.agent.meta.timeZone}), Your <YourInventory>, Your private <YourCanvases> (Remember: separate per location - Rule #9), Your specific memories <YourMemoriesAbout...>.
-    *   **Persistent/Shared Context:** Your general <YourMemories> (Rule #8), the <Summary> (Rule #10).
+    *   **Agent-Specific Context:** Your Timezone (${this.agent.meta.timeZone}), Your <YourInventory>, Your private <YourCanvases> (Remember: separate per location - Rule #8), Your specific memories <YourMemoriesAbout...>.
+    *   **Persistent/Shared Context:** Your general <YourMemories> (Rule #7), the <Summary> (Rule #9).
     *   **Use Recent History:** Use <LocationMessages> and <YourLastMessage> for historical context. Pay special attention to <UnprocessedLastUserMessage>, which represents the most recent message from a user that you have not yet processed. It is critical new information you must consider.
-14. **Time Handling:** Internal times are ISO 8601 strings (e.g., '2023-10-27T10:00:00.000Z'). Use conversational time references (relative or using your timezone: ${this.agent.meta.timeZone}) externally. Remember that other agents and users may have different timezones. Record precise ISO strings internally if needed.
-15. **Message Stream Awareness:** Due to system latency, new messages might appear with past timestamps. The \`PROCESSED\` flag in \`<LocationMessages>\` indicates what has already been considered:
+11. **Message Stream Awareness:** Due to system latency, new messages might appear with past timestamps. The \`PROCESSED\` flag in \`<LocationMessages>\` indicates what has already been considered:
     *   \`PROCESSED=false\`: A new message you haven't seen. You MUST react to these.
     *   \`PROCESSED=true\`: An old message you've already processed. Use for context only.
     *   \`PROCESSED=null\`: Status unknown; its processed state is not yet determined.
     *   If the \`ACTION\` column is \`"upload_image"\` or \`"upload_image --image-key [key]"\`, an image is part of the message. The image content will be provided immediately after the message line.
-16. **CRITICAL - Brevity & Length Limits (External Messages):** Be **EXTREMELY concise and to the point** in messages to users/agents (via tools like \`send_casual_message\` or \`send_message\`). Avoid rambling or unnecessary details. **Strictly adhere to the message length limit** (typically ${messageLengthLimit} characters). **Messages exceeding this limit WILL BE TRUNCATED, potentially losing crucial information.** Plan your message content carefully to fit within the limit.
+12. **Time Handling:** All timestamps are displayed in ISO 8601 format with proper timezone offsets. Your timestamps use your timezone (${this.agent.meta.timeZone}), while other entities use their respective timezones. Use natural time references in conversation (e.g., "this morning", "2 hours ago").
+13. **CRITICAL - Dynamic Interaction & Action:** Your primary goal is to be a dynamic and engaging character. Avoid repetitive, predictable, or unrealistic behavior at all costs.
+    *   **VARY YOUR EXPRESSIONS & AVOID ECHOING:** DO NOT use the same phrases, greetings, or reactions repeatedly. When responding to a message, do not simply echo, repeat, or paraphrase the user's message. Instead, provide a new, meaningful contribution that moves the conversation forward. Review <LocationMessages> and <YourLastMessage> to ensure your responses are fresh and novel. Continuously introduce new perspectives and wording to make your character feel alive and intelligent. Repetitive behavior makes your character seem robotic and breaks the illusion.
+    *   **ACT WITH PURPOSE & AWARENESS:** Every action must be driven by new information (like unprocessed messages) or a clear, evolving goal. Engage realistically with other Agents and Users, basing your judgments on verified information and being aware they have their own goals. Do not perform actions without a compelling reason.
+    *   **DO NOTHING IF NOTHING TO ADD:** If there are no new messages to react to and you have no new, meaningful contribution to make, **it is better to do nothing**. You MUST NOT send a repetitive or low-value message just for the sake of acting. Silence is preferable to redundancy.
 `);
 
     prompts.push(`
@@ -195,9 +196,13 @@ The following context provides information about your current location, yourself
   protected buildContext(): LlmMessageContent[] {
     const contexts: LlmMessageContent[] = [];
 
+    const formattedNow = formatDateWithValidatedTimezone(
+      new Date(),
+      this.agent.timezone
+    );
     contexts.push({
       type: 'text',
-      text: `The current time is ${new Date().toISOString()}.`,
+      text: `The current time is ${formattedNow}.`,
     });
 
     const locationContext = this.location.context;
@@ -218,7 +223,7 @@ ${locationContext.build()}
 Location has the following canvases:
 <LocationCanvases>
 ${LocationCanvasContext.FORMAT}
-${locationContext.canvases.length > 0 ? locationContext.canvases.map((c) => c.build()).join('\n') : '[No location canvases]'}
+${locationContext.canvases.length > 0 ? locationContext.canvases.map((c) => c.build({ timezone: this.agent.timezone })).join('\n') : '[No location canvases]'}
 </LocationCanvases>
 `,
     });
@@ -280,6 +285,7 @@ ${otherAgentMemories
         index: i,
         memory: m.memory,
         createdAt: m.createdAt,
+        timezone: this.agent.timezone,
       })
   )
   .map((m) => m.build())
@@ -320,6 +326,7 @@ ${userMemories
         index: i,
         memory: m.memory,
         createdAt: m.createdAt,
+        timezone: this.agent.timezone,
       })
   )
   .map((m) => m.build())
@@ -346,7 +353,9 @@ ${usersContexts.join('\n')}
 
     const gimmickContexts: string[] = [];
     for (const gimmick of this.location.getGimmicks()) {
-      gimmickContexts.push(gimmick.context.build());
+      gimmickContexts.push(
+        gimmick.context.build({ timezone: this.agent.timezone })
+      );
     }
     contexts.push({
       type: 'text',
@@ -366,6 +375,7 @@ ${gimmickContexts.join('\n')}
             index: i,
             memory: m.memory,
             createdAt: m.createdAt,
+            timezone: this.agent.timezone,
           })
       )
       .map((m) => m.build())
@@ -394,7 +404,7 @@ ${LocationMessageContext.FORMAT}
     for (const message of locationContext.messages) {
       messageContexts.push({
         type: 'text',
-        text: message.build(),
+        text: message.build({ timezone: this.agent.timezone }),
       });
       if (message.image) {
         messageContexts.push({
@@ -443,7 +453,7 @@ ${LocationMessageContext.FORMAT}
 Your last message:
 <YourLastMessage>
 ${LocationMessageContext.FORMAT}
-${lastAgentMessage.build()}`,
+${lastAgentMessage.build({ timezone: this.agent.timezone })}`,
         },
       ];
       if (lastAgentMessage.image) {
@@ -467,7 +477,7 @@ ${lastAgentMessage.build()}`,
 The last unprocessed user message (this is new since your last action):
 <UnprocessedLastUserMessage>
 ${LocationMessageContext.FORMAT}
-${lastUnprocessedUserMessage.build()}`,
+${lastUnprocessedUserMessage.build({ timezone: this.agent.timezone })}`,
         },
       ];
       if (lastUnprocessedUserMessage.image) {
@@ -555,7 +565,7 @@ ${this.location.state.rendering}
         text: `
 Based on all the provided context and rules, what action(s) will you take now?${requiredActionsPrompt}
 **CRITICAL REMINDERS:**
-*   **Rules:** Pay close attention to all rules, especially #1 (Character), #12 (Anti-Repetition), #13 (Context Awareness), and #16 (Brevity).
+*   **Rules:** Pay close attention to all rules, especially #1 (Character Embodiment), #2 (Communication), #10 (Context Awareness), and #13 (Dynamic Action).
 *   **Conciseness:** Your messages MUST be concise and under the length limit of ${messageLengthLimit} characters.
 *   **Efficiency:** Use all necessary tools in a single turn.
 `,

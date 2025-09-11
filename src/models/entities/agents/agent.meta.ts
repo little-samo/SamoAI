@@ -147,9 +147,9 @@ export const DEFAULT_AGENT_META: AgentMeta = {
   requiredActions: [],
 
   memoryLimit: 24,
-  memoryLengthLimit: 250,
-  entityMemoryLimit: 12,
-  entityMemoryLengthLimit: 250,
+  memoryLengthLimit: 500,
+  entityMemoryLimit: 8,
+  entityMemoryLengthLimit: 500,
 
   summaryLengthLimit: 2000,
 

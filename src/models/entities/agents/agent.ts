@@ -1,4 +1,5 @@
 import {
+  createValidatedTimezone,
   ENV,
   LlmFactory,
   LlmGenerateResponse,
@@ -99,6 +100,7 @@ export class Agent extends Entity {
     Agent.fixState(state, meta);
 
     super(location, model.name, meta, state, items);
+    this.timezone = createValidatedTimezone(this.meta.timeZone) ?? undefined;
 
     this.reloadCore();
 
@@ -186,6 +188,7 @@ export class Agent extends Entity {
               maxLength: c.maxLength,
               lastModifiedAt: canvas.updatedAt,
               text: canvas.text,
+              timezone: this.timezone,
             });
           })
         : [],

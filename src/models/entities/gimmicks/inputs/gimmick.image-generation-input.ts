@@ -1,9 +1,10 @@
-import { z } from 'zod';
-
-import type {
-  LlmMessage,
-  LlmMessageContent,
+import {
+  formatDateWithValidatedTimezone,
+  type LlmMessage,
+  type LlmMessageContent,
+  type ValidatedTimezone,
 } from '@little-samo/samo-ai/common';
+import { z } from 'zod';
 
 import { type ItemKey } from '../../../entities';
 import { EntityCanvasContext } from '../../../entities/entity.context';
@@ -75,12 +76,20 @@ The following context provides information about your current location, requesti
     return prompts.map((p) => p.trim()).join('\n\n');
   }
 
-  protected buildContext(): LlmMessageContent[] {
+  protected buildContext(
+    options: {
+      timezone?: ValidatedTimezone;
+    } = {}
+  ): LlmMessageContent[] {
     const contexts: LlmMessageContent[] = [];
 
+    const formattedNow = formatDateWithValidatedTimezone(
+      new Date(),
+      options.timezone
+    );
     contexts.push({
       type: 'text',
-      text: `The current time is ${new Date().toISOString()}.`,
+      text: `The current time is ${formattedNow}.`,
     });
 
     const locationContext = this.location.context;
@@ -150,6 +159,7 @@ ${agentContext.canvases.length > 0 ? agentContext.canvases.map((c) => c.build())
               index: i,
               memory: m.memory,
               createdAt: m.createdAt,
+              timezone: this.entity.timezone,
             })
         )
         .map((m) => m.build())
@@ -316,6 +326,7 @@ ${this.location.state.rendering}
     options: {
       parameters?: string;
       referenceImages?: GimmickImageGenerationReferenceImage[];
+      timezone?: ValidatedTimezone;
     } = {}
   ): LlmMessage[] {
     const messages: LlmMessage[] = [];
@@ -326,7 +337,7 @@ ${this.location.state.rendering}
       content: prompt,
     });
 
-    const contextContents = this.buildContext();
+    const contextContents = this.buildContext(options);
     const userPrompt = options.parameters ?? '';
 
     const userContents: LlmMessageContent[] = [

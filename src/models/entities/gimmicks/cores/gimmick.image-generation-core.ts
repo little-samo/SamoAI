@@ -87,6 +87,7 @@ export class GimmickImageGenerationCore extends GimmickCore {
     );
     const messages = inputBuilder.build({
       referenceImages: this.options.images,
+      timezone: entity.timezone,
     });
 
     let imageGenerationResponse: LlmGenerateResponse<false>;

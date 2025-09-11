@@ -1,3 +1,8 @@
+import {
+  formatDateWithValidatedTimezone,
+  ValidatedTimezone,
+} from '@little-samo/samo-ai/common';
+
 import { Context } from '../context';
 
 import type { EntityKey } from '../entities';
@@ -45,7 +50,7 @@ export class LocationMessageContext extends Context {
     this.created = new Date(options.created);
   }
 
-  public build(): string {
+  public build(options: { timezone?: ValidatedTimezone } = {}): string {
     const targetKey = this.targetKey ?? 'null';
     const message = this.message ? JSON.stringify(this.message) : 'null';
     const expression = this.expression
@@ -59,7 +64,11 @@ export class LocationMessageContext extends Context {
     }
     const processed =
       this.processed === undefined ? 'null' : this.processed ? 'true' : 'false';
-    return `${this.created.toISOString()}\t${processed}\t${this.key}\t${targetKey}\t${JSON.stringify(
+    const formattedCreated = formatDateWithValidatedTimezone(
+      this.created,
+      options.timezone
+    );
+    return `${formattedCreated}\t${processed}\t${this.key}\t${targetKey}\t${JSON.stringify(
       this.name
     )}\t${message}\t${expression}\t${action}`;
   }
@@ -72,6 +81,7 @@ export interface LocationCanvasContextOptions {
   lastModeifierKey: EntityKey;
   lastModifiedAt: string | Date;
   text: string;
+  timezone?: ValidatedTimezone;
 }
 
 export class LocationCanvasContext extends Context {
@@ -96,8 +106,12 @@ export class LocationCanvasContext extends Context {
     this.text = options.text;
   }
 
-  public build(): string {
-    return `${this.name}\t${JSON.stringify(this.description)}\t${this.maxLength}\t${this.lastModeifierKey}\t${this.lastModifiedAt.toISOString()}\t${this.text}`;
+  public build(options: { timezone?: ValidatedTimezone } = {}): string {
+    const formattedLastModifiedAt = formatDateWithValidatedTimezone(
+      this.lastModifiedAt,
+      options.timezone
+    );
+    return `${this.name}\t${JSON.stringify(this.description)}\t${this.maxLength}\t${this.lastModeifierKey}\t${formattedLastModifiedAt}\t${this.text}`;
   }
 }
 

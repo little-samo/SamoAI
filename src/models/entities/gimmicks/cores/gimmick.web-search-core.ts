@@ -92,6 +92,7 @@ export class GimmickWebSearchCore extends GimmickCore {
       parameters: query,
       maxLlmResultLength,
       maxLlmSummaryLength,
+      timezone: entity.timezone,
     });
 
     let searchSummaryResponse: LlmGenerateResponse<false>;

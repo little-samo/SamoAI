@@ -1,4 +1,4 @@
-import { truncateString } from '@little-samo/samo-ai/common';
+import { truncateString, ValidatedTimezone } from '@little-samo/samo-ai/common';
 
 import { type Location, type LocationEntityState } from '../locations';
 
@@ -17,6 +17,7 @@ import {
 export abstract class Entity {
   protected _meta!: EntityMeta;
   protected _state: EntityState;
+  public timezone?: ValidatedTimezone;
 
   protected _itemsByItemKey: Record<ItemKey, ItemModel> = {};
   protected _itemsByDataId: Record<ItemDataId, ItemModel[]> = {};
