@@ -68,7 +68,7 @@ export class GimmickImageGenerationCore extends GimmickCore {
       .string()
       .max(GimmickImageGenerationCore.DEFAULT_MAX_IMAGE_DESCRIPTION_LENGTH)
       .describe(
-        'Detailed image generation prompt. Use conversation context and reference images to create contextually appropriate descriptions.'
+        'Detailed image generation prompt. Use conversation context and reference images to create contextually appropriate descriptions. For revealing depictions, describe such elements artistically or symbolically. For instance, using undergarments or creative obstruction can imply nudity without directly showing sensitive areas, ensuring content policy compliance.'
       );
   }
 
