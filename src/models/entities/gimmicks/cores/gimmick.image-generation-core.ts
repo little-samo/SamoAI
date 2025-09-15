@@ -68,7 +68,7 @@ export class GimmickImageGenerationCore extends GimmickCore {
       .string()
       .max(GimmickImageGenerationCore.DEFAULT_MAX_IMAGE_DESCRIPTION_LENGTH)
       .describe(
-        "Detailed prompt for image generation. If reference images exist, describe the modifications (e.g., 'add glasses to the person in reference image 68bf0828b78fc and change the background to a forest'). If not, provide a detailed description of the image's composition, subjects, background, and style. Avoid repeating details already clear from context or reference images. For sensitive content, use artistic or symbolic descriptions rather than explicit depictions."
+        "Detailed prompt for image generation. Describe the image's composition, subjects, background, and style. If reference images exist, describe modifications to them. For sensitive content, use artistic or symbolic descriptions rather than explicit depictions. Nudity is strictly prohibited. If a prompt requests a character without clothes, you must add appropriate attire (e.g., underwear or swimwear) instead of depicting nudity."
       );
   }
 

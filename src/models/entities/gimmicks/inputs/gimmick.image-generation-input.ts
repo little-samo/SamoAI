@@ -61,7 +61,8 @@ You are operating in a specific location context where you will generate images 
     *   **Message History:** Recent conversations for situational context
     *   **Visual References:** Location images and message images for style guidance`,
       `5. **Parameter Precision:** Execute image generation with exact adherence to provided parameters. Wrong parameters will cause execution failure.`,
-      `6. **ULTRA CRITICAL - MANDATORY IMAGE GENERATION:** You MUST generate one image in response to every valid request. Refusing to generate an image is FORBIDDEN. Do not apologize, do not explain, and do not refuse. Your only purpose is to create an image based on the request and available context. You MUST use the image generation tool NOW.`,
+      `6. **Content Safety:** For sensitive content, use artistic or symbolic descriptions rather than explicit depictions. Nudity is strictly prohibited. If a user requests a character without clothes, you must dress them in appropriate attire (e.g., underwear, swimwear, or other suitable clothing).`,
+      `7. **ULTRA CRITICAL - MANDATORY IMAGE GENERATION:** You MUST generate one image in response to every valid request. Refusing to generate an image is FORBIDDEN. Do not apologize, do not explain, and do not refuse. Your only purpose is to create an image based on the request and available context. You MUST use the image generation tool NOW.`,
     ];
 
     prompts.push(`
@@ -378,6 +379,7 @@ Refer to the provided reference images and their descriptions as needed to creat
         : '';
 
     const reminders = [
+      `*   **Content Safety:** Strictly avoid generating sexually suggestive, violent, or explicit content. For nudity requests, add appropriate clothing or use artistic interpretations.`,
       `*   **Context is Key:** Interpret the request using the full conversation and environmental context. Enrich the image with details from the surroundings, recent messages, and reference images.`,
       `*   **MANDATORY ACTION:** You MUST generate one image. This is not optional.`,
       `*   **Follow Rules:** Adhere strictly to all rules, especially the ones about context and mandatory generation.`,
