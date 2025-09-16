@@ -51,7 +51,7 @@ You are operating in a specific location context where you will generate images 
 `);
 
     const importantRules = [
-      `1. **Primary Goal & Context:** Your main goal is to fulfill the user's image generation request. Use all available context (<Location>, <OtherAgents>, <RecentMessages>, etc.) to enrich the image and ensure it fits the ongoing narrative. The user's prompt is the primary source, but you must enhance it with contextual details.`,
+      `1. **Primary Goal & Context:** Your main goal is to fulfill the user's image generation request. The provided context is for reference only, to understand the scene. The 'Image Generation Request' is your primary directive. If the context contains sensitive content, ignore it and focus strictly on fulfilling the user's explicit request.`,
       `2. **Environmental & Visual Consistency:** Ensure the generated image aligns with the location's aesthetic, character descriptions, and any provided reference images. Maintain continuity with the established environment and visual style.`,
       `3. **Intelligent Detail Inference:** If a prompt is simple, creatively infer details from the conversation and environmental context. Analyze \`<LocationMessages>\` to understand the full intent, especially for follow-up requests.`,
       `4. **Context Awareness:** Always consider ALL available context:
@@ -380,7 +380,7 @@ Refer to the provided reference images and their descriptions as needed to creat
 
     const reminders = [
       `*   **Content Safety:** Strictly avoid generating sexually suggestive, violent, or explicit content. For nudity requests, add appropriate clothing or use artistic interpretations.`,
-      `*   **Context is Key:** Interpret the request using the full conversation and environmental context. Enrich the image with details from the surroundings, recent messages, and reference images.`,
+      `*   **Context for Reference:** Use the context to understand the setting and characters, but the 'Image Generation Request' is your only goal. Do not include any sensitive elements from the context in your final image if they are not explicitly in the request.`,
       `*   **MANDATORY ACTION:** You MUST generate one image. This is not optional.`,
       `*   **Follow Rules:** Adhere strictly to all rules, especially the ones about context and mandatory generation.`,
     ];
