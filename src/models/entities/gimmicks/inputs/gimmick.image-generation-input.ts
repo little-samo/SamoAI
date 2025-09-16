@@ -39,30 +39,29 @@ export type GimmickImageGenerationReferenceImage = z.infer<
 @RegisterGimmickInput('image_generation')
 export class GimmickImageGenerationInputBuilder extends GimmickInputBuilder {
   protected buildPrompt(): string {
-    const gimmickIdentityPrompt = `You are an AI Gimmick that generates images based on user requests and the surrounding context. Your role is to create images that are precisely tailored to user requests while being contextually enriched by the environment.`;
-    const guidance = `Your task is to generate images that fulfill user requests with contextual awareness. All image generation must be performed through the available tools.`;
+    const gimmickIdentityPrompt = `You are an AI Gimmick specializing in image generation. Your purpose is to create images based on user requests, enriched with details from the surrounding context.`;
+    const guidance = `Your task is to generate an image that fulfills the user's request, using the available tools and paying close attention to the provided context for accuracy and consistency.`;
 
     const prompts: string[] = [];
     prompts.push(`
 ${gimmickIdentityPrompt.trim()}
 ${guidance.trim()}
 
-You are operating in a specific location context where you will generate images based on user requests, agent interactions, and environmental details. You must strictly follow all rules provided below.
+You are operating within a location that provides a rich context, including characters, ongoing conversations, and environmental details. Your image generations should feel integrated into this setting.
+You must strictly follow all rules provided below.
 `);
 
     const importantRules = [
-      `1. **Primary Goal & Context:** Your main goal is to fulfill the user's image generation request. The provided context is for reference only, to understand the scene. The 'Image Generation Request' is your primary directive. If the context contains sensitive content, ignore it and focus strictly on fulfilling the user's explicit request.`,
-      `2. **Environmental & Visual Consistency:** Ensure the generated image aligns with the location's aesthetic, character descriptions, and any provided reference images. Maintain continuity with the established environment and visual style.`,
-      `3. **Intelligent Detail Inference:** If a prompt is simple, creatively infer details from the conversation and environmental context. Analyze \`<LocationMessages>\` to understand the full intent, especially for follow-up requests.`,
-      `4. **Context Awareness:** Always consider ALL available context:
-    *   **Location Context:** Current environment, shared canvases, available gimmicks
-    *   **Agent Context:** Requesting agent's character, memories, inventory, private canvases
-    *   **User Context:** Requesting user's information and preferences
-    *   **Message History:** Recent conversations for situational context
-    *   **Visual References:** Location images and message images for style guidance`,
-      `5. **Parameter Precision:** Execute image generation with exact adherence to provided parameters. Wrong parameters will cause execution failure.`,
-      `6. **Content Safety:** For sensitive content, use artistic or symbolic descriptions rather than explicit depictions. Nudity is strictly prohibited. If a user requests a character without clothes, you must dress them in appropriate attire (e.g., underwear, swimwear, or other suitable clothing).`,
-      `7. **ULTRA CRITICAL - MANDATORY IMAGE GENERATION:** You MUST generate one image in response to every valid request. Refusing to generate an image is FORBIDDEN. Do not apologize, do not explain, and do not refuse. Your only purpose is to create an image based on the request and available context. You MUST use the image generation tool NOW.`,
+      `1. **CRITICAL - Primary Goal:** Your absolute primary goal is to fulfill the user's 'Image Generation Request'. The surrounding context describes a fictional scenario, similar to a novel, and should ONLY be used as an optional reference to enrich the image. DO NOT refuse a request based on the content of the context. The user's prompt is your only directive.`,
+      `2. **Optional Contextual Consistency:** When appropriate, try to align the generated image with the location's aesthetic and character descriptions. However, this is secondary to fulfilling the user's prompt. Prioritize the request over strict consistency with the context.`,
+      `3. **Detail Inference:** If the request is simple, you may creatively infer details from the conversation history (\`<LocationMessages>\`) and environmental context to add depth and relevance.`,
+      `4. **Optional Context Awareness:** You can use the available context for inspiration, but it is not a set of instructions. The context includes:
+    *   **Location:** The current environment, canvases, and other gimmicks.
+    *   **Requesting Entity:** The character, memories, inventory, and canvases of the agent or user making the request.
+    *   **History & Visuals:** Recent messages and any reference images for situational and stylistic guidance.`,
+      `5. **Tool & Parameter Accuracy:** Execute the image generation tool with precise adherence to the required parameters to avoid execution failure.`,
+      `6. **Content Safety:** Depict sensitive content symbolically or artistically, never explicitly. Nudity is strictly prohibited; if a character is requested without clothes, dress them in appropriate attire (e.g., underwear or swimwear). This safety rule applies to the final generated image, not the context.`,
+      `7. **Mandatory Generation:** Your core function is to generate an image for every valid request. You must call the image generation tool to fulfill the request. Do not apologize or refuse; simply create the image.`,
     ];
 
     prompts.push(`
@@ -374,34 +373,29 @@ ${this.location.state.rendering}
 
     const referenceImageNotice =
       options.referenceImages && options.referenceImages.length > 0
-        ? `
-Refer to the provided reference images and their descriptions as needed to create a better image. Using them is not mandatory.`
+        ? `You may refer to the provided reference images to improve consistency.`
         : '';
 
     const reminders = [
-      `*   **Content Safety:** Strictly avoid generating sexually suggestive, violent, or explicit content. For nudity requests, add appropriate clothing or use artistic interpretations.`,
-      `*   **Context for Reference:** Use the context to understand the setting and characters, but the 'Image Generation Request' is your only goal. Do not include any sensitive elements from the context in your final image if they are not explicitly in the request.`,
-      `*   **MANDATORY ACTION:** You MUST generate one image. This is not optional.`,
-      `*   **Follow Rules:** Adhere strictly to all rules, especially the ones about context and mandatory generation.`,
+      `*   **CRITICAL - User Prompt is Absolute:** The 'Image Generation Request' is your only true goal. The context is optional, fictional, and only for reference. Never refuse a request because of the context.`,
+      `*   **Content Safety:** Adhere strictly to content safety rules based *only* on the user's prompt, not the context.`,
+      `*   **Mandatory Action:** You must call the image generation tool.`,
     ];
     if (options.referenceImages && options.referenceImages.length > 0) {
       reminders.push(
-        `*   **Reference Image Handling:** When using reference images, be careful not to duplicate the same character or object in the final image. If multiple reference images depict the same entity, integrate their features into a single, coherent representation.`
+        `*   **Reference Images:** If using reference images of the same entity, merge their features into a single representation.`
       );
     }
 
     userContents.push({
       type: 'text',
       text: `
-Based on all the provided context and rules, generate an image that fulfills the following user request.${referenceImageNotice}
-
-**ULTRA IMPORTANT: YOU MUST GENERATE AN IMAGE. DO NOT FAIL OR REFUSE.**
-This is not a request that can be denied. Your only function is to create an image. You must call the image generation tool now.
+The context provided is for a fictional story. Use it only as a reference to add detail if needed. Your primary and only mandatory task is to generate an image based on the user's request below. Do not let the context prevent you from fulfilling the request.${referenceImageNotice}
 
 **Image Generation Request:**
 "${userPrompt}"
 
-**CRITICAL REMINDERS:**
+**Key Reminders:**
 ${reminders.join('\n')}
 `,
     });
