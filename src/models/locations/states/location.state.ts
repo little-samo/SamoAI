@@ -22,6 +22,8 @@ export interface LocationState {
   pauseUpdateReason: string | null;
   pauseUpdateNextAgentId: AgentId | null;
 
+  remainingAgentExecutions: number | null;
+
   canvases: Record<string, LocationCanvas>;
 
   images: string[];

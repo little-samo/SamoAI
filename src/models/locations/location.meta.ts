@@ -5,6 +5,7 @@ export interface LocationCoreMeta {
   sequential?: boolean;
   interval?: number;
   fast?: boolean;
+  maxAgentExecutions?: number | null;
 }
 
 export interface LocationPrompts {

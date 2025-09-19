@@ -3,6 +3,7 @@
  */
 const locationPauseReasonValues = [
   'NO_AGENTS',
+  'NO_AGENT_EXECUTIONS',
   'UPDATE_ERROR',
   'SCHEDULED_PAUSE',
   'UPDATE_COMPLETED',

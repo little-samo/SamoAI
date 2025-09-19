@@ -52,6 +52,16 @@ export interface LocationRepository {
     pauseUpdateReason?: string | null,
     pauseUpdateNextAgentId?: AgentId | null
   ): Promise<void>;
+  updateLocationStateRemainingAgentExecutions(
+    locationId: LocationId,
+    value?:
+      | {
+          remainingAgentExecutions?: number | null;
+        }
+      | {
+          remainingAgemtExecutionsDelta?: number | null;
+        }
+  ): Promise<void>;
   updateLocationStateCanvas(
     locationId: LocationId,
     canvasName: string,

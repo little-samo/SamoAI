@@ -581,6 +581,21 @@ export class SamoAI extends AsyncEventEmitter {
       }
 
       if (
+        location.state.remainingAgentExecutions !== null &&
+        location.state.remainingAgentExecutions <= 0
+      ) {
+        console.log(
+          `No agent executions remaining in location ${locationId}, pausing update`
+        );
+        await this.locationRepository.updateLocationStatePauseUpdateUntil(
+          locationId,
+          null,
+          LocationPauseReason.NO_AGENT_EXECUTIONS
+        );
+        return location;
+      }
+
+      if (
         !options.ignorePauseUpdateUntil &&
         location.state.pauseUpdateUntil &&
         new Date(location.state.pauseUpdateUntil).getTime() > Date.now()
@@ -723,6 +738,12 @@ export class SamoAI extends AsyncEventEmitter {
             Promise.all([
               this.updateAgentSummary(agent, messages, toolCalls),
               this.updateAgentMemory(agent, messages, toolCalls),
+              this.locationRepository.updateLocationStateRemainingAgentExecutions(
+                locationId,
+                {
+                  remainingAgemtExecutionsDelta: -1,
+                }
+              ),
             ])
           );
         }
