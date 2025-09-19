@@ -54,12 +54,12 @@ export interface LocationRepository {
   ): Promise<void>;
   updateLocationStateRemainingAgentExecutions(
     locationId: LocationId,
-    value?:
+    value:
       | {
-          remainingAgentExecutions?: number | null;
+          remainingAgentExecutions: number | null;
         }
       | {
-          remainingAgemtExecutionsDelta?: number | null;
+          remainingAgemtExecutionsDelta: number | null;
         }
   ): Promise<void>;
   updateLocationStateCanvas(
