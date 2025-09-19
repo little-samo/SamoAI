@@ -13,7 +13,7 @@ export interface AgentEditCanvasParameters {
 
 @RegisterAgentAction('edit_canvas')
 export class AgentEditCanvasAction extends AgentAction {
-  public static readonly ACTION_TEXT_DISPLAY_MAX_LENGTH = 50;
+  public static readonly ACTION_TEXT_DISPLAY_MAX_LENGTH = 500;
 
   private static formatContentForDisplay(content: string): string {
     if (

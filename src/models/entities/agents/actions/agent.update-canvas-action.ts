@@ -12,7 +12,7 @@ export interface AgentUpdateCanvasParameters {
 
 @RegisterAgentAction('update_canvas')
 export class AgentUpdateCanvasAction extends AgentAction {
-  public static readonly ACTION_TEXT_DISPLAY_MAX_LENGTH = 50;
+  public static readonly ACTION_TEXT_DISPLAY_MAX_LENGTH = 500;
 
   public override get description(): string {
     return `Updates the text content of a specific **public Location Canvas** (found in '<LocationCanvases>'). This **overwrites** the entire existing text. Use for major revisions or replacing content completely. For minor edits, additions, or corrections, use \`edit_canvas\`. Be mindful that anyone in the location can see and modify these canvases.`;
