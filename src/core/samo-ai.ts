@@ -741,7 +741,7 @@ export class SamoAI extends AsyncEventEmitter {
               this.locationRepository.updateLocationStateRemainingAgentExecutions(
                 locationId,
                 {
-                  remainingAgemtExecutionsDelta: -1,
+                  remainingAgentExecutionsDelta: -1,
                 }
               ),
             ])
