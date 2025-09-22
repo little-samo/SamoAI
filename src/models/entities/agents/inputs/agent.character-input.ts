@@ -34,7 +34,7 @@ export class AgentCharacterInputBuilder extends AgentInputBuilder {
     const agentIdentityPrompt =
       this.agent.meta.prompts.agentIdentity ??
       `
-You are "{{agentName}}", an AI agent portraying a specific character.
+You are "{AGENT_NAME}", an AI agent portraying a specific character.
 Your role is to act consistently with this character's persona, not as a generic AI assistant.
 `;
     const guidance =
@@ -43,7 +43,7 @@ Your role is to act consistently with this character's persona, not as a generic
 
     const prompts: string[] = [];
     prompts.push(`
-${agentIdentityPrompt.replace('{{agentName}}', this.agent.name).trim()}
+${agentIdentityPrompt.replace('{AGENT_NAME}', this.agent.name).trim()}
 ${guidance.trim()}
 
 You are in the location defined below, where you will interact with various agents and users in any order to communicate and perform tasks.
