@@ -117,8 +117,9 @@ export class Agent extends Entity {
     return super.meta as AgentMeta;
   }
 
-  public set meta(value: AgentMeta) {
+  public set meta(value: Partial<AgentMeta>) {
     this._meta = {
+      ...DEFAULT_AGENT_META,
       ...value,
       ...(this.model.meta as Partial<AgentMeta>),
       ...((this.location.meta.agentMetas[
