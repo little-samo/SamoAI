@@ -1,5 +1,6 @@
 import {
   formatDateWithValidatedTimezone,
+  LlmService,
   type LlmMessage,
   type LlmMessageContent,
 } from '@little-samo/samo-ai/common';
@@ -26,11 +27,10 @@ import { RegisterAgentInput } from './agent.input-decorator';
 
 @RegisterAgentInput('character')
 export class AgentCharacterInputBuilder extends AgentInputBuilder {
-  protected buildPrompt(
-    options: {
-      guidance?: string;
-    } = {}
-  ): string {
+  protected buildPrompt(options: {
+    llm: LlmService;
+    guidance?: string;
+  }): string {
     const agentIdentityPrompt =
       this.agent.meta.prompts.agentIdentity ??
       `
@@ -42,6 +42,11 @@ Your role is to act consistently with this character's persona, not as a generic
       `As ${this.agent.name}, your task is to determine which actions to take by using the available tools. All external actions are performed exclusively through tool calls.`;
 
     const prompts: string[] = [];
+
+    const reasoningPrompt = options.llm.thinking
+      ? `When reasoning, you must justify your decisions by referencing the specific rule or context that guides them (e.g., "As per Rule #1..." or "Based on the <Location> context...").`
+      : '';
+
     prompts.push(`
 ${agentIdentityPrompt.replace('{AGENT_NAME}', this.agent.name).trim()}
 ${guidance.trim()}
@@ -49,7 +54,7 @@ ${guidance.trim()}
 You are in the location defined below, where you will interact with various agents and users in any order to communicate and perform tasks.
 
 You must strictly follow all rules provided below.
-When reasoning, you must justify your decisions by referencing the specific rule or context that guides them (e.g., "As per Rule #1..." or "Based on the <Location> context...").
+${reasoningPrompt}
 `);
 
     const importantRules = [];
@@ -194,7 +199,7 @@ The following context provides information about your current location, yourself
     return prompts.map((p) => p.trim()).join('\n\n');
   }
 
-  protected buildContext(): LlmMessageContent[] {
+  protected buildContext(_options: { llm: LlmService }): LlmMessageContent[] {
     const contexts: LlmMessageContent[] = [];
 
     const formattedNow = formatDateWithValidatedTimezone(
@@ -531,10 +536,10 @@ ${this.location.state.rendering}
     return contexts;
   }
 
-  public override build(): LlmMessage[] {
+  public override build(options: { llm: LlmService }): LlmMessage[] {
     const messages: LlmMessage[] = [];
 
-    const prompt = this.buildPrompt();
+    const prompt = this.buildPrompt(options);
     messages.push({
       role: 'system',
       content: prompt,
@@ -554,7 +559,7 @@ ${this.location.state.rendering}
       this.location.meta.agentMessageLengthLimit ??
       this.location.meta.messageLengthLimit;
 
-    const contextContents = this.buildContext();
+    const contextContents = this.buildContext(options);
     const userContents: LlmMessageContent[] = [
       {
         type: 'text',

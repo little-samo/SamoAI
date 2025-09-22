@@ -1,6 +1,7 @@
 import type {
   LlmMessage,
   LlmMessageContent,
+  LlmService,
 } from '@little-samo/samo-ai/common';
 
 import { AgentCharacterInputBuilder } from './agent.character-input';
@@ -8,17 +9,17 @@ import { RegisterAgentInput } from './agent.input-decorator';
 
 @RegisterAgentInput('character_evaluation')
 export class AgentCharacterEvaluationInputBuilder extends AgentCharacterInputBuilder {
-  public override build(): LlmMessage[] {
+  public override build(options: { llm: LlmService }): LlmMessage[] {
     const messages: LlmMessage[] = [];
 
     const guidance = `As ${this.agent.name}, your task is to decide whether to perform any action in this turn. An 'action' refers to using any available tool, such as sending a message, updating memory, or executing a gimmick. Your response must be ONLY 'true' or 'false'.`;
-    const prompt = this.buildPrompt({ guidance });
+    const prompt = this.buildPrompt({ ...options, guidance });
     messages.push({
       role: 'system',
       content: prompt,
     });
 
-    const contextContents = this.buildContext();
+    const contextContents = this.buildContext(options);
     const userContents: LlmMessageContent[] = [
       {
         type: 'text',

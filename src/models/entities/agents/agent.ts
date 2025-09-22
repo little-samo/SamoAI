@@ -467,8 +467,8 @@ export class Agent extends Entity {
       await this.location.emitAsync('agentExecuteNextActions', this);
 
       const input = this.getInput(inputIndex);
-      const messages = input.build();
       const llm = this.getLlm(llmIndex);
+      const messages = input.build({ llm });
       let useToolsResponse: LlmToolsResponse;
       try {
         useToolsResponse = await llm.useTools(
@@ -528,8 +528,8 @@ export class Agent extends Entity {
     llmIndex: number = Agent.EVALUATE_LLM_INDEX
   ): Promise<boolean> {
     const input = this.getInput(inputIndex);
-    const messages = input.build();
     const llm = this.getLlm(llmIndex, Agent.MINI_LLM_INDEX);
+    const messages = input.build({ llm });
     let response: LlmGenerateResponse;
     try {
       response = await llm.generate(messages, {
@@ -565,12 +565,13 @@ export class Agent extends Entity {
     llmIndex: number = Agent.SUMMARY_LLM_INDEX
   ): Promise<string> {
     const input = this.getInput(inputIndex);
+    const llm = this.getLlm(llmIndex, Agent.MINI_LLM_INDEX);
     const messages = input.build({
+      llm,
       prevSummary: this.state.summary,
       inputMessages,
       toolCalls: prevToolCalls,
     });
-    const llm = this.getLlm(llmIndex, Agent.MINI_LLM_INDEX);
 
     let summaryResponse: LlmGenerateResponse;
     try {
@@ -603,8 +604,12 @@ export class Agent extends Entity {
     llmIndex: number = Agent.MEMORY_LLM_INDEX
   ): Promise<void> {
     const input = this.getInput(inputIndex);
-    const messages = input.build({ inputMessages, toolCalls: prevToolCalls });
     const llm = this.getLlm(llmIndex, Agent.MINI_LLM_INDEX);
+    const messages = input.build({
+      llm,
+      inputMessages,
+      toolCalls: prevToolCalls,
+    });
 
     const actions = Object.fromEntries(
       this.meta.memoryPostActions.map((actionWithVersion) => {

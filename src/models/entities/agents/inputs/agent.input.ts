@@ -1,5 +1,6 @@
 import {
   LlmMessage,
+  LlmService,
   LlmMessageTextContent,
   LlmMessageContent,
 } from '@little-samo/samo-ai/common';
@@ -39,5 +40,8 @@ export abstract class AgentInputBuilder {
     public readonly agent: Agent
   ) {}
 
-  public abstract build(options?: object): LlmMessage[];
+  public abstract build(options: {
+    llm: LlmService;
+    [key: string]: unknown;
+  }): LlmMessage[];
 }

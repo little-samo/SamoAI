@@ -1,6 +1,7 @@
 import type {
   LlmMessage,
   LlmMessageContent,
+  LlmService,
   LlmToolCall,
 } from '@little-samo/samo-ai/common';
 
@@ -10,6 +11,7 @@ import { RegisterAgentInput } from './agent.input-decorator';
 @RegisterAgentInput('summary')
 export class AgentSummaryInputBuilder extends AgentInputBuilder {
   public override build(options: {
+    llm: LlmService;
     prevSummary: string;
     inputMessages: LlmMessage[];
     toolCalls: LlmToolCall[];
