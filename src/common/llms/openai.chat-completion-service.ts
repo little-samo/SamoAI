@@ -193,10 +193,10 @@ export class OpenAIChatCompletionService extends LlmService {
         // add thinking tokens to max output tokens until thinking budget is supported
         maxOutputTokens +=
           options?.maxThinkingTokens ?? LlmService.DEFAULT_MAX_THINKING_TOKENS;
-        if (options?.thinkingLevel) {
+        if (this.supportThinkingLevel && options?.thinkingLevel) {
           request.reasoning_effort = options.thinkingLevel;
         }
-        if (options?.outputVerbosity) {
+        if (this.supportOutputVerbosity && options?.outputVerbosity) {
           request.verbosity = options.outputVerbosity;
         }
       }
@@ -354,10 +354,10 @@ Response can only be in JSON format and must strictly follow the following forma
         // add thinking tokens to max output tokens until thinking budget is supported
         maxOutputTokens +=
           options?.maxThinkingTokens ?? LlmService.DEFAULT_MAX_THINKING_TOKENS;
-        if (options?.thinkingLevel) {
+        if (this.supportThinkingLevel && options?.thinkingLevel) {
           request.reasoning_effort = options.thinkingLevel;
         }
-        if (options?.outputVerbosity) {
+        if (this.supportOutputVerbosity && options?.outputVerbosity) {
           request.verbosity = options.outputVerbosity;
         }
       }

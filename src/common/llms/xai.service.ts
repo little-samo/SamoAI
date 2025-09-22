@@ -1,7 +1,7 @@
 import { LlmPlatform, LlmServiceOptions } from './llm.types';
-import { OpenAIChatCompletionService } from './openai.chat-completion-service';
+import { OpenAIService } from './openai.service';
 
-export class XAIService extends OpenAIChatCompletionService {
+export class XAIService extends OpenAIService {
   protected readonly serviceName: string = 'XAI';
 
   public constructor(options: LlmServiceOptions) {
