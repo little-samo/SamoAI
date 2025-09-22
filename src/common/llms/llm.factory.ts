@@ -22,10 +22,7 @@ export class LlmFactory {
       case LlmPlatform.DEEPSEEK:
         return new DeepSeekService(options);
       case LlmPlatform.XAI:
-        return new XAIService({
-          ...options,
-          supportThinkingLevel: true,
-        });
+        return new XAIService(options);
       default:
         throw new Error(`Unsupported LLM platform: ${options.platform}`);
     }
