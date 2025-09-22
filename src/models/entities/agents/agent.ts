@@ -76,9 +76,9 @@ export class Agent extends Entity {
 
   public core!: AgentCore;
 
-  public readonly inputs: AgentInputBuilder[] = [];
-  public readonly llms: LlmService[] = [];
-  public readonly actions: Record<string, AgentAction> = {};
+  private _inputs: AgentInputBuilder[] = [];
+  private _llms: LlmService[] = [];
+  private _actions: Record<string, AgentAction> = {};
 
   private readonly _entityStates: Record<EntityKey, AgentEntityState> = {};
 
@@ -103,40 +103,6 @@ export class Agent extends Entity {
     this.timezone = createValidatedTimezone(this.meta.timeZone) ?? undefined;
 
     this.reloadCore();
-
-    for (const llm of meta.llms) {
-      const llmOptions = {
-        ...llm,
-        apiKey: llm.apiKey ?? location.apiKeys[llm.platform]?.key,
-      };
-      if (llmOptions.apiKey) {
-        const llmService = LlmFactory.create(llmOptions);
-        this.llms.push(llmService);
-      }
-    }
-    for (const input of meta.inputs) {
-      this.inputs.push(AgentInputFactory.createInput(input, location, this));
-    }
-    const actions = [
-      ...location.meta.actions,
-      ...(location.meta.addActions ?? []),
-      ...[location.meta.messageAction],
-      ...(location.meta.canvasActions ?? []),
-      ...meta.actions,
-      ...(meta.addActions ?? []),
-      ...(meta.canvasActions ?? []),
-      ...(meta.memoryActions ?? []),
-    ];
-    this.actions = Object.fromEntries(
-      actions.map((actionWithVersion) => {
-        const action = AgentActionFactory.createAction(
-          actionWithVersion,
-          location,
-          this
-        );
-        return [action.name, action];
-      })
-    );
   }
 
   public override get type(): 'agent' {
@@ -199,6 +165,101 @@ export class Agent extends Entity {
 
   public get memories(): AgentMemory[] {
     return this.state.memories;
+  }
+
+  public async init(): Promise<void> {
+    await super.init();
+    this.reloadCore();
+  }
+
+  private initLlms() {
+    if (this._llms.length > 0) {
+      return;
+    }
+
+    for (const llm of this.meta.llms) {
+      const llmOptions = {
+        ...llm,
+        apiKey: llm.apiKey ?? this.location.apiKeys[llm.platform]?.key,
+      };
+      if (llmOptions.apiKey) {
+        const llmService = LlmFactory.create(llmOptions);
+        this._llms.push(llmService);
+      }
+    }
+  }
+
+  private initInputs() {
+    if (this._inputs.length > 0) {
+      return;
+    }
+
+    for (const input of this.meta.inputs) {
+      this._inputs.push(
+        AgentInputFactory.createInput(input, this.location, this)
+      );
+    }
+  }
+
+  private initActions() {
+    const actions = [
+      ...this.location.meta.actions,
+      ...(this.location.meta.addActions ?? []),
+      ...[this.location.meta.messageAction],
+      ...(this.location.meta.canvasActions ?? []),
+      ...this.meta.actions,
+      ...(this.meta.addActions ?? []),
+      ...(this.meta.canvasActions ?? []),
+      ...(this.meta.memoryActions ?? []),
+    ];
+    this._actions = Object.fromEntries(
+      actions.map((actionWithVersion) => {
+        const action = AgentActionFactory.createAction(
+          actionWithVersion,
+          this.location,
+          this
+        );
+        return [action.name, action];
+      })
+    );
+  }
+
+  private getLlm(
+    index: number,
+    defaultIndex: number = Agent.MAIN_LLM_INDEX
+  ): LlmService {
+    this.initLlms();
+
+    const llm = this._llms.at(index) ?? this._llms.at(defaultIndex);
+    if (!llm) {
+      throw new Error(`No LlmService found at index ${index}`);
+    }
+    return llm;
+  }
+
+  private getInput(index: number): AgentInputBuilder {
+    this.initInputs();
+
+    const input = this._inputs.at(index);
+    if (!input) {
+      throw new Error(`No AgentInputBuilder found at index ${index}`);
+    }
+    return input;
+  }
+
+  private getAction(name: string): AgentAction {
+    this.initActions();
+
+    const action = this._actions[name];
+    if (!action) {
+      throw new Error(`No AgentAction found with name ${name}`);
+    }
+    return action;
+  }
+
+  private getActions(): Record<string, AgentAction> {
+    this.initActions();
+    return this._actions;
   }
 
   public fixEntityState(state: AgentEntityState): void {
@@ -370,11 +431,6 @@ export class Agent extends Entity {
     };
   }
 
-  public async init(): Promise<void> {
-    await super.init();
-    this.reloadCore();
-  }
-
   public async update(): Promise<boolean> {
     if (this.location.getEntityState(this.key)?.isActive === false) {
       if (ENV.DEBUG) {
@@ -391,7 +447,7 @@ export class Agent extends Entity {
     action?: AgentAction
   ): Promise<void> {
     try {
-      action ??= this.actions[toolCall.name];
+      action ??= this.getAction(toolCall.name);
       await action.execute(toolCall);
     } catch (error) {
       console.error(
@@ -407,20 +463,14 @@ export class Agent extends Entity {
     try {
       await this.location.emitAsync('agentExecuteNextActions', this);
 
-      const input = this.inputs[inputIndex];
-      if (!input) {
-        throw new Error('No input found');
-      }
+      const input = this.getInput(inputIndex);
       const messages = input.build();
-      const llm = this.llms.at(llmIndex) ?? this.llms.at(Agent.MAIN_LLM_INDEX);
-      if (!llm) {
-        throw new Error('No LlmService found');
-      }
+      const llm = this.getLlm(llmIndex);
       let useToolsResponse: LlmToolsResponse;
       try {
         useToolsResponse = await llm.useTools(
           messages,
-          Object.values(this.actions),
+          Object.values(this.getActions()),
           {
             maxTokens: this.meta.maxTokens,
             temperature: this.meta.temperature,
@@ -474,15 +524,9 @@ export class Agent extends Entity {
     inputIndex: number = Agent.EVALUATE_INPUT_INDEX,
     llmIndex: number = Agent.EVALUATE_LLM_INDEX
   ): Promise<boolean> {
-    const input = this.inputs[inputIndex];
-    if (!input) {
-      throw new Error('No input found');
-    }
+    const input = this.getInput(inputIndex);
     const messages = input.build();
-    const llm = this.llms.at(llmIndex) ?? this.llms.at(Agent.MINI_LLM_INDEX);
-    if (!llm) {
-      throw new Error('No LlmService found');
-    }
+    const llm = this.getLlm(llmIndex, Agent.MINI_LLM_INDEX);
     let response: LlmGenerateResponse;
     try {
       response = await llm.generate(messages, {
@@ -517,19 +561,13 @@ export class Agent extends Entity {
     inputIndex: number = Agent.SUMMARY_INPUT_INDEX,
     llmIndex: number = Agent.SUMMARY_LLM_INDEX
   ): Promise<string> {
-    const input = this.inputs[inputIndex];
-    if (!input) {
-      throw new Error('No input found');
-    }
+    const input = this.getInput(inputIndex);
     const messages = input.build({
       prevSummary: this.state.summary,
       inputMessages,
       toolCalls: prevToolCalls,
     });
-    const llm = this.llms.at(llmIndex) ?? this.llms.at(Agent.MINI_LLM_INDEX);
-    if (!llm) {
-      throw new Error('No LlmService found');
-    }
+    const llm = this.getLlm(llmIndex, Agent.MINI_LLM_INDEX);
 
     let summaryResponse: LlmGenerateResponse;
     try {
@@ -561,16 +599,9 @@ export class Agent extends Entity {
     inputIndex: number = Agent.MEMORY_INPUT_INDEX,
     llmIndex: number = Agent.MEMORY_LLM_INDEX
   ): Promise<void> {
-    const input = this.inputs[inputIndex];
-    if (!input) {
-      throw new Error('No input found');
-    }
+    const input = this.getInput(inputIndex);
     const messages = input.build({ inputMessages, toolCalls: prevToolCalls });
-
-    const llm = this.llms.at(llmIndex) ?? this.llms.at(Agent.MINI_LLM_INDEX);
-    if (!llm) {
-      throw new Error('No LlmService found');
-    }
+    const llm = this.getLlm(llmIndex, Agent.MINI_LLM_INDEX);
 
     const actions = Object.fromEntries(
       this.meta.memoryPostActions.map((actionWithVersion) => {
