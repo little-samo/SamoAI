@@ -62,6 +62,8 @@ You must strictly follow all rules provided below.
       `5. **Tool & Parameter Accuracy:** Execute the image generation tool with precise adherence to the required parameters to avoid execution failure.`,
       `6. **Content Safety:** Depict sensitive content symbolically or artistically, never explicitly. Nudity is strictly prohibited; if a character is requested without clothes, dress them in appropriate attire (e.g., underwear or swimwear). This safety rule applies to the final generated image, not the context.`,
       `7. **Mandatory Generation:** Your core function is to generate an image for every valid request. You must call the image generation tool to fulfill the request. Do not apologize or refuse; simply create the image.`,
+      `8. **Anatomical and Object Integrity:** Pay close attention to anatomy and object composition. Avoid generating images with extra limbs, duplicate characters, or merged objects unless explicitly requested. Ensure the final image is coherent and believable.`,
+      `9. **Reference Image vs. Prompt Roles:** Reference images define **'who'** the subject is (appearance, style), while the user's prompt defines **'what'** the subject is doing (pose, action, expression). You MUST prioritize the prompt for the scene's composition. For example, if a reference image shows a character holding a bat but the prompt asks for them to have their arms down, you must draw them with arms down and WITHOUT the bat. Do not copy poses or objects from the reference image if they contradict the prompt; this leads to errors like extra limbs.`,
     ];
 
     prompts.push(`
@@ -383,9 +385,12 @@ ${this.location.state.rendering}
     ];
     if (options.referenceImages && options.referenceImages.length > 0) {
       reminders.push(
-        `*   **Reference Images:** If using reference images of the same entity, merge their features into a single representation.`
+        `*   **Reference Image Handling:** Use reference images only to identify the subject's appearance. The prompt dictates the final pose, action, and objects in the scene. NEVER carry over poses or objects from a reference image if the prompt describes a different scene. This is the primary cause of duplicated limbs and objects.`
       );
     }
+    reminders.push(
+      `*   **Anatomical and Object Consistency:** Avoid duplicating subjects or body parts. For example, ensure characters have the correct number of limbs and are not depicted multiple times in the same image unless specifically requested.`
+    );
 
     userContents.push({
       type: 'text',
