@@ -1,5 +1,44 @@
 /**
+ * Extracts JSON blocks from text that may contain ```json code fences
+ * Returns the first valid JSON block found, or the original string if no blocks found
+ */
+export function extractJsonBlocksFromText(text: string): string {
+  if (!text || typeof text !== 'string') {
+    return text;
+  }
+
+  // Look for ```json blocks in the text
+  const jsonBlockRegex = /```json\s*([\s\S]*?)\s*```/gi;
+  const matches = [...text.matchAll(jsonBlockRegex)];
+
+  if (matches.length > 0) {
+    // Try each JSON block until we find one that's likely valid
+    for (const match of matches) {
+      const jsonContent = match[1]?.trim();
+      if (
+        jsonContent &&
+        (jsonContent.startsWith('{') || jsonContent.startsWith('['))
+      ) {
+        return jsonContent;
+      }
+    }
+
+    // If no block starts with { or [, return the first non-empty one
+    for (const match of matches) {
+      const jsonContent = match[1]?.trim();
+      if (jsonContent) {
+        return jsonContent;
+      }
+    }
+  }
+
+  // If no ```json blocks found, return original text
+  return text;
+}
+
+/**
  * Fixes common issues with JSON strings, particularly those returned by LLMs
+ * - Extracts JSON from markdown code fences if present
  * - Removes markdown code fences
  * - Closes unclosed quotes and brackets
  * - Handles truncated JSON
@@ -9,9 +48,10 @@ export function fixJson(jsonString: string): string {
     throw new Error('Input must be a non-empty string');
   }
 
-  let fixed = jsonString.trim();
+  // First, try to extract JSON blocks from text (handles text with ```json blocks)
+  let fixed = extractJsonBlocksFromText(jsonString).trim();
 
-  // Remove markdown fences (similar to gemini.service.ts implementation)
+  // Remove markdown fences (fallback for cases not handled by extractJsonBlocksFromText)
   if (fixed.startsWith('```json')) {
     fixed = fixed.slice(7);
   } else if (fixed.startsWith('```')) {
