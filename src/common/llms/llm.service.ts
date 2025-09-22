@@ -21,12 +21,18 @@ export abstract class LlmService {
   public readonly thinking: boolean;
   public readonly baseUrl?: string;
 
+  public readonly supportThinkingLevel: boolean;
+  public readonly supportOutputVerbosity: boolean;
+
   public constructor(options: LlmServiceOptions) {
     this.model = options.model;
     this.platform = options.platform;
     this.apiKey = options.apiKey;
     this.thinking = options.thinking ?? false;
     this.baseUrl = options.baseUrl;
+
+    this.supportThinkingLevel = options.supportThinkingLevel ?? false;
+    this.supportOutputVerbosity = options.supportOutputVerbosity ?? false;
   }
 
   public abstract generate<T extends boolean = false>(
