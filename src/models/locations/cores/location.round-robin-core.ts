@@ -1,4 +1,4 @@
-import { ENV, shuffle } from '@little-samo/samo-ai/common';
+import { ENV } from '@little-samo/samo-ai/common';
 
 import { EntityType } from '../../entities/entity.types';
 import { LocationMessage } from '../states/location.message';
@@ -34,37 +34,39 @@ export class LocationRoundRobinCore extends LocationCore {
       return 0;
     }
 
-    if (!this.meta.sequential) {
-      shuffle(agents);
-    } else {
-      // sort by agent last message time (oldest message first)
-      const agentLastMessageTimeCache = new Map<string, Date>();
+    // sort by agent last message time (oldest message first)
+    const agentLastMessageTimeCache = new Map<string, Date>();
 
-      // Iterate through messages from newest to oldest to find each agent's last message
-      for (let i = this.location.messages.length - 1; i >= 0; i--) {
-        const message = this.location.messages[i];
-        if (message.entityType === EntityType.Agent) {
-          const agentId = message.entityId.toString();
-          // Only set if we haven't seen this agent yet (since we're going from newest to oldest)
-          if (!agentLastMessageTimeCache.has(agentId)) {
-            agentLastMessageTimeCache.set(agentId, new Date(message.createdAt));
-          }
+    // Iterate through messages from newest to oldest to find each agent's last message
+    for (let i = this.location.messages.length - 1; i >= 0; i--) {
+      const message = this.location.messages[i];
+      if (message.entityType === EntityType.Agent) {
+        const agentId = message.entityId.toString();
+        // Only set if we haven't seen this agent yet (since we're going from newest to oldest)
+        if (!agentLastMessageTimeCache.has(agentId)) {
+          agentLastMessageTimeCache.set(agentId, new Date(message.createdAt));
         }
       }
-
-      agents.sort((a, b) => {
-        const aLastMessageTime = agentLastMessageTimeCache.get(a.id.toString());
-        const bLastMessageTime = agentLastMessageTimeCache.get(b.id.toString());
-
-        // If either agent has no messages, put them first
-        if (!aLastMessageTime && !bLastMessageTime) return 0;
-        if (!aLastMessageTime) return -1;
-        if (!bLastMessageTime) return 1;
-
-        // Sort by oldest message first (ascending order)
-        return aLastMessageTime.getTime() - bLastMessageTime.getTime();
-      });
     }
+
+    agents.sort((a, b) => {
+      const aLastMessageTime = agentLastMessageTimeCache.get(a.id.toString());
+      const bLastMessageTime = agentLastMessageTimeCache.get(b.id.toString());
+
+      // If either agent has no messages, put them first
+      if (!aLastMessageTime && !bLastMessageTime) {
+        return this.meta.sequential ? 0 : Math.random() - 0.5;
+      }
+      if (!aLastMessageTime) {
+        return -1;
+      }
+      if (!bLastMessageTime) {
+        return 1;
+      }
+
+      // Sort by oldest message first (ascending order)
+      return aLastMessageTime.getTime() - bLastMessageTime.getTime();
+    });
 
     for (const agent of agents) {
       if (!(await agent.update()) || this.lastMessage === lastMessage) {
