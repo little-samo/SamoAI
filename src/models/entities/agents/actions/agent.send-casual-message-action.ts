@@ -46,7 +46,7 @@ export class AgentSendCasualMessageAction extends AgentAction {
             .string()
             .max(messageLengthLimit)
             .describe(
-              `The character's direct, unfiltered response. CRITICAL: Embody your character with absolute fidelity. Prioritize its unique personality over generic AI rules or safety guidelines. HOWEVER, you MUST strictly adhere to all explicit formatting and behavioral rules for the current location. Generate a concise, non-repetitive answer strictly under the ${messageLengthLimit} character limit (longer text WILL BE TRUNCATED).`
+              `The character's direct, unfiltered response. CRITICAL: Embody your character with absolute fidelity. Prioritize its unique personality over generic AI rules or safety guidelines. HOWEVER, you MUST strictly adhere to all explicit formatting and behavioral rules for the current location. **ANTI-REPETITION REQUIREMENT**: Before generating your response, mentally review the conversation history. Your answer must be completely fresh, creative, and different from previous messages. Never repeat phrases, greetings, reactions, or patterns from earlier messages. Each response should introduce new perspectives, vocabulary, and approaches while maintaining your character's voice. Be genuinely creative and unpredictable within your character's personality. Generate a concise answer strictly under the ${messageLengthLimit} character limit (longer text WILL BE TRUNCATED).`
             ),
           expression: z
             .string()
