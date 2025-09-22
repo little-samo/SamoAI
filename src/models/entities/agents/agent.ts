@@ -120,8 +120,10 @@ export class Agent extends Entity {
   public set meta(value: AgentMeta) {
     this._meta = {
       ...value,
-      ...(this.model.meta as object),
-      ...((this.location.meta.agentMetas[this.id.toString()] as object) ?? {}),
+      ...(this.model.meta as Partial<AgentMeta>),
+      ...((this.location.meta.agentMetas[
+        this.id.toString()
+      ] as Partial<AgentMeta>) ?? {}),
     };
   }
 
