@@ -426,12 +426,17 @@ export class Location extends AsyncEventEmitter {
     await this.addMessage(locationMessage);
   }
 
-  public async addSystemMessage(message: string): Promise<void> {
+  public async addSystemMessage(
+    message: string,
+    options: {
+      name?: string;
+    } = {}
+  ): Promise<void> {
     const locationMessage: LocationMessage = {
       locationId: this.id,
       entityType: EntityType.System,
       entityId: 0 as EntityId,
-      name: '[SYSTEM]',
+      name: options.name ?? '[SYSTEM]',
       message: message,
       createdAt: new Date(),
       updatedAt: new Date(),

@@ -538,13 +538,15 @@ export class SamoAI extends AsyncEventEmitter {
     locationId: LocationId,
     message: string,
     createdAt?: Date,
-    _options: {} = {}
+    options: {
+      name?: string;
+    } = {}
   ): Promise<void> {
     const locationMessage: LocationMessage = {
       locationId,
       entityType: EntityType.System,
       entityId: 0 as EntityId,
-      name: '[SYSTEM]',
+      name: options.name ?? '[SYSTEM]',
       message,
       createdAt: createdAt ?? new Date(),
       updatedAt: new Date(),
