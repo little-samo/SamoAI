@@ -360,6 +360,7 @@ export class Location extends AsyncEventEmitter {
       action?: string;
       emotion?: string;
       image?: string;
+      isSensitiveImage?: boolean;
       createdAt?: Date;
     } = {}
   ): Promise<void> {
@@ -373,6 +374,7 @@ export class Location extends AsyncEventEmitter {
       action: options.action,
       emotion: options.emotion,
       image: options.image,
+      isSensitiveImage: options.isSensitiveImage,
       createdAt: options.createdAt ?? new Date(),
       updatedAt: new Date(),
     };
@@ -407,6 +409,7 @@ export class Location extends AsyncEventEmitter {
       message?: string;
       expression?: string;
       image?: string;
+      isSensitiveImage?: boolean;
       action?: string;
       emotion?: string;
     } = {}
@@ -419,6 +422,7 @@ export class Location extends AsyncEventEmitter {
       message: options.message,
       expression: options.expression,
       image: options.image,
+      isSensitiveImage: options.isSensitiveImage,
       action: options.action,
       emotion: options.emotion,
       createdAt: new Date(),
