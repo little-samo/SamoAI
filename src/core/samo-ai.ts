@@ -741,16 +741,18 @@ export class SamoAI extends AsyncEventEmitter {
         'agentExecutedNextActions',
         (agent: Agent, messages: LlmMessage[], toolCalls: LlmToolCall[]) => {
           void options.handleSave!(
-            Promise.all([
-              this.updateAgentSummary(agent, messages, toolCalls),
-              this.updateAgentMemory(agent, messages, toolCalls),
-              this.locationRepository.updateLocationStateRemainingAgentExecutions(
-                locationId,
-                {
-                  remainingAgentExecutionsDelta: -1,
-                }
-              ),
-            ])
+            this.updateAgentSummary(agent, messages, toolCalls)
+          );
+          void options.handleSave!(
+            this.updateAgentMemory(agent, messages, toolCalls)
+          );
+          void options.handleSave!(
+            this.locationRepository.updateLocationStateRemainingAgentExecutions(
+              locationId,
+              {
+                remainingAgentExecutionsDelta: -1,
+              }
+            )
           );
         }
       );
