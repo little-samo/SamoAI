@@ -3,9 +3,6 @@ import {
   GenerateContentParameters,
   GenerateContentResponse,
   GoogleGenAI,
-  HarmBlockThreshold,
-  HarmCategory,
-  SafetySetting,
 } from '@google/genai';
 
 import {
@@ -32,25 +29,6 @@ import {
 } from './llm.types';
 
 export class GeminiService extends LlmService {
-  private static readonly DEFAULT_SAFETY_SETTINGS: SafetySetting[] = [
-    {
-      category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-      threshold: HarmBlockThreshold.BLOCK_NONE,
-    },
-    {
-      category: HarmCategory.HARM_CATEGORY_HARASSMENT,
-      threshold: HarmBlockThreshold.BLOCK_NONE,
-    },
-    {
-      category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-      threshold: HarmBlockThreshold.BLOCK_NONE,
-    },
-    {
-      category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-      threshold: HarmBlockThreshold.BLOCK_NONE,
-    },
-  ];
-
   private client: GoogleGenAI;
 
   public constructor(options: LlmServiceOptions) {
@@ -199,7 +177,6 @@ export class GeminiService extends LlmService {
         temperature,
         maxOutputTokens,
         systemInstruction: systemMessages,
-        safetySettings: GeminiService.DEFAULT_SAFETY_SETTINGS,
       },
     };
     if (this.thinking) {
@@ -427,7 +404,6 @@ Response can only be in JSON format and must strictly follow the following forma
         temperature,
         maxOutputTokens,
         systemInstruction: systemMessages,
-        safetySettings: GeminiService.DEFAULT_SAFETY_SETTINGS,
       },
     };
     if (this.thinking) {
