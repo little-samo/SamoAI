@@ -417,6 +417,7 @@ export class SamoAI extends AsyncEventEmitter {
       expression?: string;
       emotion?: string;
       image?: string;
+      isSensitiveImage?: boolean;
     } = {}
   ): Promise<void> {
     const locationMessage: LocationMessage = {
@@ -430,6 +431,7 @@ export class SamoAI extends AsyncEventEmitter {
       expression: options.expression,
       emotion: options.emotion,
       image: options.image,
+      isSensitiveImage: options.isSensitiveImage,
       createdAt: createdAt ?? new Date(),
       updatedAt: new Date(),
     };
@@ -496,6 +498,7 @@ export class SamoAI extends AsyncEventEmitter {
       expression?: string;
       emotion?: string;
       image?: string;
+      isSensitiveImage?: boolean;
     } = {}
   ): Promise<void> {
     const locationMessage: LocationMessage = {
@@ -509,6 +512,7 @@ export class SamoAI extends AsyncEventEmitter {
       expression: options.expression,
       emotion: options.emotion,
       image: options.image,
+      isSensitiveImage: options.isSensitiveImage,
       createdAt: createdAt ?? new Date(),
       updatedAt: new Date(),
     };
