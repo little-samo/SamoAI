@@ -30,6 +30,7 @@ import { RegisterGimmickInput } from './gimmick.input-decorator';
 
 export const GimmickImageGenerationReferenceImageSchema = z.object({
   url: z.string(),
+  name: z.string().optional(),
   description: z.string(),
 });
 export type GimmickImageGenerationReferenceImage = z.infer<
@@ -364,7 +365,7 @@ ${this.location.state.rendering}
 
         userContents.push({
           type: 'text',
-          text: `Reference image ${i + 1}: ${referenceImage.description}`,
+          text: `Reference image ${i + 1}: ${referenceImage.name ? `${referenceImage.name} - ` : ''}${JSON.stringify(referenceImage.description)}`,
         });
         userContents.push({
           type: 'image',
