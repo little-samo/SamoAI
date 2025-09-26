@@ -16,6 +16,7 @@ export interface LocationMessageContextOptions {
   action?: string;
   image?: string;
   imageKey?: string;
+  isSensitiveImage?: boolean;
   processed?: boolean;
   created: string | Date;
 }
@@ -32,6 +33,7 @@ export class LocationMessageContext extends Context {
   public readonly action?: string;
   public readonly image?: string;
   public readonly imageKey?: string;
+  public readonly isSensitiveImage?: boolean;
   public readonly processed?: boolean;
   public readonly created: Date;
 
@@ -46,6 +48,7 @@ export class LocationMessageContext extends Context {
     this.action = options.action;
     this.image = options.image;
     this.imageKey = options.imageKey;
+    this.isSensitiveImage = options.isSensitiveImage;
     this.processed = options.processed;
     this.created = new Date(options.created);
   }
@@ -58,9 +61,10 @@ export class LocationMessageContext extends Context {
       : 'null';
     let action = this.action ? JSON.stringify(this.action) : 'null';
     if (this.image) {
+      const hiddenFlag = this.isSensitiveImage ? ' --hidden' : '';
       action = this.imageKey
-        ? `"upload_image --image-key ${this.imageKey}"`
-        : `"upload_image"`;
+        ? `"upload_image --image-key ${this.imageKey}${hiddenFlag}"`
+        : `"upload_image${hiddenFlag}"`;
     }
     const processed =
       this.processed === undefined ? 'null' : this.processed ? 'true' : 'false';

@@ -51,6 +51,7 @@ export class Location extends AsyncEventEmitter {
       action: message.action,
       image: message.image,
       imageKey: message.imageKey,
+      isSensitiveImage: message.isSensitiveImage,
       processed: message.processed,
       created: message.createdAt,
     });

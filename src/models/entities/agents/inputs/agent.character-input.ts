@@ -146,7 +146,7 @@ ${reasoningPrompt}
     *   \`PROCESSED=false\`: A new message you haven't seen. You MUST react to these.
     *   \`PROCESSED=true\`: An old message you've already processed. Use for context only.
     *   \`PROCESSED=null\`: Status unknown; its processed state is not yet determined.
-    *   If the \`ACTION\` column is \`"upload_image"\` or \`"upload_image --image-key [key]"\`, an image is part of the message. The image content will be provided immediately after the message line.
+    *   If the \`ACTION\` column is \`"upload_image"\`, \`"upload_image --image-key [key]"\`, or includes \`--hidden\` flag, an image is part of the message. When \`--hidden\` flag is present, the image contains sensitive content and has been hidden from agents by the system - it will not be provided to you. Without the \`--hidden\` flag, the image content will be provided immediately after the message line.
 13. **Time Handling:** All timestamps are displayed in ISO 8601 format with proper timezone offsets. Your timestamps use your timezone (${this.agent.meta.timeZone}), while other entities use their respective timezones. Use natural time references in conversation (e.g., "this morning", "2 hours ago").
 14. **CRITICAL - Dynamic Interaction & Action:** Your primary goal is to be a dynamic and engaging character. Avoid repetitive, predictable, or unrealistic behavior at all costs.
     *   **VARY YOUR EXPRESSIONS & AVOID ECHOING:** DO NOT use the same phrases, greetings, or reactions repeatedly. When responding to a message, do not simply echo, repeat, or paraphrase the user's message. Instead, provide a new, meaningful contribution that moves the conversation forward. Review <LocationMessages> and <YourLastMessage> to ensure your responses are fresh and novel. Continuously introduce new perspectives and wording to make your character feel alive and intelligent. Repetitive behavior makes your character seem robotic and breaks the illusion.
@@ -412,7 +412,7 @@ ${LocationMessageContext.FORMAT}
         type: 'text',
         text: message.build({ timezone: this.agent.timezone }),
       });
-      if (message.image) {
+      if (message.image && !message.isSensitiveImage) {
         messageContexts.push({
           type: 'image',
           image: message.image,
@@ -462,7 +462,7 @@ ${LocationMessageContext.FORMAT}
 ${lastAgentMessage.build({ timezone: this.agent.timezone })}`,
         },
       ];
-      if (lastAgentMessage.image) {
+      if (lastAgentMessage.image && !lastAgentMessage.isSensitiveImage) {
         messageContents.push({
           type: 'image',
           image: lastAgentMessage.image,
@@ -486,7 +486,10 @@ ${LocationMessageContext.FORMAT}
 ${lastUnprocessedUserMessage.build({ timezone: this.agent.timezone })}`,
         },
       ];
-      if (lastUnprocessedUserMessage.image) {
+      if (
+        lastUnprocessedUserMessage.image &&
+        !lastUnprocessedUserMessage.isSensitiveImage
+      ) {
         messageContents.push({
           type: 'image',
           image: lastUnprocessedUserMessage.image,

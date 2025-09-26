@@ -19,6 +19,8 @@ export interface LocationMessage {
 
   image?: string;
   imageKey?: string;
+  // Flag to indicate if image is sensitive and should be hidden from agent
+  isSensitiveImage?: boolean;
 
   // Flag to indicate if this message has been processed in location update
   processed?: boolean;
