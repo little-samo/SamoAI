@@ -268,7 +268,7 @@ export class OpenAIService extends LlmService {
           refusal += '.';
         }
         throw new LlmInvalidContentError(
-          `${this.serviceName} refused to generate content${refusal} Try again with a different request.`,
+          `${this.serviceName} refused to generate content${refusal} Try again with a different message.`,
           result
         );
       }
@@ -276,7 +276,7 @@ export class OpenAIService extends LlmService {
       const responseText = response.output_text;
       if (!responseText) {
         throw new LlmInvalidContentError(
-          `${this.serviceName} returned no content. Try again with a different request.`,
+          `${this.serviceName} returned no content. Try again with a different message.`,
           result
         );
       }
@@ -445,7 +445,7 @@ Response can only be in JSON format and must strictly follow the following forma
           refusal += '.';
         }
         throw new LlmInvalidContentError(
-          `${this.serviceName} refused to generate content${refusal} Try again with a different request.`,
+          `${this.serviceName} refused to generate content${refusal} Try again with a different message.`,
           result
         );
       }

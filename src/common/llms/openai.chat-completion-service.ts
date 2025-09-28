@@ -229,12 +229,12 @@ export class OpenAIChatCompletionService extends LlmService {
       if (!responseText) {
         if (response.choices.at(0)?.finish_reason === 'content_filter') {
           throw new LlmInvalidContentError(
-            `${this.serviceName} refused to generate content. Try again with a different request.`,
+            `${this.serviceName} refused to generate content. Try again with a different message.`,
             result
           );
         }
         throw new LlmInvalidContentError(
-          `${this.serviceName} returned no content. Try again with a different request.`,
+          `${this.serviceName} returned no content. Try again with a different message.`,
           result
         );
       }
@@ -390,7 +390,7 @@ Response can only be in JSON format and must strictly follow the following forma
       if (!responseText) {
         if (response.choices.at(0)?.finish_reason === 'content_filter') {
           throw new LlmInvalidContentError(
-            `${this.serviceName} refused to generate content. Try again with a different request.`,
+            `${this.serviceName} refused to generate content. Try again with a different message.`,
             result
           );
         }
