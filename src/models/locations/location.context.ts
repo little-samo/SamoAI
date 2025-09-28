@@ -90,7 +90,7 @@ export interface LocationCanvasContextOptions {
 
 export class LocationCanvasContext extends Context {
   public static readonly FORMAT =
-    'NAME\tDESCRIPTION\tMAX_LENGTH\tLAST_MODIFIED_BY\tLAST_MODIFIED\tTEXT';
+    'NAME\tDESCRIPTION\tLENGTH\tLAST_MODIFIED_BY\tLAST_MODIFIED\tTEXT';
 
   public readonly name: string;
   public readonly description: string;
@@ -115,7 +115,7 @@ export class LocationCanvasContext extends Context {
       this.lastModifiedAt,
       options.timezone
     );
-    return `${this.name}\t${JSON.stringify(this.description)}\t${this.maxLength}\t${this.lastModeifierKey}\t${formattedLastModifiedAt}\t${this.text}`;
+    return `${this.name}\t${JSON.stringify(this.description)}\t${this.text.length}/${this.maxLength}\t${this.lastModeifierKey}\t${formattedLastModifiedAt}\t${this.text}`;
   }
 }
 
