@@ -909,7 +909,10 @@ export class SamoAI extends AsyncEventEmitter {
         'gimmickExecuted',
         async (gimmick: Gimmick, entity: Entity) => {
           await gimmick.release(entity);
-          if (entity.type === EntityType.Agent) {
+          if (
+            !gimmick.core.options.skipResumeAgent &&
+            entity.type === EntityType.Agent
+          ) {
             if (ENV.DEBUG) {
               console.log(
                 `Force updating location ${locationId} with agent ${entity.id} for gimmick ${gimmick.id}`

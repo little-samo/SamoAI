@@ -3,6 +3,7 @@ import { EntityMeta } from '../entity.meta';
 import { type EntityKey } from '../entity.types';
 
 export interface GimmickCoreOptions {
+  skipResumeAgent?: boolean;
   [key: string]: unknown;
 }
 
