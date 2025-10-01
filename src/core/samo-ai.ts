@@ -323,7 +323,9 @@ export class SamoAI extends AsyncEventEmitter {
     agentIds: AgentId[],
     userIds: UserId[]
   ): Promise<Map<AgentId, Agent>> {
-    const agentModels = await this.agentRepository.getAgentModels(agentIds);
+    const agentModels = await this.agentRepository.getAgentModels(agentIds, {
+      locationModel: location.model,
+    });
     const agentStates =
       await this.agentRepository.getOrCreateAgentStates(agentIds);
     const agentEntityStates =

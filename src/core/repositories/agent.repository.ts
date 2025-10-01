@@ -1,4 +1,4 @@
-import {
+import type {
   AgentId,
   AgentModel,
   AgentState,
@@ -6,11 +6,18 @@ import {
   EntityId,
   EntityType,
   UserId,
+  LocationModel,
 } from '@little-samo/samo-ai/models';
 
 export interface AgentRepository {
-  getAgentModel(agentId: AgentId): Promise<AgentModel>;
-  getAgentModels(agentIds: AgentId[]): Promise<Map<AgentId, AgentModel>>;
+  getAgentModel(
+    agentId: AgentId,
+    options?: { locationModel?: LocationModel }
+  ): Promise<AgentModel>;
+  getAgentModels(
+    agentIds: AgentId[],
+    options?: { locationModel?: LocationModel }
+  ): Promise<Map<AgentId, AgentModel>>;
   getOrCreateAgentState(agentId: AgentId): Promise<AgentState>;
   getOrCreateAgentStates(
     agentIds: AgentId[]
