@@ -435,7 +435,11 @@ ${LocationMessageContext.FORMAT}
 
     // Find the last message from the agent and the last unprocessed user message in a single pass.
     for (const message of locationContext.messages.slice().reverse()) {
-      if (!lastAgentMessage && message.key === this.agent.key) {
+      if (
+        !lastAgentMessage &&
+        message.message &&
+        message.key === this.agent.key
+      ) {
         lastAgentMessage = message;
       }
       // An unprocessed message is explicitly marked as `false`. `null` means its state is not yet determined.
