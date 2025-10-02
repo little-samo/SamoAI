@@ -160,17 +160,21 @@ IMPORTANT RULES (Follow Strictly):
 ${importantRules.map((r) => r.trim()).join('\n')}
 `);
 
+    const locationRules = [...this.location.meta.rules];
+    for (const user of this.location.getUsers()) {
+      locationRules.push(...user.meta.locationRules);
+    }
     const requiredActions = [
       ...this.agent.meta.requiredActions,
       ...this.location.meta.requiredActions,
     ];
-    if (this.location.meta.rules.length > 0 || requiredActions.length > 0) {
-      const locationRules = [...this.location.meta.rules];
-      if (requiredActions.length > 0) {
-        locationRules.push(
-          `You MUST use the following tools: ${requiredActions.join(', ')}, before using any other tools.`
-        );
-      }
+    if (requiredActions.length > 0) {
+      locationRules.push(
+        `You MUST use the following tools: ${requiredActions.join(', ')}, before using any other tools.`
+      );
+    }
+
+    if (locationRules.length > 0) {
       prompts.push(`
 Location Rules:
 - ${locationRules.join('\n- ')}
