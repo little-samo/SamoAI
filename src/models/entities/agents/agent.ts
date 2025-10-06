@@ -490,6 +490,8 @@ export class Agent extends Entity {
         );
 
         // Execute tool calls and stream message fields as they arrive
+        // Track sequence number to preserve event order
+        let streamSequence = 0;
         let result = await generator.next();
         while (!result.done) {
           const event = result.value;
@@ -498,16 +500,20 @@ export class Agent extends Entity {
             case 'field':
               // Emit partial message content for send_message or send_casual_message
               await this.location.emitAsync(
-                'agentMessageFieldUpdate',
+                'agentSendMessageStream',
                 this,
                 event.index,
-                event.toolName,
-                event.argumentKey,
-                event.delta,
-                event.value
+                streamSequence++,
+                event.delta
               );
               break;
             case 'toolCall':
+              await this.location.emitAsync(
+                'agentExecuteNextAction',
+                this,
+                event.index,
+                event.toolCall
+              );
               await this.executeToolCall(event.toolCall);
               break;
           }
