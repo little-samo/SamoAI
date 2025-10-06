@@ -6,6 +6,7 @@ import {
   LlmServiceOptions,
   LlmGenerateResponse,
   LlmToolsResponse,
+  LlmToolsStreamChunk,
 } from './llm.types';
 
 export abstract class LlmService {
@@ -45,4 +46,10 @@ export abstract class LlmService {
     tools: LlmTool[],
     options?: LlmOptions
   ): Promise<LlmToolsResponse>;
+
+  public abstract useToolsStream(
+    messages: LlmMessage[],
+    tools: LlmTool[],
+    options?: LlmOptions
+  ): AsyncGenerator<LlmToolsStreamChunk, LlmToolsResponse>;
 }

@@ -1,6 +1,7 @@
 export * from './array';
 export * from './event';
 export * from './image';
+export * from './json-stream';
 export * from './json';
 export * from './sleep';
 export * from './string';

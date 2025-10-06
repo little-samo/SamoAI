@@ -3,13 +3,20 @@ import { zodTextFormat } from 'openai/helpers/zod';
 import { ResponseFormatJSONObject, ResponseFormatText } from 'openai/resources';
 import {
   Response,
+  ResponseCreateParamsBase,
   ResponseCreateParamsNonStreaming,
+  ResponseCreateParamsStreaming,
   ResponseFormatTextJSONSchemaConfig,
   ResponseInput,
   ResponseOutputText,
 } from 'openai/resources/responses/responses';
 
-import { sleep, zodSchemaToLlmFriendlyString, parseAndFixJson } from '../utils';
+import {
+  sleep,
+  zodSchemaToLlmFriendlyString,
+  parseAndFixJson,
+  JsonArrayStreamParser,
+} from '../utils';
 
 import { LlmApiError } from './llm.errors';
 import { LlmInvalidContentError } from './llm.errors';
@@ -23,6 +30,7 @@ import {
   LlmResponseBase,
   LlmServiceOptions,
   LlmToolsResponse,
+  LlmToolsStreamChunk,
 } from './llm.types';
 
 export class OpenAIService extends LlmService {
@@ -154,6 +162,29 @@ export class OpenAIService extends LlmService {
     }
   }
 
+  private throwIfContentFiltered(
+    response: Response,
+    result: LlmResponseBase
+  ): void {
+    if (response.incomplete_details?.reason !== 'content_filter') {
+      return;
+    }
+
+    let refusal = this.findRefusal(response);
+    if (refusal) {
+      refusal = `: ${refusal}`;
+    } else {
+      refusal = '';
+    }
+    if (!refusal.endsWith('.')) {
+      refusal += '.';
+    }
+    throw new LlmInvalidContentError(
+      `${this.serviceName} refused to generate content${refusal} Try again with a different message.`,
+      result
+    );
+  }
+
   private findAnnotations(
     response: Response
   ):
@@ -257,21 +288,7 @@ export class OpenAIService extends LlmService {
         responseTime,
       };
 
-      if (response.incomplete_details?.reason === 'content_filter') {
-        let refusal = this.findRefusal(response);
-        if (refusal) {
-          refusal = `: ${refusal}`;
-        } else {
-          refusal = '';
-        }
-        if (!refusal.endsWith('.')) {
-          refusal += '.';
-        }
-        throw new LlmInvalidContentError(
-          `${this.serviceName} refused to generate content${refusal} Try again with a different message.`,
-          result
-        );
-      }
+      this.throwIfContentFiltered(response, result);
 
       const responseText = response.output_text;
       if (!responseText) {
@@ -337,6 +354,87 @@ export class OpenAIService extends LlmService {
     }
   }
 
+  private prepareToolsSystemMessages(
+    systemMessages: string[],
+    tools: LlmTool[]
+  ): void {
+    systemMessages.push(
+      `The definition of the tools you have can be organized as a JSON Schema as follows. Clearly understand the definition and purpose of each tool.`
+    );
+
+    for (const tool of tools) {
+      const parameters = zodSchemaToLlmFriendlyString(tool.parameters);
+      systemMessages.push(
+        `name: ${tool.name}
+description: ${tool.description}
+parameters: ${parameters}`
+      );
+    }
+
+    systemMessages.push(
+      `Refer to the definitions of the available tools above, and output the tools you plan to use in JSON format. Based on that analysis, select and use the necessary tools from the rest—following the guidance provided in the previous prompt.
+
+Response can only be in JSON format and must strictly follow the following format, with no surrounding text or markdown:
+[
+  {
+    "name": "tool_name",
+    "arguments": { ... }
+  },
+  ... // (Include additional tool calls as needed)
+]`
+    );
+  }
+
+  private buildToolsRequest(
+    systemMessages: string[],
+    userAssistantMessages: ResponseInput,
+    options?: LlmOptions
+  ): {
+    request: ResponseCreateParamsBase;
+    maxOutputTokens: number;
+    temperature: number | undefined;
+  } {
+    let maxOutputTokens = options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS;
+    let temperature: number | undefined;
+    const request: ResponseCreateParamsBase = {
+      model: this.model,
+      instructions: systemMessages.join('\n\n'),
+      input: userAssistantMessages,
+      max_output_tokens: maxOutputTokens,
+      text: {
+        format: { type: 'text' as const },
+      },
+      store: false,
+    };
+    if (options?.webSearch) {
+      request.tools = [
+        {
+          type: 'web_search' as const,
+        },
+      ];
+    }
+    // web search models and gpt-5 do not support temperature
+    if (!options?.webSearch && !this.model.startsWith('gpt-5')) {
+      temperature = options?.temperature ?? LlmService.DEFAULT_TEMPERATURE;
+      request.temperature = temperature;
+    }
+    if (this.thinking && options?.thinkingLevel) {
+      // add thinking tokens to max output tokens until thinking budget is supported
+      maxOutputTokens +=
+        options?.maxThinkingTokens ?? LlmService.DEFAULT_MAX_THINKING_TOKENS;
+      if (this.supportThinkingLevel && options?.thinkingLevel) {
+        request.reasoning = {
+          effort: options.thinkingLevel,
+        };
+      }
+      if (this.supportOutputVerbosity && options?.outputVerbosity) {
+        (request.text as Record<string, unknown>).verbosity =
+          options.outputVerbosity;
+      }
+    }
+    return { request, maxOutputTokens, temperature };
+  }
+
   public async useTools(
     messages: LlmMessage[],
     tools: LlmTool[],
@@ -349,72 +447,23 @@ export class OpenAIService extends LlmService {
       const [systemMessages, userAssistantMessages] =
         this.llmMessagesToOpenAiMessages(messages);
 
-      systemMessages.push(
-        `The definition of the tools you have can be organized as a JSON Schema as follows. Clearly understand the definition and purpose of each tool.`
+      this.prepareToolsSystemMessages(systemMessages, tools);
+
+      const { request, maxOutputTokens, temperature } = this.buildToolsRequest(
+        systemMessages,
+        userAssistantMessages,
+        options
       );
 
-      for (const tool of tools) {
-        const parameters = zodSchemaToLlmFriendlyString(tool.parameters);
-        systemMessages.push(
-          `name: ${tool.name}
-description: ${tool.description}
-parameters: ${parameters}`
-        );
-      }
-
-      systemMessages.push(
-        `Refer to the definitions of the available tools above, and output the tools you plan to use in JSON format. Based on that analysis, select and use the necessary tools from the rest—following the guidance provided in the previous prompt.
-
-Response can only be in JSON format and must strictly follow the following format, with no surrounding text or markdown:
-[
-  {
-    "name": "tool_name",
-    "arguments": { ... }
-  },
-  ... // (Include additional tool calls as needed)
-]`
-      );
-
-      let maxOutputTokens = options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS;
-      let temperature: number | undefined;
-      const request: ResponseCreateParamsNonStreaming = {
-        model: this.model,
-        instructions: systemMessages.join('\n\n'),
-        input: userAssistantMessages,
-        max_output_tokens: maxOutputTokens,
-        text: {
-          format: { type: 'text' },
-        },
-      };
-      if (options?.webSearch) {
-        request.tools ??= [];
-        request.tools.push({
-          type: 'web_search',
-        });
-      }
-      // web search models and gpt-5 do not support temperature
-      if (!options?.webSearch && !this.model.startsWith('gpt-5')) {
-        temperature = options?.temperature ?? LlmService.DEFAULT_TEMPERATURE;
-        request.temperature = temperature;
-      }
-      if (this.thinking) {
-        // add thinking tokens to max output tokens until thinking budget is supported
-        maxOutputTokens +=
-          options?.maxThinkingTokens ?? LlmService.DEFAULT_MAX_THINKING_TOKENS;
-        if (this.supportThinkingLevel && options?.thinkingLevel) {
-          request.reasoning ??= {};
-          request.reasoning.effort = options.thinkingLevel;
-        }
-        if (this.supportOutputVerbosity && options?.outputVerbosity) {
-          request.text!.verbosity = options.outputVerbosity;
-        }
-      }
       if (options?.verbose) {
         console.log(request);
       }
 
       const startTime = Date.now();
-      const response = await this.createResponsesWithRetry(request, options);
+      const response = await this.createResponsesWithRetry(
+        request as ResponseCreateParamsNonStreaming,
+        options
+      );
       const responseTime = Date.now() - startTime;
 
       const result: LlmResponseBase = {
@@ -434,21 +483,7 @@ Response can only be in JSON format and must strictly follow the following forma
         responseTime,
       };
 
-      if (response.incomplete_details?.reason === 'content_filter') {
-        let refusal = this.findRefusal(response);
-        if (refusal) {
-          refusal = `: ${refusal}`;
-        } else {
-          refusal = '';
-        }
-        if (!refusal.endsWith('.')) {
-          refusal += '.';
-        }
-        throw new LlmInvalidContentError(
-          `${this.serviceName} refused to generate content${refusal} Try again with a different message.`,
-          result
-        );
-      }
+      this.throwIfContentFiltered(response, result);
 
       const responseText = response.output_text;
       if (!responseText) {
@@ -472,6 +507,137 @@ Response can only be in JSON format and must strictly follow the following forma
           result
         );
       }
+    } catch (error) {
+      if (error instanceof OpenAI.APIError) {
+        throw new LlmApiError(error.status, error.message);
+      }
+      throw error;
+    }
+  }
+
+  public async *useToolsStream(
+    messages: LlmMessage[],
+    tools: LlmTool[],
+    options?: LlmOptions
+  ): AsyncGenerator<LlmToolsStreamChunk, LlmToolsResponse> {
+    try {
+      // openai does not support assistant message prefilling
+      messages = messages.filter((message) => message.role !== 'assistant');
+
+      const [systemMessages, userAssistantMessages] =
+        this.llmMessagesToOpenAiMessages(messages);
+
+      this.prepareToolsSystemMessages(systemMessages, tools);
+
+      const { request, maxOutputTokens, temperature } = this.buildToolsRequest(
+        systemMessages,
+        userAssistantMessages,
+        options
+      );
+      request.stream = true;
+
+      if (options?.verbose) {
+        console.log(request);
+      }
+
+      const startTime = Date.now();
+      const stream = await this.client.responses.create(
+        request as ResponseCreateParamsStreaming
+      );
+
+      const parser = new JsonArrayStreamParser();
+      let response: Response | null = null;
+
+      for await (const chunk of stream) {
+        switch (chunk.type) {
+          case 'response.output_text.delta': {
+            const textDelta = chunk.delta;
+
+            // Process the chunk and yield any complete tool calls
+            for (const { json, index } of parser.processChunk(textDelta)) {
+              try {
+                const toolCall = JSON.parse(json) as LlmToolCall;
+                yield {
+                  toolCall,
+                  index,
+                };
+              } catch (error) {
+                console.error('Failed to parse tool call:', error);
+                console.error('JSON:', json);
+              }
+            }
+            break;
+          }
+          case 'response.completed': {
+            response = chunk.response;
+            break;
+          }
+          case 'error': {
+            throw new LlmApiError(500, chunk.message);
+          }
+        }
+      }
+
+      if (!response) {
+        throw new LlmApiError(500, 'No response received from stream');
+      }
+
+      const responseTime = Date.now() - startTime;
+
+      const result: LlmResponseBase = {
+        platform: this.platform,
+        model: this.model,
+        thinking: this.thinking,
+        maxOutputTokens,
+        temperature,
+        inputTokens: response.usage?.input_tokens ?? 0,
+        outputTokens: response.usage?.output_tokens ?? 0,
+        thinkingTokens:
+          response.usage?.output_tokens_details?.reasoning_tokens ?? 0,
+        cachedInputTokens:
+          response.usage?.input_tokens_details?.cached_tokens ?? 0,
+        request,
+        response,
+        responseTime,
+      };
+
+      this.throwIfContentFiltered(response, result);
+
+      // Finalize and yield any remaining tool calls
+      for (const { json, index } of parser.finalize()) {
+        try {
+          const toolCall = JSON.parse(json) as LlmToolCall;
+          yield {
+            toolCall,
+            index,
+          };
+        } catch (error) {
+          console.error('Failed to parse tool call:', error);
+          console.error('JSON:', json);
+        }
+      }
+
+      // Parse all tool calls from the complete response
+      const responseText = response.output_text;
+      let toolCalls: LlmToolCall[] = [];
+
+      if (responseText) {
+        try {
+          toolCalls = parseAndFixJson<LlmToolCall[]>(responseText);
+        } catch (error) {
+          console.error(error);
+          console.error(responseText);
+          throw new LlmInvalidContentError(
+            `${this.serviceName} returned invalid JSON`,
+            result
+          );
+        }
+      }
+
+      return {
+        ...result,
+        toolCalls,
+      };
     } catch (error) {
       if (error instanceof OpenAI.APIError) {
         throw new LlmApiError(error.status, error.message);

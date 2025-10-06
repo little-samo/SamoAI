@@ -68,15 +68,11 @@ export function fixJson(jsonString: string): string {
   const stack: Array<'{' | '[' | '"'> = [];
   let inString = false;
   let escaped = false;
-  let lastNonWhitespaceIndex = -1;
+  let lastValidIndex = -1; // Track the last valid character position
 
   // Parse through the string to understand its structure
   for (let i = 0; i < fixed.length; i++) {
     const char = fixed[i];
-
-    if (!char.match(/\s/)) {
-      lastNonWhitespaceIndex = i;
-    }
 
     if (escaped) {
       escaped = false;
@@ -100,32 +96,43 @@ export function fixJson(jsonString: string): string {
         inString = true;
         stack.push('"');
       }
+      lastValidIndex = i;
       continue;
     }
 
     // Skip characters inside strings
     if (inString) {
+      lastValidIndex = i;
       continue;
     }
 
     if (char === '{') {
       stack.push('{');
+      lastValidIndex = i;
     } else if (char === '[') {
       stack.push('[');
+      lastValidIndex = i;
     } else if (char === '}') {
       if (stack[stack.length - 1] === '{') {
         stack.pop();
+        lastValidIndex = i;
       }
+      // If no matching opening bracket, this is an excess closing bracket - don't update lastValidIndex
     } else if (char === ']') {
       if (stack[stack.length - 1] === '[') {
         stack.pop();
+        lastValidIndex = i;
       }
+      // If no matching opening bracket, this is an excess closing bracket - don't update lastValidIndex
+    } else if (!char.match(/\s/)) {
+      // Other non-whitespace characters (commas, colons, etc.)
+      lastValidIndex = i;
     }
   }
 
-  // Trim to last non-whitespace character + 1
-  if (lastNonWhitespaceIndex >= 0) {
-    fixed = fixed.substring(0, lastNonWhitespaceIndex + 1);
+  // Trim to last valid character + 1 (removes excess closing brackets)
+  if (lastValidIndex >= 0) {
+    fixed = fixed.substring(0, lastValidIndex + 1);
   }
 
   // Handle backslash truncation

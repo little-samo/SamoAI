@@ -5,12 +5,21 @@ import {
   ResponseFormatText,
 } from 'openai/resources';
 import {
+  ChatCompletionCreateParams,
   ChatCompletionCreateParamsNonStreaming,
+  ChatCompletionCreateParamsStreaming,
   ChatCompletionMessageParam,
+  ChatCompletionChunk,
+  ChatCompletionCreateParamsBase,
 } from 'openai/resources/chat/completions';
 import zodToJsonSchema from 'zod-to-json-schema';
 
-import { sleep, zodSchemaToLlmFriendlyString, parseAndFixJson } from '../utils';
+import {
+  sleep,
+  zodSchemaToLlmFriendlyString,
+  parseAndFixJson,
+  JsonArrayStreamParser,
+} from '../utils';
 
 import { LlmApiError } from './llm.errors';
 import { LlmInvalidContentError } from './llm.errors';
@@ -24,6 +33,7 @@ import {
   LlmResponseBase,
   LlmServiceOptions,
   LlmToolsResponse,
+  LlmToolsStreamChunk,
 } from './llm.types';
 
 export class OpenAIChatCompletionService extends LlmService {
@@ -296,6 +306,76 @@ export class OpenAIChatCompletionService extends LlmService {
     }
   }
 
+  private prepareToolsSystemMessages(
+    systemMessages: ChatCompletionMessageParam[],
+    tools: LlmTool[]
+  ): void {
+    systemMessages.push({
+      role: 'system',
+      content: `The definition of the tools you have can be organized as a JSON Schema as follows. Clearly understand the definition and purpose of each tool.`,
+    });
+
+    for (const tool of tools) {
+      const parameters = zodSchemaToLlmFriendlyString(tool.parameters);
+      systemMessages.push({
+        role: 'system',
+        content: `name: ${tool.name}
+description: ${tool.description}
+parameters: ${parameters}`,
+      });
+    }
+
+    systemMessages.push({
+      role: 'system',
+      content: `Refer to the definitions of the available tools above, and output the tools you plan to use in JSON format. Based on that analysis, select and use the necessary tools from the rest—following the guidance provided in the previous prompt.
+
+Response can only be in JSON format and must strictly follow the following format, with no surrounding text or markdown:
+[
+  {
+    "name": "tool_name",
+    "arguments": { ... }
+  },
+  ... // (Include additional tool calls as needed)
+]`,
+    });
+  }
+
+  private buildToolsRequest(
+    systemMessages: ChatCompletionMessageParam[],
+    userAssistantMessages: ChatCompletionMessageParam[],
+    options?: LlmOptions
+  ): {
+    request: ChatCompletionCreateParamsBase;
+    maxOutputTokens: number;
+    temperature: number | undefined;
+  } {
+    let maxOutputTokens = options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS;
+    let temperature: number | undefined;
+    const request: ChatCompletionCreateParams = {
+      model: this.model,
+      messages: [...systemMessages, ...userAssistantMessages],
+      max_completion_tokens: maxOutputTokens,
+      response_format: { type: 'text' as const },
+    };
+    // web search models and gpt-5 do not support temperature
+    if (!options?.webSearch && !this.model.startsWith('gpt-5')) {
+      temperature = options?.temperature ?? LlmService.DEFAULT_TEMPERATURE;
+      request.temperature = temperature;
+    }
+    if (this.thinking) {
+      // add thinking tokens to max output tokens until thinking budget is supported
+      maxOutputTokens +=
+        options?.maxThinkingTokens ?? LlmService.DEFAULT_MAX_THINKING_TOKENS;
+      if (this.supportThinkingLevel && options?.thinkingLevel) {
+        request.reasoning_effort = options.thinkingLevel;
+      }
+      if (this.supportOutputVerbosity && options?.outputVerbosity) {
+        request.verbosity = options.outputVerbosity;
+      }
+    }
+    return { request, maxOutputTokens, temperature };
+  }
+
   public async useTools(
     messages: LlmMessage[],
     tools: LlmTool[],
@@ -308,65 +388,23 @@ export class OpenAIChatCompletionService extends LlmService {
       const [systemMessages, userAssistantMessages] =
         this.llmMessagesToOpenAiMessages(messages);
 
-      systemMessages.push({
-        role: 'system',
-        content: `The definition of the tools you have can be organized as a JSON Schema as follows. Clearly understand the definition and purpose of each tool.`,
-      });
+      this.prepareToolsSystemMessages(systemMessages, tools);
 
-      for (const tool of tools) {
-        const parameters = zodSchemaToLlmFriendlyString(tool.parameters);
-        systemMessages.push({
-          role: 'system',
-          content: `name: ${tool.name}
-description: ${tool.description}
-parameters: ${parameters}`,
-        });
-      }
+      const { request, maxOutputTokens, temperature } = this.buildToolsRequest(
+        systemMessages,
+        userAssistantMessages,
+        options
+      );
 
-      systemMessages.push({
-        role: 'system',
-        content: `Refer to the definitions of the available tools above, and output the tools you plan to use in JSON format. Based on that analysis, select and use the necessary tools from the rest—following the guidance provided in the previous prompt.
-
-Response can only be in JSON format and must strictly follow the following format, with no surrounding text or markdown:
-[
-  {
-    "name": "tool_name",
-    "arguments": { ... }
-  },
-  ... // (Include additional tool calls as needed)
-]`,
-      });
-
-      let maxOutputTokens = options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS;
-      let temperature: number | undefined;
-      const request: ChatCompletionCreateParamsNonStreaming = {
-        model: this.model,
-        messages: [...systemMessages, ...userAssistantMessages],
-        max_completion_tokens: maxOutputTokens,
-        response_format: { type: 'text' },
-      };
-      // web search models and gpt-5 do not support temperature
-      if (!options?.webSearch && !this.model.startsWith('gpt-5')) {
-        temperature = options?.temperature ?? LlmService.DEFAULT_TEMPERATURE;
-        request.temperature = temperature;
-      }
-      if (this.thinking) {
-        // add thinking tokens to max output tokens until thinking budget is supported
-        maxOutputTokens +=
-          options?.maxThinkingTokens ?? LlmService.DEFAULT_MAX_THINKING_TOKENS;
-        if (this.supportThinkingLevel && options?.thinkingLevel) {
-          request.reasoning_effort = options.thinkingLevel;
-        }
-        if (this.supportOutputVerbosity && options?.outputVerbosity) {
-          request.verbosity = options.outputVerbosity;
-        }
-      }
       if (options?.verbose) {
         console.log(request);
       }
 
       const startTime = Date.now();
-      const response = await this.createCompletionWithRetry(request, options);
+      const response = await this.createCompletionWithRetry(
+        request as ChatCompletionCreateParamsNonStreaming,
+        options
+      );
       const responseTime = Date.now() - startTime;
 
       const result: LlmResponseBase = {
@@ -409,6 +447,175 @@ Response can only be in JSON format and must strictly follow the following forma
       } catch (error) {
         console.error(error);
         console.error(responseText);
+        throw new LlmInvalidContentError(
+          `${this.serviceName} returned invalid JSON`,
+          result
+        );
+      }
+    } catch (error) {
+      if (error instanceof OpenAI.APIError) {
+        throw new LlmApiError(error.status, error.message);
+      }
+      throw error;
+    }
+  }
+
+  public async *useToolsStream(
+    messages: LlmMessage[],
+    tools: LlmTool[],
+    options?: LlmOptions
+  ): AsyncGenerator<LlmToolsStreamChunk, LlmToolsResponse, unknown> {
+    try {
+      // openai does not support assistant message prefilling
+      messages = messages.filter((message) => message.role !== 'assistant');
+
+      const [systemMessages, userAssistantMessages] =
+        this.llmMessagesToOpenAiMessages(messages);
+
+      this.prepareToolsSystemMessages(systemMessages, tools);
+
+      const { request, maxOutputTokens, temperature } = this.buildToolsRequest(
+        systemMessages,
+        userAssistantMessages,
+        options
+      );
+      request.stream = true;
+      request.stream_options = {
+        include_usage: true,
+      };
+
+      if (options?.verbose) {
+        console.log(request);
+      }
+
+      const startTime = Date.now();
+      const stream = await this.client.chat.completions.create(
+        request as ChatCompletionCreateParamsStreaming
+      );
+
+      const parser = new JsonArrayStreamParser();
+      let fullText = '';
+      let lastChunk: ChatCompletionChunk | null = null;
+      let usage: {
+        prompt_tokens?: number;
+        completion_tokens?: number;
+        completion_tokens_details?: { reasoning_tokens?: number };
+        prompt_tokens_details?: { cached_tokens?: number };
+      } | null = null;
+
+      let refusal: string | undefined;
+      for await (const chunk of stream) {
+        // Store the last chunk
+        lastChunk = chunk;
+
+        if (chunk.usage) {
+          usage = chunk.usage;
+        }
+
+        const choice = chunk.choices?.[0];
+        if (choice) {
+          const delta = choice.delta;
+          if (delta) {
+            if (delta.refusal) {
+              refusal = delta.refusal;
+              break;
+            }
+
+            if (delta.content) {
+              const textDelta = delta.content;
+              fullText += textDelta;
+
+              // Process the chunk and yield any complete tool calls
+              for (const { json, index } of parser.processChunk(textDelta)) {
+                try {
+                  const toolCall = JSON.parse(json) as LlmToolCall;
+                  yield {
+                    toolCall,
+                    index,
+                  };
+                } catch (error) {
+                  console.error('Failed to parse tool call:', error);
+                  console.error('JSON:', json);
+                }
+              }
+            }
+          }
+
+          if (choice.finish_reason === 'content_filter' && !refusal) {
+            refusal = '';
+          }
+        }
+      }
+
+      if (!lastChunk) {
+        throw new LlmApiError(500, 'No response received from stream');
+      }
+
+      const responseTime = Date.now() - startTime;
+
+      const result: LlmResponseBase = {
+        platform: this.platform,
+        model: this.model,
+        thinking: this.thinking,
+        maxOutputTokens,
+        temperature,
+        inputTokens: usage?.prompt_tokens ?? 0,
+        outputTokens: usage?.completion_tokens ?? 0,
+        thinkingTokens: usage?.completion_tokens_details?.reasoning_tokens ?? 0,
+        cachedInputTokens: usage?.prompt_tokens_details?.cached_tokens ?? 0,
+        request,
+        response: {
+          ...lastChunk,
+          output_text: fullText,
+        },
+        responseTime,
+      };
+
+      if (refusal !== undefined) {
+        if (refusal) {
+          refusal = `: ${refusal}`;
+        } else {
+          refusal = '';
+        }
+        if (!refusal.endsWith('.')) {
+          refusal += '.';
+        }
+        throw new LlmInvalidContentError(
+          `${this.serviceName} refused to generate content${refusal} Try again with a different message.`,
+          result
+        );
+      }
+
+      // Finalize and yield any remaining tool calls
+      for (const { json, index } of parser.finalize()) {
+        try {
+          const toolCall = JSON.parse(json) as LlmToolCall;
+          yield {
+            toolCall,
+            index,
+          };
+        } catch (error) {
+          console.error('Failed to parse tool call:', error);
+          console.error('JSON:', json);
+        }
+      }
+
+      if (!fullText) {
+        return {
+          ...result,
+          toolCalls: [],
+        };
+      }
+
+      try {
+        const toolCalls = parseAndFixJson<LlmToolCall[]>(fullText);
+        return {
+          ...result,
+          toolCalls,
+        };
+      } catch (error) {
+        console.error(error);
+        console.error(fullText);
         throw new LlmInvalidContentError(
           `${this.serviceName} returned invalid JSON`,
           result

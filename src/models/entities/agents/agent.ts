@@ -469,9 +469,10 @@ export class Agent extends Entity {
       const input = this.getInput(inputIndex);
       const llm = this.getLlm(llmIndex);
       const messages = input.build({ llm });
-      let useToolsResponse: LlmToolsResponse;
+
+      let useToolsResponse: LlmToolsResponse | undefined;
       try {
-        useToolsResponse = await llm.useTools(
+        const generator = llm.useToolsStream(
           messages,
           Object.values(this.getActions()),
           {
@@ -483,6 +484,19 @@ export class Agent extends Entity {
             verbose: ENV.VERBOSE_LLM,
           }
         );
+
+        // Execute tool calls as they arrive
+        let result = await generator.next();
+        while (!result.done) {
+          await this.executeToolCall(result.value.toolCall);
+          result = await generator.next();
+        }
+
+        // Get the final response from the return value
+        useToolsResponse = result.value;
+        if (!useToolsResponse) {
+          throw new Error('No final response from stream');
+        }
       } catch (error) {
         if (error instanceof LlmInvalidContentError && error.llmResponse) {
           error.llmResponse.logType = LlmUsageType.EXECUTION;
@@ -493,10 +507,6 @@ export class Agent extends Entity {
 
       useToolsResponse.logType = LlmUsageType.EXECUTION;
       await this.location.emitAsync('llmUseTools', this, useToolsResponse);
-
-      for (const toolCall of useToolsResponse.toolCalls) {
-        await this.executeToolCall(toolCall);
-      }
 
       await this.location.emitAsync(
         'agentExecutedNextActions',

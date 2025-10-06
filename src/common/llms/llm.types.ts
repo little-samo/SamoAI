@@ -158,3 +158,11 @@ export interface LlmToolsResponse extends LlmResponseBase {
     arguments: unknown;
   }>;
 }
+
+export interface LlmToolsStreamChunk {
+  toolCall: {
+    name: string;
+    arguments: unknown;
+  };
+  index: number;
+}

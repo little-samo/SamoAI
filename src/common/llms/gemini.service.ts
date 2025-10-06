@@ -10,6 +10,7 @@ import {
   zodSchemaToLlmFriendlyString,
   parseAndFixJson,
   getImageBase64,
+  JsonArrayStreamParser,
 } from '../utils';
 
 import { LlmApiError, LlmInvalidContentError } from './llm.errors';
@@ -26,6 +27,7 @@ import {
   LlmResponseBase,
   LlmGenerateResponseWebSearchSource,
   LlmResponseType,
+  LlmToolsStreamChunk,
 } from './llm.types';
 
 export class GeminiService extends LlmService {
@@ -248,6 +250,9 @@ export class GeminiService extends LlmService {
       outputTokens += thinkingTokens;
     }
 
+    const cachedInputTokens =
+      response.usageMetadata?.cachedContentTokenCount ?? undefined;
+
     const result: LlmResponseBase = {
       platform: LlmPlatform.GEMINI,
       model: this.model,
@@ -258,8 +263,7 @@ export class GeminiService extends LlmService {
       inputTokens,
       outputTokens,
       thinkingTokens,
-      cachedInputTokens:
-        response.usageMetadata?.cachedContentTokenCount ?? undefined,
+      cachedInputTokens,
       request,
       response,
       responseTime,
@@ -357,17 +361,10 @@ export class GeminiService extends LlmService {
     };
   }
 
-  public async useTools(
-    messages: LlmMessage[],
-    tools: LlmTool[],
-    options?: LlmOptions
-  ): Promise<LlmToolsResponse> {
-    // gemini does not support assistant message prefilling
-    messages = messages.filter((message) => message.role !== 'assistant');
-
-    const [systemMessages, userAssistantMessages] =
-      await this.llmMessagesToGeminiMessages(messages);
-
+  private prepareToolsSystemMessages(
+    systemMessages: Content,
+    tools: LlmTool[]
+  ): void {
     systemMessages.parts!.push({
       text: `The definition of the tools you have can be organized as a JSON Schema as follows. Clearly understand the definition and purpose of each tool.`,
     });
@@ -393,7 +390,18 @@ Response can only be in JSON format and must strictly follow the following forma
 ... // (Include additional tool calls as needed)
 ]`,
     });
+  }
 
+  private buildToolsRequest(
+    systemMessages: Content,
+    userAssistantMessages: Content[],
+    options?: LlmOptions
+  ): {
+    request: GenerateContentParameters;
+    maxOutputTokens: number;
+    thinkingBudget: number | undefined;
+    temperature: number;
+  } {
     let maxOutputTokens = options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS;
     let thinkingBudget: number | undefined;
     const temperature = options?.temperature ?? LlmService.DEFAULT_TEMPERATURE;
@@ -433,6 +441,25 @@ Response can only be in JSON format and must strictly follow the following forma
     } else {
       request.config!.responseMimeType = 'application/json';
     }
+    return { request, maxOutputTokens, thinkingBudget, temperature };
+  }
+
+  public async useTools(
+    messages: LlmMessage[],
+    tools: LlmTool[],
+    options?: LlmOptions
+  ): Promise<LlmToolsResponse> {
+    // gemini does not support assistant message prefilling
+    messages = messages.filter((message) => message.role !== 'assistant');
+
+    const [systemMessages, userAssistantMessages] =
+      await this.llmMessagesToGeminiMessages(messages);
+
+    this.prepareToolsSystemMessages(systemMessages, tools);
+
+    const { request, maxOutputTokens, thinkingBudget, temperature } =
+      this.buildToolsRequest(systemMessages, userAssistantMessages, options);
+
     if (options?.verbose) {
       console.log(request);
     }
@@ -453,6 +480,9 @@ Response can only be in JSON format and must strictly follow the following forma
       outputTokens += thinkingTokens;
     }
 
+    const cachedInputTokens =
+      response.usageMetadata?.cachedContentTokenCount ?? undefined;
+
     const result: LlmResponseBase = {
       platform: LlmPlatform.GEMINI,
       model: this.model,
@@ -463,8 +493,7 @@ Response can only be in JSON format and must strictly follow the following forma
       inputTokens,
       outputTokens,
       thinkingTokens,
-      cachedInputTokens:
-        response.usageMetadata?.cachedContentTokenCount ?? undefined,
+      cachedInputTokens,
       request,
       response,
       responseTime,
@@ -502,6 +531,148 @@ Response can only be in JSON format and must strictly follow the following forma
     } catch (error) {
       console.error(error);
       console.error(responseText);
+      throw new LlmInvalidContentError('Gemini returned invalid JSON', result);
+    }
+  }
+
+  public async *useToolsStream(
+    messages: LlmMessage[],
+    tools: LlmTool[],
+    options?: LlmOptions
+  ): AsyncGenerator<LlmToolsStreamChunk, LlmToolsResponse, unknown> {
+    // gemini does not support assistant message prefilling
+    messages = messages.filter((message) => message.role !== 'assistant');
+
+    const [systemMessages, userAssistantMessages] =
+      await this.llmMessagesToGeminiMessages(messages);
+
+    this.prepareToolsSystemMessages(systemMessages, tools);
+
+    const { request, maxOutputTokens, thinkingBudget, temperature } =
+      this.buildToolsRequest(systemMessages, userAssistantMessages, options);
+
+    if (options?.verbose) {
+      console.log(request);
+    }
+
+    const startTime = Date.now();
+    const stream = await this.client.models.generateContentStream(request);
+
+    const parser = new JsonArrayStreamParser();
+    let fullText = '';
+    let lastChunk: GenerateContentResponse | null = null;
+
+    for await (const chunk of stream) {
+      const textChunk = chunk.text;
+      if (textChunk) {
+        fullText += textChunk;
+
+        // Process the chunk and yield any complete tool calls
+        for (const { json, index } of parser.processChunk(textChunk)) {
+          try {
+            const toolCall = JSON.parse(json) as LlmToolCall;
+            yield {
+              toolCall,
+              index,
+            };
+          } catch (error) {
+            console.error('Failed to parse tool call:', error);
+            console.error('JSON:', json);
+          }
+        }
+      }
+
+      // Store the last chunk as the full response
+      lastChunk = chunk;
+    }
+
+    // Finalize and yield any remaining tool calls
+    for (const { json, index } of parser.finalize()) {
+      try {
+        const toolCall = JSON.parse(json) as LlmToolCall;
+        yield {
+          toolCall,
+          index,
+        };
+      } catch (error) {
+        console.error('Failed to parse tool call:', error);
+        console.error('JSON:', json);
+      }
+    }
+
+    const responseTime = Date.now() - startTime;
+
+    if (!lastChunk) {
+      throw new LlmApiError(500, 'No response received from stream');
+    }
+
+    let inputTokens = lastChunk.usageMetadata?.promptTokenCount ?? 0;
+    inputTokens += lastChunk.usageMetadata?.toolUsePromptTokenCount ?? 0;
+
+    let outputTokens = lastChunk.usageMetadata?.candidatesTokenCount ?? 0;
+    const thinkingTokens =
+      lastChunk.usageMetadata?.thoughtsTokenCount ?? undefined;
+
+    if (thinkingTokens) {
+      outputTokens += thinkingTokens;
+    }
+
+    const cachedInputTokens =
+      lastChunk.usageMetadata?.cachedContentTokenCount ?? undefined;
+
+    const result: LlmResponseBase = {
+      platform: LlmPlatform.GEMINI,
+      model: this.model,
+      thinking: this.thinking,
+      maxOutputTokens,
+      thinkingBudget,
+      temperature,
+      inputTokens,
+      outputTokens,
+      thinkingTokens,
+      cachedInputTokens,
+      request,
+      response: {
+        ...lastChunk,
+        text: fullText,
+      },
+      responseTime,
+    };
+
+    if (!fullText) {
+      if (lastChunk.promptFeedback?.blockReasonMessage) {
+        let blockReasonMessage = lastChunk.promptFeedback.blockReasonMessage;
+        if (!blockReasonMessage.endsWith('.')) {
+          blockReasonMessage += '.';
+        }
+        throw new LlmInvalidContentError(
+          `Gemini refused to generate content: ${blockReasonMessage} Try again with a different message.`,
+          result
+        );
+      }
+      if (
+        lastChunk.promptFeedback?.blockReason ||
+        lastChunk.candidates?.[0]?.finishReason === 'PROHIBITED_CONTENT'
+      ) {
+        throw new LlmInvalidContentError(
+          'Gemini refused to generate content. Try again with a different message.',
+          result
+        );
+      }
+      return {
+        ...result,
+        toolCalls: [],
+      };
+    }
+
+    try {
+      return {
+        ...result,
+        toolCalls: parseAndFixJson<LlmToolCall[]>(fullText),
+      };
+    } catch (error) {
+      console.error(error);
+      console.error(fullText);
       throw new LlmInvalidContentError('Gemini returned invalid JSON', result);
     }
   }
