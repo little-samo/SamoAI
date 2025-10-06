@@ -11,6 +11,7 @@ import {
   parseAndFixJson,
   getImageBase64,
   JsonArrayStreamParser,
+  PartialFieldUpdate,
 } from '../utils';
 
 import { LlmApiError, LlmInvalidContentError } from './llm.errors';
@@ -27,7 +28,7 @@ import {
   LlmResponseBase,
   LlmGenerateResponseWebSearchSource,
   LlmResponseType,
-  LlmToolsStreamChunk,
+  LlmToolsStreamEvent,
 } from './llm.types';
 
 export class GeminiService extends LlmService {
@@ -539,7 +540,7 @@ Response can only be in JSON format and must strictly follow the following forma
     messages: LlmMessage[],
     tools: LlmTool[],
     options?: LlmOptions
-  ): AsyncGenerator<LlmToolsStreamChunk, LlmToolsResponse, unknown> {
+  ): AsyncGenerator<LlmToolsStreamEvent, LlmToolsResponse> {
     // gemini does not support assistant message prefilling
     messages = messages.filter((message) => message.role !== 'assistant');
 
@@ -559,6 +560,16 @@ Response can only be in JSON format and must strictly follow the following forma
     const stream = await this.client.models.generateContentStream(request);
 
     const parser = new JsonArrayStreamParser();
+    const fieldUpdateQueue: PartialFieldUpdate[] = [];
+
+    // Set up field tracking for message streaming
+    if (options?.trackToolFields && options.trackToolFields.length > 0) {
+      parser.trackToolFields(options.trackToolFields);
+      parser.setFieldUpdateCallback((update: PartialFieldUpdate) => {
+        fieldUpdateQueue.push(update);
+      });
+    }
+
     let fullText = '';
     let lastChunk: GenerateContentResponse | null = null;
 
@@ -567,11 +578,12 @@ Response can only be in JSON format and must strictly follow the following forma
       if (textChunk) {
         fullText += textChunk;
 
-        // Process the chunk and yield any complete tool calls
+        // Process the chunk (this will populate fieldUpdateQueue)
         for (const { json, index } of parser.processChunk(textChunk)) {
           try {
             const toolCall = JSON.parse(json) as LlmToolCall;
             yield {
+              type: 'toolCall' as const,
               toolCall,
               index,
             };
@@ -579,6 +591,19 @@ Response can only be in JSON format and must strictly follow the following forma
             console.error('Failed to parse tool call:', error);
             console.error('JSON:', json);
           }
+        }
+
+        // Yield field updates for incomplete tool calls
+        while (fieldUpdateQueue.length > 0) {
+          const update = fieldUpdateQueue.shift()!;
+          yield {
+            type: 'field' as const,
+            index: update.index,
+            toolName: update.toolName,
+            argumentKey: update.argumentKey,
+            value: update.value,
+            delta: update.delta,
+          };
         }
       }
 
@@ -591,6 +616,7 @@ Response can only be in JSON format and must strictly follow the following forma
       try {
         const toolCall = JSON.parse(json) as LlmToolCall;
         yield {
+          type: 'toolCall' as const,
           toolCall,
           index,
         };

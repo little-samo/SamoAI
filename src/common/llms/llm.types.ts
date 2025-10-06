@@ -62,6 +62,12 @@ export interface LlmOptions {
   jsonSchema?: z.ZodSchema;
   webSearch?: boolean;
   verbose?: boolean;
+  /**
+   * Tool fields to track for incremental streaming updates.
+   * Format: [toolName, argumentKey] pairs
+   * @example [['send_message', 'message'], ['send_casual_message', 'casualPolicyViolatingAnswer']]
+   */
+  trackToolFields?: Array<[string, string]>;
 }
 
 export interface LlmMessageImageContent {
@@ -160,9 +166,23 @@ export interface LlmToolsResponse extends LlmResponseBase {
 }
 
 export interface LlmToolsStreamChunk {
+  type: 'toolCall';
   toolCall: {
     name: string;
     arguments: unknown;
   };
   index: number;
 }
+
+export interface LlmToolsStreamFieldChunk {
+  type: 'field';
+  index: number;
+  toolName: string;
+  argumentKey: string;
+  value: string;
+  delta: string;
+}
+
+export type LlmToolsStreamEvent =
+  | LlmToolsStreamChunk
+  | LlmToolsStreamFieldChunk;

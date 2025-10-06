@@ -19,6 +19,7 @@ import {
   zodSchemaToLlmFriendlyString,
   parseAndFixJson,
   JsonArrayStreamParser,
+  PartialFieldUpdate,
 } from '../utils';
 
 import { LlmApiError } from './llm.errors';
@@ -33,7 +34,7 @@ import {
   LlmResponseBase,
   LlmServiceOptions,
   LlmToolsResponse,
-  LlmToolsStreamChunk,
+  LlmToolsStreamEvent,
 } from './llm.types';
 
 export class OpenAIChatCompletionService extends LlmService {
@@ -464,7 +465,7 @@ Response can only be in JSON format and must strictly follow the following forma
     messages: LlmMessage[],
     tools: LlmTool[],
     options?: LlmOptions
-  ): AsyncGenerator<LlmToolsStreamChunk, LlmToolsResponse, unknown> {
+  ): AsyncGenerator<LlmToolsStreamEvent, LlmToolsResponse> {
     try {
       // openai does not support assistant message prefilling
       messages = messages.filter((message) => message.role !== 'assistant');
@@ -494,6 +495,16 @@ Response can only be in JSON format and must strictly follow the following forma
       );
 
       const parser = new JsonArrayStreamParser();
+      const fieldUpdateQueue: PartialFieldUpdate[] = [];
+
+      // Set up field tracking for message streaming
+      if (options?.trackToolFields && options.trackToolFields.length > 0) {
+        parser.trackToolFields(options.trackToolFields);
+        parser.setFieldUpdateCallback((update: PartialFieldUpdate) => {
+          fieldUpdateQueue.push(update);
+        });
+      }
+
       let fullText = '';
       let lastChunk: ChatCompletionChunk | null = null;
       let usage: {
@@ -525,11 +536,12 @@ Response can only be in JSON format and must strictly follow the following forma
               const textDelta = delta.content;
               fullText += textDelta;
 
-              // Process the chunk and yield any complete tool calls
+              // Process the chunk (this will populate fieldUpdateQueue)
               for (const { json, index } of parser.processChunk(textDelta)) {
                 try {
                   const toolCall = JSON.parse(json) as LlmToolCall;
                   yield {
+                    type: 'toolCall' as const,
                     toolCall,
                     index,
                   };
@@ -537,6 +549,19 @@ Response can only be in JSON format and must strictly follow the following forma
                   console.error('Failed to parse tool call:', error);
                   console.error('JSON:', json);
                 }
+              }
+
+              // Yield field updates for incomplete tool calls
+              while (fieldUpdateQueue.length > 0) {
+                const update = fieldUpdateQueue.shift()!;
+                yield {
+                  type: 'field' as const,
+                  index: update.index,
+                  toolName: update.toolName,
+                  argumentKey: update.argumentKey,
+                  value: update.value,
+                  delta: update.delta,
+                };
               }
             }
           }
@@ -591,6 +616,7 @@ Response can only be in JSON format and must strictly follow the following forma
         try {
           const toolCall = JSON.parse(json) as LlmToolCall;
           yield {
+            type: 'toolCall' as const,
             toolCall,
             index,
           };

@@ -481,14 +481,37 @@ export class Agent extends Entity {
             maxThinkingTokens: this.meta.maxThinkingTokens,
             thinkingLevel: this.meta.thinkingLevel,
             outputVerbosity: this.meta.outputVerbosity,
+            trackToolFields: [
+              ['send_message', 'message'],
+              ['send_casual_message', 'casualPolicyViolatingAnswer'],
+            ],
             verbose: ENV.VERBOSE_LLM,
           }
         );
 
-        // Execute tool calls as they arrive
+        // Execute tool calls and stream message fields as they arrive
         let result = await generator.next();
         while (!result.done) {
-          await this.executeToolCall(result.value.toolCall);
+          const event = result.value;
+
+          switch (event.type) {
+            case 'field':
+              // Emit partial message content for send_message or send_casual_message
+              await this.location.emitAsync(
+                'agentMessageFieldUpdate',
+                this,
+                event.index,
+                event.toolName,
+                event.argumentKey,
+                event.delta,
+                event.value
+              );
+              break;
+            case 'toolCall':
+              await this.executeToolCall(event.toolCall);
+              break;
+          }
+
           result = await generator.next();
         }
 
