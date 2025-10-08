@@ -6,6 +6,7 @@ export const LlmPlatform = {
   GEMINI: 'GEMINI',
   DEEPSEEK: 'DEEPSEEK',
   XAI: 'XAI',
+  OPENROUTER: 'OPENROUTER',
 } as const;
 
 export type LlmPlatform = (typeof LlmPlatform)[keyof typeof LlmPlatform];

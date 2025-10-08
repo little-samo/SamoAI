@@ -4,6 +4,7 @@ import { GeminiService } from './gemini.service';
 import { LlmService } from './llm.service';
 import { LlmServiceOptions, LlmPlatform } from './llm.types';
 import { OpenAIService } from './openai.service';
+import { OpenRouterService } from './openrouter.service';
 import { XAIService } from './xai.service';
 
 export class LlmFactory {
@@ -23,6 +24,8 @@ export class LlmFactory {
         return new DeepSeekService(options);
       case LlmPlatform.XAI:
         return new XAIService(options);
+      case LlmPlatform.OPENROUTER:
+        return new OpenRouterService(options);
       default:
         throw new Error(`Unsupported LLM platform: ${options.platform}`);
     }
