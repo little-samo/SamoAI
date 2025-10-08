@@ -1,7 +1,7 @@
 import { LlmServiceOptions } from './llm.types';
-import { OpenAIService } from './openai.service';
+import { OpenAIChatCompletionService } from './openai.chat-completion-service';
 
-export class OpenRouterService extends OpenAIService {
+export class OpenRouterService extends OpenAIChatCompletionService {
   protected override readonly serviceName: string = 'OpenRouter';
 
   public constructor(options: LlmServiceOptions) {
