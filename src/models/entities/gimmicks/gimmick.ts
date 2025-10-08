@@ -117,11 +117,7 @@ export class Gimmick extends Entity {
     duration?: number,
     reason?: string
   ): Promise<boolean> {
-    if (
-      this.state.occupierType &&
-      (this.state.occupierId !== entity.id ||
-        this.state.occupierType !== entity.type)
-    ) {
+    if (this.state.occupationUntil) {
       return false;
     }
     this.state.occupierType = entity.type;
