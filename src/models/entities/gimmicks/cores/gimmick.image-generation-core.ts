@@ -37,7 +37,7 @@ export class GimmickImageGenerationCore extends GimmickCore {
   public static readonly DEFAULT_IMAGE_GENERATION_LLM_PLATFORM =
     LlmPlatform.GEMINI;
   public static readonly DEFAULT_IMAGE_GENERATION_LLM_MODEL =
-    'gemini-2.5-flash-image-preview';
+    'gemini-2.5-flash-image';
   public static readonly DEFAULT_IMAGE_GENERATION_LLM_MAX_TOKENS = 8192;
   public static readonly DEFAULT_MAX_IMAGE_DESCRIPTION_LENGTH = 500;
 
