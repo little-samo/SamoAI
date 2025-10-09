@@ -209,13 +209,13 @@ export class GeminiService extends LlmService {
     }
     if (options?.responseTypes) {
       const responseModalities: string[] = [];
-      if (options?.responseTypes.includes(LlmResponseType.text)) {
+      if (options.responseTypes.includes(LlmResponseType.text)) {
         responseModalities.push('TEXT');
       }
-      if (options?.responseTypes.includes(LlmResponseType.image)) {
+      if (options.responseTypes.includes(LlmResponseType.image)) {
         responseModalities.push('IMAGE');
       }
-      if (options?.responseTypes.includes(LlmResponseType.audio)) {
+      if (options.responseTypes.includes(LlmResponseType.audio)) {
         responseModalities.push('AUDIO');
       }
       request.config!.responseModalities = responseModalities;
