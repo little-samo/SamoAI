@@ -9,4 +9,5 @@ export * from './llm.types';
 export * from './openai.chat-completion-service';
 export * from './openai.service';
 export * from './openrouter.service';
+export * from './vllm.service';
 export * from './xai.service';

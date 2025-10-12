@@ -5,6 +5,7 @@ import { LlmService } from './llm.service';
 import { LlmServiceOptions, LlmPlatform } from './llm.types';
 import { OpenAIService } from './openai.service';
 import { OpenRouterService } from './openrouter.service';
+import { VLLMService } from './vllm.service';
 import { XAIService } from './xai.service';
 
 export class LlmFactory {
@@ -26,6 +27,8 @@ export class LlmFactory {
         return new XAIService(options);
       case LlmPlatform.OPENROUTER:
         return new OpenRouterService(options);
+      case LlmPlatform.VLLM:
+        return new VLLMService(options);
       default:
         throw new Error(`Unsupported LLM platform: ${options.platform}`);
     }
