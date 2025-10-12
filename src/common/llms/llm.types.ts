@@ -47,6 +47,7 @@ export interface LlmServiceOptions {
   thinking?: boolean;
   baseUrl?: string;
 
+  disableResponseFormat?: boolean;
   supportThinkingLevel?: boolean;
   supportOutputVerbosity?: boolean;
 }

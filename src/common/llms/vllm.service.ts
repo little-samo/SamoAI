@@ -13,7 +13,10 @@ export class VLLMService extends OpenAIChatCompletionService {
   protected readonly serviceName: string = 'vLLM';
 
   public constructor(options: LlmServiceOptions) {
-    super(options);
+    super({
+      ...options,
+      disableResponseFormat: options.disableResponseFormat ?? true,
+    });
 
     // vLLM requires a baseUrl to be specified for the server endpoint
     if (!this.baseUrl) {

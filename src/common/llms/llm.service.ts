@@ -22,6 +22,7 @@ export abstract class LlmService {
   public readonly thinking: boolean;
   public readonly baseUrl?: string;
 
+  public readonly disableResponseFormat: boolean;
   public readonly supportThinkingLevel: boolean;
   public readonly supportOutputVerbosity: boolean;
 
@@ -32,6 +33,7 @@ export abstract class LlmService {
     this.thinking = options.thinking ?? false;
     this.baseUrl = options.baseUrl;
 
+    this.disableResponseFormat = options.disableResponseFormat ?? false;
     this.supportThinkingLevel = options.supportThinkingLevel ?? false;
     this.supportOutputVerbosity = options.supportOutputVerbosity ?? false;
   }

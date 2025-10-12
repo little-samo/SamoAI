@@ -170,22 +170,25 @@ export class OpenAIChatCompletionService extends LlmService {
       let responseFormat:
         | ResponseFormatText
         | ResponseFormatJSONObject
-        | ResponseFormatJSONSchema;
-      if (options?.jsonSchema) {
-        responseFormat = {
-          type: 'json_schema',
-          json_schema: {
-            name: 'response',
-            strict: true,
-            schema: zodToJsonSchema(options.jsonSchema, {
-              target: 'openAi',
-            }),
-          },
-        };
-      } else if (options?.jsonOutput) {
-        responseFormat = { type: 'json_object' };
-      } else {
-        responseFormat = { type: 'text' };
+        | ResponseFormatJSONSchema
+        | undefined;
+      if (!this.disableResponseFormat) {
+        if (options?.jsonSchema) {
+          responseFormat = {
+            type: 'json_schema',
+            json_schema: {
+              name: 'response',
+              strict: true,
+              schema: zodToJsonSchema(options.jsonSchema, {
+                target: 'openAi',
+              }),
+            },
+          };
+        } else if (options?.jsonOutput) {
+          responseFormat = { type: 'json_object' };
+        } else {
+          responseFormat = { type: 'text' };
+        }
       }
       let maxOutputTokens = options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS;
       let temperature: number | undefined;
@@ -193,7 +196,7 @@ export class OpenAIChatCompletionService extends LlmService {
         model: this.model,
         messages: [...systemMessages, ...userAssistantMessages],
         max_completion_tokens: maxOutputTokens,
-        response_format: responseFormat,
+        ...(responseFormat && { response_format: responseFormat }),
       };
       // web search models and gpt-5 do not support temperature
       if (!options?.webSearch && !this.model.startsWith('gpt-5')) {
@@ -356,7 +359,9 @@ Response can only be in JSON format and must strictly follow the following forma
       model: this.model,
       messages: [...systemMessages, ...userAssistantMessages],
       max_completion_tokens: maxOutputTokens,
-      response_format: { type: 'text' as const },
+      ...(!this.disableResponseFormat && {
+        response_format: { type: 'text' as const },
+      }),
     };
     // web search models and gpt-5 do not support temperature
     if (!options?.webSearch && !this.model.startsWith('gpt-5')) {
