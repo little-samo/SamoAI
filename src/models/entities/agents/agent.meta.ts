@@ -26,12 +26,17 @@ export interface AgentMeta extends EntityMeta {
   maxThinkingTokens: number;
   thinkingLevel: LlmThinkingLevel;
   outputVerbosity: LlmOutputVerbosity;
+
   maxEvaluatationThinkingTokens: number;
   evaluationThinkingLevel: LlmThinkingLevel;
   evaluationOutputVerbosity: LlmOutputVerbosity;
+
+  disableSummary?: boolean;
   maxSummaryThinkingTokens: number;
   summaryThinkingLevel: LlmThinkingLevel;
   summaryOutputVerbosity: LlmOutputVerbosity;
+
+  disableMemory?: boolean;
   maxMemoryThinkingTokens: number;
   memoryThinkingLevel: LlmThinkingLevel;
   memoryOutputVerbosity: LlmOutputVerbosity;
@@ -109,12 +114,15 @@ export const DEFAULT_AGENT_META: AgentMeta = {
   thinkingLevel: LlmThinkingLevel.low,
   maxThinkingTokens: 1024,
   outputVerbosity: LlmOutputVerbosity.low,
+
   maxEvaluatationThinkingTokens: 512,
   evaluationThinkingLevel: LlmThinkingLevel.minimal,
   evaluationOutputVerbosity: LlmOutputVerbosity.low,
+
   maxSummaryThinkingTokens: 512,
   summaryThinkingLevel: LlmThinkingLevel.minimal,
   summaryOutputVerbosity: LlmOutputVerbosity.low,
+
   maxMemoryThinkingTokens: 512,
   memoryThinkingLevel: LlmThinkingLevel.minimal,
   memoryOutputVerbosity: LlmOutputVerbosity.low,
