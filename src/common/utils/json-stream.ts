@@ -50,6 +50,7 @@ export class JsonArrayStreamParser {
   // String parsing state
   private currentStringStart = -1;
   private lastJsonKey: string | null = null;
+  private lastString: string | null = null;
 
   /**
    * Set a callback to be notified when specific fields are updated
@@ -224,55 +225,13 @@ export class JsonArrayStreamParser {
             i
           );
 
-          // Check if this is a JSON key (followed by ':')
-          let isKey = false;
-          for (let j = i + 1; j < this.buffer.length; j++) {
-            const c = this.buffer[j];
-            if (c === ':') {
-              isKey = true;
-              break;
-            } else if (c !== ' ' && c !== '\n' && c !== '\t' && c !== '\r') {
-              break;
-            }
-          }
+          // Store the string - we'll determine if it's a key or value when we see the next delimiter
+          this.lastString = stringValue;
 
-          if (isKey) {
-            this.lastJsonKey = stringValue;
-          } else if (this.lastJsonKey) {
-            // This is a value for the last key
-            if (this.currentObject) {
-              if (this.lastJsonKey === 'name' && this.depth === 3) {
-                this.currentObject.name = stringValue;
-              } else if (
-                this.currentObject.inArguments &&
-                this.currentObject.currentKey === this.lastJsonKey &&
-                this.depth === this.currentObject.keyDepth + 1
-              ) {
-                // String value completed for tracked argument
-                if (
-                  this.currentObject.name &&
-                  this.trackedPairs.has(
-                    `${this.currentObject.name}:${this.lastJsonKey}`
-                  )
-                ) {
-                  this.emitFieldUpdate(
-                    this.yieldedCount,
-                    this.currentObject.name,
-                    this.lastJsonKey,
-                    stringValue
-                  );
-                }
-                this.currentObject.currentKey = null;
-              }
-
-              // Reset tracking flag when string ends
-              if (this.currentObject.isTrackingField) {
-                this.currentObject.isTrackingField = false;
-                this.currentObject.accumulatedValue = '';
-              }
-            }
-
-            this.lastJsonKey = null;
+          // Reset tracking flag when string ends
+          if (this.currentObject?.isTrackingField) {
+            this.currentObject.isTrackingField = false;
+            this.currentObject.accumulatedValue = '';
           }
         }
         continue;
@@ -342,6 +301,41 @@ export class JsonArrayStreamParser {
         continue;
       }
 
+      // Handle string values before structural changes
+      if (char === ',' || char === '}' || char === ']') {
+        // The last string was a value (or we're at end of object/array)
+        if (this.lastString !== null && this.lastJsonKey !== null) {
+          // Process the key-value pair
+          if (this.currentObject) {
+            if (this.lastJsonKey === 'name' && this.depth === 3) {
+              this.currentObject.name = this.lastString;
+            } else if (
+              this.currentObject.inArguments &&
+              this.currentObject.currentKey === this.lastJsonKey &&
+              this.depth === this.currentObject.keyDepth + 1
+            ) {
+              // String value completed for tracked argument
+              if (
+                this.currentObject.name &&
+                this.trackedPairs.has(
+                  `${this.currentObject.name}:${this.lastJsonKey}`
+                )
+              ) {
+                this.emitFieldUpdate(
+                  this.yieldedCount,
+                  this.currentObject.name,
+                  this.lastJsonKey,
+                  this.lastString
+                );
+              }
+              this.currentObject.currentKey = null;
+            }
+          }
+          this.lastString = null;
+          this.lastJsonKey = null;
+        }
+      }
+
       // Track object boundaries
       if (char === '{') {
         // Tool call object starts at depth 2 (inside toolCalls array)
@@ -405,30 +399,25 @@ export class JsonArrayStreamParser {
         if (this.depth === 1 && this.arrayStarted) {
           this.arrayStarted = false;
         }
-      } else if (
-        char === ':' &&
-        this.currentObject &&
-        this.lastJsonKey &&
-        this.depth === 3
-      ) {
-        // Found a key-value separator at tool call object root level
-        // Next value could be for "name" or start of "arguments"
-      } else if (
-        char === ':' &&
-        this.currentObject &&
-        this.currentObject.inArguments &&
-        this.lastJsonKey &&
-        this.depth === this.currentObject.keyDepth + 1
-      ) {
-        // We just found a key in arguments
-        // Check if this (toolName, argumentKey) pair is tracked
-        if (
-          this.currentObject.name &&
-          this.trackedPairs.has(
-            `${this.currentObject.name}:${this.lastJsonKey}`
-          )
-        ) {
-          this.currentObject.currentKey = this.lastJsonKey;
+        this.lastString = null;
+      } else if (char === ':') {
+        // The last string was a key
+        if (this.lastString !== null) {
+          this.lastJsonKey = this.lastString;
+          this.lastString = null;
+
+          // Check if we're tracking this field in arguments
+          if (
+            this.currentObject &&
+            this.currentObject.inArguments &&
+            this.currentObject.name &&
+            this.depth === this.currentObject.keyDepth + 1 &&
+            this.trackedPairs.has(
+              `${this.currentObject.name}:${this.lastJsonKey}`
+            )
+          ) {
+            this.currentObject.currentKey = this.lastJsonKey;
+          }
         }
       }
     }
