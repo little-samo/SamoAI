@@ -1,4 +1,7 @@
-import { LlmServiceOptions } from './llm.types';
+import { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
+import { ChatCompletionCreateParamsBase } from 'openai/resources/chat/completions';
+
+import { LlmOptions, LlmServiceOptions } from './llm.types';
 import { OpenAIChatCompletionService } from './openai.chat-completion-service';
 
 /**
@@ -15,7 +18,7 @@ export class VLLMService extends OpenAIChatCompletionService {
   public constructor(options: LlmServiceOptions) {
     super({
       ...options,
-      disableResponseFormat: options.disableResponseFormat ?? true,
+      disableResponseFormat: true,
     });
 
     // vLLM requires a baseUrl to be specified for the server endpoint
@@ -25,5 +28,48 @@ export class VLLMService extends OpenAIChatCompletionService {
           'Please provide the vLLM server endpoint (e.g., http://localhost:8000/v1)'
       );
     }
+  }
+
+  protected buildToolsRequest(
+    systemMessages: ChatCompletionMessageParam[],
+    userAssistantMessages: ChatCompletionMessageParam[],
+    options?: LlmOptions
+  ): {
+    request: ChatCompletionCreateParamsBase;
+    maxOutputTokens: number;
+    temperature: number | undefined;
+  } {
+    const { request, maxOutputTokens, temperature } = super.buildToolsRequest(
+      systemMessages,
+      userAssistantMessages,
+      options
+    );
+
+    // @ts-expect-error - vLLM uses guided_json instead of response_format
+    request.extra_body = {
+      guided_json: {
+        type: 'object',
+        properties: {
+          toolCalls: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                name: {
+                  type: 'string',
+                },
+                arguments: {
+                  type: 'object',
+                },
+              },
+              required: ['name', 'arguments'],
+            },
+          },
+        },
+        required: ['toolCalls'],
+      },
+    };
+
+    return { request, maxOutputTokens, temperature };
   }
 }

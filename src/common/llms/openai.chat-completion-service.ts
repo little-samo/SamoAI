@@ -346,7 +346,7 @@ Response can only be in JSON format and must strictly follow the following forma
     });
   }
 
-  private buildToolsRequest(
+  protected buildToolsRequest(
     systemMessages: ChatCompletionMessageParam[],
     userAssistantMessages: ChatCompletionMessageParam[],
     options?: LlmOptions
