@@ -224,23 +224,23 @@ export class JsonArrayStreamParser {
             i
           );
 
-          if (this.currentObject) {
-            // Check if this is a JSON key (followed by ':')
-            let isKey = false;
-            for (let j = i + 1; j < this.buffer.length; j++) {
-              const c = this.buffer[j];
-              if (c === ':') {
-                isKey = true;
-                break;
-              } else if (c !== ' ' && c !== '\n' && c !== '\t' && c !== '\r') {
-                break;
-              }
+          // Check if this is a JSON key (followed by ':')
+          let isKey = false;
+          for (let j = i + 1; j < this.buffer.length; j++) {
+            const c = this.buffer[j];
+            if (c === ':') {
+              isKey = true;
+              break;
+            } else if (c !== ' ' && c !== '\n' && c !== '\t' && c !== '\r') {
+              break;
             }
+          }
 
-            if (isKey) {
-              this.lastJsonKey = stringValue;
-            } else if (this.lastJsonKey) {
-              // This is a value for the last key
+          if (isKey) {
+            this.lastJsonKey = stringValue;
+          } else if (this.lastJsonKey) {
+            // This is a value for the last key
+            if (this.currentObject) {
               if (this.lastJsonKey === 'name' && this.depth === 3) {
                 this.currentObject.name = stringValue;
               } else if (
@@ -265,14 +265,14 @@ export class JsonArrayStreamParser {
                 this.currentObject.currentKey = null;
               }
 
-              this.lastJsonKey = null;
+              // Reset tracking flag when string ends
+              if (this.currentObject.isTrackingField) {
+                this.currentObject.isTrackingField = false;
+                this.currentObject.accumulatedValue = '';
+              }
             }
 
-            // Reset tracking flag when string ends
-            if (this.currentObject.isTrackingField) {
-              this.currentObject.isTrackingField = false;
-              this.currentObject.accumulatedValue = '';
-            }
+            this.lastJsonKey = null;
           }
         }
         continue;
