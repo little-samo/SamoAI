@@ -20,11 +20,11 @@ interface CurrentObjectState {
 }
 
 /**
- * Parses a streaming JSON array in the format [{...}, {...}, {...}]
- * and yields complete objects as they arrive
+ * Parses a streaming JSON object in the format {toolCalls: [{...}, {...}, {...}]}
+ * and yields complete tool call objects as they arrive
  *
  * Optimized for tool call format:
- * { "name": "tool_name", "arguments": { "key": "value", ... } }
+ * { "toolCalls": [{ "name": "tool_name", "arguments": { "key": "value", ... } }, ...] }
  *
  * Performance Optimizations:
  * - O(n) complexity: Incremental character accumulation (not re-parsing from start)
@@ -36,6 +36,7 @@ export class JsonArrayStreamParser {
   private depth = 0;
   private inString = false;
   private escaped = false;
+  private rootObjectStarted = false;
   private arrayStarted = false;
   private objectStartIndex = -1;
   private yieldedCount = 0;
@@ -240,7 +241,7 @@ export class JsonArrayStreamParser {
               this.lastJsonKey = stringValue;
             } else if (this.lastJsonKey) {
               // This is a value for the last key
-              if (this.lastJsonKey === 'name' && this.depth === 1) {
+              if (this.lastJsonKey === 'name' && this.depth === 3) {
                 this.currentObject.name = stringValue;
               } else if (
                 this.currentObject.inArguments &&
@@ -322,24 +323,38 @@ export class JsonArrayStreamParser {
         continue;
       }
 
-      // Track array start
-      if (char === '[' && this.depth === 0 && !this.arrayStarted) {
+      // Track root object start
+      if (char === '{' && this.depth === 0 && !this.rootObjectStarted) {
+        this.rootObjectStarted = true;
+        this.depth++;
+        continue;
+      }
+
+      // Track toolCalls array start
+      if (
+        char === '[' &&
+        this.depth === 1 &&
+        this.lastJsonKey === 'toolCalls' &&
+        !this.arrayStarted
+      ) {
         this.arrayStarted = true;
+        this.depth++;
         continue;
       }
 
       // Track object boundaries
       if (char === '{') {
-        if (this.depth === 0 && this.arrayStarted) {
+        // Tool call object starts at depth 2 (inside toolCalls array)
+        if (this.depth === 2 && this.arrayStarted) {
           this.objectStartIndex = i;
           this.resetCurrentObject();
         }
 
-        // Check if we're entering "arguments"
+        // Check if we're entering "arguments" (at depth 3)
         if (
           this.currentObject &&
           this.lastJsonKey === 'arguments' &&
-          this.depth === 1
+          this.depth === 3
         ) {
           this.currentObject.inArguments = true;
           this.currentObject.keyDepth = this.depth;
@@ -359,8 +374,9 @@ export class JsonArrayStreamParser {
           this.currentObject.currentKey = null;
         }
 
-        if (this.depth === 0 && this.objectStartIndex !== -1) {
-          // We have a complete object
+        // Complete tool call object (back to depth 2)
+        if (this.depth === 2 && this.objectStartIndex !== -1) {
+          // We have a complete tool call object
           if (this.currentObject) {
             this.currentObject.isComplete = true;
           }
@@ -383,13 +399,19 @@ export class JsonArrayStreamParser {
           this.currentObject = null;
           this.lastJsonKey = null;
         }
+      } else if (char === ']') {
+        this.depth--;
+        // Exiting toolCalls array
+        if (this.depth === 1 && this.arrayStarted) {
+          this.arrayStarted = false;
+        }
       } else if (
         char === ':' &&
         this.currentObject &&
         this.lastJsonKey &&
-        this.depth === 1
+        this.depth === 3
       ) {
-        // Found a key-value separator at object root level
+        // Found a key-value separator at tool call object root level
         // Next value could be for "name" or start of "arguments"
       } else if (
         char === ':' &&
@@ -416,8 +438,8 @@ export class JsonArrayStreamParser {
    * Finalizes parsing and yields any remaining complete objects
    */
   public *finalize(): Generator<{ json: string; index: number }> {
-    // If we have a partial object at the end, try to fix and yield it
-    if (this.objectStartIndex !== -1 && this.depth > 0) {
+    // If we have a partial tool call object at the end, try to fix and yield it
+    if (this.objectStartIndex !== -1 && this.depth > 2) {
       const partialJson = this.buffer.substring(this.objectStartIndex);
       try {
         const fixedJson = fixJson(partialJson);

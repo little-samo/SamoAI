@@ -376,13 +376,15 @@ parameters: ${parameters}`
       `Refer to the definitions of the available tools above, and output the tools you plan to use in JSON format. Based on that analysis, select and use the necessary tools from the rest—following the guidance provided in the previous prompt.
 
 Response can only be in JSON format and must strictly follow the following format, with no surrounding text or markdown:
-[
-  {
-    "name": "tool_name",
-    "arguments": { ... }
-  },
-  ... // (Include additional tool calls as needed)
-]`
+{
+  "toolCalls": [
+    {
+      "name": "tool_name",
+      "arguments": { ... }
+    }
+    ... // (Include additional tool calls as needed)
+  ]
+}`
     );
   }
 
@@ -402,9 +404,11 @@ Response can only be in JSON format and must strictly follow the following forma
       instructions: systemMessages.join('\n\n'),
       input: userAssistantMessages,
       max_output_tokens: maxOutputTokens,
-      text: {
-        format: { type: 'text' as const },
-      },
+      ...(!this.disableResponseFormat && {
+        text: {
+          format: { type: 'json_object' as const },
+        },
+      }),
       store: false,
     };
     if (options?.webSearch) {
@@ -495,10 +499,12 @@ Response can only be in JSON format and must strictly follow the following forma
       }
 
       try {
-        const toolCalls = parseAndFixJson<LlmToolCall[]>(responseText);
+        const parsed = parseAndFixJson<{ toolCalls: LlmToolCall[] }>(
+          responseText
+        );
         return {
           ...result,
-          toolCalls,
+          toolCalls: parsed.toolCalls,
         };
       } catch (error) {
         console.error(error);
@@ -649,7 +655,10 @@ Response can only be in JSON format and must strictly follow the following forma
 
       if (responseText) {
         try {
-          toolCalls = parseAndFixJson<LlmToolCall[]>(responseText);
+          const parsed = parseAndFixJson<{ toolCalls: LlmToolCall[] }>(
+            responseText
+          );
+          toolCalls = parsed.toolCalls;
         } catch (error) {
           console.error(error);
           console.error(responseText);
