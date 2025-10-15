@@ -229,8 +229,10 @@ export class GimmickWebSearchCore extends GimmickCore {
     llmSearchOptions.model ??= GimmickWebSearchCore.DEFAULT_SEARCH_LLM_MODEL;
     llmSearchOptions.thinking ??=
       GimmickWebSearchCore.DEFAULT_SEARCH_LLM_THINKING;
-    llmSearchOptions.apiKey ??=
-      entity.location.apiKeys[llmSearchOptions.platform]?.key;
+
+    const llmApiKeyModel = entity.location.apiKeys[llmSearchOptions.platform];
+    llmSearchOptions.apiKey ??= llmApiKeyModel?.key;
+
     const maxTokens = Number(
       this.meta.options?.maxTokens ?? GimmickWebSearchCore.LLM_MAX_TOKENS
     );
@@ -246,7 +248,10 @@ export class GimmickWebSearchCore extends GimmickCore {
       return 'No API key found';
     }
 
-    const searchLlm = LlmFactory.create(llmSearchOptions as LlmServiceOptions);
+    const searchLlm = LlmFactory.create(
+      llmSearchOptions as LlmServiceOptions,
+      llmApiKeyModel
+    );
 
     const maxResultLength =
       Number(

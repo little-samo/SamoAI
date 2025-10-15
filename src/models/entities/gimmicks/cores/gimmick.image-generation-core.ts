@@ -184,14 +184,18 @@ export class GimmickImageGenerationCore extends GimmickCore {
       GimmickImageGenerationCore.DEFAULT_IMAGE_GENERATION_LLM_PLATFORM;
     llmImageOptions.model ??=
       GimmickImageGenerationCore.DEFAULT_IMAGE_GENERATION_LLM_MODEL;
-    llmImageOptions.apiKey ??=
-      entity.location.apiKeys[llmImageOptions.platform]?.key;
+
+    const llmApiKeyModel = entity.location.apiKeys[llmImageOptions.platform];
+    llmImageOptions.apiKey ??= llmApiKeyModel?.key;
 
     if (!llmImageOptions.apiKey) {
       return 'No API key found for image generation';
     }
 
-    const imageLlm = LlmFactory.create(llmImageOptions as LlmServiceOptions);
+    const imageLlm = LlmFactory.create(
+      llmImageOptions as LlmServiceOptions,
+      llmApiKeyModel
+    );
 
     const promise = this.generateImage(entity, imageLlm, prompt);
 

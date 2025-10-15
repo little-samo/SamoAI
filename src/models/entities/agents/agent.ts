@@ -6,6 +6,7 @@ import {
   LlmInvalidContentError,
   LlmMessage,
   LlmService,
+  LlmServiceOptions,
   LlmToolCall,
   LlmToolsResponse,
   LlmUsageType,
@@ -181,12 +182,13 @@ export class Agent extends Entity {
     }
 
     for (const llm of this.meta.llms) {
-      const llmOptions = {
+      const llmApiKeyModel = this.location.apiKeys[llm.platform];
+      const llmOptions: LlmServiceOptions = {
         ...llm,
-        apiKey: llm.apiKey ?? this.location.apiKeys[llm.platform]?.key,
+        apiKey: llm.apiKey ?? llmApiKeyModel?.key ?? '',
       };
       if (llmOptions.apiKey) {
-        const llmService = LlmFactory.create(llmOptions);
+        const llmService = LlmFactory.create(llmOptions, llmApiKeyModel);
         this._llms.push(llmService);
       }
     }
