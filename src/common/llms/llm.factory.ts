@@ -12,8 +12,6 @@ export interface LlmApiKeyOptions {
   key?: string;
   baseUrl?: string | null;
   geminiVertexai?: boolean | null;
-  geminiVertexaiProject?: string | null;
-  geminiVertexaiLocation?: string | null;
 }
 
 export class LlmFactory {
@@ -28,14 +26,6 @@ export class LlmFactory {
       baseUrl: options.baseUrl ?? apiKeyModel?.baseUrl ?? undefined,
       geminiVertexai:
         options.geminiVertexai ?? apiKeyModel?.geminiVertexai ?? undefined,
-      geminiVertexaiProject:
-        options.geminiVertexaiProject ??
-        apiKeyModel?.geminiVertexaiProject ??
-        undefined,
-      geminiVertexaiLocation:
-        options.geminiVertexaiLocation ??
-        apiKeyModel?.geminiVertexaiLocation ??
-        undefined,
     };
 
     switch (mergedOptions.platform) {
