@@ -41,8 +41,8 @@ export class OpenAIService extends LlmService {
   public constructor(options: LlmServiceOptions) {
     super(options);
     this.client = new OpenAI({
-      apiKey: this.apiKey,
-      ...(this.baseUrl && { baseURL: this.baseUrl }),
+      apiKey: this.options.apiKey,
+      ...(this.options.baseUrl && { baseURL: this.options.baseUrl }),
     });
   }
 

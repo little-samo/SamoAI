@@ -37,7 +37,12 @@ export class GeminiService extends LlmService {
   public constructor(options: LlmServiceOptions) {
     super(options);
     this.client = new GoogleGenAI({
-      apiKey: this.apiKey,
+      apiKey: this.options.apiKey,
+      ...(this.options.geminiVertexai && {
+        vertexai: true,
+        project: this.options.geminiVertexaiProject,
+        location: this.options.geminiVertexaiLocation,
+      }),
     });
   }
 

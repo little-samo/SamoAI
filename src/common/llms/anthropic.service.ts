@@ -39,7 +39,7 @@ export class AnthropicService extends LlmService {
   public constructor(options: LlmServiceOptions) {
     super(options);
     this.client = new Anthropic({
-      apiKey: this.apiKey,
+      apiKey: this.options.apiKey,
     });
   }
 

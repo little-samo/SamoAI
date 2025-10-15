@@ -22,7 +22,7 @@ export class VLLMService extends OpenAIChatCompletionService {
     });
 
     // vLLM requires a baseUrl to be specified for the server endpoint
-    if (!this.baseUrl) {
+    if (!this.options.baseUrl) {
       throw new Error(
         'vLLM service requires a baseUrl to be specified. ' +
           'Please provide the vLLM server endpoint (e.g., http://localhost:8000/v1)'

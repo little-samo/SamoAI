@@ -47,6 +47,10 @@ export interface LlmServiceOptions {
   thinking?: boolean;
   baseUrl?: string;
 
+  geminiVertexai?: boolean;
+  geminiVertexaiProject?: string;
+  geminiVertexaiLocation?: string;
+
   disableResponseFormat?: boolean;
   supportThinkingLevel?: boolean;
   supportOutputVerbosity?: boolean;
