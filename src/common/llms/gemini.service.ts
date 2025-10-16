@@ -38,6 +38,7 @@ export class GeminiService extends LlmService {
     super(options);
     this.client = new GoogleGenAI({
       apiKey: this.options.apiKey,
+      ...(this.options.baseUrl && { baseURL: this.options.baseUrl }),
       ...(this.options.geminiVertexai && {
         vertexai: true,
         project: this.options.geminiVertexaiProject,

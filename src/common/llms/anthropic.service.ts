@@ -40,6 +40,7 @@ export class AnthropicService extends LlmService {
     super(options);
     this.client = new Anthropic({
       apiKey: this.options.apiKey,
+      ...(this.options.baseUrl && { baseURL: this.options.baseUrl }),
     });
   }
 
