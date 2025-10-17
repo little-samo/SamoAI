@@ -546,6 +546,7 @@ export class SamoAI extends AsyncEventEmitter {
     createdAt?: Date,
     options: {
       name?: string;
+      image?: string;
     } = {}
   ): Promise<void> {
     const locationMessage: LocationMessage = {
@@ -554,6 +555,7 @@ export class SamoAI extends AsyncEventEmitter {
       entityId: 0 as EntityId,
       name: options.name ?? '[SYSTEM]',
       message,
+      image: options.image,
       createdAt: createdAt ?? new Date(),
       updatedAt: new Date(),
     };
