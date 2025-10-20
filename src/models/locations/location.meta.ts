@@ -63,7 +63,7 @@ export const DEFAULT_LOCATION_META: LocationMeta = {
   userContextLimit: 8,
   agentUserContextLimit: 4,
   actions: [],
-  messageAction: 'send_casual_message:latest',
+  messageAction: 'send_message:latest',
   canvasActions: ['update_canvas:latest', 'edit_canvas:latest'],
   requiredActions: [],
   rules: [],
