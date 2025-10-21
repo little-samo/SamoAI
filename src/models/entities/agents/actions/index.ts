@@ -8,6 +8,7 @@ export * from './agent.add-memory-action';
 export * from './agent.execute-cli-action';
 export * from './agent.execute-gimmick-action';
 export * from './agent.move-gba-action';
+export * from './agent.send-agent-message-action';
 export * from './agent.send-casual-message-action';
 export * from './agent.send-message-action';
 export * from './agent.transfer-item-action';

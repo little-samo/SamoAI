@@ -17,6 +17,15 @@ export type AgentLlmMeta = {
   model: string;
 } & Partial<LlmServiceOptions>;
 
+export interface AgentInputOptions {
+  [key: string]: unknown;
+}
+
+export interface AgentInputMeta {
+  name: string;
+  options?: AgentInputOptions;
+}
+
 export interface AgentMeta extends EntityMeta {
   core: string;
   prompts: AgentPrompts;
@@ -42,7 +51,7 @@ export interface AgentMeta extends EntityMeta {
   memoryOutputVerbosity: LlmOutputVerbosity;
 
   llms: AgentLlmMeta[];
-  inputs: string[];
+  inputs: (string | AgentInputMeta)[];
   languages: string[];
   timeZone: string;
   greeting?: string;

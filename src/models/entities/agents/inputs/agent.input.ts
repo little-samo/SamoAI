@@ -7,6 +7,7 @@ import {
 import { type Location } from '@little-samo/samo-ai/models';
 
 import { Agent } from '../agent';
+import { type AgentInputOptions } from '../agent.meta';
 
 export abstract class AgentInputBuilder {
   protected static mergeMessageContents(
@@ -37,7 +38,8 @@ export abstract class AgentInputBuilder {
   protected constructor(
     public readonly version: number,
     public readonly location: Location,
-    public readonly agent: Agent
+    public readonly agent: Agent,
+    public readonly options: AgentInputOptions = {}
   ) {}
 
   public abstract build(options: {

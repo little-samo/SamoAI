@@ -2,18 +2,36 @@ import type { Location } from '@little-samo/samo-ai/models';
 
 import type { Agent } from '../agent';
 import type { AgentInputBuilder } from './agent.input';
+import type { AgentInputMeta, AgentInputOptions } from '../agent.meta';
 
 export class AgentInputFactory {
   public static readonly INPUT_MAP: Record<
     string,
-    new (version: number, location: Location, agent: Agent) => AgentInputBuilder
+    new (
+      version: number,
+      location: Location,
+      agent: Agent,
+      options?: AgentInputOptions
+    ) => AgentInputBuilder
   > = {};
 
   public static createInput(
-    input: string,
+    inputMeta: string | AgentInputMeta,
     location: Location,
     agent: Agent
   ): AgentInputBuilder {
+    // Parse input meta (string or object)
+    let input: string;
+    let options: AgentInputOptions = {};
+
+    if (typeof inputMeta === 'string') {
+      input = inputMeta;
+    } else {
+      input = inputMeta.name;
+      options = inputMeta.options ?? {};
+    }
+
+    // Parse version from input name
     let version = 0;
     const inputMatch = input.match(/^(\w+):(\w+)$/);
     if (inputMatch) {
@@ -28,6 +46,6 @@ export class AgentInputFactory {
     if (!InputClass) {
       throw new Error(`Unknown input type: ${input}`);
     }
-    return new InputClass(version, location, agent);
+    return new InputClass(version, location, agent, options);
   }
 }

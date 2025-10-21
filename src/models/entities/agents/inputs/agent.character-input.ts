@@ -21,12 +21,19 @@ import {
   AgentItemContext,
   AgentMemoryContext,
 } from '../agent.context';
+import { AgentInputOptions } from '../agent.meta';
 
 import { AgentInputBuilder } from './agent.input';
 import { RegisterAgentInput } from './agent.input-decorator';
 
+export interface AgentCharacterInputOptions extends AgentInputOptions {
+  includeOtherAgentsCharacter?: boolean;
+}
+
 @RegisterAgentInput('character')
 export class AgentCharacterInputBuilder extends AgentInputBuilder {
+  public override readonly options!: AgentCharacterInputOptions;
+
   protected buildPrompt(options: {
     llm: LlmService;
     guidance?: string;
@@ -225,7 +232,21 @@ ${agentContext.canvases.length > 0 ? agentContext.canvases.map((c) => c.build())
         continue;
       }
       let otherAgentContext = `<OtherAgent>
-${agent.context.build()}
+${agent.context.build()}`;
+
+      // Include character information if flag is enabled
+      // Only for agents within agentAgentContextLimit (check entity state existence)
+      if (
+        this.options.includeOtherAgentsCharacter &&
+        this.agent.getEntityState(agent.key)
+      ) {
+        otherAgentContext += `
+<Character>
+${JSON.stringify(agent.meta.character)}
+</Character>`;
+      }
+
+      otherAgentContext += `
 <YourMemoriesAboutOtherAgent>`;
       const otherAgentMemories = this.agent.getEntityMemories(agent.key);
       if (otherAgentMemories) {
