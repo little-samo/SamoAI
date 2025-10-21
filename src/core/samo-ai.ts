@@ -220,7 +220,36 @@ export class SamoAI extends AsyncEventEmitter {
       apiKeys,
     });
 
+    let lastAgentMessageAt: Map<AgentId, Date> | undefined = undefined;
     let lastUserMessageAt: Map<UserId, Date> | undefined = undefined;
+
+    let agentContextAgentIds = location.state.agentIds;
+    if (agentContextAgentIds.length > location.meta.agentAgentContextLimit) {
+      lastAgentMessageAt = new Map();
+      for (const message of location.messages) {
+        if (message.entityType == EntityType.Agent) {
+          lastAgentMessageAt.set(
+            message.entityId as AgentId,
+            new Date(message.createdAt)
+          );
+        }
+      }
+      if (lastAgentMessageAt.size >= location.meta.agentAgentContextLimit) {
+        agentContextAgentIds = Array.from(lastAgentMessageAt.keys());
+      } else {
+        agentContextAgentIds = [...agentContextAgentIds];
+      }
+      agentContextAgentIds.sort(
+        (a, b) =>
+          (lastAgentMessageAt!.get(b)?.getTime() ?? Math.random()) -
+          (lastAgentMessageAt!.get(a)?.getTime() ?? Math.random())
+      );
+      agentContextAgentIds = agentContextAgentIds.slice(
+        0,
+        location.meta.agentAgentContextLimit
+      );
+    }
+
     let agentContextUserIds = location.state.userIds;
     if (agentContextUserIds.length > location.meta.agentUserContextLimit) {
       lastUserMessageAt = new Map();
@@ -247,9 +276,11 @@ export class SamoAI extends AsyncEventEmitter {
         location.meta.agentUserContextLimit
       );
     }
+
     const agents = await this.getAgents(
       location,
       location.state.agentIds,
+      agentContextAgentIds,
       agentContextUserIds
     );
 
@@ -321,7 +352,8 @@ export class SamoAI extends AsyncEventEmitter {
   private async getAgents(
     location: Location,
     agentIds: AgentId[],
-    userIds: UserId[]
+    contextAgentIds: AgentId[],
+    contextUserIds: UserId[]
   ): Promise<Map<AgentId, Agent>> {
     const agentModels = await this.agentRepository.getAgentModels(agentIds, {
       locationModel: location.model,
@@ -331,8 +363,8 @@ export class SamoAI extends AsyncEventEmitter {
     const agentEntityStates =
       await this.agentRepository.getOrCreateAgentEntityStates(
         agentIds,
-        agentIds,
-        userIds
+        contextAgentIds,
+        contextUserIds
       );
 
     const agents: Map<AgentId, Agent> = new Map();

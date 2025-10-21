@@ -35,6 +35,7 @@ export interface LocationMeta {
   messageLengthLimit: number;
   agentMessageLengthLimit?: number;
   userContextLimit: number;
+  agentAgentContextLimit: number;
   agentUserContextLimit: number;
 
   actions: string[];
@@ -61,6 +62,7 @@ export const DEFAULT_LOCATION_META: LocationMeta = {
   messageLimit: 30,
   messageLengthLimit: 800,
   userContextLimit: 8,
+  agentAgentContextLimit: 4,
   agentUserContextLimit: 4,
   actions: [],
   messageAction: 'send_message:latest',
