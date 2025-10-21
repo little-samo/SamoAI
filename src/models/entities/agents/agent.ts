@@ -207,6 +207,10 @@ export class Agent extends Entity {
   }
 
   private initActions() {
+    if (Object.keys(this._actions).length > 0) {
+      return;
+    }
+
     const actions = [
       ...this.location.meta.actions,
       ...(this.location.meta.addActions ?? []),
