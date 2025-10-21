@@ -20,6 +20,19 @@ interface CurrentObjectState {
 }
 
 /**
+ * Converts a pattern with wildcards (*) to a regex pattern
+ * @param pattern - e.g., "send_*_message" or "exact_match"
+ * @returns RegExp for matching
+ */
+function patternToRegex(pattern: string): RegExp {
+  // Escape special regex characters except *
+  const escapedPattern = pattern.replace(/[.+?^${}()|[\]\\]/g, '\\$&');
+  // Replace * with regex pattern for any characters
+  const regexPattern = '^' + escapedPattern.replace(/\*/g, '.*') + '$';
+  return new RegExp(regexPattern);
+}
+
+/**
  * Parses a streaming JSON object in the format {toolCalls: [{...}, {...}, {...}]}
  * and yields complete tool call objects as they arrive
  *
@@ -40,7 +53,7 @@ export class JsonArrayStreamParser {
   private arrayStarted = false;
   private objectStartIndex = -1;
   private yieldedCount = 0;
-  private trackedPairs = new Set<string>(); // "toolName:argumentKey" pairs
+  private trackedPairs: Array<{ pattern: string; regex: RegExp }> = []; // "toolName:argumentKey" pairs (supports wildcards)
   private onFieldUpdate?: (update: PartialFieldUpdate) => void;
 
   // Current object parsing state
@@ -63,13 +76,26 @@ export class JsonArrayStreamParser {
 
   /**
    * Track specific (toolName, argumentKey) pairs for partial updates
-   * @param pairs - e.g., [['send_message', 'message'], ['send_casual_message', 'casualPolicyViolatingAnswer']]
+   * Supports wildcard patterns with * (e.g., 'send_*_message')
+   * @param pairs - e.g., [['send_message', 'message'], ['send_*_message', 'message'], ['send_casual_message', 'casualPolicyViolatingAnswer']]
    */
   public trackToolFields(pairs: Array<[string, string]>): void {
-    this.trackedPairs.clear();
+    this.trackedPairs = [];
     for (const [toolName, argumentKey] of pairs) {
-      this.trackedPairs.add(`${toolName}:${argumentKey}`);
+      const pattern = `${toolName}:${argumentKey}`;
+      this.trackedPairs.push({
+        pattern,
+        regex: patternToRegex(pattern),
+      });
     }
+  }
+
+  /**
+   * Checks if a toolName:argumentKey pair matches any tracked pattern
+   */
+  private matchesTrackedPair(toolName: string, argumentKey: string): boolean {
+    const pairKey = `${toolName}:${argumentKey}`;
+    return this.trackedPairs.some(({ regex }) => regex.test(pairKey));
   }
 
   /**
@@ -148,8 +174,7 @@ export class JsonArrayStreamParser {
     }
 
     // Only emit for tracked (toolName, argumentKey) pairs
-    const pairKey = `${toolName}:${argumentKey}`;
-    if (!this.trackedPairs.has(pairKey)) {
+    if (!this.matchesTrackedPair(toolName, argumentKey)) {
       return;
     }
 
@@ -209,8 +234,9 @@ export class JsonArrayStreamParser {
             this.currentObject.name &&
             this.currentObject.inArguments &&
             this.currentObject.currentKey &&
-            this.trackedPairs.has(
-              `${this.currentObject.name}:${this.currentObject.currentKey}`
+            this.matchesTrackedPair(
+              this.currentObject.name,
+              this.currentObject.currentKey
             )
           ) {
             this.currentObject.isTrackingField = true;
@@ -317,8 +343,9 @@ export class JsonArrayStreamParser {
               // String value completed for tracked argument
               if (
                 this.currentObject.name &&
-                this.trackedPairs.has(
-                  `${this.currentObject.name}:${this.lastJsonKey}`
+                this.matchesTrackedPair(
+                  this.currentObject.name,
+                  this.lastJsonKey
                 )
               ) {
                 this.emitFieldUpdate(
@@ -412,9 +439,7 @@ export class JsonArrayStreamParser {
             this.currentObject.inArguments &&
             this.currentObject.name &&
             this.depth === this.currentObject.keyDepth + 1 &&
-            this.trackedPairs.has(
-              `${this.currentObject.name}:${this.lastJsonKey}`
-            )
+            this.matchesTrackedPair(this.currentObject.name, this.lastJsonKey)
           ) {
             this.currentObject.currentKey = this.lastJsonKey;
           }

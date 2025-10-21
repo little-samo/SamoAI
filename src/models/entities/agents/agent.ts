@@ -485,6 +485,7 @@ export class Agent extends Entity {
             outputVerbosity: this.meta.outputVerbosity,
             trackToolFields: [
               ['send_message', 'message'],
+              ['send_*_message', 'message'],
               ['send_casual_message', 'casualPolicyViolatingAnswer'],
             ],
             verbose: ENV.VERBOSE_LLM,

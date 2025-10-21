@@ -72,7 +72,8 @@ export interface LlmOptions {
   /**
    * Tool fields to track for incremental streaming updates.
    * Format: [toolName, argumentKey] pairs
-   * @example [['send_message', 'message'], ['send_casual_message', 'casualPolicyViolatingAnswer']]
+   * Supports wildcard patterns with * (e.g., 'send_*_message' matches 'send_dm_message', 'send_casual_message', etc.)
+   * @example [['send_message', 'message'], ['send_*_message', 'message'], ['send_casual_message', 'casualPolicyViolatingAnswer']]
    */
   trackToolFields?: Array<[string, string]>;
 }
