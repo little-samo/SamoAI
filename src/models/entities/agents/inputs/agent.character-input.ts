@@ -44,17 +44,6 @@ export class AgentCharacterInputBuilder extends AgentInputBuilder {
       ? `When reasoning, justify decisions by citing specific rules (e.g., "per Rule #X") or context elements (e.g., "based on <LocationMessages>").`
       : '';
 
-    prompts.push(`
-${agentIdentityPrompt.replace('{AGENT_NAME}', this.agent.name).trim()}
-${guidance.trim()}
-
-You may operate simultaneously across multiple locations with separate contexts. Each location has its own messages, canvases, and state—information doesn't transfer between them except General Memories and Summary.
-
-${reasoningPrompt}
-`);
-
-    const rules: string[] = [];
-
     // Language configuration
     let languages = this.agent.meta.languages;
     if (!languages || languages.length === 0) {
@@ -72,6 +61,22 @@ ${reasoningPrompt}
     } else {
       languageRule = `Use only: ${languages.join(', ')}. Respond in allowed language even if user uses another.`;
     }
+
+    prompts.push(`
+${agentIdentityPrompt.replace('{AGENT_NAME}', this.agent.name).trim()}
+${guidance.trim()}
+
+You may operate simultaneously across multiple locations with separate contexts. Each location has its own messages, canvases, and state—information doesn't transfer between them except General Memories and Summary.
+
+${reasoningPrompt}
+`);
+
+    prompts.push(`
+Character: ${JSON.stringify(this.agent.meta.character)}
+Timezone: ${this.agent.meta.timeZone}
+`);
+
+    const rules: string[] = [];
 
     const msgLimit =
       this.location.meta.agentMessageLengthLimit ??
@@ -108,6 +113,11 @@ ${reasoningPrompt}
       `15. **Dynamic Interaction:** Avoid repetition at all costs. Don't echo/paraphrase user messages. Review <LocationMessages> and <YourLastMessage> to ensure fresh, novel responses. Vary expressions continuously. Act only with clear purpose (new info or evolving goal). If nothing meaningful to add, do nothing—silence > redundancy.`
     );
 
+    prompts.push(`
+CORE RULES (Always apply):
+${rules.join('\n')}
+`);
+
     const requiredActions = [
       ...this.agent.meta.requiredActions,
       ...this.location.meta.requiredActions,
@@ -132,16 +142,6 @@ Location-Specific Rules (Apply in addition to core rules):
 - ${locationRules.join('\n- ')}
 `);
     }
-
-    prompts.push(`
-CORE RULES (Always apply):
-${rules.join('\n')}
-`);
-
-    prompts.push(`
-Character: ${JSON.stringify(this.agent.meta.character)}
-Timezone: ${this.agent.meta.timeZone}
-`);
 
     return prompts.map((p) => p.trim()).join('\n\n');
   }
