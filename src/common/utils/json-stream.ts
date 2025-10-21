@@ -344,7 +344,7 @@ export class JsonArrayStreamParser {
             } else if (
               this.currentObject.inArguments &&
               this.currentObject.currentKey === this.lastJsonKey &&
-              this.depth === this.currentObject.keyDepth + 1
+              this.depth === this.currentObject.keyDepth
             ) {
               // String value completed for tracked argument
               if (
@@ -448,7 +448,7 @@ export class JsonArrayStreamParser {
             this.currentObject &&
             this.currentObject.inArguments &&
             this.currentObject.name &&
-            this.depth === this.currentObject.keyDepth + 1 &&
+            this.depth === this.currentObject.keyDepth &&
             this.matchesTrackedPair(this.currentObject.name, this.lastJsonKey)
           ) {
             this.currentObject.currentKey = this.lastJsonKey;
