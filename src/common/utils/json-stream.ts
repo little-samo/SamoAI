@@ -17,6 +17,7 @@ interface CurrentObjectState {
   isComplete: boolean;
   accumulatedValue: string;
   isTrackingField: boolean;
+  startDepth: number; // Track the depth at which this tool call started
 }
 
 /**
@@ -146,7 +147,7 @@ export class JsonArrayStreamParser {
   /**
    * Resets current object state
    */
-  private resetCurrentObject(): void {
+  private resetCurrentObject(startDepth: number): void {
     this.currentObject = {
       name: null,
       inArguments: false,
@@ -156,6 +157,7 @@ export class JsonArrayStreamParser {
       isComplete: false,
       accumulatedValue: '',
       isTrackingField: false,
+      startDepth,
     };
   }
 
@@ -323,6 +325,10 @@ export class JsonArrayStreamParser {
         !this.arrayStarted
       ) {
         this.arrayStarted = true;
+      }
+
+      // Always increment depth for arrays
+      if (char === '[') {
         this.depth++;
         continue;
       }
@@ -368,20 +374,21 @@ export class JsonArrayStreamParser {
         // Tool call object starts at depth 2 (inside toolCalls array)
         if (this.depth === 2 && this.arrayStarted) {
           this.objectStartIndex = i;
-          this.resetCurrentObject();
+          this.resetCurrentObject(this.depth + 1); // Will be depth 3 after increment
         }
 
-        // Check if we're entering "arguments" (at depth 3)
+        // Increment depth after checking for tool call start
+        this.depth++;
+
+        // Check if we're entering "arguments"
         if (
           this.currentObject &&
           this.lastJsonKey === 'arguments' &&
-          this.depth === 3
+          this.depth === this.currentObject.startDepth + 1
         ) {
           this.currentObject.inArguments = true;
           this.currentObject.keyDepth = this.depth;
         }
-
-        this.depth++;
       } else if (char === '}') {
         this.depth--;
 
@@ -395,17 +402,20 @@ export class JsonArrayStreamParser {
           this.currentObject.currentKey = null;
         }
 
-        // Complete tool call object (back to depth 2)
-        if (this.depth === 2 && this.objectStartIndex !== -1) {
+        // Complete tool call object - check if we're back to the depth where it started
+        if (
+          this.currentObject &&
+          this.objectStartIndex !== -1 &&
+          this.depth === this.currentObject.startDepth - 1
+        ) {
           // We have a complete tool call object
-          if (this.currentObject) {
-            this.currentObject.isComplete = true;
-          }
+          this.currentObject.isComplete = true;
 
           const objectJson = this.buffer.substring(
             this.objectStartIndex,
             i + 1
           );
+
           yield { json: objectJson, index: this.yieldedCount };
 
           // Memory cleanup: remove field values for completed object
@@ -453,7 +463,7 @@ export class JsonArrayStreamParser {
    */
   public *finalize(): Generator<{ json: string; index: number }> {
     // If we have a partial tool call object at the end, try to fix and yield it
-    if (this.objectStartIndex !== -1 && this.depth >= 2) {
+    if (this.objectStartIndex !== -1) {
       const partialJson = this.buffer.substring(this.objectStartIndex);
       try {
         const fixedJson = fixJson(partialJson);
