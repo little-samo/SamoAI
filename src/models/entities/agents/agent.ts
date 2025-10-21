@@ -231,12 +231,6 @@ export class Agent extends Entity {
         return [action.name, action];
       })
     );
-
-    if (ENV.DEBUG) {
-      console.log(
-        `Initialized actions: ${Object.keys(this._actions).join(', ')}`
-      );
-    }
   }
 
   private getLlm(
