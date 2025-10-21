@@ -453,7 +453,7 @@ export class JsonArrayStreamParser {
    */
   public *finalize(): Generator<{ json: string; index: number }> {
     // If we have a partial tool call object at the end, try to fix and yield it
-    if (this.objectStartIndex !== -1 && this.depth > 2) {
+    if (this.objectStartIndex !== -1 && this.depth >= 2) {
       const partialJson = this.buffer.substring(this.objectStartIndex);
       try {
         const fixedJson = fixJson(partialJson);
