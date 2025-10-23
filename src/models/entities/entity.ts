@@ -28,7 +28,7 @@ export abstract class Entity {
 
   protected constructor(
     public readonly location: Location,
-    public readonly name: string,
+    public name: string,
     meta: EntityMeta,
     state: EntityState,
     items: ItemModel[] = []
