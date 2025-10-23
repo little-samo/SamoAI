@@ -13,8 +13,6 @@ import {
 } from '@little-samo/samo-ai/common';
 import { z } from 'zod';
 
-import { type Entity } from '../../entity';
-import { Gimmick } from '../gimmick';
 import { GimmickCoreMeta } from '../gimmick.meta';
 import { GimmickParameters } from '../gimmick.types';
 import {
@@ -24,6 +22,9 @@ import {
 
 import { GimmickCore } from './gimmick.core';
 import { RegisterGimmickCore } from './gimmick.core-decorator';
+
+import type { Entity } from '../../entity';
+import type { Gimmick } from '../gimmick';
 
 export const GimmickImageGenerationCoreOptionsSchema = z.object({
   images: z.array(GimmickImageGenerationReferenceImageSchema).optional(),

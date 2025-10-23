@@ -6,8 +6,8 @@ import { Entity } from '../entity';
 import { ItemModel } from '../entity.item-model';
 import { EntityType } from '../entity.types';
 
-import { GimmickCoreFactory } from './cores';
 import { GimmickCore } from './cores/gimmick.core';
+import { GimmickCoreFactory } from './cores/gimmick.core-factory';
 import { GimmickContext } from './gimmick.context';
 import { GimmickMeta } from './gimmick.meta';
 import { GimmickId, GimmickParameters } from './gimmick.types';
