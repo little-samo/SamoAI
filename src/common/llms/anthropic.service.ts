@@ -538,6 +538,7 @@ Response can only be in JSON format and must strictly follow the following forma
                   type: 'field' as const,
                   index: update.index,
                   toolName: update.toolName,
+                  ...(update.entityKey && { entityKey: update.entityKey }),
                   argumentKey: update.argumentKey,
                   value: update.value,
                   delta: update.delta,

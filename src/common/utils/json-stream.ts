@@ -3,6 +3,7 @@ import { fixJson } from './json';
 export interface PartialFieldUpdate {
   index: number;
   toolName: string;
+  entityKey?: string;
   argumentKey: string;
   value: string;
   delta: string;
@@ -60,6 +61,7 @@ export class JsonArrayStreamParser {
   // Current object parsing state
   private currentObject: CurrentObjectState | null = null;
   private fieldValues = new Map<string, string>(); // "index:key" -> value
+  private entityKeys = new Map<number, string>(); // index -> entityKey value
 
   // String parsing state
   private currentStringStart = -1;
@@ -187,12 +189,14 @@ export class JsonArrayStreamParser {
       const delta = newValue.substring(oldValue.length);
 
       if (this.onFieldUpdate && delta.length > 0) {
+        const entityKey = this.entityKeys.get(index);
         this.onFieldUpdate({
           index,
           toolName,
           argumentKey,
           value: newValue,
           delta,
+          ...(entityKey && { entityKey }),
         });
       }
 
@@ -346,6 +350,11 @@ export class JsonArrayStreamParser {
               this.currentObject.currentKey === this.lastJsonKey &&
               this.depth === this.currentObject.keyDepth
             ) {
+              // Store entityKey if this is the entityKey field
+              if (this.lastJsonKey === 'entityKey') {
+                this.entityKeys.set(this.yieldedCount, this.lastString);
+              }
+
               // String value completed for tracked argument
               if (
                 this.currentObject.name &&
@@ -425,6 +434,9 @@ export class JsonArrayStreamParser {
             }
           }
 
+          // Cleanup entityKey for completed object
+          this.entityKeys.delete(this.yieldedCount);
+
           this.yieldedCount++;
           this.objectStartIndex = -1;
           this.currentObject = null;
@@ -478,6 +490,7 @@ export class JsonArrayStreamParser {
 
     // Memory cleanup: clear accumulated field values
     this.fieldValues.clear();
+    this.entityKeys.clear();
   }
 
   /**

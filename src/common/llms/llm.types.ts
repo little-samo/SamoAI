@@ -186,6 +186,7 @@ export interface LlmToolsStreamFieldChunk {
   type: 'field';
   index: number;
   toolName: string;
+  entityKey?: string;
   argumentKey: string;
   value: string;
   delta: string;
