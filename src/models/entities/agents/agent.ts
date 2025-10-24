@@ -509,6 +509,8 @@ export class Agent extends Entity {
               await this.location.emitAsync(
                 'agentSendMessageStream',
                 this,
+                event.entityKey,
+                event.toolName,
                 event.index,
                 streamSequence++,
                 event.delta
