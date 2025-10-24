@@ -70,7 +70,7 @@ export class LocationRoundRobinCore extends LocationCore {
 
     for (const agent of agents) {
       if (!(await agent.update()) || this.lastMessage === lastMessage) {
-        if (ENV.DEBUG) {
+        if (ENV.DEBUG && agent.core.name !== 'no_action') {
           console.log(`Agent ${agent.name} did not execute next actions`);
         }
         continue;
