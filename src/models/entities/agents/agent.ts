@@ -266,7 +266,7 @@ export class Agent extends Entity {
     return action;
   }
 
-  private getActions(): Record<string, AgentAction> {
+  public getActions(): Record<string, AgentAction> {
     this.initActions();
     return this._actions;
   }
