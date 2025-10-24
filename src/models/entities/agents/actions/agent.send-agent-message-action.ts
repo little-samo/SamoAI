@@ -9,7 +9,7 @@ import { RegisterAgentAction } from './agent.action-decorator';
 import type { Agent } from '../agent';
 
 export interface AgentSendAgentMessageActionParameters {
-  agentKey: string;
+  entityKey: string;
   message: string;
   expression: null | string;
 }
@@ -33,7 +33,7 @@ export class AgentSendAgentMessageAction extends AgentAction {
       case 1:
       default:
         return z.object({
-          agentKey: z
+          entityKey: z
             .string()
             .describe(
               `Entity key of the target agent to control (format: "agent:ID"). Find available agents in <OtherAgents> context. Use the KEY field from their agent entry.`
@@ -58,17 +58,23 @@ export class AgentSendAgentMessageAction extends AgentAction {
   public override async execute(call: LlmToolCall): Promise<void> {
     const action = call.arguments as AgentSendAgentMessageActionParameters;
 
-    const targetEntity = this.location.getEntity(action.agentKey as EntityKey);
+    const targetEntity = this.location.getEntity(action.entityKey as EntityKey);
 
     if (!targetEntity) {
       throw new Error(
-        `Entity with key ${action.agentKey} not found in this location`
+        `Entity with key ${action.entityKey} not found in this location`
       );
     }
 
     if (targetEntity.type !== EntityType.Agent) {
       throw new Error(
-        `Entity ${action.agentKey} is not an agent (type: ${targetEntity.type})`
+        `Entity ${action.entityKey} is not an agent (type: ${targetEntity.type})`
+      );
+    }
+
+    if (targetEntity.key === this.agent.key) {
+      throw new Error(
+        `Cannot control yourself (${action.entityKey}). You can only control other agents.`
       );
     }
 
