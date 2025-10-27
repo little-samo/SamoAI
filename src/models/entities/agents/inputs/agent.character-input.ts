@@ -125,10 +125,10 @@ Timezone: ${this.agent.meta.timeZone}
 
     // Interaction & awareness - streamlined
     rules.push(
-      `12. **Multi-Location Awareness:** You operate across multiple locations with separate contexts. Information does NOT transfer between locations except General Memories and Summary. Per-location: <Location>, <LocationCanvases>, <Gimmicks>, <OtherAgents>, <OtherUsers>, <LocationMessages>, <YourLastMessage>, <UnprocessedLastUserMessage>, <YourCanvases>, <YourMemoriesAbout...>. Shared: Current Time, Timezone (${this.agent.meta.timeZone}), <YourInventory>, <YourMemories>, <Summary>.`,
+      `12. **Multi-Location Awareness:** You operate across multiple locations with separate contexts. Only these persist across locations: <YourInventory>, <YourMemories>, <Summary>, Current Time, Timezone (${this.agent.meta.timeZone}). All other context (including <OtherAgents> and their last messages) is location-specific.`,
       `13. **Message Stream Processing:** \`PROCESSED=false\` means new message requiring reaction. \`PROCESSED=true\` means already handled (context only). \`PROCESSED=null\` means status undetermined. \`ACTION\` field shows \`upload_image\` for images; \`--hidden\` flag means sensitive content hidden from agents.`,
       `14. **Timezone & Time:** Your timezone is ${this.agent.meta.timeZone}. All timestamps in ISO 8601 with timezone offsets. Others use their timezones. Use natural phrases in messages ("this morning", "2 hours ago"), not raw ISO timestamps.`,
-      `15. **Dynamic Interaction:** Avoid repetition at all costs. Don't echo/paraphrase user messages. Review <LocationMessages> and <YourLastMessage> to ensure fresh, novel responses. Vary expressions continuously. Act only with clear purpose (new info or evolving goal). If nothing meaningful to add, do nothing—silence > redundancy.`
+      `15. **Dynamic Interaction:** Avoid repetition at all costs. Don't echo/paraphrase user messages. Review <LocationMessages>, <YourLastMessage>, and <OtherAgents> (check their last messages) to ensure fresh, novel responses. Vary expressions continuously. Act only with clear purpose (new info or evolving goal). If nothing meaningful to add, do nothing—silence > redundancy.`
     );
 
     prompts.push(`
@@ -280,7 +280,27 @@ ${otherAgentMemories
 [Omitted]`;
       }
       otherAgentContext += `
-</YourMemoriesAboutOtherAgent>
+</YourMemoriesAboutOtherAgent>`;
+
+      // Include last message from this agent if within context limit
+      if (this.agent.getEntityState(agent.key)) {
+        // Find last message from this specific agent
+        const lastMessage = locationContext.messages
+          .slice()
+          .reverse()
+          .find(
+            (m) => !m.isHiddenFromAgent && m.message && m.key === agent.key
+          );
+        if (lastMessage) {
+          otherAgentContext += `
+<LastMessage>
+${LocationMessageContext.FORMAT}
+${lastMessage.build({ timezone: this.agent.timezone })}
+</LastMessage>`;
+        }
+      }
+
+      otherAgentContext += `
 </OtherAgent>`;
       otherAgentContexts.push(otherAgentContext);
     }
