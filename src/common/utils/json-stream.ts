@@ -18,6 +18,8 @@ interface CurrentObjectState {
   isComplete: boolean;
   accumulatedValue: string;
   isTrackingField: boolean;
+  isTrackingEntityKey: boolean; // Track if we're currently streaming entityKey
+  entityKeyValue: string; // Accumulated entityKey value during streaming
   startDepth: number; // Track the depth at which this tool call started
 }
 
@@ -159,6 +161,8 @@ export class JsonArrayStreamParser {
       isComplete: false,
       accumulatedValue: '',
       isTrackingField: false,
+      isTrackingEntityKey: false,
+      entityKeyValue: '',
       startDepth,
     };
   }
@@ -239,14 +243,21 @@ export class JsonArrayStreamParser {
             this.currentObject &&
             this.currentObject.name &&
             this.currentObject.inArguments &&
-            this.currentObject.currentKey &&
-            this.matchesTrackedPair(
-              this.currentObject.name,
-              this.currentObject.currentKey
-            )
+            this.lastJsonKey &&
+            this.depth === this.currentObject.keyDepth
           ) {
-            this.currentObject.isTrackingField = true;
-            this.currentObject.accumulatedValue = '';
+            // Check if this is the entityKey field
+            if (this.lastJsonKey === 'entityKey') {
+              this.currentObject.isTrackingEntityKey = true;
+              this.currentObject.entityKeyValue = '';
+            }
+            // Check if this is a tracked field for streaming
+            else if (
+              this.matchesTrackedPair(this.currentObject.name, this.lastJsonKey)
+            ) {
+              this.currentObject.isTrackingField = true;
+              this.currentObject.accumulatedValue = '';
+            }
           }
         } else {
           this.inString = false;
@@ -260,6 +271,16 @@ export class JsonArrayStreamParser {
           // Store the string - we'll determine if it's a key or value when we see the next delimiter
           this.lastString = stringValue;
 
+          // If we were tracking entityKey, store it in the map immediately
+          if (this.currentObject?.isTrackingEntityKey) {
+            this.entityKeys.set(
+              this.yieldedCount,
+              this.currentObject.entityKeyValue
+            );
+            this.currentObject.isTrackingEntityKey = false;
+            this.currentObject.entityKeyValue = '';
+          }
+
           // Reset tracking flag when string ends
           if (this.currentObject?.isTrackingField) {
             this.currentObject.isTrackingField = false;
@@ -269,43 +290,83 @@ export class JsonArrayStreamParser {
         continue;
       }
 
-      // Optimization: Incremental character accumulation for tracked fields
-      if (this.inString && this.currentObject?.isTrackingField) {
-        // Process character with escape handling
-        if (this.escaped) {
-          // Handle escape sequences incrementally
-          switch (char) {
-            case '"':
-            case '\\':
-            case '/':
-              this.currentObject.accumulatedValue += char;
-              break;
-            case 'n':
-              this.currentObject.accumulatedValue += '\n';
-              break;
-            case 'r':
-              this.currentObject.accumulatedValue += '\r';
-              break;
-            case 't':
-              this.currentObject.accumulatedValue += '\t';
-              break;
-            default:
-              // Unknown escape, keep the backslash
-              this.currentObject.accumulatedValue += '\\' + char;
+      // Optimization: Incremental character accumulation for tracked fields and entityKey
+      if (this.inString && this.currentObject) {
+        // Handle entityKey field streaming
+        if (this.currentObject.isTrackingEntityKey) {
+          // Process character with escape handling
+          if (this.escaped) {
+            // Handle escape sequences incrementally
+            switch (char) {
+              case '"':
+              case '\\':
+              case '/':
+                this.currentObject.entityKeyValue += char;
+                break;
+              case 'n':
+                this.currentObject.entityKeyValue += '\n';
+                break;
+              case 'r':
+                this.currentObject.entityKeyValue += '\r';
+                break;
+              case 't':
+                this.currentObject.entityKeyValue += '\t';
+                break;
+              default:
+                // Unknown escape, keep the backslash
+                this.currentObject.entityKeyValue += '\\' + char;
+            }
+          } else if (char !== '\\') {
+            // Regular character (not a backslash)
+            this.currentObject.entityKeyValue += char;
           }
-        } else if (char !== '\\') {
-          // Regular character (not a backslash)
-          this.currentObject.accumulatedValue += char;
-        }
 
-        // Emit update with accumulated value (skip backslash itself)
-        if (char !== '\\' || this.escaped) {
-          this.emitFieldUpdate(
-            this.yieldedCount,
-            this.currentObject.name!,
-            this.currentObject.currentKey!,
-            this.currentObject.accumulatedValue
-          );
+          // Update the entityKeys map in real-time
+          if (char !== '\\' || this.escaped) {
+            this.entityKeys.set(
+              this.yieldedCount,
+              this.currentObject.entityKeyValue
+            );
+          }
+        }
+        // Handle tracked field streaming
+        else if (this.currentObject.isTrackingField) {
+          // Process character with escape handling
+          if (this.escaped) {
+            // Handle escape sequences incrementally
+            switch (char) {
+              case '"':
+              case '\\':
+              case '/':
+                this.currentObject.accumulatedValue += char;
+                break;
+              case 'n':
+                this.currentObject.accumulatedValue += '\n';
+                break;
+              case 'r':
+                this.currentObject.accumulatedValue += '\r';
+                break;
+              case 't':
+                this.currentObject.accumulatedValue += '\t';
+                break;
+              default:
+                // Unknown escape, keep the backslash
+                this.currentObject.accumulatedValue += '\\' + char;
+            }
+          } else if (char !== '\\') {
+            // Regular character (not a backslash)
+            this.currentObject.accumulatedValue += char;
+          }
+
+          // Emit update with accumulated value (skip backslash itself)
+          if (char !== '\\' || this.escaped) {
+            this.emitFieldUpdate(
+              this.yieldedCount,
+              this.currentObject.name!,
+              this.currentObject.currentKey!,
+              this.currentObject.accumulatedValue
+            );
+          }
         }
       }
 
