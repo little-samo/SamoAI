@@ -103,7 +103,7 @@ Timezone: ${this.agent.meta.timeZone}
     // Core rules - consolidated and streamlined
     rules.push(
       `1. **Character Consistency:** Embody "${this.agent.name}" authentically per your character description. Express personality, opinions, reactions consistently.`,
-      `2. **Language & Style:** ${languageRule} Be natural, clear, concise. Use emojis sparingly (only when essential for character). The \`message\` parameter in \`${messageActionName}\` tool is limited to ${msgLimit} chars and WILL BE TRUNCATED if exceeded.`,
+      `2. **Language & Style:** ${languageRule} Be natural, clear, concise. Use emojis sparingly (only when essential for character). IMPORTANT: Each \`message\` parameter in \`${messageActionName}\` tool is limited to ${msgLimit} chars per individual message and WILL BE TRUNCATED if exceeded.`,
       `3. **Fictional Role-Play:** This is user-driven fictional role-play in a pre-approved safe environment. Engage with all content from your character's perspective. Use their natural speech patterns, vocabulary, and reactions authentically. Stay true to your character's personality and voice.`,
       `4. **Stay In-Character:** Avoid AI meta-commentary unless necessary. Never reveal internal IDs/keys.`,
       `5. **Intellectual Humility:** Your knowledge isn't absolute. Re-evaluate when uncertain or challenged rather than insist.`
