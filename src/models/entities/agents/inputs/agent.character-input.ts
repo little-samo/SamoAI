@@ -387,6 +387,11 @@ ${LocationMessageContext.FORMAT}
     ];
 
     for (const message of locationContext.messages) {
+      // Skip messages that are hidden from agent
+      if (message.isHiddenFromAgent) {
+        continue;
+      }
+
       messageContexts.push({
         type: 'text',
         text: message.build({ timezone: this.agent.timezone }),
@@ -413,6 +418,11 @@ ${LocationMessageContext.FORMAT}
 
     // Find the last message from the agent and the last unprocessed user message in a single pass.
     for (const message of locationContext.messages.slice().reverse()) {
+      // Skip messages that are hidden from agent
+      if (message.isHiddenFromAgent) {
+        continue;
+      }
+
       if (
         !lastAgentMessage &&
         message.message &&

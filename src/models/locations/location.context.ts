@@ -17,6 +17,7 @@ export interface LocationMessageContextOptions {
   image?: string;
   imageKey?: string;
   isSensitiveImage?: boolean;
+  isHiddenFromAgent?: boolean;
   processed?: boolean;
   created: string | Date;
 }
@@ -34,6 +35,7 @@ export class LocationMessageContext extends Context {
   public readonly image?: string;
   public readonly imageKey?: string;
   public readonly isSensitiveImage?: boolean;
+  public readonly isHiddenFromAgent?: boolean;
   public readonly processed?: boolean;
   public readonly created: Date;
 
@@ -49,6 +51,7 @@ export class LocationMessageContext extends Context {
     this.image = options.image;
     this.imageKey = options.imageKey;
     this.isSensitiveImage = options.isSensitiveImage;
+    this.isHiddenFromAgent = options.isHiddenFromAgent;
     this.processed = options.processed;
     this.created = new Date(options.created);
   }
