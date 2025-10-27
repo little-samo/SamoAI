@@ -93,10 +93,10 @@ export interface AgentMeta extends EntityMeta {
 
     // Personality aspects
     personality?: {
-      traits?: string; // Key personality traits (empathetic, analytical, creative)
-      interests?: string; // Topics of interest
-      values?: string; // Core values and beliefs
-      quirks?: string; // Unique habits or characteristics
+      traits?: string | string[]; // Key personality traits (empathetic, analytical, creative)
+      interests?: string | string[]; // Topics of interest
+      values?: string | string[]; // Core values and beliefs
+      quirks?: string | string[]; // Unique habits or characteristics
       mbti?: string; // MBTI personality type
       [key: string]: undefined | string | string[]; // Additional personality properties
     };
