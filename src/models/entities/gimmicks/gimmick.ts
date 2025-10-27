@@ -164,6 +164,9 @@ export class Gimmick extends Entity {
   }
 
   public async update(): Promise<boolean> {
+    if (this.location.getEntityState(this.key)?.isActive === false) {
+      return false;
+    }
     await super.update();
     return await this.core.update();
   }
