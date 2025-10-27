@@ -103,19 +103,23 @@ export class AgentItemContext extends Context {
 }
 
 export interface AgentContextOptions extends EntityContextOptions {
+  role?: string;
   summary: string;
 }
 export class AgentContext extends EntityContext implements AgentContextOptions {
-  public static readonly FORMAT = EntityContext.FORMAT;
+  public static readonly FORMAT = `${EntityContext.FORMAT}\tROLE`;
+
+  public readonly role?: string;
 
   public readonly summary: string;
 
   public constructor(options: AgentContextOptions) {
     super(options);
+    this.role = options.role;
     this.summary = options.summary;
   }
 
   public build(): string {
-    return super.build();
+    return `${super.build()}\t${this.role}`;
   }
 }

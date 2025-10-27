@@ -162,6 +162,7 @@ export class Agent extends Entity {
             });
           })
         : [],
+      role: this.meta.character?.background?.role,
       summary: this.state.summary,
     });
     return context;
