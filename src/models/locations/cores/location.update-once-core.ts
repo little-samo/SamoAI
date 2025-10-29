@@ -13,7 +13,7 @@ export class LocationUpdateOnceCore extends LocationCore {
 
     if (
       this.meta.fast &&
-      agents.length === 1 &&
+      agents.filter((agent) => agent.core.name !== 'no_action').length === 1 &&
       lastMessage?.entityType === EntityType.User
     ) {
       await agents[0].executeNextActions();
