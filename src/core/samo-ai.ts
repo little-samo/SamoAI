@@ -239,11 +239,49 @@ export class SamoAI extends AsyncEventEmitter {
       } else {
         agentContextAgentIds = [...agentContextAgentIds];
       }
-      agentContextAgentIds.sort(
-        (a, b) =>
-          (lastAgentMessageAt!.get(b)?.getTime() ?? Math.random()) -
-          (lastAgentMessageAt!.get(a)?.getTime() ?? Math.random())
+
+      // Check which agents are mentioned in messages
+      const agentModelsForSorting = await this.agentRepository.getAgentModels(
+        agentContextAgentIds,
+        { locationModel: location.model }
       );
+      const agentMentionedInMessages = new Map<AgentId, boolean>();
+
+      for (const agentId of agentContextAgentIds) {
+        const agentModel = agentModelsForSorting.get(agentId);
+        if (!agentModel) continue;
+
+        const agentName = agentModel.name;
+        const isMentioned = location.messages.some(
+          (message) => message.message && message.message.includes(agentName)
+        );
+        agentMentionedInMessages.set(agentId, isMentioned);
+      }
+
+      agentContextAgentIds.sort((a, b) => {
+        const aLastMessageTime = lastAgentMessageAt!.get(a)?.getTime();
+        const bLastMessageTime = lastAgentMessageAt!.get(b)?.getTime();
+        const aHasMessage = aLastMessageTime !== undefined;
+        const bHasMessage = bLastMessageTime !== undefined;
+
+        // Priority 1: Agents who recently sent messages
+        if (aHasMessage !== bHasMessage) {
+          return bHasMessage ? 1 : -1;
+        }
+        if (aHasMessage && bHasMessage) {
+          return bLastMessageTime! - aLastMessageTime!;
+        }
+
+        // Priority 2: Agents mentioned in messages
+        const aMentioned = agentMentionedInMessages.get(a) ?? false;
+        const bMentioned = agentMentionedInMessages.get(b) ?? false;
+        if (aMentioned !== bMentioned) {
+          return bMentioned ? 1 : -1;
+        }
+
+        // Priority 3: Random for same priority
+        return Math.random() - 0.5;
+      });
       agentContextAgentIds = agentContextAgentIds.slice(
         0,
         location.meta.agentAgentContextLimit
