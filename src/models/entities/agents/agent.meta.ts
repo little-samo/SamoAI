@@ -172,7 +172,6 @@ export const DEFAULT_AGENT_META: AgentMeta = {
   summaryLengthLimit: 2000,
 
   appearance: 'Typical human (but AI Agent)',
-  role: 'AI Agent',
   character: {},
 
   rules: [],

@@ -1,4 +1,4 @@
 export interface EntityMeta {
   appearance: string;
-  role: string;
+  role?: string;
 }

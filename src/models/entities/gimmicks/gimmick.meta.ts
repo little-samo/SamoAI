@@ -24,4 +24,5 @@ export interface GimmickMeta extends EntityMeta {
 
   name: string;
   description?: string;
+  appearance: string;
 }
