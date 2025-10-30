@@ -51,6 +51,7 @@ export interface EntityContextOptions {
   key: string;
   handle?: string;
   name: string;
+  role?: string;
   appearance: string;
   expression?: string;
   items: Record<ItemKey, ItemModel>;
@@ -59,11 +60,12 @@ export interface EntityContextOptions {
 
 export class EntityContext extends Context implements EntityContextOptions {
   public static readonly FORMAT: string =
-    'KEY\tHANDLE\tNAME\tAPPEARANCE\tEXPRESSION';
+    'KEY\tHANDLE\tNAME\tROLE\tAPPEARANCE\tEXPRESSION';
 
   public readonly key: string;
   public readonly handle?: string;
   public readonly name: string;
+  public readonly role?: string;
   public readonly appearance: string;
   public readonly expression?: string;
 
@@ -75,6 +77,7 @@ export class EntityContext extends Context implements EntityContextOptions {
     this.key = options.key;
     this.handle = options.handle;
     this.name = options.name;
+    this.role = options.role;
     this.appearance = options.appearance;
     this.expression = options.expression;
     this.items = options.items;
@@ -87,6 +90,6 @@ export class EntityContext extends Context implements EntityContextOptions {
       handle = `@${this.handle}`;
     }
     const expression = this.expression ?? 'null';
-    return `${this.key}\t${handle}\t${JSON.stringify(this.name)}\t${JSON.stringify(this.appearance)}\t${JSON.stringify(expression)}`;
+    return `${this.key}\t${handle}\t${this.name}\t${this.role ?? 'null'}\t${this.appearance}\t${expression}`;
   }
 }
