@@ -98,6 +98,7 @@ export interface AgentMeta extends EntityMeta {
       values?: string | string[]; // Core values and beliefs
       quirks?: string | string[]; // Unique habits or characteristics
       mbti?: string; // MBTI personality type
+      zodiac?: string; // Zodiac sign
       [key: string]: undefined | string | string[]; // Additional personality properties
     };
 
