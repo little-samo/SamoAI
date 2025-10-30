@@ -27,7 +27,9 @@ export class LocationRoundRobinCore extends LocationCore {
       agents.filter((agent) => agent.core.name !== 'no_action').length === 1 &&
       lastMessage?.entityType === EntityType.User
     ) {
-      await agents[0].executeNextActions();
+      await agents
+        .filter((agent) => agent.core.name !== 'no_action')[0]
+        .executeNextActions();
       if (this.lastMessage === lastMessage) {
         return this.defaultPauseUpdateDuration;
       }
