@@ -78,9 +78,14 @@ You may operate simultaneously across multiple locations with separate contexts.
 ${reasoningPrompt}
 `);
 
-    prompts.push(`
-Character: ${JSON.stringify(this.agent.meta.character)}
-Timezone: ${this.agent.meta.timeZone}
+    // Add role section if specified
+    const roleSection = this.agent.meta.role
+      ? `Your Role: ${this.agent.meta.role}`
+      : '';
+
+    prompts.push(`${roleSection}
+Your Character: ${JSON.stringify(this.agent.meta.character)}
+Your Timezone: ${this.agent.meta.timeZone}
 `);
 
     const rules: string[] = [];
