@@ -1,6 +1,7 @@
 import { shuffle } from '@little-samo/samo-ai/common';
 
 import { EntityType } from '../../entities';
+import { LocationPauseReason } from '../location.constants';
 
 import { LocationCore } from './location.core';
 import { RegisterLocationCore } from './location.core-decorator';
@@ -14,7 +15,9 @@ export class LocationUpdateOnceCore extends LocationCore {
     if (
       this.meta.fast &&
       agents.filter((agent) => agent.core.name !== 'no_action').length === 1 &&
-      lastMessage?.entityType === EntityType.User
+      (lastMessage?.entityType === EntityType.User ||
+        this.location.state.pauseUpdateReason ===
+          LocationPauseReason.USER_RESUME_UPDATE)
     ) {
       await agents
         .filter((agent) => agent.core.name !== 'no_action')[0]

@@ -1,6 +1,7 @@
 import { ENV } from '@little-samo/samo-ai/common';
 
 import { EntityType } from '../../entities/entity.types';
+import { LocationPauseReason } from '../location.constants';
 import { LocationMessage } from '../states/location.message';
 
 import { LocationCore } from './location.core';
@@ -25,7 +26,9 @@ export class LocationRoundRobinCore extends LocationCore {
     if (
       this.meta.fast &&
       agents.filter((agent) => agent.core.name !== 'no_action').length === 1 &&
-      lastMessage?.entityType === EntityType.User
+      (lastMessage?.entityType === EntityType.User ||
+        this.location.state.pauseUpdateReason ===
+          LocationPauseReason.USER_RESUME_UPDATE)
     ) {
       await agents
         .filter((agent) => agent.core.name !== 'no_action')[0]
