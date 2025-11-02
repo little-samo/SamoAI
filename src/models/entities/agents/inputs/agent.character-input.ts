@@ -363,6 +363,9 @@ ${usersContexts.join('\n')}
 
     const gimmickContexts: string[] = [];
     for (const gimmick of this.location.getGimmicks()) {
+      if (this.location.getEntityState(gimmick.key)?.isActive === false) {
+        continue;
+      }
       gimmickContexts.push(
         gimmick.context.build({ timezone: this.agent.timezone })
       );

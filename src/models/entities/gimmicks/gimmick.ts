@@ -177,6 +177,9 @@ export class Gimmick extends Entity {
     reason?: string,
     force: boolean = false
   ): Promise<string | undefined> {
+    if (this.location.getEntityState(this.key)?.isActive === false) {
+      return 'Gimmick is not active';
+    }
     if (!this.isExecutable && !force) {
       return 'Gimmick is not executable';
     }
