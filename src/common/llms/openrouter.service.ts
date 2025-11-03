@@ -28,6 +28,15 @@ export class OpenRouterService extends OpenAIChatCompletionService {
     maxOutputTokens: number;
     temperature: number | undefined;
   } {
+    if (
+      this.model.includes('gemini') &&
+      options &&
+      options.maxTokens &&
+      options.maxThinkingTokens
+    ) {
+      options.maxTokens += options.maxThinkingTokens;
+    }
+
     const { request, maxOutputTokens, temperature } =
       super.buildGenerateRequest(
         systemMessages,
@@ -37,7 +46,7 @@ export class OpenRouterService extends OpenAIChatCompletionService {
 
     // Add Gemini thinking budget support via OpenRouter
     // See: https://openrouter.ai/docs/use-cases/reasoning-tokens
-    if (request.model.includes('gemini') && options?.maxThinkingTokens) {
+    if (this.model.includes('gemini') && options?.maxThinkingTokens) {
       // @ts-expect-error - OpenRouter supports reasoning for provider-specific parameters
       request.reasoning ??= {};
       // @ts-expect-error - OpenRouter supports reasoning for provider-specific parameters
@@ -56,6 +65,15 @@ export class OpenRouterService extends OpenAIChatCompletionService {
     maxOutputTokens: number;
     temperature: number | undefined;
   } {
+    if (
+      this.model.includes('gemini') &&
+      options &&
+      options.maxTokens &&
+      options.maxThinkingTokens
+    ) {
+      options.maxTokens += options.maxThinkingTokens;
+    }
+
     const { request, maxOutputTokens, temperature } = super.buildToolsRequest(
       systemMessages,
       userAssistantMessages,
@@ -64,7 +82,7 @@ export class OpenRouterService extends OpenAIChatCompletionService {
 
     // Add Gemini thinking budget support via OpenRouter
     // See: https://openrouter.ai/docs/use-cases/reasoning-tokens
-    if (request.model.includes('gemini') && options?.maxThinkingTokens) {
+    if (this.model.includes('gemini') && options?.maxThinkingTokens) {
       // @ts-expect-error - OpenRouter supports reasoning for provider-specific parameters
       request.reasoning ??= {};
       // @ts-expect-error - OpenRouter supports reasoning for provider-specific parameters
