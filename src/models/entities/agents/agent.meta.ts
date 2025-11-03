@@ -50,7 +50,7 @@ export interface AgentMeta extends EntityMeta {
   memoryThinkingLevel: LlmThinkingLevel;
   memoryOutputVerbosity: LlmOutputVerbosity;
 
-  llms: AgentLlmMeta[];
+  llms: (AgentLlmMeta | null)[];
   inputs: (string | AgentInputMeta)[];
   languages: string[];
   timeZone: string;

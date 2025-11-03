@@ -47,6 +47,7 @@ export class Agent extends Entity {
   public static readonly EVALUATE_LLM_INDEX = 1;
   public static readonly SUMMARY_LLM_INDEX = 2;
   public static readonly MEMORY_LLM_INDEX = 3;
+  public static readonly ACTION_FALLBACK_LLM_INDEX = 4;
 
   public static readonly ACTION_INPUT_INDEX = 0;
   public static readonly EVALUATE_INPUT_INDEX = 1;
@@ -78,7 +79,7 @@ export class Agent extends Entity {
   public core!: AgentCore;
 
   private _inputs: AgentInputBuilder[] = [];
-  private _llms: LlmService[] = [];
+  private _llms: (LlmService | null)[] = [];
   private _actions: Record<string, AgentAction> = {};
 
   private readonly _entityStates: Record<EntityKey, AgentEntityState> = {};
@@ -183,6 +184,11 @@ export class Agent extends Entity {
     }
 
     for (const llm of this.meta.llms) {
+      if (!llm) {
+        this._llms.push(null);
+        continue;
+      }
+
       const llmApiKeyModel = this.location.apiKeys[llm.platform];
       const llmOptions: LlmServiceOptions = {
         ...llm,
@@ -466,6 +472,68 @@ export class Agent extends Entity {
     }
   }
 
+  private async processToolsStream(
+    llm: LlmService,
+    messages: LlmMessage[],
+    actions: AgentAction[]
+  ): Promise<LlmToolsResponse> {
+    const generator = llm.useToolsStream(messages, actions, {
+      maxTokens: this.meta.maxTokens,
+      temperature: this.meta.temperature,
+      maxThinkingTokens: this.meta.maxThinkingTokens,
+      thinkingLevel: this.meta.thinkingLevel,
+      outputVerbosity: this.meta.outputVerbosity,
+      trackToolFields: [
+        ['send_message', 'message'],
+        ['send_*_message', 'message'],
+        ['send_casual_message', 'casualPolicyViolatingAnswer'],
+      ],
+      verbose: ENV.VERBOSE_LLM,
+    });
+
+    // Execute tool calls and stream message fields as they arrive
+    // Track sequence number to preserve event order
+    let streamSequence = 0;
+    let result = await generator.next();
+    while (!result.done) {
+      const event = result.value;
+
+      switch (event.type) {
+        case 'field':
+          // Emit partial message content for send_message or send_casual_message
+          await this.location.emitAsync(
+            'agentSendMessageStream',
+            this,
+            event.entityKey,
+            event.toolName,
+            event.index,
+            streamSequence++,
+            event.delta
+          );
+          break;
+        case 'toolCall':
+          await this.location.emitAsync(
+            'agentExecuteNextAction',
+            this,
+            event.index,
+            event.toolCall
+          );
+          await this.executeToolCall(event.toolCall);
+          break;
+      }
+
+      result = await generator.next();
+    }
+
+    // Get the final response from the return value
+    const useToolsResponse = result.value;
+    if (!useToolsResponse) {
+      throw new Error('No final response from stream');
+    }
+
+    return useToolsResponse;
+  }
+
   public async executeNextActions(
     inputIndex: number = Agent.ACTION_INPUT_INDEX,
     llmIndex: number = Agent.ACTION_LLM_INDEX
@@ -476,72 +544,64 @@ export class Agent extends Entity {
       const input = this.getInput(inputIndex);
       const llm = this.getLlm(llmIndex);
       const messages = input.build({ llm });
+      const actions = Object.values(this.getActions());
 
       let useToolsResponse: LlmToolsResponse | undefined;
+
       try {
-        const generator = llm.useToolsStream(
+        useToolsResponse = await this.processToolsStream(
+          llm,
           messages,
-          Object.values(this.getActions()),
-          {
-            maxTokens: this.meta.maxTokens,
-            temperature: this.meta.temperature,
-            maxThinkingTokens: this.meta.maxThinkingTokens,
-            thinkingLevel: this.meta.thinkingLevel,
-            outputVerbosity: this.meta.outputVerbosity,
-            trackToolFields: [
-              ['send_message', 'message'],
-              ['send_*_message', 'message'],
-              ['send_casual_message', 'casualPolicyViolatingAnswer'],
-            ],
-            verbose: ENV.VERBOSE_LLM,
-          }
+          actions
         );
-
-        // Execute tool calls and stream message fields as they arrive
-        // Track sequence number to preserve event order
-        let streamSequence = 0;
-        let result = await generator.next();
-        while (!result.done) {
-          const event = result.value;
-
-          switch (event.type) {
-            case 'field':
-              // Emit partial message content for send_message or send_casual_message
-              await this.location.emitAsync(
-                'agentSendMessageStream',
-                this,
-                event.entityKey,
-                event.toolName,
-                event.index,
-                streamSequence++,
-                event.delta
-              );
-              break;
-            case 'toolCall':
-              await this.location.emitAsync(
-                'agentExecuteNextAction',
-                this,
-                event.index,
-                event.toolCall
-              );
-              await this.executeToolCall(event.toolCall);
-              break;
-          }
-
-          result = await generator.next();
-        }
-
-        // Get the final response from the return value
-        useToolsResponse = result.value;
-        if (!useToolsResponse) {
-          throw new Error('No final response from stream');
-        }
       } catch (error) {
         if (error instanceof LlmInvalidContentError && error.llmResponse) {
           error.llmResponse.logType = LlmUsageType.EXECUTION;
           await this.location.emitAsync('llmUseTools', this, error.llmResponse);
+
+          // Try fallback LLM if available and different from current LLM
+          try {
+            const fallbackLlm = this.getLlm(
+              Agent.ACTION_FALLBACK_LLM_INDEX,
+              Agent.ACTION_FALLBACK_LLM_INDEX
+            );
+
+            // Only retry if fallback is different from the current LLM
+            if (fallbackLlm !== llm) {
+              try {
+                useToolsResponse = await this.processToolsStream(
+                  fallbackLlm,
+                  messages,
+                  actions
+                );
+              } catch (fallbackError) {
+                if (
+                  fallbackError instanceof LlmInvalidContentError &&
+                  fallbackError.llmResponse
+                ) {
+                  fallbackError.llmResponse.logType = LlmUsageType.EXECUTION;
+                  await this.location.emitAsync(
+                    'llmUseTools',
+                    this,
+                    fallbackError.llmResponse
+                  );
+                }
+                throw fallbackError;
+              }
+            } else {
+              throw error;
+            }
+          } catch {
+            // No fallback LLM available, throw original error
+            throw error;
+          }
+        } else {
+          throw error;
         }
-        throw error;
+      }
+
+      if (!useToolsResponse) {
+        throw new Error('No response obtained from LLM');
       }
 
       useToolsResponse.logType = LlmUsageType.EXECUTION;
