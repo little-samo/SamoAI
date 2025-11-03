@@ -156,6 +156,69 @@ export class OpenAIChatCompletionService extends LlmService {
     return [systemMessages, userAssistantMessages];
   }
 
+  protected buildGenerateRequest(
+    systemMessages: ChatCompletionMessageParam[],
+    userAssistantMessages: ChatCompletionMessageParam[],
+    options?: LlmOptions & { jsonOutput?: boolean }
+  ): {
+    request: ChatCompletionCreateParamsNonStreaming;
+    maxOutputTokens: number;
+    temperature: number | undefined;
+  } {
+    let responseFormat:
+      | ResponseFormatText
+      | ResponseFormatJSONObject
+      | ResponseFormatJSONSchema
+      | undefined;
+    if (!this.disableResponseFormat) {
+      if (options?.jsonSchema) {
+        responseFormat = {
+          type: 'json_schema',
+          json_schema: {
+            name: 'response',
+            strict: true,
+            schema: zodToJsonSchema(options.jsonSchema, {
+              target: 'openAi',
+            }),
+          },
+        };
+      } else if (options?.jsonOutput) {
+        responseFormat = { type: 'json_object' };
+      } else {
+        responseFormat = { type: 'text' };
+      }
+    }
+
+    let maxOutputTokens = options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS;
+    let temperature: number | undefined;
+    const request: ChatCompletionCreateParamsNonStreaming = {
+      model: this.model,
+      messages: [...systemMessages, ...userAssistantMessages],
+      max_completion_tokens: maxOutputTokens,
+      ...(responseFormat && { response_format: responseFormat }),
+    };
+
+    // web search models and gpt-5 do not support temperature
+    if (!options?.webSearch && !this.model.startsWith('gpt-5')) {
+      temperature = options?.temperature ?? LlmService.DEFAULT_TEMPERATURE;
+      request.temperature = temperature;
+    }
+
+    if (this.thinking && options?.thinkingLevel) {
+      // add thinking tokens to max output tokens until thinking budget is supported
+      maxOutputTokens +=
+        options?.maxThinkingTokens ?? LlmService.DEFAULT_MAX_THINKING_TOKENS;
+      if (this.supportThinkingLevel && options?.thinkingLevel) {
+        request.reasoning_effort = options.thinkingLevel;
+      }
+      if (this.supportOutputVerbosity && options?.outputVerbosity) {
+        request.verbosity = options.outputVerbosity;
+      }
+    }
+
+    return { request, maxOutputTokens, temperature };
+  }
+
   public async generate<T extends boolean = false>(
     messages: LlmMessage[],
     options?: LlmOptions & { jsonOutput?: T }
@@ -167,53 +230,13 @@ export class OpenAIChatCompletionService extends LlmService {
       const [systemMessages, userAssistantMessages] =
         this.llmMessagesToOpenAiMessages(messages);
 
-      let responseFormat:
-        | ResponseFormatText
-        | ResponseFormatJSONObject
-        | ResponseFormatJSONSchema
-        | undefined;
-      if (!this.disableResponseFormat) {
-        if (options?.jsonSchema) {
-          responseFormat = {
-            type: 'json_schema',
-            json_schema: {
-              name: 'response',
-              strict: true,
-              schema: zodToJsonSchema(options.jsonSchema, {
-                target: 'openAi',
-              }),
-            },
-          };
-        } else if (options?.jsonOutput) {
-          responseFormat = { type: 'json_object' };
-        } else {
-          responseFormat = { type: 'text' };
-        }
-      }
-      let maxOutputTokens = options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS;
-      let temperature: number | undefined;
-      const request: ChatCompletionCreateParamsNonStreaming = {
-        model: this.model,
-        messages: [...systemMessages, ...userAssistantMessages],
-        max_completion_tokens: maxOutputTokens,
-        ...(responseFormat && { response_format: responseFormat }),
-      };
-      // web search models and gpt-5 do not support temperature
-      if (!options?.webSearch && !this.model.startsWith('gpt-5')) {
-        temperature = options?.temperature ?? LlmService.DEFAULT_TEMPERATURE;
-        request.temperature = temperature;
-      }
-      if (this.thinking && options?.thinkingLevel) {
-        // add thinking tokens to max output tokens until thinking budget is supported
-        maxOutputTokens +=
-          options?.maxThinkingTokens ?? LlmService.DEFAULT_MAX_THINKING_TOKENS;
-        if (this.supportThinkingLevel && options?.thinkingLevel) {
-          request.reasoning_effort = options.thinkingLevel;
-        }
-        if (this.supportOutputVerbosity && options?.outputVerbosity) {
-          request.verbosity = options.outputVerbosity;
-        }
-      }
+      const { request, maxOutputTokens, temperature } =
+        this.buildGenerateRequest(
+          systemMessages,
+          userAssistantMessages,
+          options
+        );
+
       if (options?.verbose) {
         console.log(request);
       }
