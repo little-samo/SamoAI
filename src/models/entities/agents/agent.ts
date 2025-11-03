@@ -566,30 +566,31 @@ export class Agent extends Entity {
               Agent.ACTION_FALLBACK_LLM_INDEX
             );
 
-            // Only retry if fallback is different from the current LLM
-            if (fallbackLlm !== llm) {
-              try {
-                useToolsResponse = await this.processToolsStream(
-                  fallbackLlm,
-                  messages,
-                  actions
-                );
-              } catch (fallbackError) {
-                if (
-                  fallbackError instanceof LlmInvalidContentError &&
+            if (ENV.DEBUG) {
+              console.log(
+                `Agent ${this.model.name} failed to execute next actions with LLM ${llm.model}, trying fallback LLM ${fallbackLlm.model}`
+              );
+            }
+
+            try {
+              useToolsResponse = await this.processToolsStream(
+                fallbackLlm,
+                messages,
+                actions
+              );
+            } catch (fallbackError) {
+              if (
+                fallbackError instanceof LlmInvalidContentError &&
+                fallbackError.llmResponse
+              ) {
+                fallbackError.llmResponse.logType = LlmUsageType.EXECUTION;
+                await this.location.emitAsync(
+                  'llmUseTools',
+                  this,
                   fallbackError.llmResponse
-                ) {
-                  fallbackError.llmResponse.logType = LlmUsageType.EXECUTION;
-                  await this.location.emitAsync(
-                    'llmUseTools',
-                    this,
-                    fallbackError.llmResponse
-                  );
-                }
-                throw fallbackError;
+                );
               }
-            } else {
-              throw error;
+              throw fallbackError;
             }
           } catch {
             // No fallback LLM available, throw original error
