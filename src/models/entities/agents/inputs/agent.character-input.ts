@@ -414,7 +414,6 @@ ${yourMemories}
             index,
             description: obj.description,
             completed: obj.completed,
-            createdAt: obj.createdAt,
             completedAt: obj.completedAt,
             timezone: this.agent.timezone,
           })

@@ -126,19 +126,16 @@ export interface LocationObjectiveContextOptions {
   index: number;
   description: string;
   completed: boolean;
-  createdAt: string | Date;
   completedAt?: string | Date;
   timezone?: ValidatedTimezone;
 }
 
 export class LocationObjectiveContext extends Context {
-  public static readonly FORMAT =
-    'INDEX\tSTATUS\tDESCRIPTION\tCREATED\tCOMPLETED';
+  public static readonly FORMAT = 'INDEX\tSTATUS\tDESCRIPTION\COMPLETED';
 
   public readonly index: number;
   public readonly description: string;
   public readonly completed: boolean;
-  public readonly createdAt: Date;
   public readonly completedAt?: Date;
   public readonly timezone?: ValidatedTimezone;
 
@@ -147,7 +144,6 @@ export class LocationObjectiveContext extends Context {
     this.index = options.index;
     this.description = options.description;
     this.completed = options.completed;
-    this.createdAt = new Date(options.createdAt);
     this.completedAt = options.completedAt
       ? new Date(options.completedAt)
       : undefined;
@@ -156,14 +152,10 @@ export class LocationObjectiveContext extends Context {
 
   public build(): string {
     const status = this.completed ? 'done' : 'pending';
-    const formattedCreatedAt = formatDateWithValidatedTimezone(
-      this.createdAt,
-      this.timezone
-    );
     const formattedCompletedAt = this.completedAt
       ? formatDateWithValidatedTimezone(this.completedAt, this.timezone)
       : 'null';
-    return `${this.index}\t${status}\t${this.description}\t${formattedCreatedAt}\t${formattedCompletedAt}`;
+    return `${this.index}\t${status}\t${this.description}\t${formattedCompletedAt}`;
   }
 }
 

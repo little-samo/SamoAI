@@ -15,7 +15,6 @@ export interface LocationCanvas {
 export interface LocationObjective {
   description: string;
   completed: boolean;
-  createdAt: Date;
   completedAt?: Date;
 }
 
