@@ -13,6 +13,7 @@ import {
   LocationCanvasContext,
   LocationContext,
   LocationMessageContext,
+  LocationMissionContext,
 } from '../../../locations/location.context';
 import { UserContext } from '../../users';
 import {
@@ -125,15 +126,16 @@ Your Timezone: ${this.agent.meta.timeZone}
     rules.push(
       `9. **Memory (Facts):** Store concise facts in <YourMemories> (general, cross-location) and <YourMemoriesAbout...> (entity-specific, location-bound). Use \`add_memory\`/\`add_entity_memory\` to suggest updates—a background process later commits them via \`update_memory\`/\`update_entity_memory\`, managing limits (${this.agent.meta.memoryLimit} general, ${this.agent.meta.entityMemoryLimit} per entity) and overwriting old data. Displayed memories reflect post-update state. Format entity refs as \`type:id(name)\`.`,
       `10. **Canvas (Workspace):** Use for plans, drafts, analysis. <LocationCanvases> are shared in current location. <YourCanvases> are private and separate per location (content doesn't transfer). Tools: \`update_*_canvas\` overwrites entire content; \`edit_*_canvas\` modifies portions. Respect \`MAX_LENGTH\`.`,
-      `11. **Summary (Cross-Location):** <Summary> is maintained by background process, synthesizing interactions across locations. Use it for continuity when switching or returning to locations. Reflects state after last background update.`
+      `11. **Summary (Cross-Location):** <Summary> is maintained by background process, synthesizing interactions across locations. Use it for continuity when switching or returning to locations. Reflects state after last background update.`,
+      `12. **Mission (Shared Goal):** <LocationMission> shows the current mission shared by all entities in this location. Use \`set_mission\` to define main mission + all objectives at once (replaces existing mission). Use \`complete_objective\` to mark objectives done. When all objectives complete, the mission is achieved. Mission persists in location only.`
     );
 
     // Interaction & awareness - streamlined
     rules.push(
-      `12. **Multi-Location Awareness:** You operate across multiple locations with separate contexts. Only these persist across locations: <YourInventory>, <YourMemories>, <Summary>, Current Time, Timezone (${this.agent.meta.timeZone}). All other context (including <OtherAgents> and their last messages) is location-specific.`,
-      `13. **Message Stream Processing:** \`PROCESSED=false\` means new message requiring reaction. \`PROCESSED=true\` means already handled (context only). \`PROCESSED=null\` means status undetermined. \`ACTION\` field shows \`upload_image\` for images; \`--hidden\` flag means sensitive content hidden from agents.`,
-      `14. **Timezone & Time:** Your timezone is ${this.agent.meta.timeZone}. All timestamps in ISO 8601 with timezone offsets. Others use their timezones. Use natural phrases in messages ("this morning", "2 hours ago"), not raw ISO timestamps.`,
-      `15. **Dynamic Interaction:** Avoid repetition at all costs. Don't echo/paraphrase user messages. Review <LocationMessages>, <YourLastMessage>, and <OtherAgents> (check their last messages) to ensure fresh, novel responses. Vary expressions continuously. Act only with clear purpose (new info or evolving goal). If nothing meaningful to add, do nothing—silence > redundancy.`
+      `13. **Multi-Location Awareness:** You operate across multiple locations with separate contexts. Only these persist across locations: <YourInventory>, <YourMemories>, <Summary>, Current Time, Timezone (${this.agent.meta.timeZone}). All other context (including <OtherAgents>, their last messages, and <LocationMission>) is location-specific.`,
+      `14. **Message Stream Processing:** \`PROCESSED=false\` means new message requiring reaction. \`PROCESSED=true\` means already handled (context only). \`PROCESSED=null\` means status undetermined. \`ACTION\` field shows \`upload_image\` for images; \`--hidden\` flag means sensitive content hidden from agents.`,
+      `15. **Timezone & Time:** Your timezone is ${this.agent.meta.timeZone}. All timestamps in ISO 8601 with timezone offsets. Others use their timezones. Use natural phrases in messages ("this morning", "2 hours ago"), not raw ISO timestamps.`,
+      `16. **Dynamic Interaction:** Avoid repetition at all costs. Don't echo/paraphrase user messages. Review <LocationMessages>, <YourLastMessage>, and <OtherAgents> (check their last messages) to ensure fresh, novel responses. Vary expressions continuously. Act only with clear purpose (new info or evolving goal). If nothing meaningful to add, do nothing—silence > redundancy.`
     );
 
     prompts.push(`
@@ -402,6 +404,36 @@ ${yourMemories}
 </YourMemories>
 `,
     });
+
+    // Add location mission if it exists
+    if (this.location.state.mission) {
+      const missionContext = new LocationMissionContext({
+        mainMission: this.location.state.mission.mainMission,
+        objectives: this.location.state.mission.objectives.map(
+          (obj, index) => ({
+            index,
+            description: obj.description,
+            completed: obj.completed,
+            createdAt: obj.createdAt,
+            completedAt: obj.completedAt,
+            timezone: this.agent.timezone,
+          })
+        ),
+        createdAt: this.location.state.mission.createdAt,
+        updatedAt: this.location.state.mission.updatedAt,
+        timezone: this.agent.timezone,
+      });
+
+      contexts.push({
+        type: 'text',
+        text: `
+<LocationMission>
+${LocationMissionContext.FORMAT}
+${missionContext.build()}
+</LocationMission>
+`,
+      });
+    }
 
     const messageContexts: LlmMessageContent[] = [
       {

@@ -12,6 +12,20 @@ export interface LocationCanvas {
   createdAt: Date;
 }
 
+export interface LocationObjective {
+  description: string;
+  completed: boolean;
+  createdAt: Date;
+  completedAt?: Date;
+}
+
+export interface LocationMission {
+  mainMission: string;
+  objectives: LocationObjective[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface LocationState {
   locationId: LocationId;
 
@@ -25,6 +39,8 @@ export interface LocationState {
   remainingAgentExecutions: number | null;
 
   canvases: Record<string, LocationCanvas>;
+
+  mission: LocationMission | null;
 
   images: string[];
   rendering: string | null;

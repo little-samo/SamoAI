@@ -9,6 +9,7 @@ import {
   GimmickId,
   LocationModel,
   LocationMessage,
+  LocationMission,
 } from '@little-samo/samo-ai';
 
 export interface LocationRepository {
@@ -77,6 +78,16 @@ export interface LocationRepository {
   updateLocationStateRendering(
     locationId: LocationId,
     rendering: string | null
+  ): Promise<void>;
+  updateLocationStateMission(
+    locationId: LocationId,
+    mission: LocationMission
+  ): Promise<void>;
+  updateLocationStateMissionObjective(
+    locationId: LocationId,
+    objectiveIndex: number,
+    completed: boolean,
+    completedAt?: Date
   ): Promise<void>;
   addLocationMessage(
     locationId: LocationId,

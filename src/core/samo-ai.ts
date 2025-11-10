@@ -750,6 +750,29 @@ export class SamoAI extends AsyncEventEmitter {
         }
       );
 
+      location.on('missionSet', (location: Location, mission) => {
+        void options.handleSave!(
+          this.locationRepository.updateLocationStateMission(
+            location.id,
+            mission
+          )
+        );
+      });
+
+      location.on(
+        'objectiveCompleted',
+        (location: Location, objectiveIndex: number, objective) => {
+          void options.handleSave!(
+            this.locationRepository.updateLocationStateMissionObjective(
+              location.id,
+              objectiveIndex,
+              true,
+              objective.completedAt
+            )
+          );
+        }
+      );
+
       location.on(
         'agentUpdateMemory',
         (agent: Agent, state: AgentState, index: number, memory: string) => {

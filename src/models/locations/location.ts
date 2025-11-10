@@ -31,7 +31,7 @@ import { LocationModel } from './location.model';
 import { LocationId, LocationKey } from './location.types';
 import { LocationEntityState } from './states/location.entity-state';
 import { LocationMessage } from './states/location.message';
-import { LocationState } from './states/location.state';
+import { LocationMission, LocationState } from './states/location.state';
 
 export class Location extends AsyncEventEmitter {
   public static messageToContext(
@@ -487,6 +487,40 @@ export class Location extends AsyncEventEmitter {
       reason,
       wasTruncated
     );
+  }
+
+  public async setMission(mission: LocationMission): Promise<void> {
+    this.state.mission = mission;
+
+    await this.emitAsync('missionSet', this, mission);
+  }
+
+  public async completeObjective(objectiveIndex: number): Promise<void> {
+    if (!this.state.mission) {
+      throw new Error('No mission set');
+    }
+
+    const objective = this.state.mission.objectives[objectiveIndex];
+    if (!objective) {
+      throw new Error(
+        `Objective at index ${objectiveIndex} not found. Valid range: 0-${this.state.mission.objectives.length - 1}`
+      );
+    }
+
+    objective.completed = true;
+    objective.completedAt = new Date();
+    this.state.mission.updatedAt = new Date();
+
+    await this.emitAsync('objectiveCompleted', this, objectiveIndex, objective);
+
+    // Check if all objectives are completed
+    const allCompleted = this.state.mission.objectives.every(
+      (obj) => obj.completed
+    );
+
+    if (allCompleted && this.state.mission.objectives.length > 0) {
+      await this.emitAsync('missionAchieved', this, this.state.mission);
+    }
   }
 
   public async editCanvas(
