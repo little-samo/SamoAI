@@ -26,16 +26,16 @@ export class AgentSetMissionAction extends AgentAction {
         return z.object({
           mainMission: z
             .string()
-            .max(500)
+            .max(200)
             .describe(
-              'Clear description of the main mission (max 500 chars). This should be a specific, achievable goal shared by all agents in this location.'
+              'Clear description of the main mission (max 200 chars). This should be a specific, achievable goal shared by all agents in this location.'
             ),
           objectives: z
-            .array(z.string().max(300))
+            .array(z.string().max(200))
             .min(1)
-            .max(20)
+            .max(5)
             .describe(
-              'List of specific objectives needed to achieve the main mission (1-20 objectives, each max 300 chars). Each objective should be a clear, measurable step.'
+              'List of specific objectives needed to achieve the main mission (1-5 objectives, each max 200 chars). Each objective should be a clear, measurable step.'
             ),
         });
     }
@@ -43,6 +43,30 @@ export class AgentSetMissionAction extends AgentAction {
 
   public override async execute(call: LlmToolCall): Promise<void> {
     const action = call.arguments as AgentSetMissionActionParameters;
+
+    // Validate main mission length
+    if (action.mainMission.length > 200) {
+      throw new Error(
+        `Main mission exceeds maximum length of 200 characters (current: ${action.mainMission.length})`
+      );
+    }
+
+    // Validate objectives count
+    if (action.objectives.length < 1 || action.objectives.length > 5) {
+      throw new Error(
+        `Number of objectives must be between 1 and 5 (current: ${action.objectives.length})`
+      );
+    }
+
+    // Validate each objective length
+    for (let i = 0; i < action.objectives.length; i++) {
+      if (action.objectives[i].length > 200) {
+        throw new Error(
+          `Objective at index ${i} exceeds maximum length of 200 characters (current: ${action.objectives[i].length})`
+        );
+      }
+    }
+
     if (ENV.DEBUG) {
       console.log(
         `Agent ${this.agent.name} set mission: ${action.mainMission} with ${action.objectives.length} objectives`
