@@ -226,6 +226,7 @@ export class Agent extends Entity {
       ...this.meta.actions,
       ...(this.meta.addActions ?? []),
       ...(this.meta.canvasActions ?? []),
+      ...(this.meta.missionActions ?? []),
       ...(this.meta.memoryActions ?? []),
     ];
     this._actions = Object.fromEntries(
