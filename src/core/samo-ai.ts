@@ -708,14 +708,14 @@ export class SamoAI extends AsyncEventEmitter {
 
       location.on(
         'canvasUpdated',
-        (
+        async (
           location: Location,
           modifierEntityType: EntityType,
           modifierEntityId: EntityId,
           canvasName: string,
           text: string
         ) => {
-          void options.handleSave!(
+          await options.handleSave!(
             this.locationRepository.updateLocationStateCanvas(
               location.id,
               canvasName,
@@ -729,7 +729,7 @@ export class SamoAI extends AsyncEventEmitter {
 
       location.on(
         'canvasEdited',
-        (
+        async (
           location: Location,
           modifierEntityType: EntityType,
           modifierEntityId: EntityId,
@@ -738,7 +738,7 @@ export class SamoAI extends AsyncEventEmitter {
           newContent: string,
           text: string
         ) => {
-          void options.handleSave!(
+          await options.handleSave!(
             this.locationRepository.updateLocationStateCanvas(
               location.id,
               canvasName,
@@ -750,8 +750,8 @@ export class SamoAI extends AsyncEventEmitter {
         }
       );
 
-      location.on('missionSet', (location: Location, mission) => {
-        void options.handleSave!(
+      location.on('missionSet', async (location: Location, mission) => {
+        await options.handleSave!(
           this.locationRepository.updateLocationStateMission(
             location.id,
             mission
@@ -761,8 +761,8 @@ export class SamoAI extends AsyncEventEmitter {
 
       location.on(
         'objectiveCompleted',
-        (location: Location, objectiveIndex: number, objective) => {
-          void options.handleSave!(
+        async (location: Location, objectiveIndex: number, objective) => {
+          await options.handleSave!(
             this.locationRepository.updateLocationStateMissionObjective(
               location.id,
               objectiveIndex,
@@ -1112,14 +1112,36 @@ export class SamoAI extends AsyncEventEmitter {
 
       location.on(
         'entityUpdateCanvas',
-        (entity: Entity, canvasName: string, text: string) => {
-          void options.handleSave!(
+        async (entity: Entity, canvasName: string, text: string) => {
+          await options.handleSave!(
             this.locationRepository.updateLocationEntityStateCanvas(
               locationId,
               entity.type,
               entity.id,
               canvasName,
               text
+            )
+          );
+        }
+      );
+
+      location.on(
+        'entityEditCanvas',
+        async (
+          entity: Entity,
+          canvasName: string,
+          _existingContent: string,
+          _newContent: string,
+          finalText: string,
+          _wasTruncated: boolean
+        ) => {
+          await options.handleSave!(
+            this.locationRepository.updateLocationEntityStateCanvas(
+              locationId,
+              entity.type,
+              entity.id,
+              canvasName,
+              finalText
             )
           );
         }
