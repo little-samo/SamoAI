@@ -3,6 +3,7 @@ import {
   GenerateContentParameters,
   GenerateContentResponse,
   GoogleGenAI,
+  MediaResolution,
   ThinkingConfig,
   ThinkingLevel,
 } from '@google/genai';
@@ -32,6 +33,7 @@ import {
   LlmResponseType,
   LlmToolsStreamEvent,
   LlmThinkingLevel,
+  LlmMediaResolution,
 } from './llm.types';
 
 export class GeminiService extends LlmService {
@@ -59,6 +61,18 @@ export class GeminiService extends LlmService {
       case 'medium':
       case 'high':
         return ThinkingLevel.HIGH;
+    }
+  }
+
+  private mapMediaResolution(resolution: LlmMediaResolution): MediaResolution {
+    // Map our LlmMediaResolution to Gemini's MediaResolution
+    switch (resolution) {
+      case 'low':
+        return MediaResolution.MEDIA_RESOLUTION_LOW;
+      case 'medium':
+        return MediaResolution.MEDIA_RESOLUTION_MEDIUM;
+      case 'high':
+        return MediaResolution.MEDIA_RESOLUTION_HIGH;
     }
   }
 
@@ -255,6 +269,12 @@ export class GeminiService extends LlmService {
         responseModalities.push('AUDIO');
       }
       request.config!.responseModalities = responseModalities;
+    }
+    // gemini-3 models support mediaResolution
+    if (this.model.startsWith('gemini-3') && options?.mediaResolution) {
+      request.config!.mediaResolution = this.mapMediaResolution(
+        options.mediaResolution
+      );
     }
     if (options?.jsonOutput && !options?.webSearch) {
       request.config!.responseMimeType = 'application/json';
@@ -496,6 +516,12 @@ Response can only be in JSON format and must strictly follow the following forma
       ];
     } else {
       request.config!.responseMimeType = 'application/json';
+    }
+    // gemini-3 models support mediaResolution
+    if (this.model.startsWith('gemini-3') && options?.mediaResolution) {
+      request.config!.mediaResolution = this.mapMediaResolution(
+        options.mediaResolution
+      );
     }
     return {
       request,

@@ -12,6 +12,15 @@ export const LlmPlatform = {
 
 export type LlmPlatform = (typeof LlmPlatform)[keyof typeof LlmPlatform];
 
+export const LlmMediaResolution = {
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+} as const;
+
+export type LlmMediaResolution =
+  (typeof LlmMediaResolution)[keyof typeof LlmMediaResolution];
+
 export const LlmThinkingLevel = {
   minimal: 'minimal',
   low: 'low',
@@ -60,6 +69,7 @@ export interface LlmOptions {
   temperature?: number;
   maxTokens?: number;
   maxThinkingTokens?: number;
+  mediaResolution?: LlmMediaResolution;
   thinkingLevel?: LlmThinkingLevel;
   outputVerbosity?: LlmOutputVerbosity;
   maxTries?: number;
@@ -130,6 +140,7 @@ export interface LlmResponseBase {
   thinking: boolean;
 
   // Request Configuration
+  mediaResolution?: LlmMediaResolution;
   maxOutputTokens?: number;
   thinkingBudget?: number;
   thinkingLevel?: LlmThinkingLevel;
