@@ -3,6 +3,8 @@ import {
   GenerateContentParameters,
   GenerateContentResponse,
   GoogleGenAI,
+  ThinkingConfig,
+  ThinkingLevel,
 } from '@google/genai';
 
 import {
@@ -29,6 +31,7 @@ import {
   LlmGenerateResponseWebSearchSource,
   LlmResponseType,
   LlmToolsStreamEvent,
+  LlmThinkingLevel,
 } from './llm.types';
 
 export class GeminiService extends LlmService {
@@ -45,6 +48,18 @@ export class GeminiService extends LlmService {
         location: this.options.geminiVertexaiLocation,
       }),
     });
+  }
+
+  private mapThinkingLevel(level: LlmThinkingLevel): ThinkingLevel {
+    // Map our LlmThinkingLevel to Gemini's ThinkingLevel (only LOW and HIGH)
+    switch (level) {
+      case 'minimal':
+      case 'low':
+        return ThinkingLevel.LOW;
+      case 'medium':
+      case 'high':
+        return ThinkingLevel.HIGH;
+    }
   }
 
   private async generateContentWithRetry(
@@ -178,6 +193,7 @@ export class GeminiService extends LlmService {
 
     let maxOutputTokens = options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS;
     let thinkingBudget: number | undefined;
+    let thinkingLevel: LlmThinkingLevel | undefined;
     let temperature: number | undefined;
     const request: GenerateContentParameters = {
       model: this.model,
@@ -193,14 +209,24 @@ export class GeminiService extends LlmService {
       request.config!.temperature = temperature;
     }
     if (this.thinking) {
-      thinkingBudget =
-        options?.maxThinkingTokens ?? LlmService.DEFAULT_MAX_THINKING_TOKENS;
-      maxOutputTokens += thinkingBudget;
-      request.config!.thinkingConfig = {
-        includeThoughts: true,
-        thinkingBudget,
-      };
-      request.config!.maxOutputTokens = maxOutputTokens;
+      // gemini-3 models support thinkingLevel
+      if (this.model.startsWith('gemini-3') && options?.thinkingLevel) {
+        thinkingLevel = options.thinkingLevel;
+        const thinkingConfig: ThinkingConfig = {
+          includeThoughts: true,
+          thinkingLevel: this.mapThinkingLevel(thinkingLevel),
+        };
+        request.config!.thinkingConfig = thinkingConfig;
+      } else {
+        thinkingBudget =
+          options?.maxThinkingTokens ?? LlmService.DEFAULT_MAX_THINKING_TOKENS;
+        maxOutputTokens += thinkingBudget;
+        request.config!.thinkingConfig = {
+          includeThoughts: true,
+          thinkingBudget,
+        };
+        request.config!.maxOutputTokens = maxOutputTokens;
+      }
     } else {
       if (this.model.includes('image')) {
         // image generation models do not support thinking budget
@@ -270,6 +296,7 @@ export class GeminiService extends LlmService {
       thinking: this.thinking,
       maxOutputTokens,
       thinkingBudget,
+      thinkingLevel,
       temperature,
       inputTokens,
       outputTokens,
@@ -413,10 +440,12 @@ Response can only be in JSON format and must strictly follow the following forma
     request: GenerateContentParameters;
     maxOutputTokens: number;
     thinkingBudget: number | undefined;
+    thinkingLevel: LlmThinkingLevel | undefined;
     temperature: number | undefined;
   } {
     let maxOutputTokens = options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS;
     let thinkingBudget: number | undefined;
+    let thinkingLevel: LlmThinkingLevel | undefined;
     let temperature: number | undefined;
     const request: GenerateContentParameters = {
       model: this.model,
@@ -432,14 +461,24 @@ Response can only be in JSON format and must strictly follow the following forma
       request.config!.temperature = temperature;
     }
     if (this.thinking) {
-      thinkingBudget =
-        options?.maxThinkingTokens ?? LlmService.DEFAULT_MAX_THINKING_TOKENS;
-      maxOutputTokens += thinkingBudget;
-      request.config!.thinkingConfig = {
-        includeThoughts: true,
-        thinkingBudget,
-      };
-      request.config!.maxOutputTokens = maxOutputTokens;
+      // gemini-3 models support thinkingLevel
+      if (this.model.startsWith('gemini-3') && options?.thinkingLevel) {
+        thinkingLevel = options.thinkingLevel;
+        const thinkingConfig: ThinkingConfig = {
+          includeThoughts: true,
+          thinkingLevel: this.mapThinkingLevel(thinkingLevel),
+        };
+        request.config!.thinkingConfig = thinkingConfig;
+      } else {
+        thinkingBudget =
+          options?.maxThinkingTokens ?? LlmService.DEFAULT_MAX_THINKING_TOKENS;
+        maxOutputTokens += thinkingBudget;
+        request.config!.thinkingConfig = {
+          includeThoughts: true,
+          thinkingBudget,
+        };
+        request.config!.maxOutputTokens = maxOutputTokens;
+      }
     } else {
       if (this.model.includes('image')) {
         // image generation models do not support thinking budget
@@ -458,7 +497,13 @@ Response can only be in JSON format and must strictly follow the following forma
     } else {
       request.config!.responseMimeType = 'application/json';
     }
-    return { request, maxOutputTokens, thinkingBudget, temperature };
+    return {
+      request,
+      maxOutputTokens,
+      thinkingBudget,
+      thinkingLevel,
+      temperature,
+    };
   }
 
   public async useTools(
@@ -474,8 +519,13 @@ Response can only be in JSON format and must strictly follow the following forma
 
     this.prepareToolsSystemMessages(systemMessages, tools);
 
-    const { request, maxOutputTokens, thinkingBudget, temperature } =
-      this.buildToolsRequest(systemMessages, userAssistantMessages, options);
+    const {
+      request,
+      maxOutputTokens,
+      thinkingBudget,
+      thinkingLevel,
+      temperature,
+    } = this.buildToolsRequest(systemMessages, userAssistantMessages, options);
 
     if (options?.verbose) {
       console.log(request);
@@ -506,6 +556,7 @@ Response can only be in JSON format and must strictly follow the following forma
       thinking: this.thinking,
       maxOutputTokens,
       thinkingBudget,
+      thinkingLevel,
       temperature,
       inputTokens,
       outputTokens,
@@ -568,8 +619,13 @@ Response can only be in JSON format and must strictly follow the following forma
 
     this.prepareToolsSystemMessages(systemMessages, tools);
 
-    const { request, maxOutputTokens, thinkingBudget, temperature } =
-      this.buildToolsRequest(systemMessages, userAssistantMessages, options);
+    const {
+      request,
+      maxOutputTokens,
+      thinkingBudget,
+      thinkingLevel,
+      temperature,
+    } = this.buildToolsRequest(systemMessages, userAssistantMessages, options);
 
     if (options?.verbose) {
       console.log(request);
@@ -672,6 +728,7 @@ Response can only be in JSON format and must strictly follow the following forma
       thinking: this.thinking,
       maxOutputTokens,
       thinkingBudget,
+      thinkingLevel,
       temperature,
       inputTokens,
       outputTokens,
