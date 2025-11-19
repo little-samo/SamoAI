@@ -481,6 +481,7 @@ export class Agent extends Entity {
     const generator = llm.useToolsStream(messages, actions, {
       maxTokens: this.meta.maxTokens,
       temperature: this.meta.temperature,
+      mediaResolution: this.meta.mediaResolution,
       maxThinkingTokens: this.meta.maxThinkingTokens,
       thinkingLevel: this.meta.thinkingLevel,
       outputVerbosity: this.meta.outputVerbosity,

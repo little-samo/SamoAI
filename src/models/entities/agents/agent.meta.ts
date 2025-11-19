@@ -3,6 +3,7 @@ import {
   LlmServiceOptions,
   LlmThinkingLevel,
   LlmOutputVerbosity,
+  LlmMediaResolution,
 } from '@little-samo/samo-ai/common';
 
 import { EntityMeta } from '../entity.meta';
@@ -31,6 +32,7 @@ export interface AgentMeta extends EntityMeta {
   prompts: AgentPrompts;
 
   temperature: number;
+  mediaResolution?: LlmMediaResolution;
   maxTokens: number;
   maxThinkingTokens: number;
   thinkingLevel: LlmThinkingLevel;
