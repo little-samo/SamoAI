@@ -178,16 +178,20 @@ export class GeminiService extends LlmService {
 
     let maxOutputTokens = options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS;
     let thinkingBudget: number | undefined;
-    const temperature = options?.temperature ?? LlmService.DEFAULT_TEMPERATURE;
+    let temperature: number | undefined;
     const request: GenerateContentParameters = {
       model: this.model,
       contents: userAssistantMessages,
       config: {
-        temperature,
         maxOutputTokens,
         systemInstruction: systemMessages,
       },
     };
+    // gemini-3 models recommend using default temperature
+    if (!this.model.startsWith('gemini-3')) {
+      temperature = options?.temperature ?? LlmService.DEFAULT_TEMPERATURE;
+      request.config!.temperature = temperature;
+    }
     if (this.thinking) {
       thinkingBudget =
         options?.maxThinkingTokens ?? LlmService.DEFAULT_MAX_THINKING_TOKENS;
@@ -409,20 +413,24 @@ Response can only be in JSON format and must strictly follow the following forma
     request: GenerateContentParameters;
     maxOutputTokens: number;
     thinkingBudget: number | undefined;
-    temperature: number;
+    temperature: number | undefined;
   } {
     let maxOutputTokens = options?.maxTokens ?? LlmService.DEFAULT_MAX_TOKENS;
     let thinkingBudget: number | undefined;
-    const temperature = options?.temperature ?? LlmService.DEFAULT_TEMPERATURE;
+    let temperature: number | undefined;
     const request: GenerateContentParameters = {
       model: this.model,
       contents: userAssistantMessages,
       config: {
-        temperature,
         maxOutputTokens,
         systemInstruction: systemMessages,
       },
     };
+    // gemini-3 models recommend using default temperature
+    if (!this.model.startsWith('gemini-3')) {
+      temperature = options?.temperature ?? LlmService.DEFAULT_TEMPERATURE;
+      request.config!.temperature = temperature;
+    }
     if (this.thinking) {
       thinkingBudget =
         options?.maxThinkingTokens ?? LlmService.DEFAULT_MAX_THINKING_TOKENS;
