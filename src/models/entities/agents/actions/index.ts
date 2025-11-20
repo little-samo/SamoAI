@@ -20,8 +20,3 @@ export * from './agent.update-canvas-action';
 export * from './agent.edit-canvas-action';
 export * from './agent.update-entity-memory-action';
 export * from './agent.update-memory-action';
-export * from './agent.control-navigation-web-action';
-export * from './agent.control-mouse-web-action';
-export * from './agent.control-keyboard-web-action';
-export * from './agent.control-tab-web-action';
-export * from './agent.control-dialog-web-action';
