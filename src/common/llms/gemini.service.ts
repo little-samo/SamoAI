@@ -100,14 +100,34 @@ export class GeminiService extends LlmService {
         return response;
       } catch (error) {
         console.error(error);
-        if (
-          attempt < maxTries &&
-          error instanceof Error &&
-          (error.name === 'ServerError' || error.name === 'ClientError') &&
-          !error.message.includes('400 Bad Request')
-        ) {
-          await sleep(attempt * retryDelay);
-          continue;
+        if (attempt < maxTries && error instanceof Error) {
+          const errorMessage = error.message;
+          const isRetriableError =
+            // Server errors
+            error.name === 'ServerError' ||
+            // UNAVAILABLE status (503)
+            errorMessage.includes('UNAVAILABLE') ||
+            errorMessage.includes('503') ||
+            // Rate limit (429)
+            errorMessage.includes('429') ||
+            errorMessage.includes('RESOURCE_EXHAUSTED') ||
+            // Other retriable server errors
+            errorMessage.includes('500') ||
+            errorMessage.includes('502') ||
+            errorMessage.includes('504') ||
+            errorMessage.includes('INTERNAL') ||
+            errorMessage.includes('overloaded') ||
+            errorMessage.includes('try again');
+
+          // Don't retry on 400 Bad Request or other client errors
+          const isNonRetriableError =
+            errorMessage.includes('400 Bad Request') ||
+            errorMessage.includes('INVALID_ARGUMENT');
+
+          if (isRetriableError && !isNonRetriableError) {
+            await sleep(attempt * retryDelay);
+            continue;
+          }
         }
         throw error;
       }
