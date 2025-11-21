@@ -848,9 +848,11 @@ export class SamoAI extends AsyncEventEmitter {
         }
       );
 
+      let executedAgentCount = 0;
       location.on(
         'agentExecutedNextActions',
         (agent: Agent, messages: LlmMessage[], toolCalls: LlmToolCall[]) => {
+          executedAgentCount += 1;
           void options.handleSave!(
             this.updateAgentSummary(agent, messages, toolCalls)
           );
@@ -1178,6 +1180,16 @@ export class SamoAI extends AsyncEventEmitter {
         pauseUpdateDuration = location.core.defaultPauseUpdateDuration;
       } else {
         pauseUpdateDuration = await location.update();
+        if (executedAgentCount === 0) {
+          void options.handleSave!(
+            this.locationRepository.updateLocationStateRemainingAgentExecutions(
+              locationId,
+              {
+                remainingAgentExecutionsDelta: -1,
+              }
+            )
+          );
+        }
       }
 
       if (!location.pauseUpdated) {
