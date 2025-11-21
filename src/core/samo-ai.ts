@@ -688,6 +688,20 @@ export class SamoAI extends AsyncEventEmitter {
         return location;
       }
 
+      // Clear pause settings before starting update to prevent stale pause times from blocking future schedules
+      if (location.state.pauseUpdateUntil !== null) {
+        if (ENV.DEBUG) {
+          console.log(
+            `Clearing pause settings for location ${locationId} before starting update`
+          );
+        }
+        await this.locationRepository.updateLocationStatePauseUpdateUntil(
+          locationId,
+          null,
+          null
+        );
+      }
+
       if (options.useAgentStartTimeForMessages !== undefined) {
         location.useAgentStartTimeForMessages =
           options.useAgentStartTimeForMessages;
