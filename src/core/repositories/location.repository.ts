@@ -81,7 +81,7 @@ export interface LocationRepository {
   ): Promise<void>;
   updateLocationStateMission(
     locationId: LocationId,
-    mission: LocationMission
+    mission: LocationMission | null
   ): Promise<void>;
   updateLocationStateMissionObjective(
     locationId: LocationId,
