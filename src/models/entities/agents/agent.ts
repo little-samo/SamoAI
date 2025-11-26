@@ -3,6 +3,7 @@ import {
   ENV,
   LlmFactory,
   LlmGenerateResponse,
+  LlmApiError,
   LlmInvalidContentError,
   LlmMessage,
   LlmService,
@@ -557,9 +558,24 @@ export class Agent extends Entity {
           actions
         );
       } catch (error) {
-        if (error instanceof LlmInvalidContentError && error.llmResponse) {
-          error.llmResponse.logType = LlmUsageType.EXECUTION;
-          await this.location.emitAsync('llmUseTools', this, error.llmResponse);
+        const isRateLimitError =
+          (error instanceof LlmApiError && error.status === 429) ||
+          (error instanceof Error &&
+            (error.message.includes('429') ||
+              error.message.includes('RESOURCE_EXHAUSTED')));
+
+        if (
+          (error instanceof LlmInvalidContentError && error.llmResponse) ||
+          isRateLimitError
+        ) {
+          if (error instanceof LlmInvalidContentError && error.llmResponse) {
+            error.llmResponse.logType = LlmUsageType.EXECUTION;
+            await this.location.emitAsync(
+              'llmUseTools',
+              this,
+              error.llmResponse
+            );
+          }
 
           // Try fallback LLM if available and different from current LLM
           try {
