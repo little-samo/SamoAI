@@ -63,9 +63,12 @@ export class AgentCharacterInputBuilder extends AgentInputBuilder {
 
     let languageRule: string;
     if (hasAll) {
-      const fallback =
-        otherLanguages.length > 0 ? otherLanguages.join(', ') : 'English';
-      languageRule = `Match the language of the most recent agent/user message (check <UnprocessedLastUserMessage>, then <LocationMessages> backward). Ignore system/gimmick messages. Default to ${fallback} when initiating.`;
+      if (otherLanguages.length > 0) {
+        const fallback = otherLanguages.join(', ');
+        languageRule = `Detect language from the most recent agent/user message only (check <UnprocessedLastUserMessage>, then <LocationMessages> backward; skip system/gimmick messages for language detection). Default to ${fallback} only when there are NO previous messages.`;
+      } else {
+        languageRule = `Detect language from the most recent agent/user message only (check <UnprocessedLastUserMessage>, then <LocationMessages> backward; skip system/gimmick messages for language detection).`;
+      }
     } else {
       languageRule = `Use only: ${languages.join(', ')}. Respond in allowed language even if user uses another.`;
     }
