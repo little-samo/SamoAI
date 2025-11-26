@@ -28,8 +28,12 @@ export class OpenRouterService extends OpenAIChatCompletionService {
     maxOutputTokens: number;
     temperature: number | undefined;
   } {
+    // gemini-3 models use thinkingLevel instead of maxThinkingTokens
+    const isGemini3 = this.model.startsWith('gemini-3');
+
     if (
       this.model.includes('gemini') &&
+      !isGemini3 &&
       options &&
       options.maxTokens &&
       options.maxThinkingTokens
@@ -44,13 +48,24 @@ export class OpenRouterService extends OpenAIChatCompletionService {
         options
       );
 
-    // Add Gemini thinking budget support via OpenRouter
+    // gemini-3 models recommend using default temperature
+    if (isGemini3 && request.temperature !== undefined) {
+      delete request.temperature;
+    }
+
+    // Add Gemini thinking support via OpenRouter
     // See: https://openrouter.ai/docs/use-cases/reasoning-tokens
-    if (this.model.includes('gemini') && options?.maxThinkingTokens) {
-      // @ts-expect-error - OpenRouter supports reasoning for provider-specific parameters
-      request.reasoning ??= {};
-      // @ts-expect-error - OpenRouter supports reasoning for provider-specific parameters
-      request.reasoning.max_tokens = options.maxThinkingTokens;
+    if (this.model.includes('gemini')) {
+      if (isGemini3 && options?.thinkingLevel) {
+        // gemini-3 models support thinkingLevel using GPT-style reasoning_effort
+        request.reasoning_effort = options.thinkingLevel;
+      } else if (!isGemini3 && options?.maxThinkingTokens) {
+        // Older Gemini models use thinking budget
+        // @ts-expect-error - OpenRouter supports reasoning for provider-specific parameters
+        request.reasoning ??= {};
+        // @ts-expect-error - OpenRouter supports reasoning for provider-specific parameters
+        request.reasoning.max_tokens = options.maxThinkingTokens;
+      }
     }
 
     return { request, maxOutputTokens, temperature };
@@ -65,8 +80,12 @@ export class OpenRouterService extends OpenAIChatCompletionService {
     maxOutputTokens: number;
     temperature: number | undefined;
   } {
+    // gemini-3 models use thinkingLevel instead of maxThinkingTokens
+    const isGemini3 = this.model.startsWith('gemini-3');
+
     if (
       this.model.includes('gemini') &&
+      !isGemini3 &&
       options &&
       options.maxTokens &&
       options.maxThinkingTokens
@@ -80,13 +99,24 @@ export class OpenRouterService extends OpenAIChatCompletionService {
       options
     );
 
-    // Add Gemini thinking budget support via OpenRouter
+    // gemini-3 models recommend using default temperature
+    if (isGemini3 && request.temperature !== undefined) {
+      delete request.temperature;
+    }
+
+    // Add Gemini thinking support via OpenRouter
     // See: https://openrouter.ai/docs/use-cases/reasoning-tokens
-    if (this.model.includes('gemini') && options?.maxThinkingTokens) {
-      // @ts-expect-error - OpenRouter supports reasoning for provider-specific parameters
-      request.reasoning ??= {};
-      // @ts-expect-error - OpenRouter supports reasoning for provider-specific parameters
-      request.reasoning.max_tokens = options.maxThinkingTokens;
+    if (this.model.includes('gemini')) {
+      if (isGemini3 && options?.thinkingLevel) {
+        // gemini-3 models support thinkingLevel using GPT-style reasoning_effort
+        request.reasoning_effort = options.thinkingLevel;
+      } else if (!isGemini3 && options?.maxThinkingTokens) {
+        // Older Gemini models use thinking budget
+        // @ts-expect-error - OpenRouter supports reasoning for provider-specific parameters
+        request.reasoning ??= {};
+        // @ts-expect-error - OpenRouter supports reasoning for provider-specific parameters
+        request.reasoning.max_tokens = options.maxThinkingTokens;
+      }
     }
 
     return { request, maxOutputTokens, temperature };
