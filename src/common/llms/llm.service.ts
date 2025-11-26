@@ -13,8 +13,8 @@ export abstract class LlmService {
   public static readonly DEFAULT_TEMPERATURE = 0;
   public static readonly DEFAULT_MAX_TOKENS = 1024;
   public static readonly DEFAULT_MAX_THINKING_TOKENS = 1024;
-  public static readonly DEFAULT_MAX_TRIES = 5;
-  public static readonly DEFAULT_RETRY_DELAY = 1000;
+  public static readonly DEFAULT_MAX_TRIES = 3;
+  public static readonly DEFAULT_RETRY_DELAY = 500;
 
   public readonly platform: LlmPlatform;
   public readonly model: string;
