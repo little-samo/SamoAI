@@ -60,7 +60,7 @@ export interface LocationRepository {
           remainingAgentExecutions: number | null;
         }
       | {
-          remainingAgentExecutionsDelta: number | null;
+          remainingAgentExecutionsDelta: number;
         }
   ): Promise<void>;
   updateLocationStateCanvas(
