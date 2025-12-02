@@ -327,6 +327,13 @@ export class GeminiService extends LlmService {
     if (thinkingTokens) {
       outputTokens += thinkingTokens;
     }
+    const imageOutputTokens =
+      response.usageMetadata?.candidatesTokensDetails
+        ?.filter((detail: ModalityTokenCount) => detail.modality === 'IMAGE')
+        .reduce((sum: number, detail: ModalityTokenCount) => {
+          const tokenCount = detail.tokenCount ?? 0;
+          return sum + tokenCount;
+        }, 0) ?? undefined;
 
     const cachedInputTokens =
       response.usageMetadata?.cachedContentTokenCount ?? undefined;
@@ -341,6 +348,7 @@ export class GeminiService extends LlmService {
       temperature,
       inputTokens,
       outputTokens,
+      imageOutputTokens,
       thinkingTokens,
       cachedInputTokens,
       request,
