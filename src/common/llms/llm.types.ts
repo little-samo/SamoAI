@@ -149,6 +149,7 @@ export interface LlmResponseBase {
   // Token Usage
   inputTokens: number;
   outputTokens: number;
+  imageOutputTokens?: number;
   thinkingTokens?: number;
   cachedInputTokens?: number;
   cacheCreationTokens?: number;

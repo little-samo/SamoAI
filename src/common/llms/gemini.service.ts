@@ -4,6 +4,7 @@ import {
   GenerateContentResponse,
   GoogleGenAI,
   MediaResolution,
+  ModalityTokenCount,
   ThinkingConfig,
   ThinkingLevel,
 } from '@google/genai';
@@ -588,6 +589,13 @@ Response can only be in JSON format and must strictly follow the following forma
     let outputTokens = response.usageMetadata?.candidatesTokenCount ?? 0;
     const thinkingTokens =
       response.usageMetadata?.thoughtsTokenCount ?? undefined;
+    const imageOutputTokens =
+      response.usageMetadata?.candidatesTokensDetails
+        ?.filter((detail: ModalityTokenCount) => detail.modality === 'IMAGE')
+        .reduce((sum: number, detail: ModalityTokenCount) => {
+          const tokenCount = detail.tokenCount ?? 0;
+          return sum + tokenCount;
+        }, 0) ?? undefined;
 
     if (thinkingTokens) {
       outputTokens += thinkingTokens;
@@ -606,6 +614,7 @@ Response can only be in JSON format and must strictly follow the following forma
       temperature,
       inputTokens,
       outputTokens,
+      imageOutputTokens,
       thinkingTokens,
       cachedInputTokens,
       request,
@@ -760,6 +769,13 @@ Response can only be in JSON format and must strictly follow the following forma
     let outputTokens = lastChunk.usageMetadata?.candidatesTokenCount ?? 0;
     const thinkingTokens =
       lastChunk.usageMetadata?.thoughtsTokenCount ?? undefined;
+    const imageOutputTokens =
+      lastChunk.usageMetadata?.candidatesTokensDetails
+        ?.filter((detail: ModalityTokenCount) => detail.modality === 'IMAGE')
+        .reduce((sum: number, detail: ModalityTokenCount) => {
+          const tokenCount = detail.tokenCount ?? 0;
+          return sum + tokenCount;
+        }, 0) ?? undefined;
 
     if (thinkingTokens) {
       outputTokens += thinkingTokens;
@@ -778,6 +794,7 @@ Response can only be in JSON format and must strictly follow the following forma
       temperature,
       inputTokens,
       outputTokens,
+      imageOutputTokens,
       thinkingTokens,
       cachedInputTokens,
       request,
