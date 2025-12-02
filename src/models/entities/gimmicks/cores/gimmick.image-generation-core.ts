@@ -180,6 +180,8 @@ export class GimmickImageGenerationCore extends GimmickCore {
       this.meta.options?.llm ?? {};
     llmImageOptions.platform ??=
       GimmickImageGenerationCore.DEFAULT_IMAGE_GENERATION_LLM_PLATFORM;
+    llmImageOptions.model ??=
+      GimmickImageGenerationCore.DEFAULT_IMAGE_GENERATION_LLM_MODEL;
 
     const llmApiKeyModel = entity.location.apiKeys[llmImageOptions.platform];
     llmImageOptions.apiKey ??= llmApiKeyModel?.key;
