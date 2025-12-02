@@ -8,6 +8,7 @@ import {
   LlmResponseType,
   LlmService,
   LlmServiceOptions,
+  LlmThinkingLevel,
   LlmUsageType,
   truncateString,
 } from '@little-samo/samo-ai/common';
@@ -38,8 +39,9 @@ export class GimmickImageGenerationCore extends GimmickCore {
   public static readonly DEFAULT_IMAGE_GENERATION_LLM_PLATFORM =
     LlmPlatform.GEMINI;
   public static readonly DEFAULT_IMAGE_GENERATION_LLM_MODEL =
-    'gemini-2.5-flash-image';
-  public static readonly DEFAULT_IMAGE_GENERATION_LLM_MAX_TOKENS = 8192;
+    'gemini-3-pro-image-preview';
+  public static readonly DEFAULT_IMAGE_GENERATION_LLM_THINKING_LEVEL =
+    LlmThinkingLevel.high;
   public static readonly DEFAULT_MAX_IMAGE_DESCRIPTION_LENGTH = 500;
 
   public constructor(gimmick: Gimmick, meta: GimmickCoreMeta) {
@@ -95,8 +97,8 @@ export class GimmickImageGenerationCore extends GimmickCore {
     try {
       imageGenerationResponse = await imageLlm.generate(messages, {
         responseTypes: [LlmResponseType.image],
-        maxTokens:
-          GimmickImageGenerationCore.DEFAULT_IMAGE_GENERATION_LLM_MAX_TOKENS,
+        thinkingLevel:
+          GimmickImageGenerationCore.DEFAULT_IMAGE_GENERATION_LLM_THINKING_LEVEL,
         verbose: ENV.VERBOSE_LLM,
       });
     } catch (error) {
