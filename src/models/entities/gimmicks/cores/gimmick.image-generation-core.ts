@@ -94,8 +94,6 @@ export class GimmickImageGenerationCore extends GimmickCore {
     try {
       imageGenerationResponse = await imageLlm.generate(messages, {
         responseTypes: [LlmResponseType.image],
-        thinkingLevel:
-          GimmickImageGenerationCore.DEFAULT_IMAGE_GENERATION_LLM_THINKING_LEVEL,
         verbose: ENV.VERBOSE_LLM,
       });
     } catch (error) {
