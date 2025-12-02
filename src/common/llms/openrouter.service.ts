@@ -29,7 +29,7 @@ export class OpenRouterService extends OpenAIChatCompletionService {
     temperature: number | undefined;
   } {
     // gemini-3 models use thinkingLevel instead of maxThinkingTokens
-    const isGemini3 = this.model.startsWith('gemini-3');
+    const isGemini3 = this.model.includes('gemini-3');
 
     if (
       this.model.includes('gemini') &&
@@ -81,7 +81,7 @@ export class OpenRouterService extends OpenAIChatCompletionService {
     temperature: number | undefined;
   } {
     // gemini-3 models use thinkingLevel instead of maxThinkingTokens
-    const isGemini3 = this.model.startsWith('gemini-3');
+    const isGemini3 = this.model.includes('gemini-3');
 
     if (
       this.model.includes('gemini') &&
