@@ -8,7 +8,6 @@ import {
   LlmResponseType,
   LlmService,
   LlmServiceOptions,
-  LlmThinkingLevel,
   LlmUsageType,
   truncateString,
 } from '@little-samo/samo-ai/common';
@@ -40,9 +39,6 @@ export class GimmickImageGenerationCore extends GimmickCore {
     LlmPlatform.GEMINI;
   public static readonly DEFAULT_IMAGE_GENERATION_LLM_MODEL =
     'gemini-3-pro-image-preview';
-  public static readonly DEFAULT_IMAGE_GENERATION_LLM_THINKING = true;
-  public static readonly DEFAULT_IMAGE_GENERATION_LLM_THINKING_LEVEL =
-    LlmThinkingLevel.high;
   public static readonly DEFAULT_MAX_IMAGE_DESCRIPTION_LENGTH = 500;
 
   public constructor(gimmick: Gimmick, meta: GimmickCoreMeta) {
@@ -186,10 +182,6 @@ export class GimmickImageGenerationCore extends GimmickCore {
       this.meta.options?.llm ?? {};
     llmImageOptions.platform ??=
       GimmickImageGenerationCore.DEFAULT_IMAGE_GENERATION_LLM_PLATFORM;
-    llmImageOptions.model ??=
-      GimmickImageGenerationCore.DEFAULT_IMAGE_GENERATION_LLM_MODEL;
-    llmImageOptions.thinking ??=
-      GimmickImageGenerationCore.DEFAULT_IMAGE_GENERATION_LLM_THINKING;
 
     const llmApiKeyModel = entity.location.apiKeys[llmImageOptions.platform];
     llmImageOptions.apiKey ??= llmApiKeyModel?.key;
