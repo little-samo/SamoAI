@@ -67,8 +67,25 @@ export class AgentCompleteObjectiveAction extends AgentAction {
       );
     }
 
+    // Check if all other objectives are already completed
+    // If so, completing this one will complete the entire mission
+    const allOtherObjectivesCompleted =
+      this.location.state.mission.objectives.every(
+        (obj, idx) => idx === action.objectiveIndex || obj.completed
+      );
+
+    // Build action string with objective description
+    let actionString = `complete_objective --index ${action.objectiveIndex} --objective ${JSON.stringify(objective.description)}`;
+
+    // If mission will be completed, also include mission content
+    if (allOtherObjectivesCompleted) {
+      actionString += ` --mission ${JSON.stringify(
+        this.location.state.mission.mainMission
+      )}`;
+    }
+
     await this.location.addAgentMessage(this.agent, {
-      action: `complete_objective --index ${action.objectiveIndex}`,
+      action: actionString,
     });
 
     await this.location.completeObjective(action.objectiveIndex);
