@@ -40,6 +40,7 @@ export class GimmickImageGenerationCore extends GimmickCore {
     LlmPlatform.GEMINI;
   public static readonly DEFAULT_IMAGE_GENERATION_LLM_MODEL =
     'gemini-3-pro-image-preview';
+  public static readonly DEFAULT_IMAGE_GENERATION_LLM_THINKING = true;
   public static readonly DEFAULT_IMAGE_GENERATION_LLM_THINKING_LEVEL =
     LlmThinkingLevel.high;
   public static readonly DEFAULT_MAX_IMAGE_DESCRIPTION_LENGTH = 500;
@@ -187,6 +188,8 @@ export class GimmickImageGenerationCore extends GimmickCore {
       GimmickImageGenerationCore.DEFAULT_IMAGE_GENERATION_LLM_PLATFORM;
     llmImageOptions.model ??=
       GimmickImageGenerationCore.DEFAULT_IMAGE_GENERATION_LLM_MODEL;
+    llmImageOptions.thinking ??=
+      GimmickImageGenerationCore.DEFAULT_IMAGE_GENERATION_LLM_THINKING;
 
     const llmApiKeyModel = entity.location.apiKeys[llmImageOptions.platform];
     llmImageOptions.apiKey ??= llmApiKeyModel?.key;
