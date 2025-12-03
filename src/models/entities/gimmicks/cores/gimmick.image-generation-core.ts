@@ -60,7 +60,7 @@ export class GimmickImageGenerationCore extends GimmickCore {
   }
 
   public override get description(): string {
-    return 'Generates high-quality images based on detailed text descriptions. The gimmick can see the full location context including conversation history and reference images. It can also reference and edit existing images in the context by specifying the image ID. Execution takes approximately 15 seconds.';
+    return 'Generates high-quality images based on detailed text descriptions. Can create new images or modify existing ones by specifying image ID. Supports changing art styles (e.g., realistic to anime) and translating text within images. Has access to full location context including conversation history and reference images. Execution takes approximately 15 seconds.';
   }
 
   public override get parameters(): z.ZodSchema {
@@ -68,7 +68,7 @@ export class GimmickImageGenerationCore extends GimmickCore {
       .string()
       .max(GimmickImageGenerationCore.DEFAULT_MAX_IMAGE_DESCRIPTION_LENGTH)
       .describe(
-        "Detailed prompt for image generation. Describe the image's composition, subjects, background, and style. If modifying specific reference images, clearly specify which image by referencing its ID (e.g., 'modify image ID abc123 to...'). When clear reference images are provided, avoid duplicating their descriptions. For sensitive content, use artistic or symbolic descriptions rather than explicit depictions. Nudity will cause generation to fail. If a prompt requests a character without clothes, you must add appropriate attire (e.g., underwear or swimwear) to ensure successful generation."
+        "Detailed prompt for image generation. Describe the image's composition, subjects, background, and style. Can modify existing images by referencing their ID (e.g., 'change image ID abc123 to anime style' or 'translate text in image ID xyz789 to English'). When reference images are provided, avoid duplicating their descriptions. For sensitive content, use artistic or symbolic descriptions. Nudity will cause generation to fail—add appropriate attire (e.g., underwear, swimwear) if needed."
       );
   }
 
