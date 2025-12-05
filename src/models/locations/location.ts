@@ -506,6 +506,9 @@ export class Location extends AsyncEventEmitter {
         `Objective at index ${objectiveIndex} not found. Valid range: 0-${this.state.mission.objectives.length - 1}`
       );
     }
+    if (objective.completed) {
+      return;
+    }
 
     objective.completed = true;
     objective.completedAt = new Date();
