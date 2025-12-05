@@ -519,7 +519,7 @@ export class Location extends AsyncEventEmitter {
     );
 
     if (allCompleted && this.state.mission.objectives.length > 0) {
-      await this.emitAsync('missionAchieved', this, this.state.mission);
+      await this.emitAsync('missionCompleted', this, this.state.mission);
     }
   }
 
