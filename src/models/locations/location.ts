@@ -1,6 +1,7 @@
 import {
   AsyncEventEmitter,
   ENV,
+  isLatinText,
   truncateString,
 } from '@little-samo/samo-ai/common';
 import { isEqual } from 'lodash';
@@ -323,7 +324,17 @@ export class Location extends AsyncEventEmitter {
   }
 
   public async addMessage(message: LocationMessage): Promise<void> {
-    const messageLengthLimit: number = this.meta.messageLengthLimit;
+    let messageLengthLimit: number = this.meta.messageLengthLimit;
+
+    // Use English-specific length limit if message is Latin script
+    if (
+      message.message &&
+      isLatinText(message.message) &&
+      this.meta.messageLengthLimitLatin
+    ) {
+      messageLengthLimit = this.meta.messageLengthLimitLatin;
+    }
+
     if (message.expression) {
       message.expression = truncateString(
         message.expression,

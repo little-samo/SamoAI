@@ -1,4 +1,29 @@
 /**
+ * Checks if text is primarily Latin script based on the ratio of Latin letters
+ * Includes accented Latin letters (é, è, ê, ë, etc.)
+ * @param str The text to check
+ * @param threshold Minimum ratio of Latin letters (0-1), default 0.7
+ * @returns True if text is primarily Latin script
+ */
+export function isLatinText(str: string, threshold: number = 0.7): boolean {
+  if (!str || str.length === 0) {
+    return true; // Empty string defaults to Latin
+  }
+
+  // Count Latin letters including accented characters
+  // Basic Latin (A-Z, a-z) + Latin-1 Supplement (À-ÿ) + Latin Extended-A (Ā-ž) + Latin Extended-B + Latin Extended Additional
+  // Using Unicode property escapes to match all Latin script letters
+  const latinLetterPattern = /\p{Script=Latin}/gu;
+  const latinMatches = str.match(latinLetterPattern);
+  const latinLetterCount = latinMatches ? latinMatches.length : 0;
+
+  // Calculate ratio of Latin letters
+  const ratio = latinLetterCount / str.length;
+
+  return ratio >= threshold;
+}
+
+/**
  * Truncates text to a maximum length, adding a truncation message if needed
  * @param str The text to truncate
  * @param maxLength The maximum allowed length

@@ -33,6 +33,7 @@ export interface LocationMeta {
 
   messageLimit: number;
   messageLengthLimit: number;
+  messageLengthLimitLatin?: number;
   agentMessageLengthLimit?: number;
   userContextLimit: number;
   agentAgentContextLimit: number;
@@ -61,6 +62,7 @@ export const DEFAULT_LOCATION_META: LocationMeta = {
 
   messageLimit: 30,
   messageLengthLimit: 800,
+  messageLengthLimitLatin: 1600,
   userContextLimit: 8,
   agentAgentContextLimit: 4,
   agentUserContextLimit: 4,
