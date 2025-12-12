@@ -219,14 +219,19 @@ export class Agent extends Entity {
       return;
     }
 
+    const hasItems = Object.keys(this._itemsByItemKey).length > 0;
+    const agentState = this.location.getEntityState(this.key)!;
+    const hasAgentCanvas = Object.keys(agentState.canvases).length > 0;
+
     const actions = [
       ...this.location.meta.actions,
       ...(this.location.meta.addActions ?? []),
       ...[this.location.meta.messageAction],
       ...(this.location.meta.canvasActions ?? []),
+      ...(hasItems ? (this.meta.itemActions ?? []) : []),
       ...this.meta.actions,
       ...(this.meta.addActions ?? []),
-      ...(this.meta.canvasActions ?? []),
+      ...(hasAgentCanvas ? (this.meta.canvasActions ?? []) : []),
       ...(this.meta.missionActions ?? []),
       ...(this.meta.memoryActions ?? []),
     ];

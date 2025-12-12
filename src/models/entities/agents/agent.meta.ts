@@ -61,6 +61,7 @@ export interface AgentMeta extends EntityMeta {
   actions: string[];
   addActions?: string[];
   canvasActions: string[];
+  itemActions: string[];
   missionActions: string[];
   memoryActions: string[];
   memoryPostActions: string[];
@@ -161,8 +162,9 @@ export const DEFAULT_AGENT_META: AgentMeta = {
   languages: ['English'],
   timeZone: 'UTC',
 
-  actions: ['transfer_item:latest', 'execute_gimmick:latest'],
+  actions: ['execute_gimmick:latest'],
   canvasActions: ['update_agent_canvas:latest', 'edit_agent_canvas:latest'],
+  itemActions: ['transfer_item:latest'],
   missionActions: ['set_mission:latest', 'complete_objective:latest'],
   memoryActions: ['add_memory:latest', 'add_entity_memory:latest'],
   memoryPostActions: ['update_memory:latest', 'update_entity_memory:latest'],
