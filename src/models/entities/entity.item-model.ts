@@ -21,4 +21,6 @@ export interface ItemDataModel {
   memo: string | null;
 
   stackable: boolean;
+
+  isAgentHidden?: boolean;
 }

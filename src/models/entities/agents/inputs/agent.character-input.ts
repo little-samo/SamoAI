@@ -228,6 +228,7 @@ You have the following items in your inventory:
 <YourInventory>
 ${AgentItemContext.FORMAT}
 ${Object.entries(agentContext.items)
+  .filter(([_, item]) => !item.itemData?.isAgentHidden)
   .map(([key, item]) =>
     new AgentItemContext({
       key: key as ItemKey,
