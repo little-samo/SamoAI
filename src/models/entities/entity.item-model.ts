@@ -17,8 +17,8 @@ export interface ItemDataModel {
   updatedAt: Date;
 
   name: string;
-  description?: string;
-  memo?: string;
+  description: string | null;
+  memo: string | null;
 
   stackable: boolean;
 }
