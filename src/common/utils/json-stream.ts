@@ -13,7 +13,6 @@ interface CurrentObjectState {
   name: string | null;
   inArguments: boolean;
   currentKey: string | null;
-  currentValue: string;
   keyDepth: number;
   isComplete: boolean;
   accumulatedValue: string;
@@ -57,7 +56,7 @@ export class JsonArrayStreamParser {
   private arrayStarted = false;
   private objectStartIndex = -1;
   private yieldedCount = 0;
-  private trackedPairs: Array<{ pattern: string; regex: RegExp }> = []; // "toolName:argumentKey" pairs (supports wildcards)
+  private trackedPairs: RegExp[] = []; // "toolName:argumentKey" patterns (supports wildcards)
   private onFieldUpdate?: (update: PartialFieldUpdate) => void;
 
   // Current object parsing state
@@ -85,14 +84,9 @@ export class JsonArrayStreamParser {
    * @param pairs - e.g., [['send_message', 'message'], ['send_*_message', 'message'], ['send_casual_message', 'casualPolicyViolatingAnswer']]
    */
   public trackToolFields(pairs: Array<[string, string]>): void {
-    this.trackedPairs = [];
-    for (const [toolName, argumentKey] of pairs) {
-      const pattern = `${toolName}:${argumentKey}`;
-      this.trackedPairs.push({
-        pattern,
-        regex: patternToRegex(pattern),
-      });
-    }
+    this.trackedPairs = pairs.map(([toolName, argumentKey]) =>
+      patternToRegex(`${toolName}:${argumentKey}`)
+    );
   }
 
   /**
@@ -100,7 +94,7 @@ export class JsonArrayStreamParser {
    */
   private matchesTrackedPair(toolName: string, argumentKey: string): boolean {
     const pairKey = `${toolName}:${argumentKey}`;
-    return this.trackedPairs.some(({ regex }) => regex.test(pairKey));
+    return this.trackedPairs.some((regex) => regex.test(pairKey));
   }
 
   /**
@@ -156,7 +150,6 @@ export class JsonArrayStreamParser {
       name: null,
       inArguments: false,
       currentKey: null,
-      currentValue: '',
       keyDepth: 0,
       isComplete: false,
       accumulatedValue: '',
@@ -223,7 +216,48 @@ export class JsonArrayStreamParser {
       // Handle escape sequences
       if (this.escaped) {
         this.escaped = false;
-        // If we're tracking a string value, it continues
+
+        // Incremental accumulation for escaped characters
+        if (this.inString && this.currentObject) {
+          let escapedChar: string | null = null;
+          switch (char) {
+            case '"':
+            case '\\':
+            case '/':
+              escapedChar = char;
+              break;
+            case 'n':
+              escapedChar = '\n';
+              break;
+            case 'r':
+              escapedChar = '\r';
+              break;
+            case 't':
+              escapedChar = '\t';
+              break;
+            default:
+              escapedChar = '\\' + char;
+          }
+
+          if (escapedChar !== null) {
+            if (this.currentObject.isTrackingEntityKey) {
+              this.currentObject.entityKeyValue += escapedChar;
+              this.entityKeys.set(
+                this.yieldedCount,
+                this.currentObject.entityKeyValue
+              );
+            } else if (this.currentObject.isTrackingField) {
+              this.currentObject.accumulatedValue += escapedChar;
+              this.emitFieldUpdate(
+                this.yieldedCount,
+                this.currentObject.name!,
+                this.currentObject.currentKey!,
+                this.currentObject.accumulatedValue
+              );
+            }
+          }
+        }
+
         continue;
       }
 
@@ -290,83 +324,23 @@ export class JsonArrayStreamParser {
         continue;
       }
 
-      // Optimization: Incremental character accumulation for tracked fields and entityKey
+      // Incremental character accumulation for tracked fields and entityKey
+      // Note: Escape sequences and backslashes are handled above (224-274)
       if (this.inString && this.currentObject) {
-        // Handle entityKey field streaming
         if (this.currentObject.isTrackingEntityKey) {
-          // Process character with escape handling
-          if (this.escaped) {
-            // Handle escape sequences incrementally
-            switch (char) {
-              case '"':
-              case '\\':
-              case '/':
-                this.currentObject.entityKeyValue += char;
-                break;
-              case 'n':
-                this.currentObject.entityKeyValue += '\n';
-                break;
-              case 'r':
-                this.currentObject.entityKeyValue += '\r';
-                break;
-              case 't':
-                this.currentObject.entityKeyValue += '\t';
-                break;
-              default:
-                // Unknown escape, keep the backslash
-                this.currentObject.entityKeyValue += '\\' + char;
-            }
-          } else if (char !== '\\') {
-            // Regular character (not a backslash)
-            this.currentObject.entityKeyValue += char;
-          }
-
-          // Update the entityKeys map in real-time
-          if (char !== '\\' || this.escaped) {
-            this.entityKeys.set(
-              this.yieldedCount,
-              this.currentObject.entityKeyValue
-            );
-          }
-        }
-        // Handle tracked field streaming
-        else if (this.currentObject.isTrackingField) {
-          // Process character with escape handling
-          if (this.escaped) {
-            // Handle escape sequences incrementally
-            switch (char) {
-              case '"':
-              case '\\':
-              case '/':
-                this.currentObject.accumulatedValue += char;
-                break;
-              case 'n':
-                this.currentObject.accumulatedValue += '\n';
-                break;
-              case 'r':
-                this.currentObject.accumulatedValue += '\r';
-                break;
-              case 't':
-                this.currentObject.accumulatedValue += '\t';
-                break;
-              default:
-                // Unknown escape, keep the backslash
-                this.currentObject.accumulatedValue += '\\' + char;
-            }
-          } else if (char !== '\\') {
-            // Regular character (not a backslash)
-            this.currentObject.accumulatedValue += char;
-          }
-
-          // Emit update with accumulated value (skip backslash itself)
-          if (char !== '\\' || this.escaped) {
-            this.emitFieldUpdate(
-              this.yieldedCount,
-              this.currentObject.name!,
-              this.currentObject.currentKey!,
-              this.currentObject.accumulatedValue
-            );
-          }
+          this.currentObject.entityKeyValue += char;
+          this.entityKeys.set(
+            this.yieldedCount,
+            this.currentObject.entityKeyValue
+          );
+        } else if (this.currentObject.isTrackingField) {
+          this.currentObject.accumulatedValue += char;
+          this.emitFieldUpdate(
+            this.yieldedCount,
+            this.currentObject.name!,
+            this.currentObject.currentKey!,
+            this.currentObject.accumulatedValue
+          );
         }
       }
 
