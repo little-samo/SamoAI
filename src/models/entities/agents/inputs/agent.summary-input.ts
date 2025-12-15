@@ -10,6 +10,35 @@ import { RegisterAgentInput } from './agent.input-decorator';
 
 @RegisterAgentInput('summary')
 export class AgentSummaryInputBuilder extends AgentInputBuilder {
+  protected buildPrompt(): string {
+    const prompts: string[] = [];
+
+    prompts.push(`
+You are a summary management system for "${this.agent.name}". Your role is to generate an updated, concise summary in English that maintains context and continuity across multiple locations.
+
+The agent operates across multiple distinct locations where information is NOT automatically shared. This summary is crucial for maintaining context when switching between locations.
+`);
+
+    const rules: string[] = [];
+
+    rules.push(
+      `1. **Length Limit:** Must not exceed ${this.agent.meta.summaryLengthLimit} characters. Prioritize current turn's key events and recent vital points from previous summary.`,
+      `2. **Synthesize & Condense:** Create coherent narrative integrating most relevant points from <CurrentSummary> with significant events from <Input> and <Output>.`,
+      `3. **Priority Content:** Focus on ongoing situation, user intentions, relationships, unresolved tasks, and key interactions vital for when agent revisits this location after being elsewhere.`,
+      `4. **State Changes:** Mention critical changes (users entering/leaving, item transfers, memory/canvas updates) with location prefix. Format: "[Location Name] Event description (timestamp)".`,
+      `5. **Entity Format:** Use simple names for entities and locations. Include timestamps where available. Report objectively without interpretations.`,
+      `6. **Language:** ALL summary content MUST be in English.`,
+      `7. **Output Format:** Provide ONLY the raw summary text. No introductions, explanations, or markdown formatting.`
+    );
+
+    prompts.push(`
+SUMMARY UPDATE RULES:
+${rules.join('\n')}
+`);
+
+    return prompts.map((p) => p.trim()).join('\n\n');
+  }
+
   public override build(options: {
     llm: LlmService;
     prevSummary: string;
@@ -19,31 +48,17 @@ export class AgentSummaryInputBuilder extends AgentInputBuilder {
     const { prevSummary, inputMessages, toolCalls } = options;
     const messages: LlmMessage[] = [];
 
+    const prompt = this.buildPrompt();
     messages.push({
       role: 'system',
-      content: `
-**Objective:** Generate an updated, concise summary in English based on the provided context. The AI agent operates across multiple distinct Locations where information is NOT automatically shared. This summary maintains context and continuity when switching between Locations by synthesizing the previous state with events from the latest turn.
-
-**Context:**
-*   \`<Prompt>\`: System prompt defining the agent's role, rules, and behavior
-*   \`<Input>\`: Context the agent received (including summary state before this update)
-*   \`<Output>\`: Agent's tool calls from this turn
-
-**Rules:**
-1.  **Length Limit:** Must not exceed ${this.agent.meta.summaryLengthLimit} characters. Prioritize current turn's key events and recent vital points from the previous summary.
-2.  **Synthesize & Condense:** Create a coherent narrative integrating the most relevant points from \`<CurrentSummary>\` with significant events from \`<Input>\` and \`<Output>\`.
-3.  **Priority Content:** Focus on ongoing situation, user intentions, relationships, unresolved tasks, and key interactions vital for when the agent revisits this Location after being elsewhere.
-4.  **State Changes:** Mention critical changes (users entering/leaving, item transfers, memory/canvas updates) with location prefix (e.g., \`[Private Chat] Alice asked...(Apr 19, 10:00)\`).
-5.  **Format:** Use simple names for entities and locations. Include timestamps where available. Report objectively without interpretations.
-6.  **Output:** Provide only the raw summary text without introductions or markdown.
-  `.trim(),
+      content: prompt,
     });
 
     const contextContents: LlmMessageContent[] = [];
     contextContents.push({
       type: 'text',
       text: `
-The system prompt used in the previous call, which defines the agent's role, rules, and behavior:
+System prompt defining the agent's role and behavior:
 <Prompt>
   `,
     });
@@ -59,7 +74,7 @@ The system prompt used in the previous call, which defines the agent's role, rul
       text: `
 </Prompt>
 
-The context the agent received:
+Context received by the agent (including summary state before this update):
 <Input>
   `,
     });
@@ -79,11 +94,12 @@ The context the agent received:
       text: `
 </Input>
 
-The agent's tool calls performed by the agent assistant:
+Agent's tool calls from this turn:
 <Output>
 ${JSON.stringify(toolCalls, null, 2)}
 </Output>
 
+Previous summary:
 <CurrentSummary>
 ${prevSummary}
 </CurrentSummary>
@@ -93,12 +109,20 @@ ${prevSummary}
     const userContents: LlmMessageContent[] = [
       {
         type: 'text',
-        text: `Analyze the following context and generate an updated, concise summary following the rules above.`,
+        text: `Analyze the context and generate an updated summary.`,
       },
       ...AgentInputBuilder.mergeMessageContents(contextContents, '\n'),
       {
         type: 'text',
-        text: `Provide the new summary (max ${this.agent.meta.summaryLengthLimit} characters):`,
+        text: `
+Generate the new summary following the rules above.
+
+Key reminders:
+- Max ${this.agent.meta.summaryLengthLimit} characters
+- Must be in English
+- Raw text only (no markdown or introductions)
+- Prioritize current turn's key events
+`,
       },
     ];
 

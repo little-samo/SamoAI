@@ -19,7 +19,7 @@ export class AgentUpdateEntityMemoryAction extends AgentAction {
     switch (this.version) {
       case 1:
       default:
-        return `Updates or overwrites a memory slot specifically about the entity identified by 'key' (indexed 0 to ${maxIndex}). Use this to store significant facts, interactions, or observations related *only* to that entity. Choose the index carefully based on importance and timeliness. This incorporates new/corrected information (potentially based on \'add_entity_memory\` suggestions) or clears outdated facts related only to that entity. To clear outdated/invalid information from a slot, provide an empty string ('') as the 'memory' value. Choose the index carefully based on importance and timeliness (overwriting the least relevant for this entity if full). Remember that memories should be concise, factual, and in English.`;
+        return `Updates or overwrites a memory slot about a specific entity (indexed 0-${maxIndex}). Use this to store significant facts, interactions, or observations related ONLY to that entity. Incorporates new/corrected information (potentially from 'add_entity_memory' suggestions) or clears outdated facts. To clear a slot, provide empty string ('') as memory value. Choose index carefully (overwrite least relevant for this entity if full). Memories must be concise, factual, and in English. CRITICAL: 'key' format is "type:id" with NUMERIC id (e.g., "user:123" or "agent:456"), NOT "user:@name".`;
     }
   }
 
@@ -33,20 +33,20 @@ export class AgentUpdateEntityMemoryAction extends AgentAction {
           key: z
             .string()
             .describe(
-              `The unique key (e.g., 'user:123', 'agent:123') of the specific entity (User or Agent) whose memory slot you want to update.`
+              `Entity key in format "type:id" where id is a NUMBER. Examples: "user:123", "agent:456". NEVER use format like "user:@name". Extract numeric id from context (e.g., from KEY field).`
             ),
           index: z
             .number()
             .min(0)
             .max(maxIndex)
             .describe(
-              `The index (0 to ${maxIndex}) of the memory slot *for the specified entity* to update. If all slots for this entity are full, choose the index of the least important or most outdated memory *for this entity* to overwrite.`
+              `Index (0-${maxIndex}) of memory slot for this entity. If all slots full, choose least important or most outdated for this entity to overwrite.`
             ),
           memory: z
             .string()
             .max(maxLength)
             .describe(
-              `The concise and factual new memory content specifically *about the entity identified by key*, to store at the specified index. Max length: ${maxLength} characters. The memory content MUST be written in English. **Provide an empty string ('') to effectively delete/clear the memory slot if the previous content is no longer valid.**`
+              `Concise, factual memory about this entity only. Max ${maxLength} chars. MUST be in English. Use empty string ('') to clear/delete slot.`
             ),
         });
     }

@@ -17,7 +17,7 @@ export class AgentAddEntityMemoryAction extends AgentAction {
     switch (this.version) {
       case 1:
       default:
-        return `Proposes adding a new memory specifically about the entity identified by 'key'. This serves as a **suggestion** for the separate memory update process. Use this to flag significant facts, interactions, or observations related *only* to that entity based on the current interaction. For guidance on *what* constitutes good memory content, recall that memories should be concise, factual, and in English.`;
+        return `Proposes adding a memory about a specific entity. This is a SUGGESTION for the separate memory update process. Use to flag significant facts, interactions, or observations related ONLY to that entity from current interaction. Memories should be concise, factual, and in English. CRITICAL: 'key' format is "type:id" with NUMERIC id (e.g., "user:123" or "agent:456"), NOT "user:@name".`;
     }
   }
 
@@ -30,13 +30,13 @@ export class AgentAddEntityMemoryAction extends AgentAction {
           key: z
             .string()
             .describe(
-              `The unique key (e.g., 'user:123', 'agent:123') of the specific entity (User or Agent) whose memory slot you want to update.`
+              `Entity key in format "type:id" where id is a NUMBER. Examples: "user:123", "agent:456". NEVER use format like "user:@name". Extract numeric id from context (e.g., from KEY field).`
             ),
           memory: z
             .string()
             .max(maxLength)
             .describe(
-              `The concise and factual new memory content specifically *about the entity identified by key*, **proposed** for storage. Max length: ${maxLength} characters. The memory content MUST be written in English, even if summarizing non-English information.`
+              `Concise, factual memory about this entity only, proposed for storage. Max ${maxLength} chars. MUST be in English, even if summarizing non-English info.`
             ),
         });
     }

@@ -14,7 +14,7 @@ export class AgentAddMemoryAction extends AgentAction {
     switch (this.version) {
       case 1:
       default:
-        return `Proposes adding a new memory to your general memory list. This serves as a **suggestion** for the separate memory update process. Use this to flag new essential information or potential corrections to outdated facts based on the current interaction. For guidance on *what* constitutes good memory content, recall that memories should be concise, factual, and in English.`;
+        return `Proposes adding a memory to your general memory list. This is a SUGGESTION for the separate memory update process. Use to flag new essential information or corrections to outdated facts from current interaction. Memories should be concise, factual, and in English.`;
     }
   }
 
@@ -27,7 +27,7 @@ export class AgentAddMemoryAction extends AgentAction {
             .string()
             .max(this.agent.meta.memoryLengthLimit)
             .describe(
-              `The concise and factual memory content **proposed** for storage. Max length: ${this.agent.meta.memoryLengthLimit} characters. The memory content MUST be written in English, even if summarizing non-English information.`
+              `Concise, factual memory content proposed for storage. Max ${this.agent.meta.memoryLengthLimit} chars. MUST be in English, even if summarizing non-English info.`
             ),
         });
     }
