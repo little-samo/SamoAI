@@ -53,16 +53,22 @@ export class GeminiService extends LlmService {
     });
   }
 
-  private mapThinkingLevel(level: LlmThinkingLevel): ThinkingLevel {
-    // Map our LlmThinkingLevel to Gemini's ThinkingLevel (only LOW and HIGH)
-    switch (level) {
-      case 'minimal':
-      case 'low':
-        return ThinkingLevel.LOW;
-      case 'medium':
-      case 'high':
-        return ThinkingLevel.HIGH;
+  private mapThinkingLevel(
+    model: string,
+    level: LlmThinkingLevel
+  ): ThinkingLevel {
+    if (model === 'gemini-3-pro' || model === 'gemini-3-pro-preview') {
+      switch (level) {
+        case 'minimal':
+        case 'low':
+          return ThinkingLevel.LOW;
+        case 'medium':
+        case 'high':
+          return ThinkingLevel.HIGH;
+      }
     }
+
+    return level as ThinkingLevel;
   }
 
   private mapMediaResolution(resolution: LlmMediaResolution): MediaResolution {
@@ -249,7 +255,7 @@ export class GeminiService extends LlmService {
         thinkingLevel = options.thinkingLevel;
         const thinkingConfig: ThinkingConfig = {
           includeThoughts: true,
-          thinkingLevel: this.mapThinkingLevel(thinkingLevel),
+          thinkingLevel: this.mapThinkingLevel(this.model, thinkingLevel),
         };
         request.config!.thinkingConfig = thinkingConfig;
       } else {
@@ -515,7 +521,7 @@ Response can only be in JSON format and must strictly follow the following forma
         thinkingLevel = options.thinkingLevel;
         const thinkingConfig: ThinkingConfig = {
           includeThoughts: true,
-          thinkingLevel: this.mapThinkingLevel(thinkingLevel),
+          thinkingLevel: this.mapThinkingLevel(this.model, thinkingLevel),
         };
         request.config!.thinkingConfig = thinkingConfig;
       } else {
