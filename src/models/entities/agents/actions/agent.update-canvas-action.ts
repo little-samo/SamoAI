@@ -15,7 +15,7 @@ export class AgentUpdateCanvasAction extends AgentAction {
   public static readonly ACTION_TEXT_DISPLAY_MAX_LENGTH = 500;
 
   public override get description(): string {
-    return `Updates the text content of a specific **public Location Canvas** (found in '<LocationCanvases>'). This **overwrites** the entire existing text. Use for major revisions or replacing content completely. For minor edits, additions, or corrections, use \`edit_canvas\`. Be mindful that anyone in the location can see and modify these canvases.`;
+    return `Overwrite entire Location Canvas. For minor edits, use \`edit_canvas\` instead.`;
   }
 
   public override get parameters(): z.ZodSchema {
@@ -23,21 +23,11 @@ export class AgentUpdateCanvasAction extends AgentAction {
       case 1:
       default:
         return z.object({
-          name: z
-            .string()
-            .describe(
-              `The exact NAME of the public Location Canvas (from <LocationCanvases>) to update.`
-            ),
-          reason: z
-            .string()
-            .describe(
-              'A reason for updating the canvas, which will be visible to other agents.'
-            ),
+          name: z.string().describe(`Canvas NAME from <LocationCanvases>.`),
+          reason: z.string().describe('Reason for update (visible to others).'),
           text: z
             .string()
-            .describe(
-              `The **entire new text content** for the canvas. **CRITICAL: Check the canvas's specific \`MAX_LENGTH\` in '<LocationCanvases>' context BEFORE generating text.** Text exceeding this specific limit **WILL BE TRUNCATED** upon execution.`
-            ),
+            .describe(`New content. Check MAX_LENGTH—exceeding truncates.`),
         });
     }
   }

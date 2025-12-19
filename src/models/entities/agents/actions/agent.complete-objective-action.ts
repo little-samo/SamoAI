@@ -14,7 +14,7 @@ export class AgentCompleteObjectiveAction extends AgentAction {
     switch (this.version) {
       case 1:
       default:
-        return 'Mark a mission objective as completed (shared across all agents in location). When all objectives are completed, the main mission will be considered achieved. Use the INDEX from the current mission objectives list.';
+        return 'Mark mission objective as completed.';
     }
   }
 
@@ -27,9 +27,7 @@ export class AgentCompleteObjectiveAction extends AgentAction {
             .number()
             .int()
             .min(0)
-            .describe(
-              'The INDEX (0-based) of the objective to mark as completed (from the mission objectives list)'
-            ),
+            .describe('Objective INDEX (0-based) from <LocationMission>.'),
         });
     }
   }

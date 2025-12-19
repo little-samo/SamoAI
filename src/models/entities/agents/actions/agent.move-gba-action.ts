@@ -14,7 +14,7 @@ export class AgentMoveGbaAction extends AgentAction {
     switch (this.version) {
       case 1:
       default:
-        return `Efficiently moves the GBA character directly to the specified absolute coordinates ('x,y'). Use for significant distance travel in a single command, not for small step-by-step adjustments. The system handles pathfinding automatically`;
+        return `Move GBA character to 'x,y' coordinates.`;
     }
   }
 
@@ -23,11 +23,7 @@ export class AgentMoveGbaAction extends AgentAction {
       case 1:
       default:
         return z.object({
-          destination: z
-            .string()
-            .describe(
-              `Target absolute coordinates ('x,y') for the character's final destination.`
-            ),
+          destination: z.string().describe(`Target 'x,y' coordinates.`),
         });
     }
   }

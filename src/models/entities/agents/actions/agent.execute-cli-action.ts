@@ -14,7 +14,7 @@ export class AgentExecuteCliAction extends AgentAction {
     switch (this.version) {
       case 1:
       default:
-        return `Executes a CLI command. You must generate the command by precisely following the given instruction in the Rendering.`;
+        return `Execute CLI command from Rendering.`;
     }
   }
 
@@ -23,7 +23,7 @@ export class AgentExecuteCliAction extends AgentAction {
       case 1:
       default:
         return z.object({
-          command: z.string().describe(`The CLI command to execute.`),
+          command: z.string().describe(`Command string.`),
         });
     }
   }

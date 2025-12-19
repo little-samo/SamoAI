@@ -15,7 +15,7 @@ export class AgentEditAgentCanvasAction extends AgentAction {
   public static readonly ACTION_TEXT_DISPLAY_MAX_LENGTH = 50;
 
   public override get description(): string {
-    return `Edits a specific portion of one of **your private Agent Canvases** (found in '<YourCanvases>') by replacing existing content with new content, or by appending new content. This is useful for making targeted changes or additions without overwriting the entire canvas. Use this for minor edits. For major revisions, use \`update_agent_canvas\`. Only you can view and modify these canvases.`;
+    return `Edit portion of private Agent Canvas. Replace or append.`;
   }
 
   public override get parameters(): z.ZodSchema {
@@ -23,21 +23,13 @@ export class AgentEditAgentCanvasAction extends AgentAction {
       case 1:
       default:
         return z.object({
-          name: z
-            .string()
-            .describe(
-              `The exact NAME of your private Agent Canvas (from <YourCanvases>) to edit.`
-            ),
+          name: z.string().describe(`Canvas NAME from <YourCanvases>.`),
           existing_content: z
             .string()
-            .describe(
-              `The exact existing text content to find and replace. Must match exactly (case-sensitive). If empty, the new content will be appended to the canvas.`
-            ),
+            .describe(`Text to replace (case-sensitive). Empty = append.`),
           new_content: z
             .string()
-            .describe(
-              `The new content to replace the existing content with. **CRITICAL: Ensure the total canvas length after editing does not exceed the canvas's specific \`MAX_LENGTH\` in '<YourCanvases>' context.**`
-            ),
+            .describe(`Replacement content. Mind MAX_LENGTH.`),
         });
     }
   }

@@ -15,7 +15,7 @@ export class AgentSetMissionAction extends AgentAction {
     switch (this.version) {
       case 1:
       default:
-        return 'Set or update the location mission (shared by all agents). Specify the main mission and all objectives at once. This will replace any existing mission. Use this when you want to establish a clear goal with actionable objectives.';
+        return 'Set location mission with objectives. Replaces existing mission.';
     }
   }
 
@@ -27,16 +27,12 @@ export class AgentSetMissionAction extends AgentAction {
           mainMission: z
             .string()
             .max(200)
-            .describe(
-              'Clear description of the main mission (max 200 chars). This should be a specific, achievable goal shared by all agents in this location.'
-            ),
+            .describe('Main goal (max 200 chars).'),
           objectives: z
             .array(z.string().max(200))
             .min(1)
             .max(5)
-            .describe(
-              'List of specific objectives needed to achieve the main mission (1-5 objectives, each max 200 chars). Each objective should be a clear, measurable step.'
-            ),
+            .describe('1-5 specific objectives (each max 200 chars).'),
         });
     }
   }

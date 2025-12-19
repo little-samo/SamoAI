@@ -24,7 +24,7 @@ export class AgentExecuteGimmickAction extends AgentAction {
     switch (this.version) {
       case 1:
       default:
-        return `Executes a Gimmick in your current location. CRITICAL: (1) Only ONE Gimmick execution per response turn - multiple calls in the same response will fail. (2) Gimmicks become OCCUPIED during execution and cannot be used by anyone until completion. (3) Check OCCUPIER fields before attempting - occupied Gimmicks will reject your request. (4) Execution is asynchronous - results appear in your private canvas later, not immediately.`;
+        return `Execute a Gimmick. One per turn. Check OCCUPIER_* fields first—occupied gimmicks reject requests. Results appear in canvas asynchronously.`;
     }
   }
 
@@ -33,17 +33,13 @@ export class AgentExecuteGimmickAction extends AgentAction {
       case 1:
       default:
         return z.object({
-          gimmickKey: z.string().describe(`The key of the gimmick to execute.`),
+          gimmickKey: z.string().describe(`Gimmick key from <Gimmicks>.`),
           reason: z
             .string()
-            .describe(
-              'A reason for executing the gimmick, which will be visible to other agents.'
-            ),
+            .describe('Reason for execution (visible to others).'),
           parameters: z
             .union([z.string(), z.record(z.string(), z.unknown())])
-            .describe(
-              `Optional parameters for the gimmick execution. These parameters MUST strictly conform to the schema defined by the target gimmick's 'PARAMETERS' field.`
-            ),
+            .describe(`Parameters matching gimmick's PARAMETERS schema.`),
         });
     }
   }

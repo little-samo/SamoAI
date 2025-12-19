@@ -25,7 +25,7 @@ export class AgentControlGbaAction extends AgentAction {
     switch (this.version) {
       case 1:
       default:
-        return 'Control the GBA with the given inputs. Available inputs: Up, Down, Left, Right, A, B, START, SELECT. You can input up to 4 keys sequentially at once, and for efficiency, try to input as many as possible at once. Note that this tool can only be used once per response.';
+        return 'Control GBA inputs (max 4). Once per turn.';
     }
   }
 
@@ -39,9 +39,7 @@ export class AgentControlGbaAction extends AgentAction {
             .array(z.nativeEnum(AgentControlGbaActionInput))
             .min(1)
             .max(maxInputs)
-            .describe(
-              `The inputs to control the GBA. Each input represents a single key press and they will be executed sequentially in the order provided. Max length: ${maxInputs} inputs.`
-            ),
+            .describe(`Sequential inputs (max ${maxInputs}).`),
         });
     }
   }

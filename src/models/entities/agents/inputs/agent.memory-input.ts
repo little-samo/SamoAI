@@ -14,26 +14,18 @@ export class AgentMemoryInputBuilder extends AgentInputBuilder {
     const prompts: string[] = [];
 
     prompts.push(`
-You are a memory management system for "${this.agent.name}". Your role is to analyze the agent's recent interaction and determine which memory updates are necessary.
+You are a memory management system for "${this.agent.name}". Manage memory updates based on interaction.
 `);
 
     const rules: string[] = [];
 
     // Analysis rules
     rules.push(
-      `1. **Review Suggestions:** Examine all \`add_memory\` and \`add_entity_memory\` calls in <Output> based on the agent's intent and context in <Input>.`,
-      `2. **Evaluate Necessity:** Only update if information is truly important, new, or corrective compared to existing memories. Avoid redundant entries.`,
-      `3. **Validate Existing:** Review existing memories. Clear outdated or invalidated entries by using empty string ("") as memory content.`
-    );
-
-    // Execution rules
-    rules.push(
-      `4. **Prioritize Updates:** For multiple updates, prioritize the most critical. Consolidate related information when appropriate.`,
-      `5. **General Memories:** Use \`update_memory\` with indices 0-${this.agent.meta.memoryLimit - 1}. Use first available slot. If full, overwrite least important.`,
-      `6. **Entity Memories:** Use \`update_entity_memory\` with indices 0-${this.agent.meta.entityMemoryLimit - 1} per entity. Use first available slot. If full, overwrite least important for that entity.`,
-      `7. **Entity Key Format:** CRITICAL - Entity keys are in format "type:id" where id is a NUMBER. Examples: "user:123", "agent:456". NEVER use format like "user:@name" or "agent:@name". Extract the correct numeric id from context.`,
-      `8. **Clear Outdated:** To delete/clear a memory slot, use empty string ("") as the memory value.`,
-      `9. **Language:** ALL memory content MUST be written in English, even when summarizing non-English information.`
+      `1. **Analyze:** Review \`add_memory\`/\`add_entity_memory\` suggestions in <Output> vs context in <Input>.`,
+      `2. **Update:** Use \`update_memory\` (general) or \`update_entity_memory\` (entity). Store only new, critical, or corrective facts. Avoid redundancy.`,
+      `3. **Entity Keys:** Format "type:numericId" (e.g., "user:123"). Extract numeric ID from context. NEVER use names.`,
+      `4. **Maintenance:** Overwrite least important if full. Use empty string ("") to clear outdated slots.`,
+      `5. **Language:** English only.`
     );
 
     prompts.push(`
@@ -114,13 +106,13 @@ ${JSON.stringify(toolCalls, null, 2)}
       {
         type: 'text',
         text: `
-Based on your analysis, use \`update_memory\` and/or \`update_entity_memory\` to perform necessary changes.
+Determine and execute memory updates.
 
 Key reminders:
-- Use correct entity key format: "type:id" with NUMERIC id (e.g., "user:123" NOT "user:@name")
-- Justify overwrites when slots are full
-- Avoid redundancy - only truly new/corrective information
-- Use proper indices: 0-${this.agent.meta.memoryLimit - 1} (general), 0-${this.agent.meta.entityMemoryLimit - 1} (entity)
+- Key format: "type:numericId" (NO names)
+- Overwrite if full (least important)
+- English only
+- Clear outdated with ""
 `,
       },
     ];

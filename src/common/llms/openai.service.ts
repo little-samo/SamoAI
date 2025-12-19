@@ -359,32 +359,19 @@ export class OpenAIService extends LlmService {
     systemMessages: string[],
     tools: LlmTool[]
   ): void {
-    systemMessages.push(
-      `The definition of the tools you have can be organized as a JSON Schema as follows. Clearly understand the definition and purpose of each tool.`
-    );
+    systemMessages.push(`Available tools:`);
 
     for (const tool of tools) {
       const parameters = zodSchemaToLlmFriendlyString(tool.parameters);
       systemMessages.push(
-        `name: ${tool.name}
-description: ${tool.description}
+        `${tool.name}: ${tool.description}
 parameters: ${parameters}`
       );
     }
 
     systemMessages.push(
-      `Refer to the definitions of the available tools above, and output the tools you plan to use in JSON format. Based on that analysis, select and use the necessary tools from the rest—following the guidance provided in the previous prompt.
-
-Response can only be in JSON format and must strictly follow the following format, with no surrounding text or markdown:
-{
-  "toolCalls": [
-    {
-      "name": "tool_name",
-      "arguments": { ... }
-    }
-    ... // (Include additional tool calls as needed)
-  ]
-}`
+      `Output selected tools as JSON only:
+{"toolCalls": [{"name": "tool_name", "arguments": {...}}, ...]}`
     );
   }
 

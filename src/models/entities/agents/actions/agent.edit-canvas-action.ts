@@ -30,7 +30,7 @@ export class AgentEditCanvasAction extends AgentAction {
   }
 
   public override get description(): string {
-    return `Edits a specific portion of a **public Location Canvas** (found in '<LocationCanvases>') by replacing existing content with new content, or by appending new content. This is useful for making targeted changes or additions without overwriting the entire canvas. Use this for minor edits. For major revisions, use \`update_canvas\`. Be mindful that anyone in the location can see and modify these canvases.`;
+    return `Edit portion of Location Canvas. Replace existing content or append (if existing_content empty).`;
   }
 
   public override get parameters(): z.ZodSchema {
@@ -38,26 +38,16 @@ export class AgentEditCanvasAction extends AgentAction {
       case 1:
       default:
         return z.object({
-          name: z
-            .string()
-            .describe(
-              `The exact NAME of the public Location Canvas (from <LocationCanvases>) to edit.`
-            ),
-          reason: z
-            .string()
-            .describe(
-              'A reason for editing the canvas, which will be visible to other agents.'
-            ),
+          name: z.string().describe(`Canvas NAME from <LocationCanvases>.`),
+          reason: z.string().describe('Reason for edit (visible to others).'),
           existing_content: z
             .string()
             .describe(
-              `The exact existing text content to find and replace. Must match exactly (case-sensitive). If empty, the new content will be appended to the canvas.`
+              `Exact text to replace (case-sensitive). Empty = append.`
             ),
           new_content: z
             .string()
-            .describe(
-              `The new content to replace the existing content with. **CRITICAL: Ensure the total canvas length after editing does not exceed the canvas's specific \`MAX_LENGTH\` in '<LocationCanvases>' context.**`
-            ),
+            .describe(`Replacement content. Mind MAX_LENGTH.`),
         });
     }
   }

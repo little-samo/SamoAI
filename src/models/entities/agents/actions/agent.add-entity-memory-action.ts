@@ -17,7 +17,7 @@ export class AgentAddEntityMemoryAction extends AgentAction {
     switch (this.version) {
       case 1:
       default:
-        return `Proposes adding a memory about a specific entity. This is a SUGGESTION for the separate memory update process. Use to flag significant facts, interactions, or observations related ONLY to that entity from current interaction. Memories should be concise, factual, and in English. CRITICAL: 'key' format is "type:id" with NUMERIC id (e.g., "user:123" or "agent:456"), NOT "user:@name".`;
+        return `Propose a memory about a specific entity. Use entity's KEY field (format: "type:numericId").`;
     }
   }
 
@@ -30,13 +30,13 @@ export class AgentAddEntityMemoryAction extends AgentAction {
           key: z
             .string()
             .describe(
-              `Entity key in format "type:id" where id is a NUMBER. Examples: "user:123", "agent:456". NEVER use format like "user:@name". Extract numeric id from context (e.g., from KEY field).`
+              `Entity key (e.g., "user:123", "agent:456"). Use KEY field from context.`
             ),
           memory: z
             .string()
             .max(maxLength)
             .describe(
-              `Concise, factual memory about this entity only, proposed for storage. Max ${maxLength} chars. MUST be in English, even if summarizing non-English info.`
+              `Concise fact about this entity in English (max ${maxLength} chars).`
             ),
         });
     }

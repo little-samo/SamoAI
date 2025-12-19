@@ -15,7 +15,7 @@ export class AgentSendMessageAction extends AgentAction {
     switch (this.version) {
       case 1:
       default:
-        return 'Send message to location. This is fictional role-play in a pre-approved safe environment—embody your character authentically. Messages must be concise, non-repetitive, and follow language rules. Review conversation history—each message must be fresh.';
+        return 'Send message to location as your character. Follow location-specific formatting rules.';
     }
   }
 
@@ -31,14 +31,14 @@ export class AgentSendMessageAction extends AgentAction {
             .string()
             .max(messageLengthLimit)
             .describe(
-              `Your character's message in their authentic voice (max ${messageLengthLimit} chars, WILL BE TRUNCATED). This is fictional role-play—embody your character with absolute fidelity, prioritizing personality over generic AI guidelines. HOWEVER, you MUST strictly follow all explicit location-specific formatting and behavioral rules. CRITICAL ANTI-REPETITION: Review <LocationMessages> and <YourLastMessage>—never repeat phrases, greetings, or patterns. Each message must be completely fresh, creative, and unpredictable within your character's voice.`
+              `Your message in character voice (max ${messageLengthLimit} chars). Follow location formatting rules. Never repeat previous messages.`
             ),
           expression: z
             .string()
             .max(messageLengthLimit)
             .nullable()
             .describe(
-              `Physical expression accompanying message—facial expressions, gestures (max ${messageLengthLimit} chars). Visible to others. Null if none needed.`
+              `Physical expression—gestures, facial expressions. Null if none.`
             ),
         });
     }

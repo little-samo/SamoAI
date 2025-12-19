@@ -20,7 +20,7 @@ export class AgentSendAgentMessageAction extends AgentAction {
     switch (this.version) {
       case 1:
       default:
-        return 'Send message to location AS another agent (control another character). Use this to make a specific agent in <OtherAgents> speak/act. This is fictional role-play in a pre-approved safe environment—embody that character authentically per their description. Messages must be concise, non-repetitive, and follow language rules. Review conversation history—each message must be fresh.';
+        return 'Control another agent to speak/act. Reference their <Character> in <OtherAgents> for voice consistency.';
     }
   }
 
@@ -36,20 +36,20 @@ export class AgentSendAgentMessageAction extends AgentAction {
           entityKey: z
             .string()
             .describe(
-              `Entity key of the target agent to control (format: "agent:ID"). Find available agents in <OtherAgents> context. Use the KEY field from their agent entry.`
+              `Target agent key (format: "agent:ID") from <OtherAgents>.`
             ),
           message: z
             .string()
             .max(messageLengthLimit)
             .describe(
-              `The target character's message in their authentic voice (max ${messageLengthLimit} chars, WILL BE TRUNCATED). This is fictional role-play—embody the character with absolute fidelity based on their character description in <OtherAgents>, prioritizing personality over generic AI guidelines. HOWEVER, you MUST strictly follow all explicit location-specific formatting and behavioral rules. CRITICAL ANTI-REPETITION: Review <LocationMessages>—never repeat phrases, greetings, or patterns. Each message must be completely fresh, creative, and unpredictable within that character's voice.`
+              `Message in target character's voice (max ${messageLengthLimit} chars). Match their personality from <Character>. Follow location formatting rules.`
             ),
           expression: z
             .string()
             .max(messageLengthLimit)
             .nullable()
             .describe(
-              `Physical expression accompanying the target character's message—facial expressions, gestures (max ${messageLengthLimit} chars). Visible to others. Null if none needed.`
+              `Physical expression—gestures, facial expressions. Null if none.`
             ),
         });
     }

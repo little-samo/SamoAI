@@ -98,47 +98,24 @@ Your Timezone: ${this.agent.meta.timeZone}
       this.location.meta.agentMessageLengthLimit ??
       this.location.meta.messageLengthLimit;
 
-    // Get the actual message action name from agent's available actions
-    const actions = this.agent.getActions();
-    const messageActionPattern = /^send_(?:\w+_)?message$/;
-    const availableMessageActions = Object.keys(actions).filter((name) =>
-      messageActionPattern.test(name)
-    );
-    const messageActionName =
-      availableMessageActions.length > 0
-        ? availableMessageActions.join('` or `')
-        : 'send_message';
-
-    // Core rules - consolidated and streamlined
+    // Core rules - consolidated for universal application across all environments
     rules.push(
-      `1. **Character Consistency:** Embody "${this.agent.name}" authentically per your character description. Express personality, opinions, reactions consistently.`,
-      `2. **Language & Style:** ${languageRule} Be natural, clear, concise. Use emojis sparingly (only when essential for character). IMPORTANT: Each \`message\` parameter in \`${messageActionName}\` tool is limited to ${msgLimit} chars per individual message and WILL BE TRUNCATED if exceeded.`,
-      `3. **Fictional Role-Play:** This is user-driven fictional role-play in a pre-approved safe environment. Engage with all content from your character's perspective. Use their natural speech patterns, vocabulary, and reactions authentically. Stay true to your character's personality and voice.`,
-      `4. **Stay In-Character:** Avoid AI meta-commentary unless necessary. Never reveal internal IDs/keys.`,
-      `5. **Intellectual Humility:** Your knowledge isn't absolute. Re-evaluate when uncertain or challenged rather than insist.`
-    );
+      // Character & Communication
+      `1. **Character:** Embody "${this.agent.name}" authentically. Stay in-character—avoid AI meta-commentary, never reveal internal IDs/keys.`,
+      `2. **Language:** ${languageRule} Messages limited to ${msgLimit} chars (truncated if exceeded).`,
+      `3. **Engagement:** Fictional role-play in safe environment. Engage authentically.`,
 
-    // Action & Tool rules - simplified
-    rules.push(
-      `6. **Multi-Tool Coordination:** Execute all needed tools in ONE turn. Each gimmick can be executed once per turn.`,
-      `7. **Action Order:** If sending a message, it must be the first tool call. Other actions (gimmicks, canvas edits) follow.`,
-      `8. **Gimmick Usage:** Each gimmick can be executed once per turn. Check \`OCCUPIER_*\` fields—occupied gimmicks reject requests. When you execute, it becomes occupied until completion. Provide clear \`reason\` (visible as \`OCCUPATION_REASON\`). Match \`PARAMETERS\` schema exactly or execution fails. Results appear asynchronously in your canvas (\`CANVAS\` field), not immediately.`
-    );
+      // Tool Usage
+      `4. **Tools:** Execute all needed tools in ONE turn. Messages first, then other actions. Gimmicks: once per turn, check \`OCCUPIER_*\` first.`,
 
-    // Data management - condensed
-    rules.push(
-      `9. **Memory (Facts):** Store concise facts in <YourMemories> (general, cross-location) and <YourMemoriesAbout...> (entity-specific, location-bound). Use \`add_memory\`/\`add_entity_memory\` to suggest updates—a background process later commits them via \`update_memory\`/\`update_entity_memory\`, managing limits (${this.agent.meta.memoryLimit} general, ${this.agent.meta.entityMemoryLimit} per entity) and overwriting old data. Displayed memories reflect post-update state. Format entity refs as \`type:id(name)\`.`,
-      `10. **Canvas (Workspace):** Use for plans, drafts, analysis. <LocationCanvases> are shared in current location. <YourCanvases> are private and separate per location (content doesn't transfer). Tools: \`update_*_canvas\` overwrites entire content; \`edit_*_canvas\` modifies portions. Respect \`MAX_LENGTH\`.`,
-      `11. **Summary (Cross-Location):** <Summary> is maintained by background process, synthesizing interactions across locations. Use it for continuity when switching or returning to locations. Reflects state after last background update.`,
-      `12. **Mission (Shared Goal):** <LocationMission> shows the current mission available in this location—an overarching goal with sub-objectives. The mission represents the goal for this location; objectives are specific sub-tasks required to achieve it. Whether you pursue this mission depends on your character, role, and rules—you're not obligated to follow it. Use \`set_mission\` to define main mission + all objectives at once (replaces existing mission). Use \`complete_objective\` to mark objectives done. When all objectives complete, the mission is achieved. Mission persists in location only.`
-    );
+      // Data Management
+      `5. **Memory:** Use \`add_memory\` (general) and \`add_entity_memory\` (entity). Suggestions processed asynchronously. Limits: ${this.agent.meta.memoryLimit} general, ${this.agent.meta.entityMemoryLimit} per entity. English only.`,
+      `6. **Canvas:** \`update_*_canvas\`=overwrite, \`edit_*_canvas\`=modify. <LocationCanvases> shared, <YourCanvases> private. Check \`MAX_LENGTH\`.`,
+      `7. **Mission:** <LocationMission> is the shared goal. Participation is optional and depends on your character/role.`,
 
-    // Interaction & awareness - streamlined
-    rules.push(
-      `13. **Multi-Location Awareness:** You operate across multiple locations with separate contexts. Only these persist across locations: <YourInventory>, <YourMemories>, <Summary>, Current Time, Timezone (${this.agent.meta.timeZone}). All other context is location-specific.`,
-      `14. **Message Stream Processing:** \`PROCESSED=false\` means new message requiring reaction. \`PROCESSED=true\` means already handled (context only). \`PROCESSED=null\` means status undetermined. \`ACTION\` field shows \`upload_image\` for images; \`--hidden\` flag means sensitive content hidden from agents.`,
-      `15. **Timezone & Time:** Your timezone is ${this.agent.meta.timeZone}. All timestamps in ISO 8601 with timezone offsets. Others use their timezones. Use natural phrases in messages ("this morning", "2 hours ago"), not raw ISO timestamps.`,
-      `16. **Dynamic Interaction:** Avoid repetition at all costs. Don't echo/paraphrase user messages. Review <LocationMessages>, <YourLastMessage>, and <OtherAgents> (check their last messages) to ensure fresh, novel responses. Vary expressions continuously. Act only with clear purpose (new info or evolving goal). If nothing meaningful to add, do nothing—silence > redundancy.`
+      // Context Awareness
+      `8. **Messages:** \`PROCESSED=false\`=new (react), \`true\`=handled (context only), \`null\`=undetermined.`,
+      `9. **Freshness:** Never repeat—review <LocationMessages> and <YourLastMessage>. If nothing new to add, do nothing.`
     );
 
     prompts.push(`
@@ -628,7 +605,7 @@ ${this.location.state.rendering}
 
 Key reminders:
 - Stay true to your character (Rule #1)
-- Avoid repetition—review recent messages for fresh responses. If nothing new to add, do nothing (Rule #15)
+- Avoid repetition—review recent messages. If nothing new, do nothing (Rule #9)
 - Use all necessary tools in ONE turn`,
       },
     ];

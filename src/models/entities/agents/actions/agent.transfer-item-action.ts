@@ -19,7 +19,7 @@ export class AgentTransferItemAction extends AgentAction {
     switch (this.version) {
       case 1:
       default:
-        return `Transfer an item from your inventory to another agent or user.`;
+        return `Transfer item to agent/user.`;
     }
   }
 
@@ -28,12 +28,10 @@ export class AgentTransferItemAction extends AgentAction {
       case 1:
       default:
         return z.object({
-          itemKey: z.string().describe(`The key of the item to transfer.`),
-          count: z.number().describe(`The number of items to transfer.`),
-          targetEntityKey: z
-            .string()
-            .describe(`The key of the agent or user to transfer the item to.`),
-          reason: z.string().describe(`The reason for transferring the item.`),
+          itemKey: z.string().describe(`Item key.`),
+          count: z.number().describe(`Quantity.`),
+          targetEntityKey: z.string().describe(`Target entity key.`),
+          reason: z.string().describe(`Reason for transfer.`),
         });
     }
   }
