@@ -44,7 +44,7 @@ export class AgentSendCasualMessageAction extends AgentAction {
             .string()
             .max(messageLengthLimit)
             .describe(
-              `Authentic response (max ${messageLengthLimit} chars). No repetition.`
+              `Authentic response (max ${messageLengthLimit} chars). CRITICAL: Review <LocationMessages> and <YourLastMessage>—never repeat phrases/patterns.`
             ),
           expression: z
             .string()

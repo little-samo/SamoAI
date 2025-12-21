@@ -42,7 +42,7 @@ export class AgentSendAgentMessageAction extends AgentAction {
             .string()
             .max(messageLengthLimit)
             .describe(
-              `Message in target character's voice (max ${messageLengthLimit} chars). Match their personality from <Character>. Follow location formatting rules.`
+              `Message in target character's voice (max ${messageLengthLimit} chars). Match their personality from <Character>. Follow location formatting rules. CRITICAL: Review <LocationMessages>—never repeat phrases/patterns.`
             ),
           expression: z
             .string()
