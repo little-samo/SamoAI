@@ -46,7 +46,7 @@ export class OpenRouterService extends OpenAIChatCompletionService {
 
     if (
       this.model.includes('gemini') &&
-      !isGemini3 &&
+      (!isGemini3 || !options?.thinkingLevel) &&
       options &&
       options.maxTokens &&
       options.maxThinkingTokens
@@ -114,6 +114,7 @@ export class OpenRouterService extends OpenAIChatCompletionService {
 
     if (
       this.model.includes('gemini') &&
+      (!isGemini3 || !options?.thinkingLevel) &&
       options &&
       options.maxTokens &&
       options.maxThinkingTokens
