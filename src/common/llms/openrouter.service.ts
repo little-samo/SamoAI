@@ -72,6 +72,11 @@ export class OpenRouterService extends OpenAIChatCompletionService {
         if (options?.thinkingLevel) {
           // gemini-3 models support thinkingLevel using GPT-style reasoning_effort
           request.reasoning_effort = options.thinkingLevel;
+        } else if (options?.maxThinkingTokens) {
+          // @ts-expect-error - OpenRouter supports reasoning for provider-specific parameters
+          request.reasoning ??= {};
+          // @ts-expect-error - OpenRouter supports reasoning for provider-specific parameters
+          request.reasoning.max_tokens = options.maxThinkingTokens;
         }
         if (options?.mediaResolution) {
           // @ts-expect-error - OpenRouter supports media resolution for provider-specific parameters
