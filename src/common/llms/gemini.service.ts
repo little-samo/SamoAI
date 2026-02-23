@@ -57,12 +57,20 @@ export class GeminiService extends LlmService {
     model: string,
     level: LlmThinkingLevel
   ): ThinkingLevel {
-    if (model === 'gemini-3-pro' || model === 'gemini-3-pro-preview') {
+    if (model.startsWith('gemini-3')) {
       switch (level) {
         case 'minimal':
+          if (model.includes('flash')) {
+            return ThinkingLevel.MINIMAL;
+          }
+          return ThinkingLevel.LOW;
         case 'low':
           return ThinkingLevel.LOW;
         case 'medium':
+          if (model.includes('3-pro')) {
+            return ThinkingLevel.HIGH;
+          }
+          return ThinkingLevel.MEDIUM;
         case 'high':
           return ThinkingLevel.HIGH;
       }
