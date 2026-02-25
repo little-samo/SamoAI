@@ -207,11 +207,52 @@ export class OpenAIService extends LlmService {
     }
   }
 
+  private injectJsonInstruction(messages: LlmMessage[]): LlmMessage[] {
+    let lastUserIndex = -1;
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i]?.role === 'user') {
+        lastUserIndex = i;
+        break;
+      }
+    }
+
+    const instruction = 'You must respond in JSON format.';
+    if (lastUserIndex === -1) {
+      return [...messages, { role: 'user', content: instruction }];
+    }
+
+    const newMessages = [...messages];
+    const lastMessage = { ...newMessages[lastUserIndex] };
+
+    if (typeof lastMessage.content === 'string') {
+      if (!lastMessage.content.toLowerCase().includes('json')) {
+        lastMessage.content = `${lastMessage.content}\n\n${instruction}`;
+      }
+    } else if (Array.isArray(lastMessage.content)) {
+      const hasJson = lastMessage.content.some(
+        (c) => c.type === 'text' && c.text.toLowerCase().includes('json')
+      );
+      if (!hasJson) {
+        lastMessage.content = [
+          ...lastMessage.content,
+          { type: 'text', text: `\n\n${instruction}` },
+        ];
+      }
+    }
+
+    newMessages[lastUserIndex] = lastMessage;
+    return newMessages;
+  }
+
   public async generate<T extends boolean = false>(
     messages: LlmMessage[],
     options?: LlmOptions & { jsonOutput?: T }
   ): Promise<LlmGenerateResponse<T>> {
     try {
+      if (options?.jsonOutput || options?.jsonSchema) {
+        messages = this.injectJsonInstruction(messages);
+      }
+
       // openai does not support assistant message prefilling
       messages = messages.filter((message) => message.role !== 'assistant');
 
@@ -433,6 +474,8 @@ parameters: ${parameters}`
     options?: LlmOptions
   ): Promise<LlmToolsResponse> {
     try {
+      messages = this.injectJsonInstruction(messages);
+
       // openai does not support assistant message prefilling
       messages = messages.filter((message) => message.role !== 'assistant');
 
@@ -515,6 +558,8 @@ parameters: ${parameters}`
     options?: LlmOptions
   ): AsyncGenerator<LlmToolsStreamEvent, LlmToolsResponse> {
     try {
+      messages = this.injectJsonInstruction(messages);
+
       // openai does not support assistant message prefilling
       messages = messages.filter((message) => message.role !== 'assistant');
 
