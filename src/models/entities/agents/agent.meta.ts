@@ -141,12 +141,12 @@ export const DEFAULT_AGENT_META: AgentMeta = {
   llms: [
     {
       platform: LlmPlatform.GEMINI,
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3-flash-preview',
       thinking: true,
     },
     {
       platform: LlmPlatform.GEMINI,
-      model: 'gemini-2.5-flash-lite',
+      model: 'gemini-2.5-flash-lite-preview-09-2025',
       thinking: true,
     },
   ],
