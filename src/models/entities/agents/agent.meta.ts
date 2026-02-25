@@ -78,41 +78,38 @@ export interface AgentMeta extends EntityMeta {
   character: {
     // Background information
     background?: {
-      role?: string; // Agent's role (professor, assistant, coach)
-      gender?: string; // Gender
-      expertise?: string; // Areas of expertise
-      backstory?: string; // Background story
-      birthDate?: string; // Birth date (YYYY-MM-DD format)
-      occupation?: string; // Current or past occupation
-      [key: string]: undefined | string | string[]; // Additional background properties
+      gender?: string; // Agent's gender identity
+      age?: string; // Agent's age
+      expertise?: string; // Areas of specialized knowledge
+      backstory?: string; // Agent's history and past experiences
+      [key: string]: undefined | string; // Additional background properties
     };
 
     // Communication style
     speech?: {
-      tone?: string; // How the agent speaks (friendly, formal, professional)
-      style?: string; // Conversation style (concise, detailed, humorous)
-      formality?: string; // Level of formality
-      [key: string]: undefined | string | string[]; // Additional speech properties
+      tone?: string; // Emotional quality (e.g., warm, serious, playful)
+      style?: string; // Expression style (e.g., concise, verbose, poetic)
+      formality?: string; // Language formality level (e.g., casual, professional, formal)
+      [key: string]: undefined | string; // Additional speech properties
     };
 
     // Personality aspects
     personality?: {
-      traits?: string | string[]; // Key personality traits (empathetic, analytical, creative)
-      interests?: string | string[]; // Topics of interest
-      values?: string | string[]; // Core values and beliefs
-      quirks?: string | string[]; // Unique habits or characteristics
+      traits?: string; // Defining characteristics
+      interests?: string; // Topics and activities the agent enjoys
+      values?: string; // Core principles guiding behavior
+      quirks?: string; // Unique habits or mannerisms
       mbti?: string; // MBTI personality type
       zodiac?: string; // Zodiac sign
-      [key: string]: undefined | string | string[]; // Additional personality properties
+      [key: string]: undefined | string; // Additional personality properties
     };
 
     // Additional characteristics
     [key: string]:
       | undefined
       | string
-      | string[]
       | {
-          [key: string]: undefined | string | string[]; // Additional properties
+          [key: string]: undefined | string; // Additional properties
         };
   };
 
