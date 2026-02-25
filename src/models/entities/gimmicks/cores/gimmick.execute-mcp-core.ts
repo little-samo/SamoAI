@@ -20,10 +20,21 @@ import { GimmickParameters } from '../gimmick.types';
 import { GimmickCore } from './gimmick.core';
 import { RegisterGimmickCore } from './gimmick.core-decorator';
 
+export type McpToolAnnotations = {
+  title?: string;
+  readOnlyHint?: boolean;
+  destructiveHint?: boolean;
+  idempotentHint?: boolean;
+  openWorldHint?: boolean;
+  [key: string]: unknown;
+};
+
 export type McpToolDefinition = {
   name: string;
+  title?: string;
   description?: string;
   schema: z.ZodTypeAny;
+  annotations?: McpToolAnnotations;
 };
 
 // gimmick options schema
@@ -80,24 +91,32 @@ class McpToolsCache {
     try {
       client = await createMcpClient();
       const instructions = client.getInstructions();
-      const toolsList = await client.listTools();
 
       if (ENV.DEBUG) {
         console.log(`McpToolsCache update: ${serverUrl}`);
       }
 
       const tools: Record<string, McpToolDefinition> = {};
-      for (const tool of toolsList.tools) {
-        tools[tool.name] = {
-          name: tool.name,
-          description: tool.description,
-          schema: mcpSchemaToZod(tool.inputSchema as MCPJsonSchema),
-        };
+      let cursor: string | undefined;
+      do {
+        const toolsList = await client.listTools(
+          cursor ? { cursor } : undefined
+        );
+        for (const tool of toolsList.tools) {
+          tools[tool.name] = {
+            name: tool.name,
+            title: tool.title,
+            description: tool.description,
+            schema: mcpSchemaToZod(tool.inputSchema as MCPJsonSchema),
+            annotations: tool.annotations as McpToolAnnotations | undefined,
+          };
 
-        if (ENV.DEBUG) {
-          console.log(`Tool ${tool.name} - ${tool.description}`);
+          if (ENV.DEBUG) {
+            console.log(`Tool ${tool.name} - ${tool.description}`);
+          }
         }
-      }
+        cursor = toolsList.nextCursor;
+      } while (cursor);
 
       this.cachedToolsByServerUrl[serverUrl] = {
         instructions: instructions,
@@ -152,8 +171,7 @@ class McpToolsCache {
         schema = (schema as z.AnyZodObject).strict();
       }
       tools[tool.name] = {
-        name: tool.name,
-        description: tool.description,
+        ...tool,
         schema,
       };
 
@@ -356,9 +374,8 @@ export class GimmickExecuteMcpCore extends GimmickCore {
 
   private async fetchAndCacheTools(): Promise<void> {
     try {
-      await McpToolsCache.cacheTools(
-        this.serverUrl,
-        async () => await this.createMcpClient()
+      await McpToolsCache.cacheTools(this.serverUrl, () =>
+        this.createMcpClient()
       );
     } catch (error) {
       console.error(
@@ -397,18 +414,42 @@ export class GimmickExecuteMcpCore extends GimmickCore {
       });
 
       let result: string;
-      const content = rawResult.content;
-      if (content && Array.isArray(content)) {
-        result = content
-          .map((item) => {
-            if (item.type === 'text' && item.text) {
-              return item.text;
-            }
-            return JSON.stringify(item, null, 2);
-          })
-          .join('\n\n');
+
+      const structuredContent = (
+        rawResult as { structuredContent?: Record<string, unknown> }
+      ).structuredContent;
+      if (structuredContent) {
+        result = JSON.stringify(structuredContent, null, 2);
       } else {
-        result = JSON.stringify(content, null, 2);
+        const content = rawResult.content;
+        if (content && Array.isArray(content)) {
+          result = content
+            .map((item: Record<string, unknown>) => {
+              switch (item.type) {
+                case 'text':
+                  return (item.text as string) ?? '';
+                case 'resource': {
+                  const resource = item.resource as {
+                    text?: string;
+                    uri?: string;
+                  } | null;
+                  return resource?.text ?? `[Resource: ${resource?.uri}]`;
+                }
+                case 'resource_link':
+                  return `[Resource: ${item.name ?? item.uri}]`;
+                case 'image':
+                  return `[Image: ${item.mimeType ?? 'unknown'}]`;
+                case 'audio':
+                  return `[Audio: ${item.mimeType ?? 'unknown'}]`;
+                default:
+                  return JSON.stringify(item, null, 2);
+              }
+            })
+            .filter(Boolean)
+            .join('\n\n');
+        } else {
+          result = JSON.stringify(content, null, 2);
+        }
       }
 
       if (rawResult.isError) {
@@ -453,9 +494,8 @@ export class GimmickExecuteMcpCore extends GimmickCore {
       return 'Invalid parameters';
     }
 
-    const coreParameters =
-      parameters as object as GimmickExecuteMcpCoreParameters;
-    const { tool: toolName, args } = coreParameters;
+    const { tool: toolName, args } =
+      parameters as unknown as GimmickExecuteMcpCoreParameters;
 
     if (!toolName || !args) {
       return 'Required parameters missing (tool, args)';
