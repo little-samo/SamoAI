@@ -66,20 +66,33 @@ export class GimmickWebSearchCore extends GimmickCore {
     );
   }
 
-  private async searchWeb(
-    entity: Entity,
-    searchLlm: LlmService,
-    query: string,
-    maxLlmResultLength: number,
-    maxLlmSummaryLength: number,
-    maxResultLength: number,
-    maxSummaryLength: number,
-    maxSourcesLength: number,
-    maxTokens: number,
-    maxThinkingTokens: number,
-    thinkingLevel: LlmThinkingLevel,
-    outputVerbosity: LlmOutputVerbosity
-  ): Promise<void> {
+  private async searchWeb(options: {
+    entity: Entity;
+    searchLlm: LlmService;
+    query: string;
+    maxLlmResultLength: number;
+    maxLlmSummaryLength: number;
+    maxResultLength: number;
+    maxSummaryLength: number;
+    maxSourcesLength: number;
+    maxTokens: number;
+    maxThinkingTokens: number;
+    thinkingLevel: LlmThinkingLevel;
+    outputVerbosity: LlmOutputVerbosity;
+  }): Promise<void> {
+    const {
+      entity,
+      searchLlm,
+      query,
+      maxLlmResultLength,
+      maxLlmSummaryLength,
+      maxResultLength,
+      maxSourcesLength,
+      maxTokens,
+      maxThinkingTokens,
+      thinkingLevel,
+      outputVerbosity,
+    } = options;
     // Use the new input system to build rich contextual messages
     const inputBuilder = GimmickInputFactory.createInput(
       'web_search',
@@ -220,7 +233,7 @@ export class GimmickWebSearchCore extends GimmickCore {
     if (!parameters || typeof parameters !== 'string') {
       return 'Invalid search query provided. Please provide a raw string query, not a JSON object or other data type.';
     }
-    const query = parameters as string;
+    const query = parameters;
 
     const llmSearchOptions: Partial<LlmServiceOptions> =
       this.meta.options?.llm ?? {};
@@ -267,7 +280,7 @@ export class GimmickWebSearchCore extends GimmickCore {
           GimmickWebSearchCore.DEFAULT_MAX_SEARCH_SOURCES_LENGTH
       ) - 10; // Reserve for "[Sources]" prefix
 
-    const promise = this.searchWeb(
+    const promise = this.searchWeb({
       entity,
       searchLlm,
       query,
@@ -279,8 +292,8 @@ export class GimmickWebSearchCore extends GimmickCore {
       maxTokens,
       maxThinkingTokens,
       thinkingLevel,
-      outputVerbosity
-    );
+      outputVerbosity,
+    });
 
     await this.gimmick.location.emitAsync(
       'gimmickExecuting',
