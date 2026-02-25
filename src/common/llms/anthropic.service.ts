@@ -414,7 +414,7 @@ parameters: ${parameters}`,
         );
         return {
           ...result,
-          toolCalls: parsed.toolCalls,
+          toolCalls: parsed.toolCalls ?? [],
         };
       } catch (error) {
         console.error(error);
@@ -614,7 +614,7 @@ parameters: ${parameters}`,
         const parsed = parseAndFixJson<{ toolCalls: LlmToolCall[] }>(fullText);
         return {
           ...result,
-          toolCalls: parsed.toolCalls,
+          toolCalls: parsed.toolCalls ?? [],
         };
       } catch (error) {
         console.error(error);

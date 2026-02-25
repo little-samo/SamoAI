@@ -491,7 +491,7 @@ parameters: ${parameters}`
         );
         return {
           ...result,
-          toolCalls: parsed.toolCalls,
+          toolCalls: parsed.toolCalls ?? [],
         };
       } catch (error) {
         console.error(error);
@@ -659,7 +659,7 @@ parameters: ${parameters}`
 
       return {
         ...result,
-        toolCalls,
+        toolCalls: toolCalls ?? [],
       };
     } catch (error) {
       if (error instanceof OpenAI.APIError) {
