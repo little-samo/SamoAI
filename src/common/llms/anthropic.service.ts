@@ -347,12 +347,6 @@ parameters: ${parameters}`,
     try {
       messages = messages.filter((message) => message.role !== 'assistant');
 
-      const prefill: string = `
-{
-  "toolCalls": [
-    {
-`.trim();
-
       const [systemMessages, userAssistantMessages] =
         this.llmMessagesToAnthropicMessages(messages);
 
@@ -389,7 +383,7 @@ parameters: ${parameters}`,
         responseTime,
       };
 
-      let responseText = (
+      const responseText = (
         response.content
           .filter((block) => block.type === 'text')
           .at(0) as TextBlock
@@ -406,7 +400,6 @@ parameters: ${parameters}`,
           toolCalls: [],
         };
       }
-      responseText = prefill + responseText;
 
       try {
         const parsed = parseAndFixJson<{ toolCalls: LlmToolCall[] }>(
@@ -443,12 +436,6 @@ parameters: ${parameters}`,
     try {
       messages = messages.filter((message) => message.role !== 'assistant');
 
-      const prefill: string = `
-{
-  "toolCalls": [
-    {
-`.trim();
-
       const [systemMessages, userAssistantMessages] =
         this.llmMessagesToAnthropicMessages(messages);
 
@@ -470,7 +457,6 @@ parameters: ${parameters}`,
       const parser = new JsonArrayStreamParser();
       const fieldUpdateQueue: PartialFieldUpdate[] = [];
 
-      // Set up field tracking for message streaming
       if (options?.trackToolFields && options.trackToolFields.length > 0) {
         parser.trackToolFields(options.trackToolFields);
         parser.setFieldUpdateCallback((update: PartialFieldUpdate) => {
@@ -478,12 +464,7 @@ parameters: ${parameters}`,
         });
       }
 
-      // Initialize parser with prefill
-      for (const _ of parser.processChunk(prefill)) {
-        // Prefill won't yield complete objects
-      }
-
-      let fullText = prefill;
+      let fullText = '';
       let stopReason: StopReason | null = null;
       let usage: {
         input_tokens: number;
@@ -597,7 +578,7 @@ parameters: ${parameters}`,
         responseTime,
       };
 
-      if (!fullText || fullText === prefill) {
+      if (!fullText) {
         if (stopReason === 'refusal') {
           throw new LlmInvalidContentError(
             'Anthropic refused to generate content. Try again with a different message.',
