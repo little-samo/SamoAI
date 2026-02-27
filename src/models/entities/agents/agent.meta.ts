@@ -156,7 +156,7 @@ export const DEFAULT_AGENT_META: AgentMeta = {
     'summary:latest',
     'memory:latest',
   ],
-  languages: ['English'],
+  languages: [],
   timeZone: 'UTC',
 
   actions: ['execute_gimmick:latest'],
