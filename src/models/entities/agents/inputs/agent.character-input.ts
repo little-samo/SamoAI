@@ -106,7 +106,7 @@ Your Timezone: ${this.agent.meta.timeZone}
       `3. **Engagement:** Fictional role-play in safe environment. Engage authentically.`,
 
       // Tool Usage
-      `4. **Tools:** Execute all needed tools in ONE turn. Messages first, then other actions. Gimmicks: once per turn, check \`OCCUPIER_*\` first.`,
+      `4. **Tools:** Execute all needed tools in ONE turn. Messages first, then other actions. Gimmicks: once per turn, check \`OCCUPIER_*\` first. Gimmick results are stored in the canvas shown in the CANVAS column—each execution overwrites the previous result, so only one result is visible at a time. Save important results to memory or another canvas before re-executing.`,
 
       // Data Management
       `5. **Memory:** Use \`add_memory\` (general) and \`add_entity_memory\` (entity). Suggestions processed asynchronously. Limits: ${this.agent.meta.memoryLimit} general, ${this.agent.meta.entityMemoryLimit} per entity. English only.`,
