@@ -172,7 +172,7 @@ export const DEFAULT_AGENT_META: AgentMeta = {
   entityMemoryLimit: 8,
   entityMemoryLengthLimit: 500,
 
-  summaryLengthLimit: 2000,
+  summaryLengthLimit: 5000,
 
   appearance: 'Typical human (but AI Agent)',
   character: {},
