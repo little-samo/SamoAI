@@ -460,7 +460,8 @@ export class GimmickExecuteMcpCore extends GimmickCore {
         console.log(`Gimmick ${this.gimmick.name} executed: ${tool}`);
       }
 
-      await entity.updateCanvas(this.canvas!.name, result);
+      const canvasHeader = `Tool: ${tool}\nArguments: ${JSON.stringify(args)}\n\n`;
+      await entity.updateCanvas(this.canvas!.name, canvasHeader + result);
 
       await entity.location.addGimmickMessage(this.gimmick, {
         message: `Executed: ${tool}`,
