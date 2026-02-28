@@ -1,4 +1,4 @@
-import { ENV } from '@little-samo/samo-ai/common';
+import { ENV, shuffle } from '@little-samo/samo-ai/common';
 
 import { EntityType } from '../../entities/entity.types';
 import { LocationPauseReason } from '../location.constants';
@@ -23,44 +23,45 @@ export class LocationRoundRobinCore extends LocationCore {
     const lastMessage = this.lastMessage;
     const agents = this.location.getAgents();
 
+    const actionAgents = agents.filter(
+      (agent) => agent.core.name !== 'no_action'
+    );
+
     if (
       this.meta.fast &&
-      agents.filter((agent) => agent.core.name !== 'no_action').length === 1 &&
+      actionAgents.length === 1 &&
       (lastMessage?.entityType === EntityType.User ||
         this.location.state.pauseUpdateReason ===
           LocationPauseReason.USER_RESUME_UPDATE)
     ) {
-      await agents
-        .filter((agent) => agent.core.name !== 'no_action')[0]
-        .executeNextActions();
+      await actionAgents[0].executeNextActions();
       if (this.lastMessage === lastMessage) {
         return this.defaultPauseUpdateDuration;
       }
       return 0;
     }
 
-    // sort by agent last message time (oldest message first)
     const agentLastMessageTimeCache = new Map<string, Date>();
-
-    // Iterate through messages from newest to oldest to find each agent's last message
     for (let i = this.location.messages.length - 1; i >= 0; i--) {
       const message = this.location.messages[i];
       if (message.entityType === EntityType.Agent) {
         const agentId = message.entityId.toString();
-        // Only set if we haven't seen this agent yet (since we're going from newest to oldest)
         if (!agentLastMessageTimeCache.has(agentId)) {
           agentLastMessageTimeCache.set(agentId, new Date(message.createdAt));
         }
       }
     }
 
+    if (!this.meta.sequential) {
+      shuffle(agents);
+    }
+
     agents.sort((a, b) => {
       const aLastMessageTime = agentLastMessageTimeCache.get(a.id.toString());
       const bLastMessageTime = agentLastMessageTimeCache.get(b.id.toString());
 
-      // If either agent has no messages, put them first
       if (!aLastMessageTime && !bLastMessageTime) {
-        return this.meta.sequential ? 0 : Math.random() - 0.5;
+        return 0;
       }
       if (!aLastMessageTime) {
         return -1;
@@ -69,7 +70,6 @@ export class LocationRoundRobinCore extends LocationCore {
         return 1;
       }
 
-      // Sort by oldest message first (ascending order)
       return aLastMessageTime.getTime() - bLastMessageTime.getTime();
     });
 
