@@ -68,7 +68,7 @@
     "test:e2e": "node --experimental-vm-modules node_modules/jest/bin/jest.js --config ./test/jest-e2e.json"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.54.0",
+    "@anthropic-ai/sdk": "^0.78.0",
     "@google/genai": "^1.42.0",
     "@modelcontextprotocol/sdk": "^1.27.1",
     "lodash": "^4.17.21",
