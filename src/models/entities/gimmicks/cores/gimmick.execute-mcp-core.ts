@@ -67,8 +67,8 @@ interface CachedMcpTools {
 }
 
 class McpToolsCache {
-  private static readonly CACHE_EXPIRATION_TIME = 5 * 60 * 1000; // 5 minutes
-  private static readonly CACHE_REFRESH_BUFFER = 30 * 1000; // 30 seconds buffer before expiration
+  private static readonly CACHE_EXPIRATION_TIME = 10 * 60 * 1000; // 10 minutes
+  private static readonly CACHE_REFRESH_INTERVAL = 1 * 60 * 1000; // 1 minute refresh interval
 
   private static readonly cachedToolsByServerUrl: Record<
     string,
@@ -82,7 +82,10 @@ class McpToolsCache {
     const cachedTools = this.cachedToolsByServerUrl[serverUrl];
     if (
       cachedTools &&
-      cachedTools.expiresAt.getTime() - this.CACHE_REFRESH_BUFFER > Date.now()
+      Date.now() <
+        cachedTools.expiresAt.getTime() -
+          this.CACHE_EXPIRATION_TIME +
+          this.CACHE_REFRESH_INTERVAL
     ) {
       return;
     }
