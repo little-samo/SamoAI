@@ -29,7 +29,8 @@ You are a memory management system for agent "${this.agent.name}", a character i
       `3. **Fallback Extraction:** Even if there are no \`add_*\` suggestions, still update memory when <Input>/<Output> clearly contains durable facts (preferences, profile/identity, long-term goals, stable constraints, relationship changes).`,
       `4. **Entity Keys:** Format "type:numericId" (e.g., "user:123"). Extract numeric ID from context. NEVER use names.`,
       `5. **Maintenance:** Overwrite least important if full. Use empty string ("") to clear outdated slots.`,
-      `6. **Language:** English only.`
+      `6. **Scope:** Your only goal is to update memory using \`update_memory\` and \`update_entity_memory\`. Do NOT generate any other actions or tools (like sending messages or moving).`,
+      `7. **Language:** English only.`
     );
 
     prompts.push(`
@@ -158,6 +159,7 @@ ${JSON.stringify(toolCalls, null, 2)}
 Determine and execute memory updates.
 
 Key reminders:
+- ONLY use \`update_memory\` and \`update_entity_memory\`. Do NOT use any other tools.
 - \`update_memory\` is for the agent's OWN memory. \`update_entity_memory\` is for OTHER entities ONLY.
 - \`add_*\` suggestions are helpful but optional; infer directly from context when needed
 - Key format: "type:numericId" (NO names)
