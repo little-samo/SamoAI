@@ -938,7 +938,7 @@ export class SamoAI extends AsyncEventEmitter {
             }, Gimmick.MAX_EXECUTION_TIMEOUT);
           });
 
-          await Promise.race([options.handleSave!(promise), timeoutPromise]);
+          await Promise.race([promise, timeoutPromise]);
         } catch (error) {
           console.error(error);
 
