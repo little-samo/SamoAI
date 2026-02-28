@@ -356,11 +356,12 @@ export class JsonArrayStreamParser {
         continue;
       }
 
-      // Track toolCalls array start
+      // Track toolCalls/tool_calls array start
       if (
         char === '[' &&
         this.depth === 1 &&
-        this.lastJsonKey === 'toolCalls' &&
+        (this.lastJsonKey === 'toolCalls' ||
+          this.lastJsonKey === 'tool_calls') &&
         !this.arrayStarted
       ) {
         this.arrayStarted = true;
@@ -378,7 +379,12 @@ export class JsonArrayStreamParser {
         if (this.lastString !== null && this.lastJsonKey !== null) {
           // Process the key-value pair
           if (this.currentObject) {
-            if (this.lastJsonKey === 'name' && this.depth === 3) {
+            if (
+              (this.lastJsonKey === 'name' ||
+                this.lastJsonKey === 'function' ||
+                this.lastJsonKey === 'tool') &&
+              this.depth === 3
+            ) {
               this.currentObject.name = this.lastString;
             } else if (
               this.currentObject.inArguments &&
@@ -424,10 +430,13 @@ export class JsonArrayStreamParser {
         // Increment depth after checking for tool call start
         this.depth++;
 
-        // Check if we're entering "arguments"
+        // Check if we're entering "arguments" (or "parameters"/"params"/"args")
         if (
           this.currentObject &&
-          this.lastJsonKey === 'arguments' &&
+          (this.lastJsonKey === 'arguments' ||
+            this.lastJsonKey === 'parameters' ||
+            this.lastJsonKey === 'params' ||
+            this.lastJsonKey === 'args') &&
           this.depth === this.currentObject.startDepth + 1
         ) {
           this.currentObject.inArguments = true;

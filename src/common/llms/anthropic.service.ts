@@ -20,8 +20,7 @@ import {
 
 import { LlmApiError, LlmInvalidContentError } from './llm.errors';
 import { LlmService } from './llm.service';
-import { LlmToolCall } from './llm.tool';
-import { LlmTool } from './llm.tool';
+import { LlmTool, normalizeToolCall, parseToolCallsFromJson } from './llm.tool';
 import {
   LlmServiceOptions,
   LlmMessage,
@@ -402,12 +401,9 @@ parameters: ${parameters}`,
       }
 
       try {
-        const parsed = parseAndFixJson<{ toolCalls: LlmToolCall[] }>(
-          responseText
-        );
         return {
           ...result,
-          toolCalls: parsed.toolCalls ?? [],
+          toolCalls: parseToolCallsFromJson(responseText),
         };
       } catch (error) {
         console.error(error);
@@ -489,7 +485,7 @@ parameters: ${parameters}`,
               // Process the chunk (this will populate fieldUpdateQueue)
               for (const { json, index } of parser.processChunk(textDelta)) {
                 try {
-                  const toolCall = JSON.parse(json) as LlmToolCall;
+                  const toolCall = normalizeToolCall(JSON.parse(json));
                   yield {
                     type: 'toolCall' as const,
                     toolCall,
@@ -538,7 +534,7 @@ parameters: ${parameters}`,
       // Finalize and yield any remaining tool calls
       for (const { json, index } of parser.finalize()) {
         try {
-          const toolCall = JSON.parse(json) as LlmToolCall;
+          const toolCall = normalizeToolCall(JSON.parse(json));
           yield {
             type: 'toolCall' as const,
             toolCall,
@@ -592,10 +588,9 @@ parameters: ${parameters}`,
       }
 
       try {
-        const parsed = parseAndFixJson<{ toolCalls: LlmToolCall[] }>(fullText);
         return {
           ...result,
-          toolCalls: parsed.toolCalls ?? [],
+          toolCalls: parseToolCallsFromJson(fullText),
         };
       } catch (error) {
         console.error(error);
