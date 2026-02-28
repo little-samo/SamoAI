@@ -155,6 +155,8 @@ export class GimmickWebSearchCore extends GimmickCore {
     let summary: string;
     let result: string;
 
+    const canvasHeader = `Query: ${query}\n\n`;
+
     // First handle cases where tags are opened but not closed
     let processedOutput = llmOutput;
 
@@ -180,11 +182,11 @@ export class GimmickWebSearchCore extends GimmickCore {
     );
 
     if (bodyMatch?.[1] && summaryMatch?.[1]) {
-      result = bodyMatch[1].trim();
+      result = canvasHeader + bodyMatch[1].trim();
       summary = summaryMatch[1].trim();
     } else {
       const strippedOutput = processedOutput.replace(/<[^>]*>/g, '').trim();
-      result = strippedOutput;
+      result = canvasHeader + strippedOutput;
       summary = strippedOutput.substring(0, maxLlmSummaryLength);
     }
 
