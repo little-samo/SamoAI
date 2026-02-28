@@ -15,7 +15,7 @@ export class AgentUpdateMemoryAction extends AgentAction {
     switch (this.version) {
       case 1:
       default:
-        return `Update general memory slot. Use empty string to clear. English only.`;
+        return `Update YOUR OWN general memory slot. Use empty string to clear. English only.`;
     }
   }
 

@@ -18,7 +18,7 @@ export class AgentUpdateEntityMemoryAction extends AgentAction {
     switch (this.version) {
       case 1:
       default:
-        return `Update entity memory slot. Use 'type:numericId' key. English only.`;
+        return `Update OTHER entity's memory slot. NEVER use for yourself. Use 'type:numericId' key. English only.`;
     }
   }
 

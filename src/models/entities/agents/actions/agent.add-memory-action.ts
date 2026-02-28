@@ -14,7 +14,7 @@ export class AgentAddMemoryAction extends AgentAction {
     switch (this.version) {
       case 1:
       default:
-        return `Propose a durable general memory (cross-location): preferences, profile/identity facts, long-term goals, stable constraints, or major relationship changes. Skip short-lived details.`;
+        return `Propose a durable memory about YOURSELF or general facts (cross-location): your own preferences, profile/identity facts, long-term goals, stable constraints. Do NOT use for other entities. Skip short-lived details.`;
     }
   }
 

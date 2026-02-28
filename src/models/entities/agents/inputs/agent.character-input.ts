@@ -109,7 +109,7 @@ Your Timezone: ${this.agent.meta.timeZone}
       `4. **Tools:** Execute all needed tools in ONE turn. Messages first, then other actions. Gimmicks: once per turn, check \`OCCUPIER_*\` first. Gimmick results are stored in the canvas shown in the CANVAS column—each execution overwrites the previous result, so only one result is visible at a time. Save important results to memory or another canvas before re-executing.`,
 
       // Data Management
-      `5. **Memory:** Use \`add_memory\` (general) and \`add_entity_memory\` (entity) whenever new durable facts appear (user preferences, identity/profile facts, long-running goals, stable constraints, relationship changes). Suggestions are processed asynchronously. If no durable fact is present, skip memory tools. Limits: ${this.agent.meta.memoryLimit} general, ${this.agent.meta.entityMemoryLimit} per entity. English only.`,
+      `5. **Memory:** Use \`add_memory\` for your OWN general memory and \`add_entity_memory\` for OTHER entities whenever new durable facts appear (user preferences, identity/profile facts, long-running goals, stable constraints, relationship changes). NEVER use \`add_entity_memory\` for yourself. Suggestions are processed asynchronously. If no durable fact is present, skip memory tools. Limits: ${this.agent.meta.memoryLimit} general, ${this.agent.meta.entityMemoryLimit} per entity. English only.`,
       `6. **Canvas:** \`update_*_canvas\`=overwrite, \`edit_*_canvas\`=modify. <LocationCanvases> shared, <YourCanvases> private. Check \`MAX_LENGTH\`.`,
       `7. **Mission:** <LocationMission> is the shared goal. Participation is optional and depends on your character/role.`,
 
@@ -610,7 +610,7 @@ Key reminders:
 - Stay true to your character (Rule #1)
 - Avoid repetition—review recent messages. If nothing new, do nothing (Rule #9)
 - Use all necessary tools in ONE turn
-- If this turn reveals durable facts, include \`add_memory\`/\`add_entity_memory\` now (Rule #5)`,
+- If this turn reveals durable facts, include \`add_memory\` (for yourself) or \`add_entity_memory\` (for others) now (Rule #5)`,
       },
     ];
 
