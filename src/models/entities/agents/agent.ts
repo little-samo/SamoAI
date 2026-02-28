@@ -474,7 +474,7 @@ export class Agent extends Entity {
       await action.execute(toolCall);
     } catch (error) {
       console.error(
-        `Error executing tool call:\n${JSON.stringify(toolCall, null, 2)}\n${error}`
+        `Error executing tool call for agent ${this.model.name}:\n${JSON.stringify(toolCall, null, 2)}\n${error}`
       );
     }
   }
