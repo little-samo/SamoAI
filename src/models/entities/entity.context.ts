@@ -3,6 +3,7 @@ import {
   ValidatedTimezone,
 } from '@little-samo/samo-ai/common';
 
+import { truncateString } from '../../common/utils/string';
 import { Context } from '../context';
 
 import type { ItemModel } from './entity.item-model';
@@ -38,12 +39,17 @@ export class EntityCanvasContext extends Context {
     this.timezone = options.timezone;
   }
 
-  public build(): string {
+  public build(options: { truncateLength?: number } = {}): string {
     const formattedLastModifiedAt = formatDateWithValidatedTimezone(
       this.lastModifiedAt,
       this.timezone
     );
-    return `${this.name}\t${this.description}\t${this.maxLength}\t${formattedLastModifiedAt}\t${this.text}`;
+    let text = this.text;
+    if (options.truncateLength !== undefined) {
+      text = truncateString(text, options.truncateLength).text;
+    }
+    text = JSON.stringify(text);
+    return `${this.name}\t${this.description}\t${this.maxLength}\t${formattedLastModifiedAt}\t${text}`;
   }
 }
 

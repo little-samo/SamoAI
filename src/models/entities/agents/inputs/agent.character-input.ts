@@ -151,7 +151,10 @@ Location-Specific Rules (Apply in addition to core rules):
     return prompts.map((p) => p.trim()).join('\n\n');
   }
 
-  protected buildContext(_options: { llm: LlmService }): LlmMessageContent[] {
+  protected buildContext(_options: {
+    llm: LlmService;
+    truncateCanvasLength?: number;
+  }): LlmMessageContent[] {
     const contexts: LlmMessageContent[] = [];
 
     const formattedNow = formatDateWithValidatedTimezone(
@@ -181,7 +184,7 @@ ${locationContext.build()}
 Location has the following canvases:
 <LocationCanvases>
 ${LocationCanvasContext.FORMAT}
-${locationContext.canvases.length > 0 ? locationContext.canvases.map((c) => c.build({ timezone: this.agent.timezone })).join('\n') : '[No location canvases]'}
+${locationContext.canvases.length > 0 ? locationContext.canvases.map((c) => c.build({ timezone: this.agent.timezone, truncateLength: _options.truncateCanvasLength })).join('\n') : '[No location canvases]'}
 </LocationCanvases>
 `,
     });
@@ -220,7 +223,7 @@ ${Object.entries(agentContext.items)
 You have the following canvases:
 <YourCanvases>
 ${EntityCanvasContext.FORMAT}
-${agentContext.canvases.length > 0 ? agentContext.canvases.map((c) => c.build()).join('\n') : '[No canvases]'}
+${agentContext.canvases.length > 0 ? agentContext.canvases.map((c) => c.build({ truncateLength: _options.truncateCanvasLength })).join('\n') : '[No canvases]'}
 </YourCanvases>
 `,
     });

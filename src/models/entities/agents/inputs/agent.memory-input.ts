@@ -5,6 +5,9 @@ import type {
   LlmToolCall,
 } from '@little-samo/samo-ai/common';
 
+import { LocationCanvasContext } from '../../../locations/location.context';
+import { EntityCanvasContext } from '../../entity.context';
+
 import { AgentInputBuilder } from './agent.input';
 import { RegisterAgentInput } from './agent.input-decorator';
 
@@ -35,6 +38,39 @@ ${rules.join('\n')}
 `);
 
     return prompts.map((p) => p.trim()).join('\n\n');
+  }
+
+  private truncateCanvases(text: string, maxLength: number = 1000): string {
+    const locationContext = this.location.context;
+    const locationCanvasesText =
+      locationContext.canvases.length > 0
+        ? locationContext.canvases
+            .map((c) =>
+              c.build({
+                timezone: this.agent.timezone,
+                truncateLength: maxLength,
+              })
+            )
+            .join('\n')
+        : '[No location canvases]';
+
+    const agentContext = this.agent.context;
+    const yourCanvasesText =
+      agentContext.canvases.length > 0
+        ? agentContext.canvases
+            .map((c) => c.build({ truncateLength: maxLength }))
+            .join('\n')
+        : '[No canvases]';
+
+    return text
+      .replace(
+        /(<LocationCanvases>)([\s\S]*?)(<\/LocationCanvases>)/g,
+        `$1\n${LocationCanvasContext.FORMAT}\n${locationCanvasesText}\n$3`
+      )
+      .replace(
+        /(<YourCanvases>)([\s\S]*?)(<\/YourCanvases>)/g,
+        `$1\n${EntityCanvasContext.FORMAT}\n${yourCanvasesText}\n$3`
+      );
   }
 
   public override build(options: {
@@ -79,9 +115,21 @@ Context received by the agent (including current memory state):
     for (const message of inputMessages) {
       if (message.role === 'user') {
         if (typeof message.content === 'string') {
-          contextContents.push({ type: 'text', text: message.content });
+          contextContents.push({
+            type: 'text',
+            text: this.truncateCanvases(message.content),
+          });
         } else {
-          contextContents.push(...message.content);
+          for (const content of message.content) {
+            if (content.type === 'text') {
+              contextContents.push({
+                ...content,
+                text: this.truncateCanvases(content.text),
+              });
+            } else {
+              contextContents.push(content);
+            }
+          }
         }
       }
     }

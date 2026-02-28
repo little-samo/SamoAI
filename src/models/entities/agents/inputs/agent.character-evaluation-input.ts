@@ -19,7 +19,10 @@ export class AgentCharacterEvaluationInputBuilder extends AgentCharacterInputBui
       content: prompt,
     });
 
-    const contextContents = this.buildContext(options);
+    const contextContents = this.buildContext({
+      ...options,
+      truncateCanvasLength: 1000,
+    });
     const userContents: LlmMessageContent[] = [
       {
         type: 'text',
