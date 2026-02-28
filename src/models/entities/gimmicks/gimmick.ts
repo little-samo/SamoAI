@@ -139,10 +139,13 @@ export class Gimmick extends Entity {
   }
 
   public async release(entity: Entity): Promise<boolean> {
+    if (!this.state.occupierType) {
+      return false;
+    }
+
     if (
-      this.state.occupierType &&
-      (this.state.occupierId !== entity.id ||
-        this.state.occupierType !== entity.type)
+      this.state.occupierId !== entity.id ||
+      this.state.occupierType !== entity.type
     ) {
       return false;
     }

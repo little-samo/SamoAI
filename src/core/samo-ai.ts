@@ -2,7 +2,6 @@ import {
   ENV,
   LlmMessage,
   LlmToolCall,
-  sleep,
   truncateString,
 } from '@little-samo/samo-ai/common';
 import { AsyncEventEmitter } from '@little-samo/samo-ai/common';
@@ -911,9 +910,9 @@ export class SamoAI extends AsyncEventEmitter {
         promise: Promise<void>
       ): Promise<void> {
         let reOccupationInterval: NodeJS.Timeout | null = null;
+        let timeoutId: NodeJS.Timeout | null = null;
 
         try {
-          // Set up periodic re-occupation every 10 seconds
           reOccupationInterval = setInterval(async () => {
             try {
               await gimmick.occupy(
@@ -929,15 +928,16 @@ export class SamoAI extends AsyncEventEmitter {
             }
           }, Gimmick.RE_OCCUPATION_INTERVAL);
 
-          // Create timeout promise
-          const timeoutPromise = (async () => {
-            await sleep(Gimmick.MAX_EXECUTION_TIMEOUT);
-            throw new Error(
-              `Gimmick execution timeout after ${Gimmick.MAX_EXECUTION_TIMEOUT / 1000} seconds`
-            );
-          })();
+          const timeoutPromise = new Promise<never>((_, reject) => {
+            timeoutId = setTimeout(() => {
+              reject(
+                new Error(
+                  `Gimmick execution timeout after ${Gimmick.MAX_EXECUTION_TIMEOUT / 1000} seconds`
+                )
+              );
+            }, Gimmick.MAX_EXECUTION_TIMEOUT);
+          });
 
-          // Race between the actual promise and timeout
           await Promise.race([options.handleSave!(promise), timeoutPromise]);
         } catch (error) {
           console.error(error);
@@ -961,7 +961,9 @@ export class SamoAI extends AsyncEventEmitter {
             errorMessage
           );
         } finally {
-          // Clean up the re-occupation interval
+          if (timeoutId) {
+            clearTimeout(timeoutId);
+          }
           if (reOccupationInterval) {
             clearInterval(reOccupationInterval);
           }
