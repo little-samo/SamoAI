@@ -17,7 +17,7 @@ export class AgentAddEntityMemoryAction extends AgentAction {
     switch (this.version) {
       case 1:
       default:
-        return `Propose a memory about a specific entity. Use entity's KEY field (format: "type:numericId").`;
+        return `Propose a durable memory about a specific entity (preferences, profile facts, stable constraints, relationship changes). Use entity's KEY field (format: "type:numericId"). Skip short-lived details.`;
     }
   }
 

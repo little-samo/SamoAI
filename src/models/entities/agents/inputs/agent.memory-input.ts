@@ -21,11 +21,12 @@ You are a memory management system for agent "${this.agent.name}", a character i
 
     // Analysis rules
     rules.push(
-      `1. **Analyze:** Review \`add_memory\`/\`add_entity_memory\` suggestions in <Output> vs context in <Input>.`,
+      `1. **Analyze:** Review <Input> and <Output> together. Treat \`add_memory\`/\`add_entity_memory\` in <Output> as strong hints, not the only source.`,
       `2. **Update:** Use \`update_memory\` (general) or \`update_entity_memory\` (entity). Store only new, critical, or corrective facts. Avoid redundancy.`,
-      `3. **Entity Keys:** Format "type:numericId" (e.g., "user:123"). Extract numeric ID from context. NEVER use names.`,
-      `4. **Maintenance:** Overwrite least important if full. Use empty string ("") to clear outdated slots.`,
-      `5. **Language:** English only.`
+      `3. **Fallback Extraction:** Even if there are no \`add_*\` suggestions, still update memory when <Input>/<Output> clearly contains durable facts (preferences, profile/identity, long-term goals, stable constraints, relationship changes).`,
+      `4. **Entity Keys:** Format "type:numericId" (e.g., "user:123"). Extract numeric ID from context. NEVER use names.`,
+      `5. **Maintenance:** Overwrite least important if full. Use empty string ("") to clear outdated slots.`,
+      `6. **Language:** English only.`
     );
 
     prompts.push(`
@@ -109,6 +110,7 @@ ${JSON.stringify(toolCalls, null, 2)}
 Determine and execute memory updates.
 
 Key reminders:
+- \`add_*\` suggestions are helpful but optional; infer directly from context when needed
 - Key format: "type:numericId" (NO names)
 - Overwrite if full (least important)
 - English only

@@ -14,7 +14,7 @@ export class AgentAddMemoryAction extends AgentAction {
     switch (this.version) {
       case 1:
       default:
-        return `Propose a general memory (cross-location). For essential facts only.`;
+        return `Propose a durable general memory (cross-location): preferences, profile/identity facts, long-term goals, stable constraints, or major relationship changes. Skip short-lived details.`;
     }
   }
 
