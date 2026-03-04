@@ -207,6 +207,9 @@ export class JsonArrayStreamParser {
   public *processChunk(
     chunk: string
   ): Generator<{ json: string; index: number }> {
+    // We do NOT strip literal newlines from the chunk before processing it
+    // because it messes up the state machine for streaming.
+    // Instead we handle it at the end when yielding the full `objectJson`.
     this.buffer += chunk;
     const startPos = this.buffer.length - chunk.length;
 
@@ -443,6 +446,12 @@ export class JsonArrayStreamParser {
           this.currentObject.keyDepth = this.depth;
         }
       } else if (char === '}') {
+        // Prevent depth from going below 2 if we are inside the array
+        // A '}' at the array level is invalid (should be ']') and is likely an excess bracket
+        if (this.arrayStarted && this.depth === 2) {
+          continue;
+        }
+
         this.depth--;
 
         // Check if we're leaving arguments
@@ -469,7 +478,28 @@ export class JsonArrayStreamParser {
             i + 1
           );
 
-          yield { json: objectJson, index: this.yieldedCount };
+          // Strip newlines and surrounding whitespace to fix LLM line-wrapping artifacts
+          // (e.g., "e \n       xisting_content" → "existing_content")
+          let cleanedJson = objectJson.replace(/[ \t]*[\r\n]+[ \t]*/g, '');
+          cleanedJson = cleanedJson.replace(
+            /[\x00-\x08\x0B-\x1F\x7F-\x9F]/g,
+            ''
+          );
+
+          let fixedObjectJson = cleanedJson;
+          try {
+            const fixed = fixJson(cleanedJson);
+            JSON.parse(fixed);
+            fixedObjectJson = fixed;
+          } catch {
+            try {
+              JSON.parse(cleanedJson);
+            } catch {
+              // Yield best-effort cleaned JSON
+            }
+          }
+
+          yield { json: fixedObjectJson, index: this.yieldedCount };
 
           // Memory cleanup: remove field values for completed object
           for (const key of this.fieldValues.keys()) {
@@ -520,8 +550,10 @@ export class JsonArrayStreamParser {
   public *finalize(): Generator<{ json: string; index: number }> {
     // If we have a partial tool call object at the end, try to fix and yield it
     if (this.objectStartIndex !== -1) {
-      const partialJson = this.buffer.substring(this.objectStartIndex);
+      let partialJson = this.buffer.substring(this.objectStartIndex);
       try {
+        partialJson = partialJson.replace(/[ \t]*[\r\n]+[ \t]*/g, '');
+        partialJson = partialJson.replace(/[\x00-\x08\x0B-\x1F\x7F-\x9F]/g, '');
         const fixedJson = fixJson(partialJson);
         // Verify it's valid JSON before yielding
         JSON.parse(fixedJson);

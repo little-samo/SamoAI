@@ -1,4 +1,61 @@
 /**
+ * Fixes line-wrapping artifacts in JSON strings (literal newlines and surrounding spaces)
+ */
+function fixLiteralNewlinesInStrings(jsonString: string): string {
+  let result = '';
+  let inString = false;
+  let escaped = false;
+
+  for (let i = 0; i < jsonString.length; i++) {
+    const char = jsonString[i];
+
+    if (escaped) {
+      escaped = false;
+      result += char;
+      continue;
+    }
+
+    if (char === '\\') {
+      escaped = true;
+      result += char;
+      continue;
+    }
+
+    if (char === '"') {
+      inString = !inString;
+      result += char;
+      continue;
+    }
+
+    if (inString && (char === '\n' || char === '\r')) {
+      // Found a literal newline in a string.
+      // 1. Remove trailing spaces we just added to result
+      result = result.replace(/[ \t]+$/, '');
+
+      // 2. We are mutating the parsed characters to fix line-wrapping.
+      // Sometimes models break words like "e \n xisting". Let's not add a space here,
+      // which will reconnect words properly. If it was a sentence break, there'd be a space before the \n anyway.
+
+      // 3. Skip subsequent whitespace characters
+      while (
+        i + 1 < jsonString.length &&
+        (jsonString[i + 1] === ' ' ||
+          jsonString[i + 1] === '\t' ||
+          jsonString[i + 1] === '\n' ||
+          jsonString[i + 1] === '\r')
+      ) {
+        i++;
+      }
+      continue;
+    }
+
+    result += char;
+  }
+
+  return result;
+}
+
+/**
  * Removes JavaScript-style comments from JSON while preserving string content
  * Handles both single-line (//) and multi-line (/* *\/) comments
  */
@@ -65,6 +122,7 @@ export function extractJsonBlocksFromText(text: string): string {
  * - Removes common LLM prefixes/tags ([TOOL_CALLS], [ASSISTANT], etc.)
  * - Removes explanatory text before JSON
  * - Removes comments (single-line and multi-line) while preserving string content
+ * - Fixes line-wrapping artifacts (literal newlines and surrounding spaces inside strings)
  * - Removes trailing commas before closing brackets
  * - Closes unclosed quotes and brackets
  * - Handles truncated JSON
@@ -112,6 +170,9 @@ export function fixJson(jsonString: string): string {
   // This is done BEFORE parsing to avoid affecting string content
   fixed = removeCommentsFromJson(fixed);
 
+  // Fix line-wrapping artifacts (literal newlines and surrounding spaces inside strings)
+  fixed = fixLiteralNewlinesInStrings(fixed);
+
   // Remove trailing commas before closing brackets (common LLM mistake)
   fixed = fixed.replace(/,(\s*[}\]])/g, '$1');
 
@@ -119,10 +180,10 @@ export function fixJson(jsonString: string): string {
   const stack: Array<'{' | '[' | '"'> = [];
   let inString = false;
   let escaped = false;
-  let lastValidIndex = -1; // Track the last valid character position
   let jsonCompleted = false; // Track if we've completed the root JSON structure
+  let result = '';
 
-  // Parse through the string to understand its structure
+  // Parse through the string to understand its structure and filter invalid chars
   for (let i = 0; i < fixed.length; i++) {
     const char = fixed[i];
 
@@ -139,11 +200,13 @@ export function fixJson(jsonString: string): string {
 
     if (escaped) {
       escaped = false;
+      result += char;
       continue;
     }
 
     if (char === '\\' && inString) {
       escaped = true;
+      result += char;
       continue;
     }
 
@@ -159,57 +222,64 @@ export function fixJson(jsonString: string): string {
         inString = true;
         stack.push('"');
       }
-      lastValidIndex = i;
+      result += char;
+      continue;
+    }
+
+    if (inString && (char === '\n' || char === '\r')) {
+      // Safety net: strip any literal newlines in strings that survived earlier cleanup
+      result = result.replace(/[ \t]+$/, '');
+      while (
+        i + 1 < fixed.length &&
+        (fixed[i + 1] === ' ' ||
+          fixed[i + 1] === '\t' ||
+          fixed[i + 1] === '\n' ||
+          fixed[i + 1] === '\r')
+      ) {
+        i++;
+      }
       continue;
     }
 
     // Skip characters inside strings
     if (inString) {
-      lastValidIndex = i;
+      result += char;
       continue;
     }
 
     if (char === '{') {
       stack.push('{');
-      lastValidIndex = i;
+      result += char;
     } else if (char === '[') {
       stack.push('[');
-      lastValidIndex = i;
+      result += char;
     } else if (char === '}') {
       if (stack[stack.length - 1] === '{') {
         stack.pop();
-        lastValidIndex = i;
+        result += char;
         // Check if we've completed the root JSON structure
         if (stack.length === 0) {
           jsonCompleted = true;
         }
       }
-      // If no matching opening bracket, this is an excess closing bracket - don't update lastValidIndex
+      // If no matching opening bracket, this is an excess closing bracket - skip it
     } else if (char === ']') {
       if (stack[stack.length - 1] === '[') {
         stack.pop();
-        lastValidIndex = i;
+        result += char;
         // Check if we've completed the root JSON structure
         if (stack.length === 0) {
           jsonCompleted = true;
         }
       }
-      // If no matching opening bracket, this is an excess closing bracket - don't update lastValidIndex
-    } else if (
-      char !== ' ' &&
-      char !== '\t' &&
-      char !== '\n' &&
-      char !== '\r'
-    ) {
-      // Other non-whitespace characters (commas, colons, etc.)
-      lastValidIndex = i;
+      // If no matching opening bracket, this is an excess closing bracket - skip it
+    } else {
+      // Other characters (commas, colons, whitespace, etc.)
+      result += char;
     }
   }
 
-  // Trim to last valid character + 1 (removes excess closing brackets)
-  if (lastValidIndex >= 0) {
-    fixed = fixed.substring(0, lastValidIndex + 1);
-  }
+  fixed = result;
 
   // Handle backslash truncation
   if (escaped && inString && fixed.length > 0) {
