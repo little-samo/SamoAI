@@ -10,6 +10,8 @@ import {
   LocationModel,
   LocationMessage,
   LocationMission,
+  LocationScheduledMessageState,
+  DayOfWeek,
 } from '@little-samo/samo-ai';
 
 export interface LocationRepository {
@@ -112,4 +114,44 @@ export interface LocationRepository {
     canvasName: string,
     text: string
   ): Promise<void>;
+
+  getLocationScheduledMessageState(
+    messageId: string
+  ): Promise<LocationScheduledMessageState | null>;
+  getAllDueLocationScheduledMessageStates(
+    locationId?: LocationId
+  ): Promise<LocationScheduledMessageState[]>;
+
+  getLocationScheduledMessages(
+    locationId: LocationId
+  ): Promise<LocationScheduledMessageState[]>;
+  createLocationScheduledMessage(
+    locationId: LocationId,
+    data: {
+      entityType: EntityType;
+      entityId: EntityId;
+      message: string;
+      nextMessageAt?: Date | null;
+      repeatTimesOfDay?: string[];
+      repeatDaysOfWeek?: DayOfWeek[];
+      repeatUntil?: Date;
+      maxRepeatCount?: number;
+    }
+  ): Promise<LocationScheduledMessageState>;
+  updateLocationScheduledMessage(
+    messageId: string,
+    data: {
+      entityType?: EntityType;
+      entityId?: EntityId;
+      message?: string;
+      nextMessageAt?: Date | null;
+      repeatTimesOfDay?: string[];
+      repeatDaysOfWeek?: DayOfWeek[];
+      repeatUntil?: Date;
+      maxRepeatCount?: number;
+      sentCount?: number;
+      isActive?: boolean;
+    }
+  ): Promise<LocationScheduledMessageState | null>;
+  deleteLocationScheduledMessage(messageId: string): Promise<boolean>;
 }
