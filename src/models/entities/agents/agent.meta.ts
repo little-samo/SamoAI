@@ -146,7 +146,7 @@ export const DEFAULT_AGENT_META: AgentMeta = {
     },
     {
       platform: LlmPlatform.GEMINI,
-      model: 'gemini-2.5-flash-lite-preview-09-2025',
+      model: 'gemini-3.1-flash-lite-preview',
       thinking: true,
     },
   ],
